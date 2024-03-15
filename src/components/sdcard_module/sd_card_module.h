@@ -1,0 +1,22 @@
+#pragma once
+
+#include "board_config.h" // Include the main configuration header
+
+#ifdef SD_CARD_CS_PIN // Only include this class if the SD card is supported
+
+#include <SD.h>
+
+class SDCardModule {
+public:
+    SDCardModule();
+    bool init();
+    bool writeFile(const char *path, const char *message);
+    bool readFile(const char *path);
+    bool appendFile(const char *path, const char *message);
+    bool deleteFile(const char *path);
+
+private:
+    int csPin;
+};
+
+#endif // SD_CARD_CS_PIN
