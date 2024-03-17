@@ -6,6 +6,8 @@
 #include "esp_wifi_types.h"
 #include "esp_wifi.h"
 
+const wifi_promiscuous_filter_t filt = {.filter_mask=WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA};
+
 inline uint8_t packet[128] = { 0x80, 0x00, 0x00, 0x00, //Frame Control, Duration
                     /*4*/   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //Destination address 
                     /*10*/  0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //Source address - overwritten later
@@ -123,6 +125,8 @@ public:
     bool shutdownWiFi();
     void broadcastRickroll();
     void broadcastRandomSSID();
+    void RunAPScan();
+    void RunStaScan();
     void InitRandomSSIDAttack();
     void RunSetup();
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
@@ -133,4 +137,5 @@ public:
     byte src_mac[6] = {};
     uint8_t packets_sent;
     bool wifi_initialized;
+    uint8_t initTime;
 };

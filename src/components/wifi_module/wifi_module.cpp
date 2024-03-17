@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <Arduino.h>
+#include "callbacks.h"
 
 String WiFiModule::freeRAM()
 {
@@ -10,18 +12,58 @@ String WiFiModule::freeRAM()
   return String(s);
 }
 
+void WiFiModule::RunStaScan()
+{
+  rgbmodule->setColor(HIGH, LOW, HIGH);
+
+  delete access_points;
+  access_points = new LinkedList<AccessPoint>();
+
+  uint8_t set_channel = random(1, 12);
+
+  esp_wifi_init(&cfg);
+  esp_wifi_set_storage(WIFI_STORAGE_RAM);
+  esp_wifi_set_mode(WIFI_MODE_NULL);
+  esp_wifi_start();
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_promiscuous_filter(&filt);
+  esp_wifi_set_promiscuous_rx_cb(&stationSnifferCallback);
+  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+  this->wifi_initialized = true;
+  initTime = millis();
+}
+
+void WiFiModule::RunAPScan()
+{
+  rgbmodule->setColor(HIGH, LOW, HIGH);
+
+  delete access_points;
+  access_points = new LinkedList<AccessPoint>();
+
+  uint8_t set_channel = random(1, 12);
+
+  esp_wifi_init(&cfg);
+  esp_wifi_set_storage(WIFI_STORAGE_RAM);
+  esp_wifi_set_mode(WIFI_MODE_NULL);
+  esp_wifi_start();
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_promiscuous_filter(&filt);
+  esp_wifi_set_promiscuous_rx_cb(&apSnifferCallbackFull);
+  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+  this->wifi_initialized = true;
+  initTime = millis();
+}
+
 int WiFiModule::clearAPs() {
   int num_cleared = access_points->size();
   while (access_points->size() > 0)
     access_points->remove(0);
-  Serial.println("access_points: " + (String)access_points->size());
   return num_cleared;
 }
 
 int WiFiModule::clearStations() {
   int num_cleared = stations->size();
   stations->clear();
-  Serial.println("stations: " + (String)stations->size());
 
   // Now clear stations list from APs
   for (int i = 0; i < access_points->size(); i++)

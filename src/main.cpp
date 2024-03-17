@@ -19,15 +19,26 @@ void loop() {
 
 void SerialCheckTask(void *pvParameters) {
     while (1) {
-        if (Serial.available() > 0 && HasRanCommand) {
-            String flipperMessage;
-            flipperMessage = Serial.readString(); 
+        if (Serial.available() > 0) {
 
-            Serial.println(flipperMessage);
+                            String flipperMessage;
+                flipperMessage = Serial.readString(); 
 
-            if (flipperMessage.indexOf("reset") != -1 || flipperMessage.indexOf("stop") != -1 || flipperMessage.indexOf("stopscan")) {
-                Serial.println("Reset tag found. Rebooting...");
-                esp_restart(); // Restart the ESP32
+                Serial.println(flipperMessage);
+
+            if (HasRanCommand)
+            {
+
+
+                if (flipperMessage.indexOf("reset") != -1 || flipperMessage.indexOf("stop") != -1 || flipperMessage.indexOf("stopscan")) {
+                    Serial.println("Reset tag found. Rebooting...");
+                    esp_restart(); // Restart the ESP32
+                }
+            }
+            else 
+            {
+                rgbmodule->setColor(HIGH,HIGH,HIGH);
+                wifimodule->shutdownWiFi();
             }
         }
         vTaskDelay(50 / portTICK_PERIOD_MS);

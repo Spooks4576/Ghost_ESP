@@ -21,4 +21,5 @@ public:
 
     void RunSetup();
     void main(uint32_t currentTime);
+    uint8_t count_selected;
 };
