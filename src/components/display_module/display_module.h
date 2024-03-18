@@ -2,15 +2,20 @@
 
 #include "board_config.h"
 
-#if DISPLAY_SUPPORT
 
+#ifdef DISPLAY_SUPPORT
+
+struct SplashScreen
+{
+
+};
 
 
 class DisplayModule {
 public:
     void init();
-    void update();
-    // Other display-related methods
+    void UpdateSplashStatus(const char* Text, int Percent);
+    void RenderSplashScreen();
 };
 
 #endif

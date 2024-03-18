@@ -1,13 +1,14 @@
 #include "display_module.h"
 
-#if DISPLAY_SUPPORT
+#ifdef DISPLAY_SUPPORT
 
 void DisplayModule::init() {
 
 }
 
-void DisplayModule::update() {
-
+void DisplayModule::UpdateSplashStatus(const char* Text, int Percent)
+{
+    
 }
 
 #endif

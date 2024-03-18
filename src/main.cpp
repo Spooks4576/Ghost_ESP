@@ -36,6 +36,13 @@ void setup()
 {
     Serial.begin(115200);
 
+    #ifdef DISPLAY_SUPPORT
+        Serial.println("About to Init Display");
+        displaymodule = new DisplayModule();
+        displaymodule->init();
+        Serial.println("Init Display");
+    #endif
+
     
     #ifdef OLD_LED
         rgbmodule = new RGBLedModule(LED_R, LED_G, LED_B);
@@ -45,17 +52,28 @@ void setup()
         neopixelmodule->init();
     #endif
 
-    #if DISPLAY_SUPPORT
-        
-    #endif
-
     #ifdef SD_CARD_CS_PIN
+#ifdef DISPLAY_SUPPORT
+displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
+#endif
         sdCardmodule = new SDCardModule(); 
         pinMode(SD_CARD_CS_PIN, OUTPUT);
         delay(10);
         digitalWrite(SD_CARD_CS_PIN, HIGH);
 
-        sdCardmodule->init();
+        bool status = sdCardmodule->init();
+#ifdef DISPLAY_SUPPORT
+        if (status)
+        {
+            displaymodule->UpdateSplashStatus("Mounted SD Card Successfully", 50);
+            delay(100);
+        }
+        else 
+        {
+            displaymodule->UpdateSplashStatus("Failed to Mount SD Card Continuing", 50);
+            delay(100);
+        }
+#endif
     #endif
 
     #ifdef HAS_GPS
@@ -63,10 +81,18 @@ void setup()
     gpsmodule->begin();
     if (gpsmodule->getGpsModuleStatus())
     {
+        #ifdef DISPLAY_SUPPORT
+        displaymodule->UpdateSplashStatus("GPS Module Connected Successfully", 75);
+        delay(100);
+        #endif
         Serial.println("GPS Module connected");
     }
     else 
     {
+        #ifdef DISPLAY_SUPPORT
+        displaymodule->UpdateSplashStatus("GPS Module Failed to Connect", 75);
+        delay(100);
+        #endif
         Serial.println("GPS Module NOT connected");
     }
     #endif
@@ -74,7 +100,13 @@ void setup()
     #ifdef HAS_BT
     BleModule = new BLEModule();
     BleModule->init();
+    #ifdef DISPLAY_SUPPORT
+        displaymodule->UpdateSplashStatus("Initilized BLE...", 80);
+        delay(100);
+        displaymodule->UpdateSplashStatus(esp_get_idf_version(), 80);
     #endif
+    #endif
+
     Serial.println("ESP-IDF version is: " + String(esp_get_idf_version()));
 
     wifimodule = new WiFiModule();
@@ -82,6 +114,10 @@ void setup()
     wifimodule->RunSetup();
 
     cli->RunSetup();
+#ifdef DISPLAY_SUPPORT
+    displaymodule->UpdateSplashStatus("Wifi Initilized", 95);
+    delay(100);
+#endif
 
     registerCallback(
         [](String &msg) { return msg.indexOf("reset") != -1; },
@@ -113,4 +149,7 @@ void setup()
     );
 
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
+#ifdef DISPLAY_SUPPORT
+    displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
+#endif
 }

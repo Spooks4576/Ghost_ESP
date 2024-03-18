@@ -53,3 +53,8 @@ inline NeopixelModule* neopixelmodule;
 #include "../components/gps_module/gps_module.h"
 inline GpsInterface* gpsmodule;
 #endif
+
+#ifdef DISPLAY_SUPPORT
+#include "../components/display_module/display_module.h"
+inline DisplayModule* displaymodule;
+#endif

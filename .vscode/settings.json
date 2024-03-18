@@ -7,7 +7,12 @@
         "unordered_map": "cpp",
         "unordered_set": "cpp",
         "vector": "cpp",
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "lvgl.h": "c",
+        "lv_init.h": "c",
+        "ui_helpers.h": "c",
+        "ui.h": "c",
+        "new": "cpp"
     },
     "cmake.sourceDirectory": "D:/github/ESP32_Marauder_Rewrite/.pio/libdeps/esp32_dev/AsyncTCP-esphome"
 }

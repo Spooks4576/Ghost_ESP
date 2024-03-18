@@ -300,7 +300,7 @@ void WiFiModule::broadcastRandomSSID() {
     for(int i = 0; i < 12; i++) 
       packet[38 + 6 + i] = postSSID[i];
 
-    
+
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
