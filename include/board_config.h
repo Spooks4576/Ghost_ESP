@@ -10,6 +10,8 @@
     #include "config/esp32_s3_dev_module.h"
 #elif defined(ESP32_C6_DEV_MODULE)
     #include "config/esp32_c6_dev_module.h"
+#elif defined(ESP32_C3_DEV_MODULE)
+    #include "config/esp32_c3_dev_module.h"
 #else
     #error "Board type is not defined or unsupported!"
 #endif

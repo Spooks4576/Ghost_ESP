@@ -8,5 +8,6 @@
         "unordered_set": "cpp",
         "vector": "cpp",
         "system_error": "cpp"
-    }
+    },
+    "cmake.sourceDirectory": "D:/github/ESP32_Marauder_Rewrite/.pio/libdeps/esp32_dev/AsyncTCP-esphome"
 }

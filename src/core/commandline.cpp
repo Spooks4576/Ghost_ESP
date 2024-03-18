@@ -111,15 +111,6 @@ bool CommandLine::hasSSIDs() {
   return true;
 }
 
-void CommandLine::showCounts(int selected, int unselected) {
-  Serial.print((String(selected) + " selected"));
-  
-  if (unselected != -1) 
-    Serial.print(", " + (String) unselected + " unselected");
-  
-  Serial.println("");
-}
-
 String CommandLine::toLowerCase(String str) {
   String result = str;
   for (int i = 0; i < str.length(); i++) {
@@ -186,8 +177,6 @@ void CommandLine::filterAccessPoints(String filter) {
       count_unselected++;
     }
   }
-
-  this->showCounts(count_selected, count_unselected);
 }
 
 void CommandLine::runCommand(String input)
@@ -261,8 +250,7 @@ void CommandLine::runCommand(String input)
           {
             HasRanCommand = true;
             Serial.println("Starting random wifi beacon attack. Stop with " + (String)"stopscan");
-
-
+            wifimodule->RunSetup();
             wifimodule->InitRandomSSIDAttack();
             return;
           }
@@ -271,6 +259,7 @@ void CommandLine::runCommand(String input)
         if (attack_type == "rickroll")
         {
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
+          wifimodule->RunSetup();
           wifimodule->broadcastRickroll();
           return;
         }
@@ -282,9 +271,7 @@ void CommandLine::runCommand(String input)
     {
       Serial.println("Starting to scan access points");
       HasRanCommand = true;
-
       wifimodule->RunAPScan();
-
       return;
     }
 
@@ -292,10 +279,86 @@ void CommandLine::runCommand(String input)
     {
       Serial.println("Starting to scan stations");
       HasRanCommand = true;
-
       wifimodule->RunStaScan();
       return;
     }
+
+    if (cmd_args.get(0) == "ssid")
+    {
+      int ap_sw = this->argSearch(&cmd_args, "-a");
+      int ss_sw = this->argSearch(&cmd_args, "-g");
+      int nn_sw = this->argSearch(&cmd_args, "-n");
+
+      if (ap_sw != -1 && ss_sw != -1)
+      {
+        String NumSSids = cmd_args.get(ss_sw + 1);
+        NumSSids.trim();
+        wifimodule->generateSSIDs(NumSSids.toInt());
+        Serial.printf("%i Random Ssids Generated\n", NumSSids.toInt());
+      }
+
+      if (ap_sw != -1 && nn_sw != -1)
+      {
+        String SSIDName = cmd_args.get(nn_sw + 1);
+        SSIDName.trim();
+        wifimodule->addSSID(SSIDName);
+        Serial.println("Added SSID " + SSIDName);
+      }
+    }
+
+    if (cmd_args.get(0) == "select")
+    {
+      int ap_sw = this->argSearch(&cmd_args, "-a");
+      int SSIDIndex = cmd_args.get(ap_sw + 1).toInt();
+      int ssid_sw = this->argSearch(&cmd_args, "-s");
+      String SSIDArg = cmd_args.get(ssid_sw + 1);
+      bool Selected = false;
+
+      for (int i = 0; i < access_points->size(); i++) {
+        AccessPoint AP = access_points->get(i);
+
+        if (SSIDIndex != -1 && i == SSIDIndex)
+        {
+          AP.selected = true;
+          Selected = true;
+          break;
+        }
+
+        if (ssid_sw != -1 && AP.essid == SSIDArg)
+        {
+          AP.selected = true;
+          Selected = true;
+          break;
+        }
+      }
+      if (!Selected)
+      {
+        Serial.println("Did not Select Anything Possible Index out of range");
+      }
+      else 
+      {
+        Serial.println("Successfully Selected The Access Point");
+      }
+    }
+
+    if (cmd_args.get(0) == "clearlist")
+    {
+      int ap_sw = this->argSearch(&cmd_args, "-a");
+      int ss_sw = this->argSearch(&cmd_args, "-s");
+
+      if (ap_sw != -1)
+      {
+        wifimodule->clearAPs();
+        Serial.println("Cleared Access Point List");
+      }
+      else if (ss_sw != -1)
+      {
+        wifimodule->clearSSIDs();
+        Serial.println("Cleared SSID List");
+      }
+    }
+
+
 
     if (cmd_args.get(0) == "list") {
     int ap_sw = this->argSearch(&cmd_args, "-a");
@@ -311,7 +374,6 @@ void CommandLine::runCommand(String input)
         } else
           Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi);
       }
-      // this->showCounts(count_selected); // Causes Crash
     }
     // List SSIDs
     else if (ss_sw != -1 && ssids != nullptr) {
@@ -322,7 +384,6 @@ void CommandLine::runCommand(String input)
         } else
           Serial.println("[" + (String)i + "] " + ssids->get(i).essid);
       }
-      // this->showCounts(count_selected); // Causes Crash
     }
     // List Stations
     else if (cl_sw != -1 && access_points != nullptr) { 
@@ -344,7 +405,6 @@ void CommandLine::runCommand(String input)
           }
         }
       }
-      // this->showCounts(count_selected); // Causes Crash
     } else {
       Serial.println("You did not specify which list to show");
       return;

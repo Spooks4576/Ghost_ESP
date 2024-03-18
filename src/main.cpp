@@ -40,7 +40,6 @@ void setup()
     #ifdef OLD_LED
         rgbmodule = new RGBLedModule(LED_R, LED_G, LED_B);
         rgbmodule->init();
-
     #elif NEOPIXEL_PIN
         neopixelmodule = new NeopixelModule(Pixels, NEOPIXEL_PIN);
         neopixelmodule->init();
@@ -73,7 +72,6 @@ void setup()
     #endif
 
     #ifdef HAS_BT
-
     BleModule = new BLEModule();
     BleModule->init();
     #endif

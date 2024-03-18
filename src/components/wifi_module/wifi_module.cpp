@@ -176,7 +176,10 @@ void WiFiModule::getMACatoffset(char *addr, uint8_t* data, uint16_t offset) {
 
 void WiFiModule::broadcastRickroll()
 {
-    while (true)
+#ifdef OLD_LED
+    rgbmodule->setColor(0, 1, 1);
+#endif
+    while (wifi_initialized)
     {
         for (int i = 0; i < 7; i++)
         {
@@ -192,7 +195,10 @@ void WiFiModule::broadcastRickroll()
 
 void WiFiModule::InitRandomSSIDAttack()
 {
-    while (true)
+#ifdef OLD_LED
+    rgbmodule->setColor(0, 1, 1);
+#endif
+    while (wifi_initialized)
     {
         broadcastRandomSSID();
         delay(100);
@@ -200,47 +206,44 @@ void WiFiModule::InitRandomSSIDAttack()
 }
 
 void WiFiModule::broadcastSetSSID(const char* ESSID) {
-  uint8_t set_channel = random(1,12); 
-  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-  delay(1);  
+    uint8_t set_channel = random(1, 12);
+    esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
 
-  // Randomize SRC MAC
-  packet[10] = packet[16] = random(256);
-  packet[11] = packet[17] = random(256);
-  packet[12] = packet[18] = random(256);
-  packet[13] = packet[19] = random(256);
-  packet[14] = packet[20] = random(256);
-  packet[15] = packet[21] = random(256);
+   
+    for (int j = 0; j < 6; j++) {
+        uint8_t rnd = random(256);
+        for (int i = 0; i < 2; i++) {
+            packet[10 + j + i * 6] = rnd;
+        }
+    }
 
-  int ssidLen = strlen(ESSID);
-  //int rand_len = sizeof(rand_reg);
-  int fullLen = ssidLen;
-  packet[37] = fullLen;
+    int ssidLen = strlen(ESSID);
+    int fullLen = ssidLen;
+    packet[37] = fullLen;
 
-  // Insert my tag
-  for(int i = 0; i < ssidLen; i++)
-    packet[38 + i] = ESSID[i];
+    // Insert the SSID
+    for (int i = 0; i < ssidLen; i++)
+        packet[38 + i] = ESSID[i];
 
-  /////////////////////////////
-  
-  packet[50 + fullLen] = set_channel;
+    packet[50 + fullLen] = set_channel;
 
-  uint8_t postSSID[13] = {0x01, 0x08, 0x82, 0x84, 0x8b, 0x96, 0x24, 0x30, 0x48, 0x6c, //supported rate
-                      0x03, 0x01, 0x04 /*DSSS (Current Channel)*/ };
+    uint8_t postSSID[13] = {
+        0x01, 0x08, 0x82, 0x84, 0x8b, 0x96, 0x24, 0x30, 0x48, 0x6c, // Supported rates
+        0x03, 0x01, set_channel // DSSS (Current Channel)
+    };
 
 
+    for (int i = 0; i < 12; i++)
+        packet[38 + fullLen + i] = postSSID[i];
 
-  // Add everything that goes after the SSID
-  for(int i = 0; i < 12; i++) 
-    packet[38 + fullLen + i] = postSSID[i];
-  
 
-  esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
-  esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
-  esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
-
-  packets_sent = packets_sent + 3;
-  
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    packets_sent + 6;
 }
 
 void WiFiModule::RunSetup()
@@ -256,6 +259,9 @@ void WiFiModule::RunSetup()
   esp_wifi_start();
 
   esp_wifi_set_promiscuous(true);
+
+  ssids = new LinkedList<ssid>;
+  wifi_initialized = true;
 }
 
 void WiFiModule::broadcastRandomSSID() {
@@ -290,11 +296,16 @@ void WiFiModule::broadcastRandomSSID() {
 
 
 
-  // Add everything that goes after the SSID
-  for(int i = 0; i < 12; i++) 
-    packet[38 + 6 + i] = postSSID[i];
+    // Add everything that goes after the SSID
+    for(int i = 0; i < 12; i++) 
+      packet[38 + 6 + i] = postSSID[i];
 
-  esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
-
-  packets_sent = packets_sent + 3;
+    
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
+    packets_sent + 6;
 }

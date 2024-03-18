@@ -13,8 +13,8 @@ class WiFiModule;
 inline WiFiModule* wifimodule;
 
 struct SerialCallback {
-    std::function<bool(String&)> condition; // Function to check the condition.
-    std::function<void(String&)> callback;  // Function to call if condition is true.
+    std::function<bool(String&)> condition;
+    std::function<void(String&)> callback;
     int CallbackID;
 };
 
