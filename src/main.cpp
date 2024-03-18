@@ -100,5 +100,19 @@ void setup()
         }
     );
 
+    registerCallback(
+          [](String &msg) { return msg.indexOf("stopscan") != -1; },
+          [](String &msg) { 
+            #ifdef OLD_LED
+              rgbmodule->setColor(1, 1, 1);
+            #endif
+              wifimodule->shutdownWiFi();
+
+            #ifdef HAS_BT
+              BleModule->shutdownBLE();  
+            #endif
+          }
+    );
+
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
 }

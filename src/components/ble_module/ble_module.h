@@ -72,9 +72,11 @@ public:
     #endif
     void executeSpam(EBLEPayloadType type);
     void generateRandomMac(uint8_t* mac);
+    bool BLEInitilized;
     #ifdef HAS_BT
     bool shutdownBLE()
     {
+        BLEInitilized = false; // Stop While Loops
         pAdvertising->stop();
         pBLEScan->stop();
         

@@ -133,7 +133,8 @@ NimBLEAdvertisementData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType
 
 void BLEModule::executeSpam(EBLEPayloadType type) {
 #ifdef HAS_BT
-    while (true)
+    BLEInitilized = true;
+    while (BLEInitilized)
     {
       NimBLEDevice::init("");
 
@@ -153,6 +154,7 @@ void BLEModule::executeSpam(EBLEPayloadType type) {
       generateRandomMac(macAddr);
 
       esp_base_mac_addr_set(macAddr);
+      
       delay(100);
     }
 #endif

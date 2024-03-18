@@ -283,16 +283,6 @@ void CommandLine::runCommand(String input)
       Serial.println("Starting to scan access points");
       HasRanCommand = true;
 
-      registerCallback(
-          [](String &msg) { return msg.indexOf("stopscan") != -1; },
-          [](String &msg) { 
-            #ifdef OLD_LED
-              rgbmodule->setColor(1, 1, 1);
-            #endif
-              wifimodule->shutdownWiFi();
-          }
-      );
-
       wifimodule->RunAPScan();
 
       return;
@@ -302,16 +292,6 @@ void CommandLine::runCommand(String input)
     {
       Serial.println("Starting to scan stations");
       HasRanCommand = true;
-
-      registerCallback(
-          [](String &msg) { return msg.indexOf("stopscan") != -1; },
-          [](String &msg) { 
-            #ifdef OLD_LED
-              rgbmodule->setColor(1, 1, 1);
-            #endif
-              wifimodule->shutdownWiFi();
-          }
-      );
 
       wifimodule->RunStaScan();
       return;
