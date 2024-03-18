@@ -12,6 +12,23 @@ class WiFiModule;
 
 inline WiFiModule* wifimodule;
 
+struct SerialCallback {
+    std::function<bool(String&)> condition; // Function to check the condition.
+    std::function<void(String&)> callback;  // Function to call if condition is true.
+    int CallbackID;
+};
+
+inline LinkedList<SerialCallback> callbacks;
+
+inline void registerCallback(const std::function<bool(String&)>& condition, const std::function<void(String&)>& callback) {
+    int CallbackID = callbacks.size() + 1;
+    callbacks.add({condition, callback, CallbackID});
+}
+
+inline void clearCallbacks() {
+    callbacks.clear();
+}
+
 #ifdef HAS_BT
 #include "../components/ble_module/ble_module.h"
 inline BLEModule* BleModule;

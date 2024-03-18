@@ -24,10 +24,10 @@ void RGBLedModule::init() {
     digitalWrite(redPin, HIGH);
 }
 
-void RGBLedModule::setColor(uint8_t red, uint8_t green, uint8_t blue) {
-    analogWrite(redPin, red);
-    analogWrite(greenPin, green);
-    analogWrite(bluePin, blue);
+void RGBLedModule::setColor(int red, int green, int blue) {
+    digitalWrite(redPin, red);
+    digitalWrite(greenPin, green);
+    digitalWrite(bluePin, blue);
 }
 
 #endif

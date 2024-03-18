@@ -10,7 +10,6 @@
 #include <Arduino.h>
 #include <SD.h>
 
-
 void loop() {
     double currentTime = millis();
 
@@ -20,25 +19,13 @@ void loop() {
 void SerialCheckTask(void *pvParameters) {
     while (1) {
         if (Serial.available() > 0) {
+            String message = Serial.readString();
+            Serial.println(message);
 
-                            String flipperMessage;
-                flipperMessage = Serial.readString(); 
-
-                Serial.println(flipperMessage);
-
-            if (HasRanCommand)
-            {
-
-
-                if (flipperMessage.indexOf("reset") != -1 || flipperMessage.indexOf("stop") != -1 || flipperMessage.indexOf("stopscan")) {
-                    Serial.println("Reset tag found. Rebooting...");
-                    esp_restart(); // Restart the ESP32
+            for (int i = 0; i < callbacks.size(); ++i) {
+                if (callbacks[i].condition(message)) {
+                    callbacks[i].callback(message);
                 }
-            }
-            else 
-            {
-                rgbmodule->setColor(HIGH,HIGH,HIGH);
-                wifimodule->shutdownWiFi();
             }
         }
         vTaskDelay(50 / portTICK_PERIOD_MS);
@@ -97,6 +84,21 @@ void setup()
     wifimodule->RunSetup();
 
     cli->RunSetup();
+
+    registerCallback(
+        [](String &msg) { return msg.indexOf("reset") != -1; },
+        [](String &msg) { 
+            Serial.println("Reset command received. Rebooting...");
+            esp_restart();
+        }
+    );
+
+    registerCallback(
+        [](String &msg) { return msg.indexOf("stop") != -1; },
+        [](String &msg) { 
+            Serial.println("Stop command received. Handling stop...");
+        }
+    );
 
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
 }

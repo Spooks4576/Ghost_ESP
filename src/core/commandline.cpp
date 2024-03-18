@@ -112,7 +112,7 @@ bool CommandLine::hasSSIDs() {
 }
 
 void CommandLine::showCounts(int selected, int unselected) {
-  Serial.print((String) selected + " selected");
+  Serial.print((String(selected) + " selected"));
   
   if (unselected != -1) 
     Serial.print(", " + (String) unselected + " unselected");
@@ -271,7 +271,6 @@ void CommandLine::runCommand(String input)
         if (attack_type == "rickroll")
         {
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
-          HasRanCommand = true;
           wifimodule->broadcastRickroll();
           return;
         }
@@ -282,51 +281,74 @@ void CommandLine::runCommand(String input)
     if (cmd_args.get(0) == "scanap")
     {
       Serial.println("Starting to scan access points");
+      HasRanCommand = true;
+
+      registerCallback(
+          [](String &msg) { return msg.indexOf("stopscan") != -1; },
+          [](String &msg) { 
+            #ifdef OLD_LED
+              rgbmodule->setColor(1, 1, 1);
+            #endif
+              wifimodule->shutdownWiFi();
+          }
+      );
+
       wifimodule->RunAPScan();
+
       return;
     }
 
     if (cmd_args.get(0) == "scansta")
     {
       Serial.println("Starting to scan stations");
+      HasRanCommand = true;
+
+      registerCallback(
+          [](String &msg) { return msg.indexOf("stopscan") != -1; },
+          [](String &msg) { 
+            #ifdef OLD_LED
+              rgbmodule->setColor(1, 1, 1);
+            #endif
+              wifimodule->shutdownWiFi();
+          }
+      );
+
       wifimodule->RunStaScan();
       return;
     }
 
-    if (cmd_args.get(0) == "list") 
-    {
-      int ap_sw = this->argSearch(&cmd_args, "-a");
-      int ss_sw = this->argSearch(&cmd_args, "-s");
-      int cl_sw = this->argSearch(&cmd_args, "-c");
+    if (cmd_args.get(0) == "list") {
+    int ap_sw = this->argSearch(&cmd_args, "-a");
+    int ss_sw = this->argSearch(&cmd_args, "-s");
+    int cl_sw = this->argSearch(&cmd_args, "-c");
 
-      // List APs
-      if (ap_sw != -1) {
-        for (int i = 0; i < access_points->size(); i++) {
-          if (access_points->get(i).selected) {
-            Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi + " (selected)");
-            count_selected += 1;
-          } 
-          else
-            Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi);
-        }
-        this->showCounts(count_selected);
+    // List APs
+    if (ap_sw != -1 && access_points != nullptr) {
+      for (int i = 0; i < access_points->size(); i++) {
+        if (access_points->get(i).selected) {
+          Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi + " (selected)");
+          count_selected += 1;
+        } else
+          Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi);
       }
-      // List SSIDs
-      else if (ss_sw != -1) {
-        for (int i = 0; i < ssids->size(); i++) {
-          if (ssids->get(i).selected) {
-            Serial.println("[" + (String)i + "] " + ssids->get(i).essid + " (selected)");
-            count_selected += 1;
-          } 
-          else
-            Serial.println("[" + (String)i + "] " + ssids->get(i).essid);
-        }
-        this->showCounts(count_selected);
+      // this->showCounts(count_selected); // Causes Crash
+    }
+    // List SSIDs
+    else if (ss_sw != -1 && ssids != nullptr) {
+      for (int i = 0; i < ssids->size(); i++) {
+        if (ssids->get(i).selected) {
+          Serial.println("[" + (String)i + "] " + ssids->get(i).essid + " (selected)");
+          count_selected += 1;
+        } else
+          Serial.println("[" + (String)i + "] " + ssids->get(i).essid);
       }
-      // List Stations
-      else if (cl_sw != -1) {
-        char sta_mac[] = "00:00:00:00:00:00";
-        for (int x = 0; x < access_points->size(); x++) {
+      // this->showCounts(count_selected); // Causes Crash
+    }
+    // List Stations
+    else if (cl_sw != -1 && access_points != nullptr) { 
+      char sta_mac[] = "00:00:00:00:00:00";
+      for (int x = 0; x < access_points->size(); x++) {
+        if (access_points->get(x).stations != nullptr) {
           Serial.println("[" + (String)x + "] " + access_points->get(x).essid + " " + (String)access_points->get(x).rssi + ":");
           for (int i = 0; i < access_points->get(x).stations->size(); i++) {
             wifimodule->getMACatoffset(sta_mac, stations->get(access_points->get(x).stations->get(i)).mac, 0);
@@ -335,27 +357,17 @@ void CommandLine::runCommand(String input)
               Serial.print(sta_mac);
               Serial.println(" (selected)");
               count_selected += 1;
-            }
-            else {
+            } else {
               Serial.print("  [" + (String)access_points->get(x).stations->get(i) + "] ");
               Serial.println(sta_mac);
             }
           }
         }
-        this->showCounts(count_selected);
       }
-      else {
-        Serial.println("You did not specify which list to show");
-        return;
-      }
-  }
-
-    if (cmd_args.get(0) == "stop" || cmd_args.get(0) == "restart" || cmd_args.get(0) == "stopscan")
-    {
-
-      if (HasRanCommand)
-      {
-        ESP.restart();
-      }
+      // this->showCounts(count_selected); // Causes Crash
+    } else {
+      Serial.println("You did not specify which list to show");
+      return;
     }
+  }
 }

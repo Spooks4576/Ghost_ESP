@@ -14,8 +14,9 @@ String WiFiModule::freeRAM()
 
 void WiFiModule::RunStaScan()
 {
+#ifdef OLD_LED
   rgbmodule->setColor(HIGH, LOW, HIGH);
-
+#endif
   delete access_points;
   access_points = new LinkedList<AccessPoint>();
 
@@ -31,11 +32,24 @@ void WiFiModule::RunStaScan()
   esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
   this->wifi_initialized = true;
   initTime = millis();
+
+  while (this->wifi_initialized)
+  {
+     unsigned long startTime = millis();
+    if (millis() - startTime < 3000)
+    {
+      uint8_t set_channel = random(1, 13);
+      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+    }
+  }
+
 }
 
 void WiFiModule::RunAPScan()
 {
+#ifdef OLD_LED
   rgbmodule->setColor(HIGH, LOW, HIGH);
+#endif
 
   delete access_points;
   access_points = new LinkedList<AccessPoint>();
@@ -52,6 +66,16 @@ void WiFiModule::RunAPScan()
   esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
   this->wifi_initialized = true;
   initTime = millis();
+
+  while (this->wifi_initialized)
+  {
+    unsigned long startTime = millis();
+    if (millis() - startTime < 3000)
+    {
+      uint8_t set_channel = random(1, 13);
+      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+    }
+  }
 }
 
 int WiFiModule::clearAPs() {
@@ -113,6 +137,7 @@ String WiFiModule::getApMAC()
 
 bool WiFiModule::shutdownWiFi() {
   if (this->wifi_initialized) {
+    this->wifi_initialized = false; // Stop all other while loops first
     esp_wifi_set_promiscuous(false);
     WiFi.disconnect();
     WiFi.mode(WIFI_OFF);
@@ -123,8 +148,6 @@ bool WiFiModule::shutdownWiFi() {
     esp_wifi_stop();
     esp_wifi_restore();
     esp_wifi_deinit();
-  
-    this->wifi_initialized = false;
     return true;
   }
   else {

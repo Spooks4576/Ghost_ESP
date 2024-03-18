@@ -10,7 +10,7 @@ public:
     RGBLedModule(uint8_t redPin, uint8_t greenPin, uint8_t bluePin)
     : redPin(redPin), greenPin(greenPin), bluePin(bluePin) {}
     void init();
-    void setColor(uint8_t red, uint8_t green, uint8_t blue); // Set the RGB color
+    void setColor(int red, int green, int blue); // Set the RGB color
 
 private:
     uint8_t redPin, greenPin, bluePin;
