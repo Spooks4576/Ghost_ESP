@@ -1,6 +1,8 @@
 #ifndef BLE_MODULE_H
 #define BLE_MODULE_H
 
+#include "board_config.h"
+
 #ifdef HAS_BT
 #include <NimBLEDevice.h>
 #endif

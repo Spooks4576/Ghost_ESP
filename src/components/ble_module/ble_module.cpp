@@ -154,8 +154,10 @@ void BLEModule::executeSpam(EBLEPayloadType type) {
       generateRandomMac(macAddr);
 
       esp_base_mac_addr_set(macAddr);
-      
+
       delay(100);
+
+      Serial.println("Sent Packet");
     }
 #endif
 }

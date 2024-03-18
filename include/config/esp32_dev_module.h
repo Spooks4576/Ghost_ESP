@@ -7,7 +7,7 @@
 //#define LED_R 2
 //#define LED_G 2
 //#define LED_B 2
-#//define NEOPIXEL_PIN 1
+//define NEOPIXEL_PIN 1
 //#define SD_CARD_CS_PIN 5
 //#define DISPLAY_SUPPORT false
 //#define HAS_GPS false
