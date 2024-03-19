@@ -207,29 +207,36 @@ void CommandLine::runCommand(String input)
         if (bt_type == "apple") {
           Serial.println("Starting Sour Apple attack. Stop with " + (String)"stopscan");
           HasRanCommand = true;
-          BleModule->executeSpam(Apple);
+          BleModule->executeSpam(Apple, true);
           return;
         }
 
         if (bt_type == "windows") {
           Serial.println("Starting Swiftpair Spam attack. Stop with " + (String)"stopscan");
           HasRanCommand = true;
-          BleModule->executeSpam(Microsoft);
+          BleModule->executeSpam(Microsoft, true);
           return;
         }
 
         if (bt_type == "samsung") {
           Serial.println("Starting Samsung Spam attack. Stop with " + (String)"stopscan");
           HasRanCommand = true;
-          BleModule->executeSpam(Samsung);
+          BleModule->executeSpam(Samsung, true);
           return;
         }
 
         if (bt_type == "google") {
           Serial.println("Starting Google Spam attack. Stop with " + (String)"stopscan");
           HasRanCommand = true;
-          BleModule->executeSpam(Google);
+          BleModule->executeSpam(Google, true);
           return;
+        }
+
+        if (bt_type == "all")
+        {
+          Serial.println("Starting Spam all attack. Stop with " + (String)"stopscan");
+          HasRanCommand = true;
+          BleModule->executeSpamAll();
         }
       }
       #endif

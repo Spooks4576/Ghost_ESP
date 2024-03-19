@@ -52,7 +52,7 @@ void setup()
         neopixelmodule->init();
     #endif
 
-    #ifdef SD_CARD_CS_PIN
+#ifdef SD_CARD_CS_PIN
 #ifdef DISPLAY_SUPPORT
 displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
 #endif

