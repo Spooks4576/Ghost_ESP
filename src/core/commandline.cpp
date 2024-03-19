@@ -257,7 +257,6 @@ void CommandLine::runCommand(String input)
           {
             HasRanCommand = true;
             Serial.println("Starting random wifi beacon attack. Stop with " + (String)"stopscan");
-            wifimodule->RunSetup();
             wifimodule->InitRandomSSIDAttack();
             return;
           }
@@ -265,8 +264,8 @@ void CommandLine::runCommand(String input)
 
         if (attack_type == "rickroll")
         {
+          HasRanCommand = true;
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
-          wifimodule->RunSetup();
           wifimodule->broadcastRickroll();
           return;
         }

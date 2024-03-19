@@ -120,21 +120,6 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
 #endif
 
     registerCallback(
-        [](String &msg) { return msg.indexOf("reset") != -1; },
-        [](String &msg) { 
-            Serial.println("Reset command received. Rebooting...");
-            esp_restart();
-        }
-    );
-
-    registerCallback(
-        [](String &msg) { return msg.indexOf("stop") != -1; },
-        [](String &msg) { 
-            Serial.println("Stop command received. Handling stop...");
-        }
-    );
-
-    registerCallback(
           [](String &msg) { return msg.indexOf("stopscan") != -1; },
           [](String &msg) { 
             #ifdef OLD_LED
@@ -145,7 +130,15 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
             #ifdef HAS_BT
               BleModule->shutdownBLE();  
             #endif
-          }
+        }
+    );
+
+    registerCallback(
+        [](String &msg) { return msg.indexOf("reset") != -1; },
+        [](String &msg) { 
+            Serial.println("Reset command received. Rebooting...");
+            esp_restart();
+        }
     );
 
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);

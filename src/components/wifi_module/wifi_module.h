@@ -102,6 +102,11 @@ struct Station {
   bool selected;
 };
 
+struct BeaconPacket{
+    uint8_t* packet;
+    int channel;
+};
+
 class CommandLine;
 
 inline CommandLine* cli;
@@ -111,6 +116,7 @@ inline LinkedList<Station>* stations;
 inline String PROGMEM version_number;
 inline String PROGMEM board_target;
 inline bool HasRanCommand;
+inline bool HasBoundCallback;
 
 class WiFiModule
 {
@@ -137,5 +143,7 @@ public:
     byte src_mac[6] = {};
     uint8_t packets_sent;
     bool wifi_initialized;
+    bool BeaconSpamming;
     uint8_t initTime;
+    LinkedList<BeaconPacket> BeaconsToBroadcast;
 };

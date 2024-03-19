@@ -139,8 +139,6 @@ bool WiFiModule::shutdownWiFi() {
   if (this->wifi_initialized) {
     this->wifi_initialized = false; // Stop all other while loops first
     esp_wifi_set_promiscuous(false);
-    WiFi.disconnect();
-    WiFi.mode(WIFI_OFF);
 
     dst_mac = "ff:ff:ff:ff:ff:ff";
   
@@ -236,10 +234,6 @@ void WiFiModule::broadcastSetSSID(const char* ESSID) {
     for (int i = 0; i < 12; i++)
         packet[38 + fullLen + i] = postSSID[i];
 
-
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
@@ -301,9 +295,6 @@ void WiFiModule::broadcastRandomSSID() {
       packet[38 + 6 + i] = postSSID[i];
 
 
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
