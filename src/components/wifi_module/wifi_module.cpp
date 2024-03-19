@@ -194,7 +194,7 @@ void WiFiModule::broadcastRickroll()
 void WiFiModule::InitRandomSSIDAttack()
 {
 #ifdef OLD_LED
-    rgbmodule->setColor(0, 1, 1);
+    rgbmodule->setColor(1, 1, 0);
 #endif
     while (wifi_initialized)
     {
