@@ -11,9 +11,13 @@
 #include <SD.h>
 
 void loop() {
-    double currentTime = millis();
 
-    cli->main(currentTime);
+    if (!HasRanCommand)
+    {
+        double currentTime = millis();
+
+        cli->main(currentTime);
+    }
 }
 
 void SerialCheckTask(void *pvParameters) {
