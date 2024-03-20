@@ -212,14 +212,14 @@ void WiFiModule::broadcastRickroll()
 #endif
     while (wifi_initialized)
     {
-        for (int i = 0; i < 90; i++)
+        for (int i = 0; i < 12; i++)
         {
             for (int x = 0; x < (sizeof(rick_roll)/sizeof(char *)); x++)
             {
-              broadcastSetSSID(rick_roll[x]);
+              broadcastSetSSID(rick_roll[x], i);
             }
         }
-      delay(100);
+        delay(1);
     }
     
 }
@@ -231,8 +231,8 @@ void WiFiModule::InitRandomSSIDAttack()
 #endif
     while (wifi_initialized)
     {
-        broadcastRandomSSID();
-        delay(5);
+      broadcastRandomSSID();
+      delay(1);
     }
 }
 
@@ -243,17 +243,19 @@ void WiFiModule::InitListSSIDAttack()
 #endif
     while (wifi_initialized)
     {
+      for (int x = 0; x < 12; x++)
+      {
         for (int i = 0; i < ssids->size(); i++)
         {
-          broadcastSetSSID(ssids->get(i).essid.c_str());
+          broadcastSetSSID(ssids->get(i).essid.c_str(), x);
         }
-      delay(100);
+      }
+      delay(1);
     }
 }
 
-void WiFiModule::broadcastSetSSID(const char* ESSID) {
-    uint8_t set_channel = random(1, 12);
-    esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+void WiFiModule::broadcastSetSSID(const char* ESSID, uint8_t channel) {
+    esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 
    
     for (int j = 0; j < 6; j++) {
@@ -271,11 +273,11 @@ void WiFiModule::broadcastSetSSID(const char* ESSID) {
     for (int i = 0; i < ssidLen; i++)
         packet[38 + i] = ESSID[i];
 
-    packet[50 + fullLen] = set_channel;
+    packet[50 + fullLen] = channel;
 
     uint8_t postSSID[13] = {
         0x01, 0x08, 0x82, 0x84, 0x8b, 0x96, 0x24, 0x30, 0x48, 0x6c, // Supported rates
-        0x03, 0x01, set_channel // DSSS (Current Channel)
+        0x03, 0x01, channel // DSSS (Current Channel)
     };
 
 

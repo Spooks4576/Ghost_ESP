@@ -138,7 +138,7 @@ public:
     void insertTimestamp(uint8_t *packet);
     void RunSetup();
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
-    void broadcastSetSSID(const char* ESSID);
+    void broadcastSetSSID(const char* ESSID, uint8_t channel);
     void broadcastDeauthAP();
     void sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) ;
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
