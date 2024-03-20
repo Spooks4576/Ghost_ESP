@@ -262,7 +262,7 @@ void CommandLine::runCommand(String input)
             return;
           }
 
-          if (israndom != -1)
+          if (islist != -1)
           {
             if (ssids->size() > 0)
             {
@@ -308,7 +308,6 @@ void CommandLine::runCommand(String input)
     if (cmd_args.get(0) == "scanap")
     {
       Serial.println("Starting to scan access points");
-      HasRanCommand = true;
       wifimodule->RunAPScan();
       return;
     }
@@ -318,7 +317,6 @@ void CommandLine::runCommand(String input)
       if (access_points->size() > 0)
       {
         Serial.println("Starting to scan stations");
-        HasRanCommand = true;
         wifimodule->RunStaScan();
       }
       else 
