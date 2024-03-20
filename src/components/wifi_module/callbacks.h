@@ -180,7 +180,9 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
 
   if (!matched_ap)
+  {
     return;
+  }
   else {
     if (ap_is_src)
       frame_offset = 4;
@@ -208,7 +210,10 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
   // Check if dest is broadcast
   if ((in_list) || (strcmp(dst_addr, "ff:ff:ff:ff:ff:ff") == 0))
+  {
+    Serial.println("No Dest In Broadcast");
     return;
+  }
   
   // Add to list of stations
   Station sta = {
@@ -251,22 +256,6 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
   ap.stations->add(stations->size() - 1);
 
   access_points->set(ap_index, ap);
-}
-
-void collectMacAddressCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
-  wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
-  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)pkt->payload;
-  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)pkt->rx_ctrl;
-  uint8_t bssid = frameControl->bssid;
-  uint8_t mac[6];
-  int len = pkt->rx_ctrl.sig_len;
-   if (type == WIFI_PKT_MGMT && &bssid == target_ap.bssid){
-    wifimodule->getMACatoffset((char*)mac, frameControl->payload, 4);
-    
-    Serial.printf("MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    target_macs.add(mac);
-   }
-  
 }
 
 void deauthSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)

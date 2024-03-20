@@ -116,9 +116,6 @@ inline LinkedList<Station>* stations;
 inline String PROGMEM version_number;
 inline String PROGMEM board_target;
 inline bool HasRanCommand;
-inline bool HasBoundCallback;
-inline LinkedList<uint8_t*> target_macs;
-inline AccessPoint target_ap;
 
 class WiFiModule
 {

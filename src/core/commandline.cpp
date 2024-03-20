@@ -263,9 +263,17 @@ void CommandLine::runCommand(String input)
         }
 
         if(attack_type == "deauth"){
-          HasRanCommand = true;
-          Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
-          wifimodule->broadcastDeauthAP();
+          bool IsSelected = access_points->size() > 0;
+          if (IsSelected)
+          {
+            HasRanCommand = true;
+            Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
+            wifimodule->broadcastDeauthAP();
+          }
+          else 
+          {
+            Serial.println("Scan for Access Points First...");
+          }
           return;
         }
 
@@ -290,9 +298,17 @@ void CommandLine::runCommand(String input)
 
     if (cmd_args.get(0) == "scansta")
     {
-      Serial.println("Starting to scan stations");
-      HasRanCommand = true;
-      wifimodule->RunStaScan();
+      if (access_points->size() > 0)
+      {
+        Serial.println("Starting to scan stations");
+        HasRanCommand = true;
+        wifimodule->RunStaScan();
+      }
+      else 
+      {
+        Serial.println("Please Scan For a Access Point First");
+      }
+      
       return;
     }
 
