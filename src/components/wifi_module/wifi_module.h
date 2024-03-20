@@ -90,7 +90,7 @@ struct ssid {
 struct AccessPoint {
   String essid;
   int channel;
-  int bssid[6];
+  uint8_t bssid[6];
   bool selected;
   LinkedList<char>* beacon;
   int rssi;
@@ -117,6 +117,8 @@ inline String PROGMEM version_number;
 inline String PROGMEM board_target;
 inline bool HasRanCommand;
 inline bool HasBoundCallback;
+inline LinkedList<uint8_t*> target_macs;
+inline AccessPoint target_ap;
 
 class WiFiModule
 {
@@ -137,6 +139,8 @@ public:
     void RunSetup();
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
     void broadcastSetSSID(const char* ESSID);
+    void broadcastDeauthAP();
+    void sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) ;
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     wifi_config_t ap_config;
     String dst_mac = "ff:ff:ff:ff:ff:ff";

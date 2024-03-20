@@ -252,3 +252,57 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
   access_points->set(ap_index, ap);
 }
+
+void collectMacAddressCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
+  wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)pkt->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)pkt->rx_ctrl;
+  uint8_t bssid = frameControl->bssid;
+  uint8_t mac[6];
+  int len = pkt->rx_ctrl.sig_len;
+   if (type == WIFI_PKT_MGMT && &bssid == target_ap.bssid){
+    wifimodule->getMACatoffset((char*)mac, frameControl->payload, 4);
+    
+    Serial.printf("MAC Address: %02X:%02X:%02X:%02X:%02X:%02X\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    target_macs.add(mac);
+   }
+  
+}
+
+void deauthSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
+{
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)snifferPacket->rx_ctrl;
+  int len = snifferPacket->rx_ctrl.sig_len;
+
+  String display_string = "";
+
+  if (type == WIFI_PKT_MGMT)
+  {
+    len -= 4;
+    int fctl = ntohs(frameControl->fctl);
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
+    const WifiMgmtHdr *hdr = &ipkt->hdr;
+
+    
+    int buf = 0;
+
+    if ((snifferPacket->payload[0] == 0xA0 || snifferPacket->payload[0] == 0xC0 ) && (buf == 0))
+    {
+      delay(random(0, 10));
+      Serial.print("RSSI: ");
+      Serial.print(snifferPacket->rx_ctrl.rssi);
+      Serial.print(" Ch: ");
+      Serial.print(snifferPacket->rx_ctrl.channel);
+      Serial.print(" BSSID: ");
+      char addr[] = "00:00:00:00:00:00";
+      char dst_addr[] = "00:00:00:00:00:00";
+      wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+      wifimodule->getMACatoffset(dst_addr, snifferPacket->payload, 4);
+      Serial.print(addr);
+      Serial.print(" -> ");
+      Serial.print(dst_addr);
+    }
+  }
+}

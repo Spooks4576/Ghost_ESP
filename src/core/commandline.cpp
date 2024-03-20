@@ -262,6 +262,13 @@ void CommandLine::runCommand(String input)
           }
         }
 
+        if(attack_type == "deauth"){
+          HasRanCommand = true;
+          Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
+          wifimodule->broadcastDeauthAP();
+          return;
+        }
+
         if (attack_type == "rickroll")
         {
           HasRanCommand = true;

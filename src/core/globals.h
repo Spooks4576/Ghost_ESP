@@ -18,6 +18,20 @@ struct SerialCallback {
     int CallbackID;
 };
 
+
+inline void stringToUint8Array(String inputString, uint8_t* outputArray, int maxOutputLength) {
+    int byteIndex = 0;
+    int strLength = inputString.length();
+    
+    for (int i = 0; i < strLength && byteIndex < maxOutputLength; i += 2) {
+        String byteString = inputString.substring(i, i + 2);
+        
+        uint8_t byteValue = (uint8_t) strtol(byteString.c_str(), NULL, 16);
+        
+        outputArray[byteIndex++] = byteValue;
+    }
+}
+
 inline LinkedList<SerialCallback> callbacks;
 
 inline void registerCallback(const std::function<bool(String&)>& condition, const std::function<void(String&)>& callback) {
