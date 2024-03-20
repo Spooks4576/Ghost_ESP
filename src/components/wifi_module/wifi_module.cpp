@@ -96,6 +96,39 @@ int WiFiModule::clearStations() {
   return num_cleared;
 }
 
+void WiFiModule::insertTimestamp(uint8_t *packet)
+{
+  struct timeval now;
+  gettimeofday(&now, NULL);
+
+  uint64_t timestamp = (uint64_t)now.tv_sec * 1000000 + now.tv_usec;
+
+
+  for (int i = 0; i < 8; i++) {
+      packet[24 + i] = (timestamp >> (i * 8)) & 0xFF;
+  }
+}
+
+void WiFiModule::insertWPA2Info(uint8_t *packet, int ssidLength) {
+    int start = 36 + ssidLength + 2 + 8;
+
+
+    uint8_t rsnInfo[] = {
+        0x30, 0x14, // Element ID and Length for RSN (WPA2) IE
+        0x01, 0x00, // RSN Version 1
+        0x00, 0x0F, 0xAC, 0x04, // Group Cipher Suite: AES (CCMP)
+        0x01, 0x00, // Pairwise Cipher Suite Count: 1
+        0x00, 0x0F, 0xAC, 0x04, // Pairwise Cipher Suite: AES (CCMP)
+        0x01, 0x00, // AKM Suite Count: 1
+        0x00, 0x0F, 0xAC, 0x02, // AKM Suite: PSK
+        0x00, 0x00 // RSN Capabilities
+    };
+
+    for (int i = 0; i < sizeof(rsnInfo); i++) {
+        packet[start + i] = rsnInfo[i];
+    }
+}
+
 int WiFiModule::generateSSIDs(int count) {
   uint8_t num_gen = count;
   for (uint8_t x = 0; x < num_gen; x++) {
@@ -179,14 +212,14 @@ void WiFiModule::broadcastRickroll()
 #endif
     while (wifi_initialized)
     {
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < 90; i++)
         {
             for (int x = 0; x < (sizeof(rick_roll)/sizeof(char *)); x++)
             {
-            broadcastSetSSID(rick_roll[x]);
+              broadcastSetSSID(rick_roll[x]);
             }
         }
-        delay(100);
+      delay(100);
     }
     
 }
@@ -199,7 +232,22 @@ void WiFiModule::InitRandomSSIDAttack()
     while (wifi_initialized)
     {
         broadcastRandomSSID();
-        delay(100);
+        delay(5);
+    }
+}
+
+void WiFiModule::InitListSSIDAttack()
+{
+#ifdef OLD_LED
+    rgbmodule->setColor(0, 1, 1);
+#endif
+    while (wifi_initialized)
+    {
+        for (int i = 0; i < ssids->size(); i++)
+        {
+          broadcastSetSSID(ssids->get(i).essid.c_str());
+        }
+      delay(100);
     }
 }
 
@@ -230,6 +278,8 @@ void WiFiModule::broadcastSetSSID(const char* ESSID) {
         0x03, 0x01, set_channel // DSSS (Current Channel)
     };
 
+
+    insertTimestamp(packet);
 
     for (int i = 0; i < 12; i++)
         packet[38 + fullLen + i] = postSSID[i];
@@ -308,6 +358,7 @@ void WiFiModule::broadcastRandomSSID() {
                       0x03, 0x01, 0x04 /*DSSS (Current Channel)*/ };
 
 
+  insertTimestamp(packet);
 
     // Add everything that goes after the SSID
     for(int i = 0; i < 12; i++) 

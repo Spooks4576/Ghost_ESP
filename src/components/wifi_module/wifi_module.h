@@ -133,6 +133,9 @@ public:
     void RunAPScan();
     void RunStaScan();
     void InitRandomSSIDAttack();
+    void InitListSSIDAttack();
+    void insertWPA2Info(uint8_t *packet, int ssidLength);
+    void insertTimestamp(uint8_t *packet);
     void RunSetup();
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
     void broadcastSetSSID(const char* ESSID);

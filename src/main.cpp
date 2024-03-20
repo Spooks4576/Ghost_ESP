@@ -120,7 +120,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
 #endif
 
     registerCallback(
-          [](String &msg) { return msg.indexOf("stop") != -1; },
+          [](String &msg) { return msg.startsWith("stop"); },
           [](String &msg) { 
             #ifdef OLD_LED
               rgbmodule->setColor(1, 1, 1);

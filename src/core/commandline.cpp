@@ -252,6 +252,7 @@ void CommandLine::runCommand(String input)
         if (attack_type == "beacon")
         {
           int israndom = this->argSearch(&cmd_args, "-r");
+          int islist = this->argSearch(&cmd_args, "-l");
 
           if (israndom != -1)
           {
@@ -260,6 +261,22 @@ void CommandLine::runCommand(String input)
             wifimodule->InitRandomSSIDAttack();
             return;
           }
+
+          if (israndom != -1)
+          {
+            if (ssids->size() > 0)
+            {
+              HasRanCommand = true;
+              Serial.println("Starting random wifi list attack. Stop with " + (String)"stopscan");
+              wifimodule->InitListSSIDAttack();
+            }
+            else 
+            {
+              Serial.println("Add Some SSIDs...");
+            }
+            return;
+          }
+
         }
 
         if(attack_type == "deauth"){
