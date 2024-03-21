@@ -4,7 +4,6 @@
 #include "../components/wifi_module/Controllers/NetflixController.h"
 #include "../components/wifi_module/Controllers/RokuController.h"
 #include "../components/ble_module/ble_module.h"
-// #include "../components/wifi_module/WPS/WPSFunctions.h"
 #include <components/wifi_module/Features/Dial.h>
 
 CommandLine::CommandLine() {
@@ -308,29 +307,6 @@ void CommandLine::runCommand(String input)
           return;
         }
 
-      }
-    }
-
-    if (cmd_args.get(0) == "wpsattack" )
-    {
-      AccessPoint targetap;
-      for (int i = 0; i < access_points->size(); i++)
-      {
-        AccessPoint ap = access_points->get(i);
-        if (ap.selected);
-        {
-          targetap = ap;
-          break;
-        }
-      }
-      if (targetap.essid.isEmpty())
-      {
-        Serial.println("You have not selected a network target...");
-        return;
-      }
-      else 
-      {
-        // InitWPSBruteForce((mac_t)targetap.bssid, 100);
       }
     }
 
