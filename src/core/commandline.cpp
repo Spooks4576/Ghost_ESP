@@ -1,5 +1,10 @@
 #include "commandline.h"
+#include "../components/wifi_module/Controllers/AppController.h"
+#include "../components/wifi_module/Controllers/YoutubeController.h"
+#include "../components/wifi_module/Controllers/NetflixController.h"
+#include "../components/wifi_module/Controllers/RokuController.h"
 #include "../components/ble_module/ble_module.h"
+#include <components/wifi_module/Features/Dial.h>
 
 CommandLine::CommandLine() {
 }
@@ -310,6 +315,59 @@ void CommandLine::runCommand(String input)
       Serial.println("Starting to scan access points");
       wifimodule->Scan(SCAN_AP);
       return;
+    }
+
+    if (cmd_args.get(0) == "dialconnect")
+    {
+      HasRanCommand = true;
+      int ssid = this->argSearch(&cmd_args, "-s");
+      int password = this->argSearch(&cmd_args, "-p");
+      int type = this->argSearch(&cmd_args, "-t");
+      int value = this->argSearch(&cmd_args, "-v");
+
+      if (ssid != -1 && password != -1)
+      {
+        String SSID = cmd_args.get(ssid + 1);
+        String Password = cmd_args.get(password + 1);
+        if (type != -1 && value != -1)
+        {
+          String Type = cmd_args.get(type + 1);
+          String Value = cmd_args.get(value + 1);
+          AppController* controller = nullptr;
+          if (Type.startsWith("youtube"))
+          {
+            controller = new YoutubeController();
+          }
+          else if (Type.startsWith("roku"))
+          {
+            controller = new RokuController();
+          }
+          else if (Type.startsWith("netflix"))
+          {
+            controller = new NetflixController();
+          }
+          else 
+          {
+            Serial.println("Type is Invalid....");
+            return;
+          }
+
+          DIALClient* dial = new DIALClient(Value.c_str(), SSID.c_str(), Password.c_str(), controller);
+          rgbmodule->setColor(LOW, HIGH, LOW);
+          dial->Execute();
+          delete dial;
+          delete controller;
+          return;
+        }
+        else 
+        {
+          Serial.println("Please Select a Type Of Dial Attack to Perform...");
+        }
+      }
+      else 
+      {
+        Serial.println("SSID and Password are Empty...");
+      }
     }
 
     if (cmd_args.get(0) == "scansta")

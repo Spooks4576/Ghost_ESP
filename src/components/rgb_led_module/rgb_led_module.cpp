@@ -24,10 +24,67 @@ void RGBLedModule::init() {
     digitalWrite(redPin, HIGH);
 }
 
+void RGBLedModule::Rainbow(int strength, int stepDelay) 
+{
+
+    float brightnessFactor = constrain(brightnessFactor, 0.0, 1.0);
+
+    // Ensure strength is between 0 and 255
+    int maxStrength = static_cast<int>(255 * brightnessFactor);
+
+    // Color transitions
+    for (int g = 0; g <= maxStrength; g += 5) {
+        analogWrite(redPin, maxStrength);
+        analogWrite(greenPin, g);
+        analogWrite(bluePin, 0);
+        delay(stepDelay);
+    }
+
+    for (int r = maxStrength; r >= 0; r -= 5) {
+        analogWrite(redPin, r);
+        analogWrite(greenPin, maxStrength);
+        analogWrite(bluePin, 0);
+        delay(stepDelay);
+    }
+
+    for (int b = 0; b <= maxStrength; b += 5) {
+        analogWrite(redPin, 0);
+        analogWrite(greenPin, maxStrength);
+        analogWrite(bluePin, b);
+        delay(stepDelay);
+    }
+
+    for (int g = maxStrength; g >= 0; g -= 5) {
+        analogWrite(redPin, 0);
+        analogWrite(greenPin, g);
+        analogWrite(bluePin, maxStrength);
+        delay(stepDelay);
+    }
+
+    for (int r = 0; r <= maxStrength; r += 5) {
+        analogWrite(redPin, r);
+        analogWrite(greenPin, 0);
+        analogWrite(bluePin, maxStrength);
+        delay(stepDelay);
+    }
+
+    for (int b = maxStrength; b >= 0; b -= 5) {
+        analogWrite(redPin, maxStrength);
+        analogWrite(greenPin, 0);
+        analogWrite(bluePin, b);
+        delay(stepDelay);
+    }
+}
+
 void RGBLedModule::setColor(int red, int green, int blue) {
-    digitalWrite(redPin, red);
-    digitalWrite(greenPin, green);
-    digitalWrite(bluePin, blue);
+
+    int pwmRed = red;
+    int pwmGreen = green;
+    int pwmBlue = blue;
+
+    digitalWrite(redPin, pwmRed);
+    digitalWrite(greenPin, pwmGreen);
+    digitalWrite(bluePin, pwmBlue);
 }
 
 #endif

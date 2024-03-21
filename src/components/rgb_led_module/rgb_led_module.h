@@ -11,7 +11,7 @@ public:
     : redPin(bluePin), greenPin(greenPin), bluePin(redPin) {}
     void init();
     void setColor(int red, int green, int blue); // Set the RGB color
-
+    void Rainbow(int strength, int stepDelay);
 private:
     uint8_t redPin, greenPin, bluePin;
 };

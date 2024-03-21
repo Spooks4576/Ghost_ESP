@@ -211,7 +211,6 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
   // Check if dest is broadcast
   if ((in_list) || (strcmp(dst_addr, "ff:ff:ff:ff:ff:ff") == 0))
   {
-    Serial.println("No Dest In Broadcast");
     return;
   }
   
