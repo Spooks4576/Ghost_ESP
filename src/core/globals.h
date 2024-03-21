@@ -11,6 +11,7 @@
 class WiFiModule;
 
 inline WiFiModule* wifimodule;
+inline bool RainbowLEDActive;
 
 struct SerialCallback {
     std::function<bool(String&)> condition;
@@ -72,3 +73,14 @@ inline GpsInterface* gpsmodule;
 #include "../components/display_module/display_module.h"
 inline DisplayModule* displaymodule;
 #endif
+
+void RainbowTask(void *pvParameters)
+{
+    while (1)
+    {
+#ifdef OLD_LED
+        rgbmodule->Rainbow(0.1, 5);
+#endif;
+    }
+
+}

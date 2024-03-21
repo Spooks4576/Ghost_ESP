@@ -317,6 +317,16 @@ void CommandLine::runCommand(String input)
       return;
     }
 
+    if (cmd_args.get(0) == "led")
+    {
+      if (!RainbowLEDActive)
+      {
+        RainbowLEDActive = true;
+        xTaskCreate(RainbowTask, "RainbowTask", 1048, NULL, 1, NULL);
+      }
+      return;
+    }
+
     if (cmd_args.get(0) == "dialconnect")
     {
       HasRanCommand = true;

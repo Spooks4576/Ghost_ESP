@@ -20,15 +20,6 @@ void loop() {
     }
 }
 
-void RainbowTask(void *pvParameters)
-{
-    while (1)
-    {
-        rgbmodule->Rainbow(0.1, 5);
-    }
-
-}
-
 void SerialCheckTask(void *pvParameters) {
     while (1) {
         if (Serial.available() > 0) {
@@ -161,8 +152,6 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
             esp_restart();
         }
     );
-
-    xTaskCreate(RainbowTask, "RainbowTask", 1048, NULL, 1, NULL);
 
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
 #ifdef DISPLAY_SUPPORT

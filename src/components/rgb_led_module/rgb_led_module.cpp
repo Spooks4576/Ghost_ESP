@@ -24,6 +24,23 @@ void RGBLedModule::init() {
     digitalWrite(redPin, HIGH);
 }
 
+void RGBLedModule::breatheLED(int ledPin, int breatheTime)
+{
+    int fadeAmount = 5; // Amount of brightness change per step, adjust for different breathing speeds
+    int wait = breatheTime / (255 / fadeAmount * 2); // Calculate wait time to fit the breathe cycle into the given total time
+
+    // Fade in
+    for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
+        analogWrite(ledPin, brightness);
+        delay(wait);
+    }
+    // Fade out
+    for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
+        analogWrite(ledPin, brightness);
+        delay(wait);
+    }
+}
+
 void RGBLedModule::Rainbow(int strength, int stepDelay) 
 {
 

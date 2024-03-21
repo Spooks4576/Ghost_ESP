@@ -12,6 +12,7 @@ public:
     void init();
     void setColor(int red, int green, int blue); // Set the RGB color
     void Rainbow(int strength, int stepDelay);
+    void breatheLED(int ledPin, int breatheTime);
 private:
     uint8_t redPin, greenPin, bluePin;
 };
