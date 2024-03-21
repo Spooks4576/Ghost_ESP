@@ -389,6 +389,7 @@ void CommandLine::runCommand(String input)
     {
       int ap_sw = this->argSearch(&cmd_args, "-a");
       int ss_sw = this->argSearch(&cmd_args, "-s");
+      int cl_sw = this->argSearch(&cmd_args, "-c");
 
       if (ap_sw != -1)
       {
@@ -399,6 +400,11 @@ void CommandLine::runCommand(String input)
       {
         wifimodule->ClearList(ClearType::CT_SSID);
         Serial.println("Cleared SSID List");
+      }
+      else if (cl_sw != -1)
+      {
+        wifimodule->ClearList(ClearType::CT_STA);
+        Serial.println("Cleared Station List");
       }
     }
 
