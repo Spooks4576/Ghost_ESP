@@ -281,7 +281,6 @@ void CommandLine::runCommand(String input)
             }
             return;
           }
-
         }
 
         if(attack_type == "deauth"){
