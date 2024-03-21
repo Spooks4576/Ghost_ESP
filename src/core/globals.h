@@ -74,13 +74,13 @@ inline GpsInterface* gpsmodule;
 inline DisplayModule* displaymodule;
 #endif
 
-void RainbowTask(void *pvParameters)
+inline void RainbowTask(void *pvParameters)
 {
     while (1)
     {
 #ifdef OLD_LED
         rgbmodule->Rainbow(0.1, 5);
-#endif;
+#endif
     }
 
 }

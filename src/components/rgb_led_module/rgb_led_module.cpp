@@ -41,6 +41,11 @@ void RGBLedModule::breatheLED(int ledPin, int breatheTime)
     }
 }
 
+void RGBLedModule::Song()
+{
+    
+}
+
 void RGBLedModule::Rainbow(int strength, int stepDelay) 
 {
 
