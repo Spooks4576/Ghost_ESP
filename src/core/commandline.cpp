@@ -258,7 +258,7 @@ void CommandLine::runCommand(String input)
           {
             HasRanCommand = true;
             Serial.println("Starting random wifi beacon attack. Stop with " + (String)"stopscan");
-            wifimodule->InitRandomSSIDAttack();
+            wifimodule->Attack(AT_RandomSSID);
             return;
           }
 
@@ -268,7 +268,7 @@ void CommandLine::runCommand(String input)
             {
               HasRanCommand = true;
               Serial.println("Starting random wifi list attack. Stop with " + (String)"stopscan");
-              wifimodule->InitListSSIDAttack();
+              wifimodule->Attack(AT_ListSSID);
             }
             else 
             {
@@ -285,7 +285,7 @@ void CommandLine::runCommand(String input)
           {
             HasRanCommand = true;
             Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
-            wifimodule->broadcastDeauthAP();
+            wifimodule->Attack(AT_DeauthAP);
           }
           else 
           {
@@ -298,7 +298,7 @@ void CommandLine::runCommand(String input)
         {
           HasRanCommand = true;
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
-          wifimodule->broadcastRickroll();
+          wifimodule->Attack(AT_Rickroll);
           return;
         }
 
@@ -308,7 +308,7 @@ void CommandLine::runCommand(String input)
     if (cmd_args.get(0) == "scanap")
     {
       Serial.println("Starting to scan access points");
-      wifimodule->RunAPScan();
+      wifimodule->Scan(SCAN_AP);
       return;
     }
 
@@ -317,7 +317,7 @@ void CommandLine::runCommand(String input)
       if (access_points->size() > 0)
       {
         Serial.println("Starting to scan stations");
-        wifimodule->RunStaScan();
+        wifimodule->Scan(SCAN_STA);
       }
       else 
       {
@@ -392,12 +392,12 @@ void CommandLine::runCommand(String input)
 
       if (ap_sw != -1)
       {
-        wifimodule->clearAPs();
+        wifimodule->ClearList(ClearType::CT_AP);
         Serial.println("Cleared Access Point List");
       }
       else if (ss_sw != -1)
       {
-        wifimodule->clearSSIDs();
+        wifimodule->ClearList(ClearType::CT_SSID);
         Serial.println("Cleared SSID List");
       }
     }

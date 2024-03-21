@@ -117,29 +117,44 @@ inline String PROGMEM version_number;
 inline String PROGMEM board_target;
 inline bool HasRanCommand;
 
+enum ClearType
+{
+    CT_AP,
+    CT_STA,
+    CT_SSID
+};
+
+enum AttackType
+{
+    AT_RandomSSID,
+    AT_Rickroll,
+    AT_DeauthAP,
+    AT_ListSSID
+};
+
+enum ScanType
+{
+    SCAN_AP,
+    SCAN_STA,
+};
+
 class WiFiModule
 {
 public:
     String freeRAM();
-    int clearAPs();
-    int clearSSIDs();
-    int clearStations();
+    int ClearList(ClearType type);
+    void Attack(AttackType type);
     bool addSSID(String essid);
+    void Scan(ScanType type);
     int generateSSIDs(int count);
     String getApMAC();
     bool shutdownWiFi();
-    void broadcastRickroll();
     void broadcastRandomSSID();
-    void RunAPScan();
-    void RunStaScan();
-    void InitRandomSSIDAttack();
-    void InitListSSIDAttack();
     void insertWPA2Info(uint8_t *packet, int ssidLength);
     void insertTimestamp(uint8_t *packet);
     void RunSetup();
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
     void broadcastSetSSID(const char* ESSID, uint8_t channel);
-    void broadcastDeauthAP();
     void sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) ;
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     wifi_config_t ap_config;
