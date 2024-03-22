@@ -1,0 +1,79 @@
+name: Build and Release PlatformIO Project
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        board: [esp32_s2, esp32_wroom, esp32_c3, esp32-s3-devkitm-1]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Necessary to fetch all tags and history
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install PlatformIO
+      run: pip install platformio
+
+    - name: Build with PlatformIO
+      run: platformio run --environment ${{ matrix.board }}
+
+    - name: Tar artifacts
+      run: tar -czvf ${{ matrix.board }}.tar.gz -C .pio/build/${{ matrix.board }} firmware.bin partitions.bin bootloader.bin
+
+    # Check if the release already exists
+    - name: Check if Release Exists
+      id: check_release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const octokit = github.rest;
+          const { data: releases } = await octokit.repos.listReleases({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+          });
+          const release = releases.find(release => release.tag_name === 'release');
+          if (release) {
+            core.setOutput('exists', 'true');
+            core.setOutput('upload_url', release.upload_url);
+          } else {
+            core.setOutput('exists', 'false');
+          }
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Create Release if it does not exist
+    - name: Create Release
+      if: steps.check_release.outputs.exists == 'false'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./${{ matrix.board }}.tar.gz
+        draft: false
+        tag_name: release
+        name: Ghost ESP Release
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Upload assets if the release already exists
+    - name: Upload assets to Release
+      if: steps.check_release.outputs.exists == 'true'
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{ matrix.board }}.tar.gz
+        asset_name: ${{ matrix.board }}.tar.gz
+        tag: release
+        overwrite: true
+        url: ${{ steps.check_release.outputs.upload_url }}
