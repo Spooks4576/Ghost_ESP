@@ -31,8 +31,9 @@ jobs:
       run: tar -czvf ${{ matrix.board }}.tar.gz -C .pio/build/${{ matrix.board }} firmware.bin partitions.bin bootloader.bin
 
     - name: Extract commit message
-      id: commit_message
-      run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=%B | head -n1 | sed 's/[^a-zA-Z0-9-_]/-/g')" >> $GITHUB_ENV
+      run: |
+        COMMIT_MESSAGE=$(git log -1 --pretty=%B | head -n1 | tr -d '\n' | sed 's/[^a-zA-Z0-9-_]/-/g')
+        echo "COMMIT_MESSAGE=${COMMIT_MESSAGE}" >> $GITHUB_ENV
 
     - name: Print commit message
       run: echo "Commit message is $COMMIT_MESSAGE"
