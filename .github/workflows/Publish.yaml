@@ -30,9 +30,8 @@ jobs:
     - name: Install Zip
       run: sudo apt-get update && sudo apt-get install -y zip
 
-    - name: Zip artifacts
-      run: |
-        zip -r ${{ matrix.board }}.zip .pio/build/${{ matrix.board }}/firmware.bin .pio/build/${{ matrix.board }}/partitions.bin .pio/build/${{ matrix.board }}/bootloader.bin
+    - name: Tar artifacts
+      run: tar -czvf ${{ matrix.board }}.tar.gz -C .pio/build/${{ matrix.board }} firmware.bin partitions.bin bootloader.bin
 
     - name: Create Release
       id: create_release
