@@ -30,13 +30,16 @@ jobs:
     - name: Tar artifacts
       run: tar -czvf ${{ matrix.board }}.tar.gz -C .pio/build/${{ matrix.board }} firmware.bin partitions.bin bootloader.bin
 
+    - name: Get commit message
+      id: get_commit_message
+      run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=%B)" >> $GITHUB_ENV
+
     - name: Create Release
       id: create_release
       uses: softprops/action-gh-release@v1
       with:
         files: |
           ./${{ matrix.board }}.tar.gz
-        tag_name: ${{ github.ref }}
         draft: false
         prerelease: false
       env:
