@@ -10,8 +10,8 @@ CommandLine::CommandLine() {
 }
 
 void CommandLine::RunSetup() {
-  Serial.println(F("         ESP32 Marauder Rewrite      \n"));
-  Serial.println(F("       By: justcallmekoko Rewritten by: Spooky\n"));
+  Serial.println(F("         Ghost ESP     \n"));
+  Serial.println(F("       By: Spooky with features from justcallmekoko \n"));
 }
 
 String CommandLine::getSerialInput() {
