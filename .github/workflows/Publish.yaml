@@ -30,17 +30,12 @@ jobs:
     - name: Tar artifacts
       run: tar -czvf ${{ matrix.board }}.tar.gz -C .pio/build/${{ matrix.board }} firmware.bin partitions.bin bootloader.bin
 
-    - name: Fetch all tags
-      run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+    - name: Extract commit message
+      id: commit_message
+      run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=%B | head -n1 | sed 's/[^a-zA-Z0-9-_]/-/g')" >> $GITHUB_ENV
 
-    - name: Calculate new tag name
-      id: new_tag
-      run: |
-        highest_tag=$(git tag -l 'release-*' | sort -V | tail -n1)
-        highest_num=${highest_tag##*-}
-        new_num=$((highest_num + 1))
-        echo "New tag will be release-$new_num"
-        echo "::set-output name=tag::release-$new_num"
+    - name: Print commit message
+      run: echo "Commit message is $COMMIT_MESSAGE"
 
     - name: Create Release
       id: create_release
@@ -48,9 +43,9 @@ jobs:
       with:
         files: |
           ./${{ matrix.board }}.tar.gz
-          tag_name: ${{ steps.new_tag.outputs.tag }}
-          name: ${{ steps.new_tag.outputs.tag }}
         draft: false
+        tag_name: ${{ env.COMMIT_MESSAGE }}
+        name: Release ${{ env.COMMIT_MESSAGE }}
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
