@@ -105,6 +105,7 @@ function wifiUtilsMenu() {
     submenu.addItem("Beacon Spam Random", 9);
     submenu.addItem("Beacon Spam Rickroll", 10);
     submenu.addItem("Cast V2 Connect", 11);
+    submenu.addItem("Dial Connect", 12);
 
     let result = submenu.show();
 
@@ -157,6 +158,11 @@ function wifiUtilsMenu() {
     {
         // Its better if we input this info manually so ill let you guys decide this 
         sendSerialCommand("castv2connect -s GSQ1 -p 7802378253 -v Y7uhkyameuk");
+    }
+
+    if (result === 12)
+    {
+        sendSerialCommand("dialconnect -s GSQ1 -p 7802378253 -t youtube -v Y7uhkyameuk");
     }
 }
 
