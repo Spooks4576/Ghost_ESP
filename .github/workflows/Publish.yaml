@@ -15,6 +15,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Necessary to fetch all tags and history
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -30,13 +32,16 @@ jobs:
     - name: Tar artifacts
       run: tar -czvf ${{ matrix.board }}.tar.gz -C .pio/build/${{ matrix.board }} firmware.bin partitions.bin bootloader.bin
 
-    - name: Extract commit message
+    - name: Delete existing tag
       run: |
-        COMMIT_MESSAGE=$(git log -1 --pretty=%B | head -n1 | tr -d '\n' | sed 's/[^a-zA-Z0-9-_]/-/g')
-        echo "COMMIT_MESSAGE=${COMMIT_MESSAGE}" >> $GITHUB_ENV
+        git tag -d release || true
+        git push origin :refs/tags/release || true
 
-    - name: Print commit message
-      run: echo "Commit message is $COMMIT_MESSAGE"
+    - name: Create new tag
+      run: |
+        git tag release
+        git push origin release
+
 
     - name: Create Release
       id: create_release
@@ -45,8 +50,8 @@ jobs:
         files: |
           ./${{ matrix.board }}.tar.gz
         draft: false
-        tag_name: ${{ env.COMMIT_MESSAGE }}
-        name: Release ${{ env.COMMIT_MESSAGE }}
+        tag_name: release
+        name: Ghost ESP Release
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
