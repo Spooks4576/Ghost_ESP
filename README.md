@@ -20,7 +20,7 @@ Ghost ESP firmware supports the following ESP32 boards:
 - ESP32 C6
 - ESP32 S3
 
-Additional board support can be added depending on PlatformIO support and configuration in the main project's platformio.ini file.
+Additional board support can be added depending on PlatformIO support and configuration in the main project's platformio.ini file..
 
 ## Notice
 
