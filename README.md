@@ -1,6 +1,6 @@
 # Ghost ESP Firmware
 
-Ghost ESP is a firmware designed for ESP32 microcontrollers, offering a comprehensive WiFi and BLE testing toolkit. It provides various features that should be used responsibly, including WiFi scanning, station scanning, SSID spamming, BLE spamming for major brands (iOS, Windows, Android, Samsung), DIAL connect to interact with DIAL-enabled devices on the same network as the ESP (including support for YouTube, Netflix, and Roku-enabled devices), and a rainbow LED mode.
+Ghost ESP is a firmware designed for ESP32 microcontrollers, offering a comprehensive WiFi and BLE testing toolkit. It provides various features that should be used responsibly
 
 ## Features
 
