@@ -5,6 +5,7 @@
 #include "../components/wifi_module/Controllers/RokuController.h"
 #include "../components/ble_module/ble_module.h"
 #include <components/wifi_module/Features/Dial.h>
+#include <components/wifi_module/Features/ESPmDNSHelper.h>
 
 CommandLine::CommandLine() {
 }
@@ -324,6 +325,25 @@ void CommandLine::runCommand(String input)
         xTaskCreate(RainbowTask, "RainbowTask", 1048, NULL, 1, NULL);
       }
       return;
+    }
+
+    if (cmd_args.get(0) == "castv2connect")
+    {
+      HasRanCommand = true;
+      int ssid = this->argSearch(&cmd_args, "-s");
+      int password = this->argSearch(&cmd_args, "-p");
+      int value = this->argSearch(&cmd_args, "-v");
+
+      if (ssid != -1 && password != -1)
+      {
+        String SSID = cmd_args.get(ssid + 1);
+        String Password = cmd_args.get(password + 1);
+        if (value != -1)
+        {
+          String Value = cmd_args.get(value + 1);
+          ESPmDNSHelper* helper = new ESPmDNSHelper(SSID.c_str(), Password.c_str(), "", Value.c_str(), "233637DE");
+        }
+      }
     }
 
     if (cmd_args.get(0) == "dialconnect")
