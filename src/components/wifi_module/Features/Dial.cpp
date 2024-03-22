@@ -262,8 +262,9 @@ String DIALClient::extractApplicationURL(HttpClient& httpc) {
       currentLine.trim();
       currentLine.toLowerCase();
       if (currentLine.startsWith("application-url:")) {
-        appUrl = currentLine.substring(currentLine.indexOf(':') + 2);  // +2 to skip over the colon and potential space
-        break;
+          appUrl = currentLine.substring(currentLine.indexOf(':') + 1); // +1 just to skip over the colon
+          appUrl.trim();  // This will remove any leading or trailing whitespaces
+          break;
       }
       currentLine = "";
 
@@ -291,6 +292,13 @@ String DIALClient::getDialApplicationUrl(const String& locationUrl) {
   uint16_t lport = portStr.toInt();
 
   String path = extractPathFromURL(locationUrl);
+
+  // Ensure only one slash between parts
+  String fullUrl = "http://" + localip + ":" + String(lport);
+  if (!path.startsWith("/")) {
+    fullUrl += "/";
+  }
+  fullUrl += path;
 
   WiFiClient wifiClient;
 

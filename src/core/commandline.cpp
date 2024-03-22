@@ -382,7 +382,9 @@ void CommandLine::runCommand(String input)
           }
 
           DIALClient* dial = new DIALClient(Value.c_str(), SSID.c_str(), Password.c_str(), controller);
-          rgbmodule->setColor(LOW, HIGH, LOW);
+#ifdef OLD_LED
+rgbmodule->setColor(LOW, HIGH, LOW);
+#endif
           dial->Execute();
           delete dial;
           delete controller;

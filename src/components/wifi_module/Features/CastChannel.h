@@ -111,8 +111,6 @@ public:
     memset(message.payload_binary, 0, 100);
     message.payload_binary_size = 0;
 
-    Serial.println("Input Data length: " + String(Data.length()));
-
     uint8_t buffer[1000];
     uint16_t index = 0;
     ExpandedCastMessageSerializer::SerializationResult result = ExpandedCastMessageSerializer::serialize(message, buffer, index, sizeof(buffer));
@@ -142,7 +140,6 @@ public:
       }
 
       if (bytesRead > 0) {
-        Serial.println("Received data: " + serializedData);
         String jsonData = Deserialize_Internal(serializedData);
 
         onMessage(sourceId, destinationId, namespace_, jsonData);
