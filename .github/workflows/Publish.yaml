@@ -37,9 +37,9 @@ jobs:
       id: check_release
       uses: actions/github-script@v6
       with:
-        github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
-          const { data: releases } = await github.repos.listReleases({
+          const octokit = github.rest;
+          const { data: releases } = await octokit.repos.listReleases({
             owner: context.repo.owner,
             repo: context.repo.repo,
           });
@@ -50,6 +50,8 @@ jobs:
           } else {
             core.setOutput('exists', 'false');
           }
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # Create Release if it does not exist
     - name: Create Release
