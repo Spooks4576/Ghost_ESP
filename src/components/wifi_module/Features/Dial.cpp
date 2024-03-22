@@ -245,6 +245,16 @@ bool DIALClient::parseSSDPResponse(const String& response, Device& device) {
   return !device.location.isEmpty() && !device.uniqueServiceName.isEmpty();
 }
 
+String DIALClient::concatenatePaths(const String& base, const String& appUrl) {
+    String result = base;
+    if (result.endsWith("/") && appUrl.startsWith("/")) {
+        result = result.substring(0, result.length() - 1);  // Remove trailing slash from base
+    } else if (!result.endsWith("/") && !appUrl.startsWith("/")) {
+        result += "/";  // Add a missing slash between the base and the appUrl
+    }
+    result += appUrl;
+    return result;
+}
 
 String DIALClient::extractApplicationURL(HttpClient& httpc) {
   String appUrl;
@@ -292,13 +302,6 @@ String DIALClient::getDialApplicationUrl(const String& locationUrl) {
   uint16_t lport = portStr.toInt();
 
   String path = extractPathFromURL(locationUrl);
-
-  // Ensure only one slash between parts
-  String fullUrl = "http://" + localip + ":" + String(lport);
-  if (!path.startsWith("/")) {
-    fullUrl += "/";
-  }
-  fullUrl += path;
 
   WiFiClient wifiClient;
 
