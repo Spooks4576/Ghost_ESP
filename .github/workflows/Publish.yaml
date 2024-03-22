@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        board: [esp32_s2, esp32_wroom, esp32_s3, esp32_c3, esp32_wroom_screen]
+        board: [esp32_s2, esp32_wroom, esp32_c3]
 
     steps:
     - name: Checkout code
