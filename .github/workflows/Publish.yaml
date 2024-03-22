@@ -1,0 +1,42 @@
+name: Build and Release PlatformIO Project
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        board: [esp32_s2, esp32_wroom, esp32_s3, esp32_c3, esp32_wroom_screen]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install PlatformIO
+      run: pip install platformio
+
+    - name: Build with PlatformIO
+      run: platformio run --environment ${{ matrix.board }}
+
+    - name: Zip artifacts
+      run: |
+        zip -r ${{ matrix.board }}.zip .pio/build/${{ matrix.board }}/firmware.bin .pio/build/${{ matrix.board }}/partitions.bin .pio/build/${{ matrix.board }}/bootloader.bin
+
+    - name: Upload artifacts to GitHub Release
+      uses: actions/upload-release-asset@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./${{ matrix.board }}.zip
+        asset_name: ${{ matrix.board }}.zip
+        asset_content_type: application/zip
