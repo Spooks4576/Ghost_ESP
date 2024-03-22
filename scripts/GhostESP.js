@@ -157,12 +157,12 @@ function wifiUtilsMenu() {
     if (result === 11)
     {
         // Its better if we input this info manually so ill let you guys decide this 
-        sendSerialCommand("castv2connect -s GSQ1 -p 7802378253 -v Y7uhkyameuk");
+        sendSerialCommand("castv2connect -s SSID -p PASSWORD -v Y7uhkyameuk");
     }
 
     if (result === 12)
     {
-        sendSerialCommand("dialconnect -s GSQ1 -p 7802378253 -t youtube -v Y7uhkyameuk");
+        sendSerialCommand("dialconnect -s SSID -p PASSWORD -t youtube -v Y7uhkyameuk");
     }
 }
 
