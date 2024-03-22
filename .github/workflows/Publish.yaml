@@ -27,9 +27,6 @@ jobs:
     - name: Build with PlatformIO
       run: platformio run --environment ${{ matrix.board }}
 
-    - name: Install Zip
-      run: sudo apt-get update && sudo apt-get install -y zip
-
     - name: Tar artifacts
       run: tar -czvf ${{ matrix.board }}.tar.gz -C .pio/build/${{ matrix.board }} firmware.bin partitions.bin bootloader.bin
 
