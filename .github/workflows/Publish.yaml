@@ -2,8 +2,8 @@ name: Build and Release PlatformIO Project
 
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - main
 
 jobs:
   build:
