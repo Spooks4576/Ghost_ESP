@@ -35,7 +35,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ./${{ matrix.board }}.zip
+          ./${{ matrix.board }}.tar.gz
         tag_name: ${{ github.ref }}
         draft: false
         prerelease: false
