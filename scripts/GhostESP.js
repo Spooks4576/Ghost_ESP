@@ -1,50 +1,56 @@
 let submenu = require("submenu");
 let serial = require("serial");
 let keyboard = require("keyboard");
+let textbox = require("textbox");
 let dialog = require("dialog");
 
 serial.setup("usart", 115200);
 
 let shouldexit = false;
 
-function sendSerialCommand(command) {
+function sendSerialCommand(command, menutype) {
     serial.write(command);
-    receiveSerialData();
+    receiveSerialData(menutype);
 }
 
-function receiveSerialData() {
+function receiveSerialData(menutype) {
     let data = '';
     let char = '';
-    while (true) {
+    textbox.setConfig("end", "text");
+    textbox.show();
+    while (textbox.isOpen()) {
         let rx_data = serial.readBytes(1, 1000); // Timeout set to 1000 ms
         if (rx_data !== undefined) {
             let data_view = Uint8Array(rx_data);
             char = chr(data_view[0]);
             if (char === '\n')
             {
-                print(data);
-                data = '';
+                if (data.length > 4096) {
+                    data = data.slice(data.length - 2048);
+                }
+                textbox.setText(data);
             }
             data += char;
-        } else {
-            print("Delaying 2 seconds and Trying again else exiting")
-            delay(10000);
-            rx_data = serial.readBytes(1, 1000);
-            if (rx_data !== undefined) {
-                let data_view = Uint8Array(rx_data);
-                char = chr(data_view[0]);
-                if (char === '\n')
-                {
-                    print(data);
-                    data = '';
-                }
-                data += char;
-            }
-            else {
-                delay(2000);
-                break; // Break if no data received
-            }
         }
+    }
+    serial.write("stop");
+    delay(1000); // handle cases where stopscan does not go through
+
+    if (menutype === 0)
+    {
+        mainMenu();
+    }
+    if (menutype === 1)
+    {
+        wifiUtilsMenu();
+    }
+    if (menutype === 2)
+    {
+        bleSpamMenu();
+    }
+    if (menutype === 3)
+    {
+        ledUtilsMenu();
     }
 }
 
@@ -56,14 +62,14 @@ function promptForText(header, defaultValue) {
 function validateAndSelectAPStation(type, commandPrefix) {
     let input = promptForText("Enter " + to_string(type) + " Index");
     if (validateNumber(input)) {
-        sendSerialCommand(commandPrefix + " " + input);
+        sendSerialCommand(commandPrefix + " " + input, 1);
     } else {
         dialog.message("Error", "Invalid number entered.");
     }
 }
 
 function validateNumber(input) {
-    return !isNaN(input) && Number.isInteger(parseFloat(input));
+    return true;
 }
 
 function mainMenu() {
@@ -106,68 +112,74 @@ function wifiUtilsMenu() {
     submenu.addItem("Beacon Spam Rickroll", 10);
     submenu.addItem("Cast V2 Connect", 11);
     submenu.addItem("Dial Connect", 12);
+    submenu.addItem("Deauth Detector", 13);
 
     let result = submenu.show();
 
     if (result === 0) {
-        sendSerialCommand('scanap');
+        sendSerialCommand('scanap', 1);
     }
 
     if (result === 1) {
-        sendSerialCommand('scansta');
+        sendSerialCommand('scansta', 1);
     }
 
     if (result === 2) {
-        sendSerialCommand('ssid -a -g');
+        sendSerialCommand('ssid -a -g', 1);
     }
 
     if (result === 3) {
         let ssid = promptForText("Enter SSID");
-        sendSerialCommand('ssid -a -n ' + ssid);
+        sendSerialCommand('ssid -a -n ' + ssid, 1);
     }
 
     if (result === 4) {
-        sendSerialCommand('list -a');
+        sendSerialCommand('list -a', 1);
     }
 
     if (result === 5) {
-        sendSerialCommand('list -c');
+        sendSerialCommand('list -c', 1);
     }
 
     if (result === 6) {
-        validateAndSelectAPStation("AP", "select -a");
+        validateAndSelectAPStation("AP", "select -a", 1);
     }
 
     if (result === 7) {
-        validateAndSelectAPStation("Station", "select -s");
+        validateAndSelectAPStation("Station", "select -s", 1);
     }
 
     if (result === 8) {
-        sendSerialCommand('attack beacon -l');
+        sendSerialCommand('attack -t beacon -l', 1);
     }
 
     if (result === 9) {
-        sendSerialCommand('attack beacon -r');
+        sendSerialCommand('attack -t beacon -r', 1);
     }
 
     if (result === 10) {
-        sendSerialCommand('attack rickroll');
+        sendSerialCommand('attack -t rickroll', 1);
     }
 
     if (result === 11)
     {
         // Its better if we input this info manually so ill let you guys decide this 
-        sendSerialCommand("castv2connect -s SSID -p PASSWORD -v Y7uhkyameuk");
+        sendSerialCommand("castv2connect -s SSID -p PASSWORD -v Y7uhkyameuk", 1);
     }
 
     if (result === 12)
     {
-        sendSerialCommand("dialconnect -s SSID -p PASSWORD -t youtube -v Y7uhkyameuk");
+        sendSerialCommand("dialconnect -s SSID -p PASSWORD -t youtube -v Y7uhkyameuk", 1);
     }
 
     if (result === 13)
     {
-        sendSerialCommand("deauthdetector -s SSID -p PASSWORD -w WebHookUrl");
+        sendSerialCommand("deauthdetector -s SSID -p PASSWORD -w WebHookUrl", 1);
+    }
+
+    if (result === undefined)
+    {
+        mainMenu();
     }
 }
 
@@ -182,23 +194,28 @@ function bleSpamMenu() {
     let result = submenu.show();
 
     if (result === 0) {
-        sendSerialCommand('blespam -t samsung');
+        sendSerialCommand('blespam -t samsung', 2);
     }
 
     if (result === 1) {
-        sendSerialCommand('blespam -t apple');
+        sendSerialCommand('blespam -t apple', 2);
     }
 
     if (result === 2) {
-        sendSerialCommand('blespam -t google');
+        sendSerialCommand('blespam -t google', 2);
     }
 
     if (result === 3) {
-        sendSerialCommand('blespam -t windows');
+        sendSerialCommand('blespam -t windows', 2);
     }
 
     if (result === 4) {
-        sendSerialCommand('blespam -t all');
+        sendSerialCommand('blespam -t all', 2);
+    }
+
+    if (result === undefined)
+    {
+        mainMenu();
     }
 }
 
@@ -208,7 +225,12 @@ function ledUtilsMenu() {
 
     let result = submenu.show();
     if (result === 0) {
-        sendSerialCommand('led');
+        sendSerialCommand('led -p', 3);
+    }
+
+    if (result === undefined)
+    {
+        mainMenu();
     }
 }
 
@@ -217,7 +239,7 @@ function mainLoop() {
         mainMenu(); // Navigate through the main menu
         let confirm = dialog.message("Exit", "Press OK to exit, Cancel to return.");
         if (confirm === 'OK') {
-            sendSerialCommand('stop'); // Send a stop command before exiting
+            sendSerialCommand('stop', 0); // Send a stop command before exiting
             break;
         } else {
             // If the user cancels, it will loop back and show the main menu again.

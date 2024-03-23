@@ -7,8 +7,8 @@ void RGBLedModule::init() {
     pinMode(redPin, OUTPUT);
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
-    Rainbow(1, 7);
-    breatheLED(redPin, 700, true);
+    Rainbow(1, 4);
+    breatheLED(redPin, 400, true);
 }
 
 void RGBLedModule::breatheLED(int ledPin, int breatheTime, bool FadeOut)
@@ -28,14 +28,25 @@ void RGBLedModule::breatheLED(int ledPin, int breatheTime, bool FadeOut)
         return;
     }
 
-
     // Fade in
+    for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
+        analogWrite(ledPin, brightness);
+        delay(wait);
+    }
+
+    // Fade out
     for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
         analogWrite(ledPin, brightness);
         delay(wait);
     }
-    // Fade out
+    // Fade in
     for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
+        analogWrite(ledPin, brightness);
+        delay(wait);
+    }
+
+    // Fade out
+    for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
         analogWrite(ledPin, brightness);
         delay(wait);
     }

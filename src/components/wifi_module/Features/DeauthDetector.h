@@ -34,7 +34,7 @@ bool ConfigHasChannel;
 Wifianalyticsdata* analyticsdata;
 };
 
-DeauthDetectorConfig Config;
+DeauthDetectorConfig DeauthConfig;
 
 void AnalyticsCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
     if (type != WIFI_PKT_MGMT) return;
@@ -46,35 +46,29 @@ void AnalyticsCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
     switch(hdr->frame_ctrl & 0xFC) { // Mask to get type and subtype only
         case 0xB0: // Authentication frame
-            Config.analyticsdata->authCount[Config.CurrentChannel]++;
-            Serial.println("Got Auth Frame");
+            DeauthConfig.analyticsdata->authCount[DeauthConfig.CurrentChannel]++;
             break;
         case 0xC0: // Deauthentication frame
-            Config.analyticsdata->deauthCount[Config.CurrentChannel]++;
-            Config.deauthCount++;
-            Serial.println("Got Deauth Frame");
+            DeauthConfig.analyticsdata->deauthCount[DeauthConfig.CurrentChannel]++;
+            DeauthConfig.deauthCount++;
             break;
         case 0x00: // Association request frame
-            Config.analyticsdata->probeReqCount[Config.CurrentChannel]++;
-            Serial.println("Got Association request Frame");
+            DeauthConfig.analyticsdata->probeReqCount[DeauthConfig.CurrentChannel]++;
             break;
         case 0x30: // Reassociation response frame
-            Config.analyticsdata->probeRespCount[Config.CurrentChannel]++;
-            Serial.println("Got Reassociation Response Frame");
+            DeauthConfig.analyticsdata->probeRespCount[DeauthConfig.CurrentChannel]++;
             break;
         case 0x40: // Probe request frame
-            Config.analyticsdata->probeReqCount[Config.CurrentChannel]++;
-            Serial.println("Got Probe request frame");
+            DeauthConfig.analyticsdata->probeReqCount[DeauthConfig.CurrentChannel]++;
             break;
         case 0x50: // Probe response frame
-            Config.analyticsdata->probeRespCount[Config.CurrentChannel]++;
-                Serial.println("Got Probe response frame");
+            DeauthConfig.analyticsdata->probeRespCount[DeauthConfig.CurrentChannel]++;
             break;
         case 0x80: // Beacon frame
-            Config.analyticsdata->beaconCount[Config.CurrentChannel]++;
+            DeauthConfig.analyticsdata->beaconCount[DeauthConfig.CurrentChannel]++;
             break;
         default: 
-            Config.analyticsdata->otherPktCount[Config.CurrentChannel]++;
+            DeauthConfig.analyticsdata->otherPktCount[DeauthConfig.CurrentChannel]++;
             break;
     }
 }
@@ -83,6 +77,10 @@ void AnalyticsCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 void sendWifiAnalitics(String Channel, String SSID, String Password, String WebHookUrl) {
 #ifdef OLD_LED
 rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
+#endif
+
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
 #endif
 
 if (!WebHookUrl.isEmpty())
@@ -103,7 +101,7 @@ if (!WebHookUrl.isEmpty())
     
     String message;
     
-    unsigned long duration = Config.analyticsdata->endTime - Config.analyticsdata->startTime; 
+    unsigned long duration = DeauthConfig.analyticsdata->endTime - DeauthConfig.analyticsdata->startTime; 
 
     
     for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) {
@@ -113,13 +111,13 @@ if (!WebHookUrl.isEmpty())
         message += "\"color\": 3447003,";
         message += "\"fields\": [";
         message += "{\"name\":\"Monitored Channel\",\"value\":\"" + String(channelIndex) + "\",\"inline\":true},";
-        message += "{\"name\":\"Monitoring Duration\",\"value\":\"" + String((Config.analyticsdata->endTime[channelIndex] - Config.analyticsdata->startTime[channelIndex]) / 60000) + " minutes (" + String((Config.analyticsdata->endTime[channelIndex] - Config.analyticsdata->startTime[channelIndex]) / 1000) + " seconds)\",\"inline\":true},";
-        message += "{\"name\":\"Deauthentication Packets\",\"value\":\"" + String(Config.analyticsdata->deauthCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Authentication Packets\",\"value\":\"" + String(Config.analyticsdata->authCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Beacon Packets\",\"value\":\"" + String(Config.analyticsdata->beaconCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Probe Request Packets\",\"value\":\"" + String(Config.analyticsdata->probeReqCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Probe Response Packets\",\"value\":\"" + String(Config.analyticsdata->probeRespCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Other Packet Types\",\"value\":\"" + String(Config.analyticsdata->otherPktCount[channelIndex]) + "\",\"inline\":false}";
+        message += "{\"name\":\"Monitoring Duration\",\"value\":\"" + String((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 60000) + " minutes (" + String((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 1000) + " seconds)\",\"inline\":true},";
+        message += "{\"name\":\"Deauthentication Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->deauthCount[channelIndex]) + "\",\"inline\":false},";
+        message += "{\"name\":\"Authentication Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->authCount[channelIndex]) + "\",\"inline\":false},";
+        message += "{\"name\":\"Beacon Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->beaconCount[channelIndex]) + "\",\"inline\":false},";
+        message += "{\"name\":\"Probe Request Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->probeReqCount[channelIndex]) + "\",\"inline\":false},";
+        message += "{\"name\":\"Probe Response Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->probeRespCount[channelIndex]) + "\",\"inline\":false},";
+        message += "{\"name\":\"Other Packet Types\",\"value\":\"" + String(DeauthConfig.analyticsdata->otherPktCount[channelIndex]) + "\",\"inline\":false}";
         message += "]}]}";
 
         
@@ -152,29 +150,33 @@ for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) {
     Serial.println(channelIndex);
     Serial.print("Monitoring Duration: ");
     
-    Serial.print((Config.analyticsdata->endTime[channelIndex] - Config.analyticsdata->startTime[channelIndex]) / 60000);
+    Serial.print((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 60000);
     Serial.print(" minutes (");
-    Serial.print((Config.analyticsdata->endTime[channelIndex] - Config.analyticsdata->startTime[channelIndex]) / 1000);
+    Serial.print((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 1000);
     Serial.println(" seconds)");
     Serial.print("Deauthentication Packets: ");
-    Serial.println(Config.analyticsdata->deauthCount[channelIndex]);
+    Serial.println(DeauthConfig.analyticsdata->deauthCount[channelIndex]);
     Serial.print("Authentication Packets: ");
-    Serial.println(Config.analyticsdata->authCount[channelIndex]);
+    Serial.println(DeauthConfig.analyticsdata->authCount[channelIndex]);
     Serial.print("Beacon Packets: ");
-    Serial.println(Config.analyticsdata->beaconCount[channelIndex]);
+    Serial.println(DeauthConfig.analyticsdata->beaconCount[channelIndex]);
     Serial.print("Probe Request Packets: ");
-    Serial.println(Config.analyticsdata->probeReqCount[channelIndex]);
+    Serial.println(DeauthConfig.analyticsdata->probeReqCount[channelIndex]);
     Serial.print("Probe Response Packets: ");
-    Serial.println(Config.analyticsdata->probeRespCount[channelIndex]);
+    Serial.println(DeauthConfig.analyticsdata->probeRespCount[channelIndex]);
     Serial.print("Other Packet Types: ");
-    Serial.println(Config.analyticsdata->otherPktCount[channelIndex]);
+    Serial.println(DeauthConfig.analyticsdata->otherPktCount[channelIndex]);
     Serial.println("------------------------------");
 }
 #ifdef OLD_LED
 rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
 #endif
 
-delete Config.analyticsdata;
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
+#endif
+
+delete DeauthConfig.analyticsdata;
 
 Serial.println("Command Finished");
 }
@@ -182,7 +184,7 @@ Serial.println("Command Finished");
 
 void InitDeauthDetector(String Channel, String SSID, String Password, String WebHookUrl) 
 {
-    Config.startTime = millis();
+    DeauthConfig.startTime = millis();
 
     WiFi.mode(WIFI_STA);
     WiFi.disconnect();
@@ -190,52 +192,63 @@ void InitDeauthDetector(String Channel, String SSID, String Password, String Web
 
     Channel.trim();
 
-    Config.analyticsdata = new Wifianalyticsdata();
+    DeauthConfig.analyticsdata = new Wifianalyticsdata();
 
-    Config.ConfigHasChannel = !Channel.isEmpty();
+    DeauthConfig.ConfigHasChannel = !Channel.isEmpty();
 
-    if (Config.ConfigHasChannel)
+    if (DeauthConfig.ConfigHasChannel)
     {
-        Config.CurrentChannel = Channel.toInt();
+        DeauthConfig.CurrentChannel = Channel.toInt();
     }
 
     Serial.println("Channel");
-    Serial.println(Config.CurrentChannel);
+    Serial.println(DeauthConfig.CurrentChannel);
 
     esp_wifi_set_promiscuous(true);
     esp_wifi_set_promiscuous_filter(&filt);
     esp_wifi_set_promiscuous_rx_cb(AnalyticsCallback);
-    esp_wifi_set_channel(Config.CurrentChannel, WIFI_SECOND_CHAN_NONE);
+    esp_wifi_set_channel(DeauthConfig.CurrentChannel, WIFI_SECOND_CHAN_NONE);
 
-    while (millis() - Config.startTime < Config.scanDuration) {
-        if (millis() - Config.lastCheckTime > Config.checkInterval) {
-            if (Config.deauthCount > Config.deauthThreshold) {
-                Serial.println("Deauth attack detected!");
+    while (millis() - DeauthConfig.startTime < DeauthConfig.scanDuration) {
+        if (millis() - DeauthConfig.lastCheckTime > DeauthConfig.checkInterval) {
+            if (DeauthConfig.deauthCount > DeauthConfig.deauthThreshold) {
                 #ifdef OLD_LED
-                rgbmodule->breatheLED(rgbmodule->redPin, 1000);
+                if (!RainbowLEDActive)
+                {
+                    rgbmodule->breatheLED(rgbmodule->redPin, 500);
+                }
+                #endif
+                #ifdef NEOPIXEL_PIN
+                neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 1000, false);
                 #endif
             } else {
-                Serial.println("Normal network behavior.");
                 #ifdef OLD_LED
-                rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
+                if (!RainbowLEDActive)
+                {
+                    rgbmodule->breatheLED(rgbmodule->greenPin, 500);
+                }
+               
+                #endif
+                #ifdef NEOPIXEL_PIN
+                neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
                 #endif
             }
-            Config.deauthCount = 0;
-            Config.lastCheckTime = millis();
+            DeauthConfig.deauthCount = 0;
+            DeauthConfig.lastCheckTime = millis();
         }
 
-        if (millis() - Config.lastChannelCheckTime > Config.ChannelHopInterval && !Config.ConfigHasChannel)
+        if (millis() - DeauthConfig.lastChannelCheckTime > DeauthConfig.ChannelHopInterval && !DeauthConfig.ConfigHasChannel)
         {
-            Config.CurrentChannel = (Config.CurrentChannel % MAX_CHANNELS) + 1;
-            esp_wifi_set_channel(Config.CurrentChannel, WIFI_SECOND_CHAN_NONE);
-            Config.lastChannelCheckTime = millis();
+            DeauthConfig.CurrentChannel = (DeauthConfig.CurrentChannel % MAX_CHANNELS) + 1;
+            esp_wifi_set_channel(DeauthConfig.CurrentChannel, WIFI_SECOND_CHAN_NONE);
+            DeauthConfig.lastChannelCheckTime = millis();
         }
     }
 
     for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) 
     {
-        Config.analyticsdata->endTime[channelIndex] = millis();
-        Config.analyticsdata->startTime[channelIndex] =  Config.startTime;
+        DeauthConfig.analyticsdata->endTime[channelIndex] = millis();
+        DeauthConfig.analyticsdata->startTime[channelIndex] =  DeauthConfig.startTime;
     }
 
 

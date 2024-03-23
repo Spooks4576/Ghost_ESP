@@ -66,7 +66,7 @@ inline NeopixelModule* neopixelmodule;
 
 #ifdef HAS_GPS
 #include "../components/gps_module/gps_module.h"
-inline GpsInterface* gpsmodule;
+//inline GpsModule* gpsmodule;
 #endif
 
 #ifdef DISPLAY_SUPPORT
@@ -74,13 +74,25 @@ inline GpsInterface* gpsmodule;
 inline DisplayModule* displaymodule;
 #endif
 
-inline void RainbowTask(void *pvParameters)
+struct LEDThreads
 {
-    while (1)
-    {
-#ifdef OLD_LED
-        rgbmodule->Rainbow(0.1, 5);
-#endif
-    }
+TaskHandle_t* RainbowTaskHandle;
+TaskHandle_t* BreatheTaskHandle;
+int TargetPin;
+};
 
+inline LEDThreads Threadinfo;
+
+inline void BreatheTask()
+{
+#ifdef OLD_LED
+    rgbmodule->breatheLED(Threadinfo.TargetPin, 500);
+#endif
+}
+
+inline void RainbowTask()
+{
+#ifdef OLD_LED
+    rgbmodule->Rainbow(0.1, 4);
+#endif
 }

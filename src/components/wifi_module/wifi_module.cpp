@@ -93,8 +93,6 @@ bool WiFiModule::shutdownWiFi() {
   
     esp_wifi_set_mode(WIFI_MODE_NULL);
     esp_wifi_stop();
-    esp_wifi_restore();
-    esp_wifi_deinit();
     return true;
   }
   else {
@@ -113,7 +111,11 @@ bool WiFiModule::addSSID(String essid) {
 void WiFiModule::Scan(ScanType type)
 {
 #ifdef OLD_LED
-  rgbmodule->setColor(HIGH, LOW, HIGH);
+  Threadinfo.TargetPin = rgbmodule->greenPin;
+#endif
+
+#ifdef NEOPIXEL_PIN
+neopixelmodule->setColor(neopixelmodule->strip.Color(0, 255, 0));
 #endif
 
   switch (type)
@@ -213,7 +215,11 @@ int WiFiModule::ClearList(ClearType type)
 void WiFiModule::Attack(AttackType type)
 {
 #ifdef OLD_LED
-    rgbmodule->setColor(0, 1, 1);
+  Threadinfo.TargetPin = rgbmodule->redPin;
+#endif
+
+#ifdef NEOPIXEL_PIN
+neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
 #endif
 
   switch (type)
@@ -229,6 +235,7 @@ void WiFiModule::Attack(AttackType type)
                 broadcastSetSSID(rick_roll[x], i);
               }
           }
+          BreatheTask();
           delay(1);
       }
     }
@@ -237,6 +244,7 @@ void WiFiModule::Attack(AttackType type)
       while (wifi_initialized)
       {
         broadcastRandomSSID();
+        BreatheTask();
         delay(1);
       }
     }
@@ -251,6 +259,7 @@ void WiFiModule::Attack(AttackType type)
             broadcastSetSSID(ssids->get(i).essid.c_str(), x);
           }
         }
+        BreatheTask();
         delay(1);
       }
     }
@@ -267,6 +276,7 @@ void WiFiModule::Attack(AttackType type)
               }
             }
           }
+          BreatheTask();
         }
       }
     }

@@ -81,24 +81,24 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     #endif
 
     #ifdef HAS_GPS
-    gpsmodule = new GpsInterface();
-    gpsmodule->begin();
-    if (gpsmodule->getGpsModuleStatus())
-    {
-        #ifdef DISPLAY_SUPPORT
-        displaymodule->UpdateSplashStatus("GPS Module Connected Successfully", 75);
-        delay(100);
-        #endif
-        Serial.println("GPS Module connected");
-    }
-    else 
-    {
-        #ifdef DISPLAY_SUPPORT
-        displaymodule->UpdateSplashStatus("GPS Module Failed to Connect", 75);
-        delay(100);
-        #endif
-        Serial.println("GPS Module NOT connected");
-    }
+    //gpsmodule = new GpsModule();
+    //gpsmodule->begin();
+    //if (gpsmodule->getGpsModuleStatus())
+    //{
+    //    #ifdef DISPLAY_SUPPORT
+    //    displaymodule->UpdateSplashStatus("GPS Module Connected Successfully", 75);
+    //    delay(100);
+     //   #endif
+    //    Serial.println("GPS Module connected");
+    //}
+    //else 
+    //{
+    //    #ifdef DISPLAY_SUPPORT
+    //    displaymodule->UpdateSplashStatus("GPS Module Failed to Connect", 75);
+    //    delay(100);
+    //    #endif
+    ///    Serial.println("GPS Module NOT connected");
+    ///}
     #endif
 
     #ifdef HAS_BT
@@ -133,10 +133,10 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
             else 
             {
                 #ifdef OLD_LED
+                delay(1000);
                 rgbmodule->setColor(1, 1, 1);
                 #endif
                 wifimodule->shutdownWiFi();
-
                 #ifdef HAS_BT
                 BleModule->shutdownBLE();  
                 #endif

@@ -198,11 +198,11 @@ void CommandLine::runCommand(String input)
     if (cmd_args.get(0) == "gpsdata")
     {
         #ifdef HAS_GPS
-            if (gps_obj.getGpsModuleStatus()) {
-                Serial.println("Getting GPS Data. Stop with " + "stopscan");
+            // if (gpsmodule->getGpsModuleStatus()) {
+            //     Serial.println("Getting GPS Data. Stop with stopscan");
 
-              HasRanCommand = true;
-            }
+            //   HasRanCommand = true;
+            // }
         #endif
     }
     if (cmd_args.get(0) == "blespam")
@@ -302,7 +302,6 @@ void CommandLine::runCommand(String input)
 
         if (attack_type == "rickroll")
         {
-          HasRanCommand = true;
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
           wifimodule->Attack(AT_Rickroll);
           return;
@@ -323,7 +322,14 @@ void CommandLine::runCommand(String input)
       if (!RainbowLEDActive)
       {
         RainbowLEDActive = true;
-        xTaskCreate(RainbowTask, "RainbowTask", 1048, NULL, 1, NULL);
+        RainbowTask();
+        RainbowTask();
+        RainbowTask();
+        RainbowTask();
+#ifdef OLD_LED
+        rgbmodule->breatheLED(0, 1000, true);
+#endif
+        RainbowLEDActive = false;
       }
       return;
     }
@@ -349,6 +355,7 @@ void CommandLine::runCommand(String input)
 
     if (cmd_args.get(0) == "deauthdetector")
     {
+      HasRanCommand = true;
       int ssid = this->argSearch(&cmd_args, "-s");
       int password = this->argSearch(&cmd_args, "-p");
       int webhook = this->argSearch(&cmd_args, "-w");
@@ -414,6 +421,9 @@ void CommandLine::runCommand(String input)
           DIALClient* dial = new DIALClient(Value.c_str(), SSID.c_str(), Password.c_str(), controller);
 #ifdef OLD_LED
 rgbmodule->setColor(LOW, HIGH, LOW);
+#endif
+#ifdef NEOPIXEL_PIN
+neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
 #endif
           dial->Execute();
           delete dial;

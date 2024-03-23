@@ -196,8 +196,11 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       generateRandomMac(macAddr);
 
       esp_base_mac_addr_set(macAddr);
-
+#ifdef WROOM
+      delay(1000); // Increase the delay due to weak CPU
+#else
       delay(100);
+#endif
     }
 #endif
 }
