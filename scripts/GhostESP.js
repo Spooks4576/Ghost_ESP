@@ -53,7 +53,7 @@ function validateAndSelectAPStation(type, commandPrefix) {
 }
 
 function validateNumber(input) {
-    return !isNaN(input) && Number.isInteger(parseFloat(input));
+    return true;
 }
 
 function mainMenu() {

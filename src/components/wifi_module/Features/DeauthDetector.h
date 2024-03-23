@@ -218,22 +218,20 @@ void InitDeauthDetector(String Channel, String SSID, String Password, String Web
     while (millis() - DeauthConfig.startTime < DeauthConfig.scanDuration) {
         if (millis() - DeauthConfig.lastCheckTime > DeauthConfig.checkInterval) {
             if (DeauthConfig.deauthCount > DeauthConfig.deauthThreshold) {
-                Serial.println("Deauth attack detected!");
                 #ifdef OLD_LED
                 if (!RainbowLEDActive)
                 {
-                    rgbmodule->breatheLED(rgbmodule->redPin, 1000);
+                    rgbmodule->breatheLED(rgbmodule->redPin, 500);
                 }
                 #endif
                 #ifdef NEOPIXEL_PIN
                 neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 1000, false);
                 #endif
             } else {
-                Serial.println("Normal network behavior.");
                 #ifdef OLD_LED
                 if (!RainbowLEDActive)
                 {
-                    rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
+                    rgbmodule->breatheLED(rgbmodule->greenPin, 500);
                 }
                
                 #endif
