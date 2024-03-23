@@ -93,8 +93,6 @@ bool WiFiModule::shutdownWiFi() {
   
     esp_wifi_set_mode(WIFI_MODE_NULL);
     esp_wifi_stop();
-    esp_wifi_restore();
-    esp_wifi_deinit();
     return true;
   }
   else {
