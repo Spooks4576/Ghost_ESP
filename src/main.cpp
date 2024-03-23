@@ -111,7 +111,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
 #endif
 
     registerCallback(
-          [](String &msg) { return msg.startsWith("stop"); },
+          [](String &msg) { return msg == "stop" || msg == "stop\n"; },
           [](String &msg) { 
             if (HasRanCommand)
             {
