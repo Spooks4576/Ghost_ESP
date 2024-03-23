@@ -5,7 +5,7 @@ void YoutubeController::launchApp(const String& appUrl) {
   int startPos = appUrl.indexOf('/', 7);
   String basePath = (startPos != -1) ? appUrl.substring(startPos) : "/";
 
-  String youtubePath = basePath + "/YouTube";
+  String youtubePath = basePath + "YouTube";
 
   IPAddress extractedIp;
   uint16_t extractedPort;
@@ -34,7 +34,7 @@ int YoutubeController::checkAppStatus(const String& appUrl, Device& device_I) {
 
     int startPos = appUrl.indexOf('/', 7);
     String basePath = (startPos != -1) ? appUrl.substring(startPos) : "/";
-    String youtubePath = basePath + "/YouTube";
+    String youtubePath = basePath + "YouTube";
 
     Serial.println("[checkYouTubeAppStatus] Connecting to IP: " + extractedIp.toString() + " Port: " + String(extractedPort));
     Serial.println("[checkYouTubeAppStatus] Trying to access: " + youtubePath);

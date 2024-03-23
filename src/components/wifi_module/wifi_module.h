@@ -50,6 +50,21 @@ typedef struct
 } WifiMgmtHdr;
 
 typedef struct {
+	unsigned frame_ctrl:16;
+	unsigned duration_id:16;
+	uint8_t addr1[6]; /* receiver address */
+	uint8_t addr2[6]; /* sender address */
+	uint8_t addr3[6]; /* filtering address */
+	unsigned sequence_ctrl:16;
+	uint8_t addr4[6]; /* optional */
+} wifi_ieee80211_mac_hdr_t;
+
+typedef struct {
+    uint8_t payload[0];
+    wifi_ieee80211_mac_hdr_t hdr;
+} wifi_ieee80211_packet_t_2;
+
+typedef struct {
     uint8_t payload[0];
     WifiMgmtHdr hdr;
 } wifi_ieee80211_packet_t;

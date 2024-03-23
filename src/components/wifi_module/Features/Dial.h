@@ -18,6 +18,7 @@ public:
     std::vector<Device> discoverDevices();
     void exploreNetwork();
     bool parseSSDPResponse(const String& response, Device& device);
+    String concatenatePaths(const String& base, const String& appUrl);
     String extractApplicationURL(HttpClient &httpc);
     bool fetchScreenIdWithRetries(const String& applicationUrl, Device& device, YoutubeController* YTController);
 public:

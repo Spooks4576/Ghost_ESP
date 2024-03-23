@@ -74,10 +74,10 @@ public:
     : client(clientRef), sourceId(srcId), destinationId(destId), namespace_(ns), encoding(enc), Parent(InParent) {}
 
   String Deserialize_Internal(String serializedData) {
-    uint8_t* buffer = new uint8_t[1000];
-    uint16_t byteCount = hexStringToBytes_U(serializedData, buffer, 1000);
+    uint8_t* buffer = new uint8_t[serializedData.length() / 2];
+    uint16_t byteCount = hexStringToBytes_U(serializedData, buffer, serializedData.length() / 2);
 
-    char* payloadUtf8 = new char[1000];
+    char* payloadUtf8 = new char[serializedData.length() / 2];
     ExpandedCastMessageSerializer::DeserializationResult result = ExpandedCastMessageSerializer::deserialize(buffer, byteCount, payloadUtf8);
 
     String returnString = "";
@@ -111,8 +111,6 @@ public:
     memset(message.payload_binary, 0, 100);
     message.payload_binary_size = 0;
 
-    Serial.println("Input Data length: " + String(Data.length()));
-
     uint8_t buffer[1000];
     uint16_t index = 0;
     ExpandedCastMessageSerializer::SerializationResult result = ExpandedCastMessageSerializer::serialize(message, buffer, index, sizeof(buffer));
@@ -142,7 +140,6 @@ public:
       }
 
       if (bytesRead > 0) {
-        Serial.println("Received data: " + serializedData);
         String jsonData = Deserialize_Internal(serializedData);
 
         onMessage(sourceId, destinationId, namespace_, jsonData);
@@ -180,7 +177,7 @@ public:
 
         Parent->HandleCloseConnection();
 
-        delay(500);  // short delay to make sure the connection actually closes
+        delay(500);
 
         client.stop();
 

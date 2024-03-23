@@ -245,6 +245,16 @@ bool DIALClient::parseSSDPResponse(const String& response, Device& device) {
   return !device.location.isEmpty() && !device.uniqueServiceName.isEmpty();
 }
 
+String DIALClient::concatenatePaths(const String& base, const String& appUrl) {
+    String result = base;
+    if (result.endsWith("/") && appUrl.startsWith("/")) {
+        result = result.substring(0, result.length() - 1);  // Remove trailing slash from base
+    } else if (!result.endsWith("/") && !appUrl.startsWith("/")) {
+        result += "/";  // Add a missing slash between the base and the appUrl
+    }
+    result += appUrl;
+    return result;
+}
 
 String DIALClient::extractApplicationURL(HttpClient& httpc) {
   String appUrl;
@@ -262,8 +272,9 @@ String DIALClient::extractApplicationURL(HttpClient& httpc) {
       currentLine.trim();
       currentLine.toLowerCase();
       if (currentLine.startsWith("application-url:")) {
-        appUrl = currentLine.substring(currentLine.indexOf(':') + 2);  // +2 to skip over the colon and potential space
-        break;
+          appUrl = currentLine.substring(currentLine.indexOf(':') + 1); // +1 just to skip over the colon
+          appUrl.trim();  // This will remove any leading or trailing whitespaces
+          break;
       }
       currentLine = "";
 
