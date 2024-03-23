@@ -216,7 +216,9 @@ void InitDeauthDetector(String Channel, String SSID, String Password, String Web
                 #endif
             } else {
                 Serial.println("Normal network behavior.");
+                #ifdef OLD_LED
                 rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
+                #endif
             }
             Config.deauthCount = 0;
             Config.lastCheckTime = millis();
