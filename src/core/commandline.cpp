@@ -415,6 +415,9 @@ void CommandLine::runCommand(String input)
 #ifdef OLD_LED
 rgbmodule->setColor(LOW, HIGH, LOW);
 #endif
+#ifdef NEOPIXEL_PIN
+neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
+#endif
           dial->Execute();
           delete dial;
           delete controller;

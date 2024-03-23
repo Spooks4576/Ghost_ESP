@@ -85,6 +85,10 @@ void sendWifiAnalitics(String Channel, String SSID, String Password, String WebH
 rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
 #endif
 
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
+#endif
+
 if (!WebHookUrl.isEmpty())
 {
     WiFi.begin(SSID, Password);
@@ -174,6 +178,10 @@ for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) {
 rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
 #endif
 
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
+#endif
+
 delete Config.analyticsdata;
 
 Serial.println("Command Finished");
@@ -214,9 +222,19 @@ void InitDeauthDetector(String Channel, String SSID, String Password, String Web
                 #ifdef OLD_LED
                 rgbmodule->breatheLED(rgbmodule->redPin, 1000);
                 #endif
+                #ifdef NEOPIXEL_PIN
+                neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 1000, false);
+                #endif
             } else {
                 Serial.println("Normal network behavior.");
                 rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
+<<<<<<< Updated upstream
+=======
+                #endif
+                #ifdef NEOPIXEL_PIN
+                neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
+                #endif
+>>>>>>> Stashed changes
             }
             Config.deauthCount = 0;
             Config.lastCheckTime = millis();

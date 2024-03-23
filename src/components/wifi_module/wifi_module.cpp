@@ -116,6 +116,10 @@ void WiFiModule::Scan(ScanType type)
   rgbmodule->setColor(HIGH, LOW, HIGH);
 #endif
 
+#ifdef NEOPIXEL_PIN
+neopixelmodule->setColor(neopixelmodule->strip.Color(0, 255, 0));
+#endif
+
   switch (type)
   {
     case ScanType::SCAN_AP:
@@ -214,6 +218,10 @@ void WiFiModule::Attack(AttackType type)
 {
 #ifdef OLD_LED
     rgbmodule->setColor(0, 1, 1);
+#endif
+
+#ifdef NEOPIXEL_PIN
+neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
 #endif
 
   switch (type)
