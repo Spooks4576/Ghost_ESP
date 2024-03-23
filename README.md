@@ -24,7 +24,7 @@ Additional board support can be added depending on PlatformIO support and config
 
 ## Notice
 
-Please note that the BLE spam feature may not work well on the ESP32 WROOM due to limited resources, which may cause the ESP to crash.
+Please note that the BLE spam feature will not work on the ESP32 WROOM due to limited resources, which cause the ESP to crash.
 
 ## Acknowledgments
 
