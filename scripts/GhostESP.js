@@ -34,6 +34,7 @@ function receiveSerialData() {
         }
     }
     serial.write("stopscan");
+    delay(1000); // handle cases where stopscan does not go through
     mainMenu();
 }
 
@@ -95,6 +96,7 @@ function wifiUtilsMenu() {
     submenu.addItem("Beacon Spam Rickroll", 10);
     submenu.addItem("Cast V2 Connect", 11);
     submenu.addItem("Dial Connect", 12);
+    submenu.addItem("Deauth Detector", 13);
 
     let result = submenu.show();
 
