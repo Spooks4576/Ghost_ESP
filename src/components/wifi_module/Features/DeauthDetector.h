@@ -47,28 +47,22 @@ void AnalyticsCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
     switch(hdr->frame_ctrl & 0xFC) { // Mask to get type and subtype only
         case 0xB0: // Authentication frame
             DeauthConfig.analyticsdata->authCount[DeauthConfig.CurrentChannel]++;
-            Serial.println("Got Auth Frame");
             break;
         case 0xC0: // Deauthentication frame
             DeauthConfig.analyticsdata->deauthCount[DeauthConfig.CurrentChannel]++;
             DeauthConfig.deauthCount++;
-            Serial.println("Got Deauth Frame");
             break;
         case 0x00: // Association request frame
             DeauthConfig.analyticsdata->probeReqCount[DeauthConfig.CurrentChannel]++;
-            Serial.println("Got Association request Frame");
             break;
         case 0x30: // Reassociation response frame
             DeauthConfig.analyticsdata->probeRespCount[DeauthConfig.CurrentChannel]++;
-            Serial.println("Got Reassociation Response Frame");
             break;
         case 0x40: // Probe request frame
             DeauthConfig.analyticsdata->probeReqCount[DeauthConfig.CurrentChannel]++;
-            Serial.println("Got Probe request frame");
             break;
         case 0x50: // Probe response frame
             DeauthConfig.analyticsdata->probeRespCount[DeauthConfig.CurrentChannel]++;
-                Serial.println("Got Probe response frame");
             break;
         case 0x80: // Beacon frame
             DeauthConfig.analyticsdata->beaconCount[DeauthConfig.CurrentChannel]++;
