@@ -355,6 +355,7 @@ void CommandLine::runCommand(String input)
 
     if (cmd_args.get(0) == "deauthdetector")
     {
+      HasRanCommand = true;
       int ssid = this->argSearch(&cmd_args, "-s");
       int password = this->argSearch(&cmd_args, "-p");
       int webhook = this->argSearch(&cmd_args, "-w");
