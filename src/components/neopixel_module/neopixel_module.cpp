@@ -20,6 +20,7 @@ void NeopixelModule::breatheLED(uint32_t color, int breatheTime, bool FadeOut) {
         // Fade out (from bright to dark)
         for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
             setColor(strip.Color(brightness, brightness, brightness)); // Update the entire strip
+            strip.show();
             delay(wait);
         }
         return;
@@ -28,11 +29,13 @@ void NeopixelModule::breatheLED(uint32_t color, int breatheTime, bool FadeOut) {
     // Fade in (from dark to bright)
     for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
         setColor(strip.Color((color >> 16) * brightness / 255, (color >> 8 & 0xFF) * brightness / 255, (color & 0xFF) * brightness / 255));
+        strip.show();
         delay(wait);
     }
     // Fade out (from bright to dark)
     for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
         setColor(strip.Color((color >> 16) * brightness / 255, (color >> 8 & 0xFF) * brightness / 255, (color & 0xFF) * brightness / 255));
+        strip.show();
         delay(wait);
     }
 }
@@ -42,16 +45,16 @@ void NeopixelModule::rainbow(int strength, int stepDelay) {
     for (uint16_t i = 0; i < numPixels; i++) {
         // Generate rainbow colors across pixels
         strip.setPixelColor(i, strip.Color((i * 256 / numPixels), 255, 255 - (i * 256 / numPixels)));
+        strip.show();
     }
-    strip.show();
     delay(stepDelay);
 }
 
 void NeopixelModule::setColor(uint32_t color) {
     for(uint16_t i = 0; i < numPixels; i++) {
         strip.setPixelColor(i, color);
+        strip.show();
     }
-    strip.show();
 }
 
 void NeopixelModule::setPixelColor(uint16_t n, uint32_t color) {
