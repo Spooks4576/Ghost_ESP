@@ -16,6 +16,10 @@ function sendSerialCommand(command, menutype) {
 function receiveSerialData(menutype) {
     textbox.setConfig("end", "text");
     textbox.show();
+
+    serial.readAny(0);
+
+
     while (textbox.isOpen()) {
         let rx_data = serial.readAny(250);
         if (rx_data !== undefined) {
@@ -89,12 +93,12 @@ function wifiUtilsMenu() {
     submenu.setHeader("Wifi Utilities:");
     submenu.addItem("Scan Wifi", 0);
     submenu.addItem("Scan Stations", 1);
-    submenu.addItem("Add SSID Random", 2);
-    submenu.addItem("Add SSID", 3);
-    submenu.addItem("List AP", 4);
-    submenu.addItem("List Stations", 5);
-    submenu.addItem("Select AP", 6);
-    submenu.addItem("Select Station", 7);
+    submenu.addItem("List AP", 2);
+    submenu.addItem("List Stations", 3);
+    submenu.addItem("Select AP", 4);
+    submenu.addItem("Select Station", 5);
+    submenu.addItem("Add SSID Random", 6);
+    submenu.addItem("Add SSID", 7);
     submenu.addItem("Beacon Spam SSID List", 8);
     submenu.addItem("Beacon Spam Random", 9);
     submenu.addItem("Beacon Spam Rickroll", 10);
@@ -113,28 +117,28 @@ function wifiUtilsMenu() {
     }
 
     if (result === 2) {
-        sendSerialCommand('ssid -a -g', 1);
-    }
-
-    if (result === 3) {
-        let ssid = promptForText("Enter SSID");
-        sendSerialCommand('ssid -a -n ' + ssid, 1);
-    }
-
-    if (result === 4) {
         sendSerialCommand('list -a', 1);
     }
 
-    if (result === 5) {
+    if (result === 3) {
         sendSerialCommand('list -c', 1);
     }
 
-    if (result === 6) {
+    if (result === 4) {
         validateAndSelectAPStation("AP", "select -a", 1);
     }
 
-    if (result === 7) {
+    if (result === 5) {
         validateAndSelectAPStation("Station", "select -s", 1);
+    }
+
+    if (result === 6) {
+        sendSerialCommand('ssid -a -g', 1);
+    }
+
+    if (result === 7) {
+        let ssid = promptForText("Enter SSID");
+        sendSerialCommand('ssid -a -n ' + ssid, 1);
     }
 
     if (result === 8) {
