@@ -127,7 +127,7 @@ void ESPmDNSHelper::queryServices(const char* serviceType, const char* proto, ui
           SendAuth();
           break;
         }
-      } else {
+      } else if (i == 1 || i == 2) { // limit the number of connections to 2
         if (initializeClient(serviceIP.toString().c_str(), servicePort)) {
           SendAuth();
         }
