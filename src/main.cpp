@@ -10,6 +10,10 @@
 #include <Arduino.h>
 #include <SD.h>
 
+#ifdef NUGGET_BOARD
+#include <Nugget/RubberNugget/NuggetEntryPoint.h>
+#endif
+
 void loop() {
 
     if (!HasRanCommand)
@@ -81,24 +85,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     #endif
 
     #ifdef HAS_GPS
-    //gpsmodule = new GpsModule();
-    //gpsmodule->begin();
-    //if (gpsmodule->getGpsModuleStatus())
-    //{
-    //    #ifdef DISPLAY_SUPPORT
-    //    displaymodule->UpdateSplashStatus("GPS Module Connected Successfully", 75);
-    //    delay(100);
-     //   #endif
-    //    Serial.println("GPS Module connected");
-    //}
-    //else 
-    //{
-    //    #ifdef DISPLAY_SUPPORT
-    //    displaymodule->UpdateSplashStatus("GPS Module Failed to Connect", 75);
-    //    delay(100);
-    //    #endif
-    ///    Serial.println("GPS Module NOT connected");
-    ///}
+    
     #endif
 
     #ifdef HAS_BT
@@ -156,5 +143,9 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
+#endif
+
+#ifdef NUGGET_BOARD
+    NuggetEntryPoint();
 #endif
 }

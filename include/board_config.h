@@ -18,6 +18,8 @@
     #include "config/rabbit_labs_minion.h"    
 #elif defined(rek5rek5_BOARD)
     #include "config/rek5rek5_board_module.h"
+#elif defined(NUGGET_BOARD)
+    #include "config/esp32_s2_nugget.h"
 #else
     #error "Board type is not defined or unsupported!"
 #endif
