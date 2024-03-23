@@ -1,6 +1,7 @@
 let submenu = require("submenu");
 let serial = require("serial");
 let keyboard = require("keyboard");
+let textbox = require("textbox");
 let dialog = require("dialog");
 
 serial.setup("usart", 115200);
@@ -15,37 +16,25 @@ function sendSerialCommand(command) {
 function receiveSerialData() {
     let data = '';
     let char = '';
-    while (true) {
+    textbox.setConfig("end", "text");
+    textbox.show();
+    while (textbox.isOpen()) {
         let rx_data = serial.readBytes(1, 1000); // Timeout set to 1000 ms
         if (rx_data !== undefined) {
             let data_view = Uint8Array(rx_data);
             char = chr(data_view[0]);
             if (char === '\n')
             {
-                print(data);
-                data = '';
+                if (data.length > 4096) {
+                    data = data.slice(data.length - 2048);
+                }
+                textbox.setText(data);
             }
             data += char;
-        } else {
-            print("Delaying 2 seconds and Trying again else exiting")
-            delay(10000);
-            rx_data = serial.readBytes(1, 1000);
-            if (rx_data !== undefined) {
-                let data_view = Uint8Array(rx_data);
-                char = chr(data_view[0]);
-                if (char === '\n')
-                {
-                    print(data);
-                    data = '';
-                }
-                data += char;
-            }
-            else {
-                delay(2000);
-                break; // Break if no data received
-            }
         }
     }
+    serial.write("stopscan");
+    mainMenu();
 }
 
 function promptForText(header, defaultValue) {
@@ -143,15 +132,15 @@ function wifiUtilsMenu() {
     }
 
     if (result === 8) {
-        sendSerialCommand('attack beacon -l');
+        sendSerialCommand('attack -t beacon -l');
     }
 
     if (result === 9) {
-        sendSerialCommand('attack beacon -r');
+        sendSerialCommand('attack -t beacon -r');
     }
 
     if (result === 10) {
-        sendSerialCommand('attack rickroll');
+        sendSerialCommand('attack -t rickroll');
     }
 
     if (result === 11)
@@ -168,6 +157,11 @@ function wifiUtilsMenu() {
     if (result === 13)
     {
         sendSerialCommand("deauthdetector -s SSID -p PASSWORD -w WebHookUrl");
+    }
+
+    if (result === undefined)
+    {
+        mainMenu();
     }
 }
 
@@ -200,6 +194,11 @@ function bleSpamMenu() {
     if (result === 4) {
         sendSerialCommand('blespam -t all');
     }
+
+    if (result === undefined)
+    {
+        mainMenu();
+    }
 }
 
 function ledUtilsMenu() {
@@ -208,7 +207,12 @@ function ledUtilsMenu() {
 
     let result = submenu.show();
     if (result === 0) {
-        sendSerialCommand('led');
+        sendSerialCommand('led -p');
+    }
+
+    if (result === undefined)
+    {
+        mainMenu();
     }
 }
 

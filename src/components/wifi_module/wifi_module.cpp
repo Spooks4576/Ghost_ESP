@@ -113,7 +113,7 @@ bool WiFiModule::addSSID(String essid) {
 void WiFiModule::Scan(ScanType type)
 {
 #ifdef OLD_LED
-  rgbmodule->setColor(HIGH, LOW, HIGH);
+  Threadinfo.TargetPin = rgbmodule->greenPin;
 #endif
 
 #ifdef NEOPIXEL_PIN
@@ -217,7 +217,7 @@ int WiFiModule::ClearList(ClearType type)
 void WiFiModule::Attack(AttackType type)
 {
 #ifdef OLD_LED
-    rgbmodule->setColor(0, 1, 1);
+  Threadinfo.TargetPin = rgbmodule->redPin;
 #endif
 
 #ifdef NEOPIXEL_PIN
@@ -237,6 +237,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
                 broadcastSetSSID(rick_roll[x], i);
               }
           }
+          BreatheTask();
           delay(1);
       }
     }
@@ -245,6 +246,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       while (wifi_initialized)
       {
         broadcastRandomSSID();
+        BreatheTask();
         delay(1);
       }
     }
@@ -259,6 +261,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
             broadcastSetSSID(ssids->get(i).essid.c_str(), x);
           }
         }
+        BreatheTask();
         delay(1);
       }
     }
@@ -275,6 +278,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
               }
             }
           }
+          BreatheTask();
         }
       }
     }

@@ -74,13 +74,25 @@ inline GpsInterface* gpsmodule;
 inline DisplayModule* displaymodule;
 #endif
 
-inline void RainbowTask(void *pvParameters)
+struct LEDThreads
 {
-    while (1)
-    {
-#ifdef OLD_LED
-        rgbmodule->Rainbow(0.1, 5);
-#endif
-    }
+TaskHandle_t* RainbowTaskHandle;
+TaskHandle_t* BreatheTaskHandle;
+int TargetPin;
+};
 
+inline LEDThreads Threadinfo;
+
+inline void BreatheTask()
+{
+#ifdef OLD_LED
+    rgbmodule->breatheLED(Threadinfo.TargetPin, 1000);
+#endif
+}
+
+inline void RainbowTask()
+{
+#ifdef OLD_LED
+    rgbmodule->Rainbow(0.1, 5);
+#endif
 }

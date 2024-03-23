@@ -133,10 +133,10 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
             else 
             {
                 #ifdef OLD_LED
+                delay(1000);
                 rgbmodule->setColor(1, 1, 1);
                 #endif
                 wifimodule->shutdownWiFi();
-
                 #ifdef HAS_BT
                 BleModule->shutdownBLE();  
                 #endif

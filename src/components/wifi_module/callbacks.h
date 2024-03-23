@@ -47,6 +47,7 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
       }
 
       if (!in_list) {
+        BreatheTask();
       
         delay(random(0, 10));
         Serial.print("RSSI: ");
@@ -225,6 +226,7 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
                 false};
 
   stations->add(sta);
+  BreatheTask();
 
 
   Serial.print((String)stations->size() + ": ");

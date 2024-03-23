@@ -302,7 +302,6 @@ void CommandLine::runCommand(String input)
 
         if (attack_type == "rickroll")
         {
-          HasRanCommand = true;
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
           wifimodule->Attack(AT_Rickroll);
           return;
@@ -323,7 +322,14 @@ void CommandLine::runCommand(String input)
       if (!RainbowLEDActive)
       {
         RainbowLEDActive = true;
-        xTaskCreate(RainbowTask, "RainbowTask", 1048, NULL, 1, NULL);
+        RainbowTask();
+        RainbowTask();
+        RainbowTask();
+        RainbowTask();
+#ifdef OLD_LED
+        rgbmodule->breatheLED(0, 1000, true);
+#endif
+        RainbowLEDActive = false;
       }
       return;
     }
