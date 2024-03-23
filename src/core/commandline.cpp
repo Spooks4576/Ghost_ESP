@@ -5,6 +5,7 @@
 #include "../components/wifi_module/Controllers/RokuController.h"
 #include "../components/ble_module/ble_module.h"
 #include <components/wifi_module/Features/Dial.h>
+#include "../components/wifi_module/Features/DeauthDetector.h"
 #include <components/wifi_module/Features/ESPmDNSHelper.h>
 
 CommandLine::CommandLine() {
@@ -344,6 +345,35 @@ void CommandLine::runCommand(String input)
           ESPmDNSHelper* helper = new ESPmDNSHelper(SSID.c_str(), Password.c_str(), "", Value.c_str(), "233637DE");
         }
       }
+    }
+
+    if (cmd_args.get(0) == "deauthdetector")
+    {
+      int ssid = this->argSearch(&cmd_args, "-s");
+      int password = this->argSearch(&cmd_args, "-p");
+      int webhook = this->argSearch(&cmd_args, "-w");
+      int channel_index = this->argSearch(&cmd_args, "-c");
+
+      String SSID;
+      String Password;
+      String WebHook;
+      String channel;
+      if (ssid != -1 && password != -1)
+      {
+        SSID = cmd_args.get(ssid + 1);
+        Password = cmd_args.get(password + 1);
+
+        if (webhook != -1)
+        {
+          WebHook = cmd_args.get(webhook + 1);
+        }
+      }
+
+      if (channel_index != -1)
+      {
+        channel = cmd_args.get(channel_index + 1);
+      }
+      InitDeauthDetector(channel, SSID, Password, WebHook);
     }
 
     if (cmd_args.get(0) == "dialconnect")

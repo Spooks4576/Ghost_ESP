@@ -164,6 +164,11 @@ function wifiUtilsMenu() {
     {
         sendSerialCommand("dialconnect -s SSID -p PASSWORD -t youtube -v Y7uhkyameuk");
     }
+
+    if (result === 13)
+    {
+        sendSerialCommand("deauthdetector -s SSID -p PASSWORD -w WebHookUrl");
+    }
 }
 
 function bleSpamMenu() {
