@@ -66,7 +66,7 @@ inline NeopixelModule* neopixelmodule;
 
 #ifdef HAS_GPS
 #include "../components/gps_module/gps_module.h"
-inline GpsInterface* gpsmodule;
+//inline GpsModule* gpsmodule;
 #endif
 
 #ifdef DISPLAY_SUPPORT

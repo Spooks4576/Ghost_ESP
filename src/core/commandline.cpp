@@ -198,11 +198,11 @@ void CommandLine::runCommand(String input)
     if (cmd_args.get(0) == "gpsdata")
     {
         #ifdef HAS_GPS
-            if (gps_obj.getGpsModuleStatus()) {
-                Serial.println("Getting GPS Data. Stop with " + "stopscan");
+            // if (gpsmodule->getGpsModuleStatus()) {
+            //     Serial.println("Getting GPS Data. Stop with stopscan");
 
-              HasRanCommand = true;
-            }
+            //   HasRanCommand = true;
+            // }
         #endif
     }
     if (cmd_args.get(0) == "blespam")
