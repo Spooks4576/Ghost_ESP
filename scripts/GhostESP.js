@@ -14,27 +14,15 @@ function sendSerialCommand(command, menutype) {
 }
 
 function receiveSerialData(menutype) {
-    let data = '';
-    let char = '';
     textbox.setConfig("end", "text");
     textbox.show();
     while (textbox.isOpen()) {
-        let rx_data = serial.readBytes(1, 1000); // Timeout set to 1000 ms
+        let rx_data = serial.readAny(250);
         if (rx_data !== undefined) {
-            let data_view = Uint8Array(rx_data);
-            char = chr(data_view[0]);
-            if (char === '\n')
-            {
-                if (data.length > 4096) {
-                    data = data.slice(data.length - 2048);
-                }
-                textbox.setText(data);
-            }
-            data += char;
+            textbox.addText(rx_data);
         }
     }
     serial.write("stop");
-    delay(1000); // handle cases where stopscan does not go through
 
     if (menutype === 0)
     {
