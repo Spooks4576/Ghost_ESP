@@ -10,6 +10,7 @@ jobs:
     strategy:
       matrix:
         board: [esp32_s2, esp32_c3, lolin_s2_mini, dev_board_pro, marauder_minion]
+      fail-fast: false
 
     steps:
     - name: Checkout code
