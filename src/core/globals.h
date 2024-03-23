@@ -86,13 +86,13 @@ inline LEDThreads Threadinfo;
 inline void BreatheTask()
 {
 #ifdef OLD_LED
-    rgbmodule->breatheLED(Threadinfo.TargetPin, 1000);
+    rgbmodule->breatheLED(Threadinfo.TargetPin, 500);
 #endif
 }
 
 inline void RainbowTask()
 {
 #ifdef OLD_LED
-    rgbmodule->Rainbow(0.1, 5);
+    rgbmodule->Rainbow(0.1, 4);
 #endif
 }
