@@ -7,9 +7,7 @@ void RGBLedModule::init() {
     pinMode(redPin, OUTPUT);
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
-    breatheLED(redPin, 700);
-    breatheLED(greenPin, 700);
-    breatheLED(bluePin, 700, true);
+    Rainbow(1, 7);
 }
 
 void RGBLedModule::breatheLED(int ledPin, int breatheTime, bool fadein)
