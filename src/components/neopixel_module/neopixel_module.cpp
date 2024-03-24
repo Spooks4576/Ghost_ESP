@@ -8,53 +8,53 @@ NeopixelModule::NeopixelModule(uint16_t numPixels, uint8_t pin)
 void NeopixelModule::init() {
     strip.begin();
     rainbow(255, 4);
-    //breatheLED(strip.Color(255, 255, 255), 400, true); // White color for breathing
-    strip.show(); // Initialize all pixels to 'off'
+    breatheLED(strip.Color(255, 255, 255), 200, true);
+    strip.show();
 }
 
 void NeopixelModule::breatheLED(uint32_t color, int breatheTime, bool FadeOut) {
-    int fadeAmount = 5; // Adjust for different speeds
-    int wait = breatheTime / ((255 / fadeAmount) * 2); // Total time for one breathe cycle
+    int fadeAmount = 5;
+    int wait = breatheTime / ((255 / fadeAmount) * 2);
 
     if (FadeOut) {
-        // Fade in (from dark to bright), since the original logic seems inverted
-         for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
-            setColor(strip.Color((color >> 16) * brightness / 255, (color >> 8 & 0xFF) * brightness / 255, (color & 0xFF) * brightness / 255));
+       
+        for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
+            setColor(color);
             strip.setBrightness(brightness);
-            strip.show(); // Update the strip with the new color
+            strip.show(); 
             delay(wait);
         }
     } else {
-        // Fade in (from dark to bright)
+       
         for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
-            setColor(strip.Color((color >> 16) * brightness / 255, (color >> 8 & 0xFF) * brightness / 255, (color & 0xFF) * brightness / 255));
+            setColor(color);
             strip.setBrightness(brightness);
-            strip.show(); // Update the strip with the new color
+            strip.show();
             delay(wait);
         }
-        // Fade out (from bright to dark)
+      
         for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
-            setColor(strip.Color((color >> 16) * brightness / 255, (color >> 8 & 0xFF) * brightness / 255, (color & 0xFF) * brightness / 255));
+            setColor(color);
             strip.setBrightness(brightness);
-            strip.show(); // Update the strip with the new color
+            strip.show();
             delay(wait);
         }
     }
 }
 
 void NeopixelModule::rainbow(int strength, int stepDelay) {
-    // Ensure the 'strength' parameter is within the expected range
+    
     strength = max(0, min(strength, 255));
-    // Set the brightness of the strip
+   
     strip.setBrightness(strength);
 
-    // Generate rainbow colors for a single pixel over time
-    for (uint16_t i = 0; i < 256; i++) { // Loop through all 256 color positions
-        // Use the Wheel function to generate colors across the spectrum
+   
+    for (uint16_t i = 0; i < 256; i++) {
+       
         uint32_t color = Wheel(i & 255);
-        strip.setPixelColor(0, color); // Update only the first LED (or change 0 to another index if needed)
-        strip.show(); // Update the strip to show the new color
-        delay(stepDelay); // Wait for 'stepDelay' milliseconds before the next color change
+        strip.setPixelColor(0, color); 
+        strip.show(); 
+        delay(stepDelay); 
     }
 }
 
