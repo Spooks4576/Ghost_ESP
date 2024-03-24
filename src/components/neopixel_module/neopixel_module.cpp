@@ -8,7 +8,7 @@ NeopixelModule::NeopixelModule(uint16_t numPixels, uint8_t pin)
 void NeopixelModule::init() {
     strip.begin();
     rainbow(255, 4);
-    breatheLED(strip.Color(255, 255, 255), 400, true); // White color for breathing
+    //breatheLED(strip.Color(255, 255, 255), 400, true); // White color for breathing
     strip.show(); // Initialize all pixels to 'off'
 }
 
@@ -48,18 +48,14 @@ void NeopixelModule::rainbow(int strength, int stepDelay) {
     // Set the brightness of the strip
     strip.setBrightness(strength);
 
-    // Generate rainbow colors across all pixels
-    for (uint16_t i = 0; i < numPixels; i++) {
-        // Wheel function generates colors across the spectrum. 256 colors in total.
-        // 'Wheel' needs to be defined. It is a common function used with Neopixel LEDs for generating colors.
-        uint32_t color = Wheel((i * 256 / numPixels) & 255);
-        strip.setPixelColor(i, color);
+    // Generate rainbow colors for a single pixel over time
+    for (uint16_t i = 0; i < 256; i++) { // Loop through all 256 color positions
+        // Use the Wheel function to generate colors across the spectrum
+        uint32_t color = Wheel(i & 255);
+        strip.setPixelColor(0, color); // Update only the first LED (or change 0 to another index if needed)
+        strip.show(); // Update the strip to show the new color
+        delay(stepDelay); // Wait for 'stepDelay' milliseconds before the next color change
     }
-
-    // Update the strip to show the new colors
-    strip.show();
-    // Pause for 'stepDelay' milliseconds before the next update
-    delay(stepDelay);
 }
 
 uint32_t NeopixelModule::Wheel(byte WheelPos) {
@@ -76,10 +72,8 @@ uint32_t NeopixelModule::Wheel(byte WheelPos) {
 }
 
 void NeopixelModule::setColor(uint32_t color) {
-    for(uint16_t i = 0; i < numPixels; i++) {
-        strip.setPixelColor(i, color);
-        strip.show();
-    }
+    strip.setPixelColor(0, color);
+    strip.show();
 }
 
 void NeopixelModule::setPixelColor(uint16_t n, uint32_t color) {
