@@ -47,7 +47,7 @@ void setup()
     #ifdef DISPLAY_SUPPORT
         Serial.println("About to Init Display");
         displaymodule = new DisplayModule();
-        displaymodule->init();
+        displaymodule->RenderSplashScreen();
         Serial.println("Init Display");
     #endif
 

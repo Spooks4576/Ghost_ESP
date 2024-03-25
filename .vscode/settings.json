@@ -22,7 +22,9 @@
         "type_traits": "cpp",
         "utility": "cpp",
         "memory": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp"
     },
     "cmake.sourceDirectory": "D:/github/ESP32_Marauder_Rewrite/.pio/libdeps/esp32_dev/AsyncTCP-esphome"
 }

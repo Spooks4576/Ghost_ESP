@@ -1,0 +1,4 @@
+#pragma once
+#define DISPLAY_SUPPORT
+#define DISPLAYWIDTH 240
+#define DISPLAYHEIGHT 320

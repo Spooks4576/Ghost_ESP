@@ -12,6 +12,8 @@
     #include "config/rabbit_labs_minion.h"
 #elif defined(NUGGET_BOARD)
     #include "config/esp32_s2_nugget.h"
+#elif defined(CHEAP_YELLOW_BOARD)
+    #include "config/cheap_yellow_display.h"
 #else
     #error "Board type is not defined or unsupported!"
 #endif
