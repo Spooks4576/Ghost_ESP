@@ -17,11 +17,13 @@
 void loop() {
 
 #ifdef DISPLAY_SUPPORT
-    if (!displaymodule->IsOnSplash)
-    {
-        displaymodule->detectSwipeAndSwitchItems();
-        delay(100);
-    }
+if (ts.touched()) 
+{
+    TS_Point p = ts.getPoint();
+    p.x = map(p.x, 200, 3700, 0, displaymodule->tft.width()); // TODO Move these to Defines For Other Touch Screen Boards
+    p.y = map(p.y, 240, 3800, 0, displaymodule->tft.height());
+    displaymodule->checkTouch(p.x, p.y);
+}
 #endif
 
     if (!HasRanCommand)
@@ -55,7 +57,7 @@ void setup()
     #ifdef DISPLAY_SUPPORT
         Serial.println("About to Init Display");
         displaymodule = new DisplayModule();
-        displaymodule->RenderSplashScreen();
+        displaymodule->Init();
         Serial.println("Init Display");
     #endif
 
@@ -101,7 +103,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     BleModule->init();
     #ifdef DISPLAY_SUPPORT
         displaymodule->UpdateSplashStatus("Initilized BLE...", 80);
-        delay(100);
+        delay(1000);
         displaymodule->UpdateSplashStatus(esp_get_idf_version(), 80);
     #endif
     #endif

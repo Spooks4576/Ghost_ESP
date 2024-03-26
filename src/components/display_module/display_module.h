@@ -4,11 +4,6 @@
 #include "board_config.h"
 
 #define minimum(a,b)     (((a) < (b)) ? (a) : (b))
-#define SWIPE_THRESHOLD 30
-#define TS_MINX 100
-#define TS_MAXX 3800
-#define TS_MINY 100
-#define TS_MAXY 3800
 
 #ifdef DISPLAY_SUPPORT
 #include <TFT_eSPI.h>
@@ -16,12 +11,9 @@
 #include <XPT2046_Touchscreen.h>
 #include <LinkedList.h>
 
+
 inline lv_color_t buf[ DISPLAYWIDTH * DISPLAYHEIGHT / 10 ];
-
-inline XPT2046_Touchscreen* touchscreen; // Global Due to Callback syntax
-inline uint16_t touchScreenMinimumX = 200, touchScreenMaximumX = 3700, touchScreenMinimumY = 240,touchScreenMaximumY = 3800;
-
-
+inline XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
 
 struct SplashScreen
 {
@@ -29,12 +21,6 @@ struct SplashScreen
     int Progress;
     const char* lastSplashText = "";
     int lastSplashProgress = -1;
-};
-
-struct MenuItem {
-    String label;
-    uint16_t color;
-    uint16_t textColor;
 };
 
 enum MenuType
@@ -45,46 +31,55 @@ enum MenuType
     MT_LEDUtils,
 };
 
-struct MainMenu
-{
-    LinkedList<MenuItem> menuItems;
-    int currentItemIndex = 0;
-    TS_Point lastTouchPoint; // Store the last touch point
-    bool isTouching = false;
-    bool needRedraw = true;  // Flag to indicate when the screen needs to be redrawn
-    int prevItemIndex = -1;  // Previous menu item index for comparison
-
-    // Swipe detection variables
-    bool swipeStart = false;
-    int startX = 0;
-    int endX = 0;
-};
-
-struct Button {
-    int x, y;   // Top left corner
-    int w, h;   // Width and height
-    String label; // Button text
-    uint16_t color; // Button color
-    uint16_t textColor; // Text color
-    bool lastState = false; // Last touch state
-};
-
 class DisplayModule {
 public:
     TFT_eSPI tft = TFT_eSPI();
+    TFT_eSprite spr = TFT_eSprite(&tft);
+    uint16_t backgroundColor, buttonColor, textColor, buttonTextColor;
     bool IsOnSplash;
-    MainMenu mainmenu;
     MenuType mtype;
     SplashScreen Splash;
     SPIClass touchscreenSpi = SPIClass(VSPI);
-    void drawProgressBar(int x, int y, int w, int h, int progress, uint16_t color);
+
+
+    struct Button {
+        int x, y, w, h;
+        uint16_t color, textColor, buttonPressedColor;
+        String label;
+        bool isPressed, isVisible;
+        void (*callback)();
+
+        bool contains(int tx, int ty) {
+            return tx >= x && tx <= x + w && ty >= y && ty <= y + h;
+        }
+
+        void draw(TFT_eSprite &spr) {
+            if (!isVisible) return;
+            spr.fillRect(x, y, w, h, isPressed ? buttonPressedColor : color);
+            spr.setTextColor(textColor);
+            spr.drawCentreString(label, x + w / 2, y + h / 2 - 8, 2); // Center text vertically and horizontally
+        }
+    };
+
+    Button MainMenuButtons[3] = {
+        {60, 50, 200, 40, TFT_BLUE, TFT_WHITE, TFT_RED, "BLE Attacks", false, true, nullptr},
+        {60, 110, 200, 40, TFT_BLUE, TFT_WHITE, TFT_RED, "WiFi Utils", false, true, nullptr},
+        {60, 170, 200, 40, TFT_BLUE, TFT_WHITE, TFT_RED, "LED Utils", false, true, nullptr}
+    };
+    DisplayModule() : backgroundColor(TFT_BLACK), buttonColor(TFT_BLUE),
+                      textColor(TFT_WHITE),
+                      buttonTextColor(TFT_WHITE) {
+        tft = TFT_eSPI(TFT_WIDTH, TFT_HEIGHT); // Initialize display
+    }
+
+    void drawMainMenu();
+    void animateMenu();
+    void setButtonCallback(int buttonIndex, void (*callback)());
+    void checkTouch(int tx, int ty);
     void UpdateSplashStatus(const char* Text, int Percent);
-    void RenderSplashScreen();
+    void Init();
     void RenderJpg(int x, int y);
-    void drawButton(int x, int y, int w, int h, String text, bool isPressed);
-    bool isButtonTouched(Button &btn, TS_Point p);
-    void detectSwipeAndSwitchItems();
-    void drawCurrentMenuItem();
+    void printTouchToSerial(TS_Point p);
 };
 
 #endif
