@@ -31,8 +31,25 @@ enum MenuType
     MT_LEDUtils,
 };
 
+struct Card {
+    int x, y, w, h;
+    String title;
+    uint16_t bgColor;
+    uint16_t fgColor;
+    bool isSelected;
+    const uint16_t* imageBuffer;
+};
+
+const int numCards = 3;
+const int cardWidth = 70;
+const int cardHeight = 70;
+const int cardSpacing = 15;
+const int xOffset = (240 - cardWidth) / 2;
+const int yOffset = 20;
+
 class DisplayModule {
 public:
+    SPIClass mySpi = SPIClass(VSPI);
     TFT_eSPI tft = TFT_eSPI();
     TFT_eSprite spr = TFT_eSprite(&tft);
     uint16_t backgroundColor, buttonColor, textColor, buttonTextColor;
@@ -42,30 +59,12 @@ public:
     SPIClass touchscreenSpi = SPIClass(VSPI);
 
 
-    struct Button {
-        int x, y, w, h;
-        uint16_t color, textColor, buttonPressedColor;
-        String label;
-        bool isPressed, isVisible;
-        void (*callback)();
-
-        bool contains(int tx, int ty) {
-            return tx >= x && tx <= x + w && ty >= y && ty <= y + h;
-        }
-
-        void draw(TFT_eSprite &spr) {
-            if (!isVisible) return;
-            spr.fillRect(x, y, w, h, isPressed ? buttonPressedColor : color);
-            spr.setTextColor(textColor);
-            spr.drawCentreString(label, x + w / 2, y + h / 2 - 8, 2); // Center text vertically and horizontally
-        }
+    Card cards[numCards] = {
+        {xOffset, yOffset, cardWidth, cardHeight, "BLE Attacks", TFT_WHITE, TFT_BLACK, false, nullptr},
+        {xOffset, yOffset + cardHeight + cardSpacing, cardWidth, cardHeight, "WiFi Utils", TFT_WHITE, TFT_BLACK, false, nullptr},
+        {xOffset, yOffset + 2 * (cardHeight + cardSpacing), cardWidth, cardHeight, "Led Utils", TFT_WHITE, TFT_BLACK, false, nullptr}
     };
 
-    Button MainMenuButtons[3] = {
-        {60, 50, 200, 40, TFT_BLUE, TFT_WHITE, TFT_RED, "BLE Attacks", false, true, nullptr},
-        {60, 110, 200, 40, TFT_BLUE, TFT_WHITE, TFT_RED, "WiFi Utils", false, true, nullptr},
-        {60, 170, 200, 40, TFT_BLUE, TFT_WHITE, TFT_RED, "LED Utils", false, true, nullptr}
-    };
     DisplayModule() : backgroundColor(TFT_BLACK), buttonColor(TFT_BLUE),
                       textColor(TFT_WHITE),
                       buttonTextColor(TFT_WHITE) {
@@ -73,7 +72,10 @@ public:
     }
 
     void drawMainMenu();
+    void drawSelectedLabel(const String &label);
     void animateMenu();
+    void animateCardPop(const Card &card);
+    void drawCard(const Card &card);
     void setButtonCallback(int buttonIndex, void (*callback)());
     void checkTouch(int tx, int ty);
     void UpdateSplashStatus(const char* Text, int Percent);

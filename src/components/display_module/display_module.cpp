@@ -99,56 +99,70 @@ void DisplayModule::UpdateSplashStatus(const char* Text, int Percent)
     tft.fillScreen(TFT_BLACK);
     IsOnSplash = false;
     drawMainMenu();
-    animateMenu();
    }
 }
 
 void DisplayModule::drawMainMenu()
 {
-    spr.fillSprite(backgroundColor);
-    for (Button &btn : MainMenuButtons) {
-        btn.draw(spr);
+    tft.fillScreen(TFT_BLACK);
+    for (int i = 0; i < numCards; i++) {
+        drawCard(cards[i]);
     }
-    spr.pushSprite(0, 0);
 }
 
 void DisplayModule::animateMenu()
 {
-    
-    for (int i = -TFT_WIDTH; i <= 0; i += 20) {
-        spr.fillSprite(backgroundColor);
-        for (Button &btn : MainMenuButtons) {
-            btn.x = 60 + i;
-            btn.draw(spr);
-        }
-        spr.pushSprite(0, 0);
-        delay(5);
-    }
+
 }
 
 void DisplayModule::setButtonCallback(int buttonIndex, void (*callback)()) {
-    if (buttonIndex >= 0 && buttonIndex < sizeof(MainMenuButtons) / sizeof(MainMenuButtons[0])) {
-        MainMenuButtons[buttonIndex].callback = callback;
+   
+}
+
+void DisplayModule::animateCardPop(const Card &card) {
+    int expandAmount = 4;
+    for (int i = 0; i <= expandAmount; i += 2) {
+        tft.fillRect(card.x - i, card.y - i, card.w + 2*i, card.h + 2*i, card.isSelected ? TFT_RED : card.bgColor);
+        tft.drawRect(card.x - i, card.y - i, card.w + 2*i, card.h + 2*i, TFT_WHITE);  // Card outline
+        delay(15);
+    }
+    for (int i = expandAmount; i >= 0; i -= 2) {
+        tft.fillRect(card.x - i, card.y - i, card.w + 2*i, card.h + 2*i, TFT_BLACK);  // Erase previous size
+        drawCard(card);
+        delay(15);
     }
 }
 
 void DisplayModule::checkTouch(int tx, int ty) {
-    for (Button &btn : MainMenuButtons) {
-        if (btn.contains(tx, ty)) {
-            btn.isPressed = true;
-            btn.draw(spr);
-            spr.pushSprite(0, 0);
-            delay(100);
+    TS_Point p = ts.getPoint();
 
-            if (btn.callback) { 
-                btn.callback();
-            }
-
-            btn.isPressed = false;
-            btn.draw(spr);
-            spr.pushSprite(0, 0);
-            break;
+     for (int i = 0; i < numCards; i++) {
+        if (p.x > cards[i].x && p.x < cards[i].x + cards[i].w && p.y > cards[i].y && p.y < cards[i].y + cards[i].h) {
+            cards[i].isSelected = true;
+            drawCard(cards[i]);
+            drawSelectedLabel(cards[i].title);
+        } 
+        else 
+        {
+            cards[i].isSelected = false;
+            drawCard(cards[i]);
         }
+    }
+}
+
+void DisplayModule::drawSelectedLabel(const String &label) {
+    tft.fillRect(0, 0, 240, 30, TFT_BLACK);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextSize(1);
+    tft.drawString(label, 5, 10, 2);
+}
+
+void DisplayModule::drawCard(const Card &card) {
+    
+    tft.fillRect(card.x, card.y, card.w, card.h, card.bgColor);
+    
+    if (card.imageBuffer != nullptr) {
+        tft.pushImage(card.x, card.y, card.w, card.h, card.imageBuffer);
     }
 }
 
@@ -159,6 +173,7 @@ void DisplayModule::Init()
     tft.setRotation(0);
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
     ts.begin();
     ts.setRotation(0);
 }
