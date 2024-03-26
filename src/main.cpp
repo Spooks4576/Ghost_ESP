@@ -16,6 +16,14 @@
 
 void loop() {
 
+#ifdef DISPLAY_SUPPORT
+    if (!displaymodule->IsOnSplash)
+    {
+        displaymodule->detectSwipeAndSwitchItems();
+        delay(100);
+    }
+#endif
+
     if (!HasRanCommand)
     {
         double currentTime = millis();
@@ -107,7 +115,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     cli->RunSetup();
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Wifi Initilized", 95);
-    delay(100);
+    delay(500);
 #endif
 
     registerCallback(
@@ -145,6 +153,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
+    delay(500);
 #endif
 
 #ifdef NUGGET_BOARD
