@@ -2,6 +2,8 @@
 
 #ifdef SD_CARD_CS_PIN
 
+#include <time.h> 
+
 SDCardModule::SDCardModule() : csPin(SD_CARD_CS_PIN) {}
 
 bool SDCardModule::init() {
@@ -11,6 +13,20 @@ bool SDCardModule::init() {
     }
     Serial.println("SD Card initialized.");
     return true;
+}
+
+bool SDCardModule::logMessage(const char *logFileName, const char *message) {
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo)) {
+        Serial.println("Failed to obtain time");
+        return false;
+    }
+    char timeString[64];
+    // Format time: [MM-DD-YYYY HH:MM:SS AM/PM]
+    strftime(timeString, sizeof(timeString), "[%m-%d-%Y %I:%M:%S %p] ", &timeinfo);
+
+    String fullMessage = String(timeString) + message; // Concatenate time and message
+    return appendFile(logFileName, fullMessage.c_str()); // Use existing method to append the log
 }
 
 bool SDCardModule::writeFile(const char *path, const char *message) {

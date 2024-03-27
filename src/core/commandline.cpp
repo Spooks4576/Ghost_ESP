@@ -329,6 +329,9 @@ void CommandLine::runCommand(String input)
 #ifdef OLD_LED
         rgbmodule->breatheLED(0, 1000, true);
 #endif
+#ifdef NEOPIXEL_PIN
+        neopixelmodule->breatheLED(0, 1000, true);
+#endif
         RainbowLEDActive = false;
       }
       return;

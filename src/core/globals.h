@@ -71,6 +71,7 @@ inline NeopixelModule* neopixelmodule;
 
 #ifdef DISPLAY_SUPPORT
 #include "../components/display_module/display_module.h"
+#include "../lib/TFT_eSPI/User_Setup.h"
 inline DisplayModule* displaymodule;
 #endif
 
@@ -94,5 +95,7 @@ inline void RainbowTask()
 {
 #ifdef OLD_LED
     rgbmodule->Rainbow(0.1, 4);
+#elif SD_CARD_CS_PIN
+    neopixelmodule->rainbow(255, 4);
 #endif
 }
