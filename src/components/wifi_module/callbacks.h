@@ -48,6 +48,9 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
 
       if (!in_list) {
         BreatheTask();
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 300, false);
+#endif
       
         delay(random(0, 10));
         Serial.print("RSSI: ");
@@ -227,6 +230,9 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
   stations->add(sta);
   BreatheTask();
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 300, false);
+#endif
 
 
   Serial.print((String)stations->size() + ": ");

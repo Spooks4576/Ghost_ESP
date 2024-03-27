@@ -114,10 +114,6 @@ void WiFiModule::Scan(ScanType type)
   Threadinfo.TargetPin = rgbmodule->greenPin;
 #endif
 
-#ifdef NEOPIXEL_PIN
-neopixelmodule->setColor(neopixelmodule->strip.Color(0, 255, 0));
-#endif
-
   switch (type)
   {
     case ScanType::SCAN_AP:
@@ -218,10 +214,6 @@ void WiFiModule::Attack(AttackType type)
   Threadinfo.TargetPin = rgbmodule->redPin;
 #endif
 
-#ifdef NEOPIXEL_PIN
-neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
-#endif
-
   switch (type)
   {
     case AttackType::AT_Rickroll:
@@ -236,6 +228,9 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
               }
           }
           BreatheTask();
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
+#endif
           delay(1);
       }
     }

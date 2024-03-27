@@ -1,5 +1,6 @@
 #include "ble_module.h"
 #include <Arduino.h>
+#include "core/globals.h"
 
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -187,6 +188,9 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       pAdvertising->setAdvertisementData(advertisementData.AdvData);
       pAdvertising->setScanResponseData(advertisementData.ScanData);
       pAdvertising->start();
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
+#endif
       delay(100);
       pAdvertising->stop();
 

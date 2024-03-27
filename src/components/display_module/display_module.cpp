@@ -2,7 +2,8 @@
 #ifdef DISPLAY_SUPPORT
 
 #include <JPEGDecoder.h>
-#include <core/logo.h>
+#include <core/images/logo.h>
+#include <core/images/bg.h>
 
 void DisplayModule::RenderJpg(int xpos, int ypos)
 {
@@ -106,6 +107,14 @@ void DisplayModule::UpdateSplashStatus(const char* Text, int Percent)
 void DisplayModule::drawMainMenu()
 {
     tft.fillScreen(TFT_BLACK);
+
+    bool decoded = JpegDec.decodeArray(bg_jpg, bg_jpg_size);
+
+    if (decoded)
+    {
+        RenderJpg(0, 0);
+    }
+
     for (int i = 0; i < numCards; i++) {
         drawCard(cards[i]);
     }
