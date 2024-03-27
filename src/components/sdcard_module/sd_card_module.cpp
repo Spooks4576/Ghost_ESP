@@ -51,7 +51,7 @@ bool SDCardModule::init() {
     return true;
 }
 
-bool SDCardModule::logMessage(const char *logFileName, const char* foldername, const char *message)
+bool SDCardModule::logMessage(const char *logFileName, const char* foldername, String message)
 {
     if (Initlized)
     {

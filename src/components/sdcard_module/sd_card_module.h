@@ -14,7 +14,7 @@ public:
     bool readFile(const char *path);
     bool appendFile(const char *path, const char *message);
     bool deleteFile(const char *path);
-    bool logMessage(const char *logFileName, const char* foldername, const char *message);
+    bool logMessage(const char *logFileName, const char* foldername, String message);
 
 private:
     int csPin;

@@ -1,4 +1,5 @@
 #include "Dial.h"
+#include "core/globals.h"
 
 const int MAX_RETRIES = 50;
 const int RETRY_DELAY = 500;
@@ -34,24 +35,28 @@ bool DIALClient::fetchScreenIdWithRetries(const String& applicationUrl, Device& 
       return true;
     } else {
       Serial.println("Screen ID is Empty. Retrying...");
+      LOG_MESSAGE_TO_SD("Screen ID is Empty. Retrying...");
       delay(RETRY_DELAY);
     }
   }
 
   Serial.println(F("Failed to fetch Screen ID after max retries."));
+  LOG_MESSAGE_TO_SD("Failed to fetch Screen ID after max retries.");
   return false;
 }
 
 
 void DIALClient::connectWiFi() {
   Serial.println("[connectWiFi] Initiating WiFi connection.");
+  LOG_MESSAGE_TO_SD("[connectWiFi] Initiating WiFi connection.");  
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.println("[connectWiFi] Connecting to WiFi...");
+    LOG_MESSAGE_TO_SD("[connectWiFi] Initiating WiFi connection.");  
   }
   Serial.println("[connectWiFi] Connected to WiFi.");
-
+  LOG_MESSAGE_TO_SD("[connectWiFi] Connected to WiFi.");
   if (appHandler->getType() == HandlerType::YoutubeController) {
     YoutubeController* YTHandler = static_cast<YoutubeController*>(appHandler);
     YTHandler->YTService.secureClient.setInsecure();
@@ -88,6 +93,7 @@ std::vector<Device> DIALClient::discoverDevices() {
   while (devices.empty() && retries < MAX_RETRIES) {
     if (retries > 0) {
       Serial.println("[discoverDevices] Retrying device discovery...");
+      LOG_MESSAGE_TO_SD("[discoverDevices] Retrying device discovery...");
       delay(RETRY_DELAY);
     }
 
@@ -129,6 +135,7 @@ std::vector<Device> DIALClient::discoverDevices() {
 
   if (devices.empty()) {
     Serial.println(F("[discoverDevices] No devices found after all retries."));
+    LOG_MESSAGE_TO_SD("[discoverDevices] No devices found after all retries.");
   }
 
   return devices;
@@ -145,13 +152,17 @@ void DIALClient::exploreNetwork() {
 
     if (devices.empty()) {
       Serial.println(F("No devices discovered. Retrying..."));
+      LOG_MESSAGE_TO_SD("No devices discovered. Retrying...");
       continue;
     }
 
     for (Device& device : devices) {
       Serial.println("Discovered Device at URL: " + device.location);
+      LOG_MESSAGE_TO_SD("Discovered Device at URL: " + device.location);
       Serial.println(device.friendlyName.c_str());
+      LOG_MESSAGE_TO_SD(device.friendlyName.c_str());
       Serial.println(device.wakeup.c_str());
+      LOG_MESSAGE_TO_SD(device.wakeup.c_str());
 
 
       device.applicationUrl = getDialApplicationUrl(device.location);
@@ -161,6 +172,7 @@ void DIALClient::exploreNetwork() {
           YoutubeController* YTHandler = static_cast<YoutubeController*>(appHandler);
           if (appHandler->checkAppStatus(device.applicationUrl, device) != 200) {
             Serial.println(F("Launching Youtube App"));
+            LOG_MESSAGE_TO_SD("Launching Youtube App");
             appHandler->launchApp(device.applicationUrl);
           }
 
@@ -181,6 +193,7 @@ void DIALClient::exploreNetwork() {
             }
           } else {
             Serial.println("Timeout reached. YouTube app is not running.");
+            LOG_MESSAGE_TO_SD("Timeout reached. YouTube app is not running.");
           }
         } else if (appHandler->getType() == HandlerType::RokuController) {
           RokuController* RKHandler = static_cast<RokuController*>(appHandler);
@@ -197,9 +210,11 @@ void DIALClient::exploreNetwork() {
           }
         } else if (appHandler->getType() == HandlerType::NetflixController) {
           Serial.println("Launching App");
+          LOG_MESSAGE_TO_SD("Launching App");
           appHandler->launchApp(device.applicationUrl);
         }
         Serial.println(device.uniqueServiceName);
+        LOG_MESSAGE_TO_SD(device.uniqueServiceName);
       }
     }
   }
@@ -208,6 +223,7 @@ void DIALClient::exploreNetwork() {
 
 bool DIALClient::parseSSDPResponse(const String& response, Device& device) {
   Serial.println(F("[parseSSDPResponse] Parsing SSDP response."));
+  LOG_MESSAGE_TO_SD("[parseSSDPResponse] Parsing SSDP response.");
 
   if (response.length() == 0) {
     return false;
@@ -321,12 +337,15 @@ String DIALClient::getDialApplicationUrl(const String& locationUrl) {
 
     if (!appUrl.isEmpty()) {
       Serial.println("[getDialApplicationUrl] Application-URL: " + appUrl);
+      LOG_MESSAGE_TO_SD("[getDialApplicationUrl] Application-URL: " + appUrl);
     } else {
       Serial.println(F("[getDialApplicationUrl] Couldn't find Application-URL in the headers."));
+      LOG_MESSAGE_TO_SD("[getDialApplicationUrl] Couldn't find Application-URL in the headers.");
     }
     return appUrl;
   } else {
     Serial.println("Failed to fetch device description from " + locationUrl + ". HTTP Response Code: " + String(httpCode));
+    LOG_MESSAGE_TO_SD("Failed to fetch device description from " + locationUrl + ". HTTP Response Code: " + String(httpCode));
     return "";
   }
 }
