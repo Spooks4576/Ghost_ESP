@@ -101,7 +101,9 @@ inline void RainbowTask()
 }
 
 #ifdef SD_CARD_CS_PIN
-#define LOG_MESSAGE_TO_SD(message) sdCardmodule->logMessage("GhostESP.txt", message)
+#define LOG_MESSAGE_TO_SD(message) sdCardmodule->logMessage("GhostESP.txt", "logs", message)
+#define LOG_RESULTS(filename, folder, message) sdCardmodule->logMessage(filename, folder, message)
 #else
 #define LOG_MESSAGE_TO_SD(message) // Not Supported do nothing
+#define LOG_SCAN_RESULTS(filename, folder, message)
 #endif

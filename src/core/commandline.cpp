@@ -620,5 +620,19 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       LOG_MESSAGE_TO_SD("You did not specify which list to show");
       return;
     }
+
+    if (cmd_args.get(0) == "stop")
+    {
+      #ifdef OLD_LED
+      rgbmodule->setColor(1, 1, 1);
+      #endif
+      #ifdef NEOPIXEL_PIN
+      neopixelmodule->strip.setBrightness(0);
+      #endif
+      wifimodule->shutdownWiFi();
+      #ifdef HAS_BT
+      BleModule->shutdownBLE();  
+      #endif
+    }
   }
 }

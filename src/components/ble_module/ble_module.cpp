@@ -30,8 +30,6 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
 
     switch (Type) {
       case Microsoft: {
-
-        LOG_MESSAGE_TO_SD(("Sending Microsoft Packet\n"));
         
         const char* Name = this->generateRandomName();
 
@@ -53,7 +51,6 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         break;
       }
       case Apple: {
-        LOG_MESSAGE_TO_SD(("Sending Apple Packet\n"));
         AdvData_Raw = new uint8_t[17];
 
         AdvData_Raw[i++] = 17 - 1;    // Packet Length
@@ -76,7 +73,6 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         break;
       }
       case Samsung: {
-        LOG_MESSAGE_TO_SD(("Sending Samsung Packet\n"));
         int randval = random(1, 2);
 
         if (randval == 1)
@@ -126,7 +122,6 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         break;
       }
       case Google: {
-        LOG_MESSAGE_TO_SD(("Sending Google Packet\n"));
         AdvData_Raw = new uint8_t[14];
         AdvData_Raw[i++] = 3;
         AdvData_Raw[i++] = 0x03;

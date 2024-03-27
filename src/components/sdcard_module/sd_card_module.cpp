@@ -51,7 +51,8 @@ bool SDCardModule::init() {
     return true;
 }
 
-bool SDCardModule::logMessage(const char *logFileName, const char *message) {
+bool SDCardModule::logMessage(const char *logFileName, const char* foldername, const char *message)
+{
     if (Initlized)
     {
         unsigned long timeSinceBoot = millis();
@@ -63,9 +64,19 @@ bool SDCardModule::logMessage(const char *logFileName, const char *message) {
         sprintf(timeString, "[%02lu:%02lu:%02lu] ", hours, minutes, seconds);
         
         char newLogFileName[128];
-        sprintf(newLogFileName, "/logs/boot_%u_%s", BootNum, logFileName);
+        sprintf(newLogFileName, "/%s/boot_%u_%s", foldername, BootNum, logFileName);
 
         String fullMessage = String(timeString) + message;
+
+        if (!SD.exists("/" + String(foldername)))
+        {
+            SD.mkdir("/" + String(foldername));
+        }
+
+        if (!SD.exists(newLogFileName))
+        {
+            writeFile(newLogFileName, "Begin File");
+        }
         
         return appendFile(newLogFileName, fullMessage.c_str());
     }
