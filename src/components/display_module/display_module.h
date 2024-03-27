@@ -7,12 +7,11 @@
 
 #ifdef DISPLAY_SUPPORT
 #include <TFT_eSPI.h>
-#include <lvgl.h>
 #include <XPT2046_Touchscreen.h>
 #include <LinkedList.h>
 
 
-inline lv_color_t buf[ DISPLAYWIDTH * DISPLAYHEIGHT / 10 ];
+
 inline XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
 
 struct SplashScreen
@@ -41,11 +40,11 @@ struct Card {
 };
 
 const int numCards = 3;
-const int cardWidth = 70;
-const int cardHeight = 70;
+const int cardWidth = 50;
+const int cardHeight = 50;
 const int cardSpacing = 15;
-const int xOffset = (240 - cardWidth) / 2;
-const int yOffset = 20;
+const int xOffset = 80;      // Starting x-offset from left of the screen, adjust based on preference
+const int yOffset = (240 - cardHeight) / 2;  // Center cards height-wise
 
 class DisplayModule {
 public:
@@ -56,13 +55,12 @@ public:
     bool IsOnSplash;
     MenuType mtype;
     SplashScreen Splash;
-    SPIClass touchscreenSpi = SPIClass(VSPI);
 
 
     Card cards[numCards] = {
         {xOffset, yOffset, cardWidth, cardHeight, "BLE Attacks", TFT_WHITE, TFT_BLACK, false, nullptr},
-        {xOffset, yOffset + cardHeight + cardSpacing, cardWidth, cardHeight, "WiFi Utils", TFT_WHITE, TFT_BLACK, false, nullptr},
-        {xOffset, yOffset + 2 * (cardHeight + cardSpacing), cardWidth, cardHeight, "Led Utils", TFT_WHITE, TFT_BLACK, false, nullptr}
+        {xOffset + cardWidth + cardSpacing, yOffset, cardWidth, cardHeight, "WiFi Utils", TFT_WHITE, TFT_BLACK, false, nullptr},
+        {xOffset + 2 * (cardWidth + cardSpacing), yOffset, cardWidth, cardHeight, "Led Utils", TFT_WHITE, TFT_BLACK, false, nullptr}
     };
 
     DisplayModule() : backgroundColor(TFT_BLACK), buttonColor(TFT_BLUE),

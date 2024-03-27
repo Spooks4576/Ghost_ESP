@@ -22,6 +22,7 @@ if (ts.touched())
     TS_Point p = ts.getPoint();
     p.x = map(p.x, 200, 3700, 0, displaymodule->tft.width()); // TODO Move these to Defines For Other Touch Screen Boards
     p.y = map(p.y, 240, 3800, 0, displaymodule->tft.height());
+    displaymodule->printTouchToSerial(p);
     displaymodule->checkTouch(p.x, p.y);
 }
 #endif

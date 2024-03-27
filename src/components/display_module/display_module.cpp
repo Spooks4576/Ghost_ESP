@@ -98,6 +98,7 @@ void DisplayModule::UpdateSplashStatus(const char* Text, int Percent)
     delay(1000);
     tft.fillScreen(TFT_BLACK);
     IsOnSplash = false;
+    tft.setRotation(1);
     drawMainMenu();
    }
 }
@@ -134,10 +135,8 @@ void DisplayModule::animateCardPop(const Card &card) {
 }
 
 void DisplayModule::checkTouch(int tx, int ty) {
-    TS_Point p = ts.getPoint();
-
      for (int i = 0; i < numCards; i++) {
-        if (p.x > cards[i].x && p.x < cards[i].x + cards[i].w && p.y > cards[i].y && p.y < cards[i].y + cards[i].h) {
+        if (tx > cards[i].x && tx < cards[i].x + cards[i].w && ty > cards[i].y && ty < cards[i].y + cards[i].h) {
             cards[i].isSelected = true;
             drawCard(cards[i]);
             drawSelectedLabel(cards[i].title);
@@ -169,13 +168,13 @@ void DisplayModule::drawCard(const Card &card) {
 void DisplayModule::Init()
 {
     IsOnSplash = true;
+    mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
+    ts.begin();
+    ts.setRotation(1);
     tft.init();
     tft.setRotation(0);
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
-    ts.begin();
-    ts.setRotation(0);
 }
 
 void DisplayModule::printTouchToSerial(TS_Point p) {
