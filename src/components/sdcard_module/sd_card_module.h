@@ -18,6 +18,8 @@ public:
 
 private:
     int csPin;
+    int BootNum;
+    bool Initlized;
 };
 
 #endif // SD_CARD_CS_PIN

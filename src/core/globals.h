@@ -99,3 +99,9 @@ inline void RainbowTask()
     neopixelmodule->rainbow(255, 4);
 #endif
 }
+
+#ifdef SD_CARD_CS_PIN
+#define LOG_MESSAGE_TO_SD(message) sdCardmodule->logMessage("GhostESP.txt", message)
+#else
+#define LOG_MESSAGE_TO_SD(message) // Not Supported do nothing
+#endif

@@ -81,6 +81,11 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
         digitalWrite(SD_CARD_CS_PIN, HIGH);
 
         bool status = sdCardmodule->init();
+
+        if (status)
+        {   
+            LOG_MESSAGE_TO_SD("Mounted SD Card Successfully");
+        }
 #ifdef DISPLAY_SUPPORT
         if (status)
         {
@@ -102,6 +107,8 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     #ifdef HAS_BT
     BleModule = new BLEModule();
     BleModule->init();
+
+    LOG_MESSAGE_TO_SD("Initilized BLE...");
     #ifdef DISPLAY_SUPPORT
         displaymodule->UpdateSplashStatus("Initilized BLE...", 80);
         delay(1000);
@@ -110,12 +117,15 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     #endif
 
     Serial.println("ESP-IDF version is: " + String(esp_get_idf_version()));
+    LOG_MESSAGE_TO_SD("ESP IDF Version = ");
+    LOG_MESSAGE_TO_SD(esp_get_idf_version());
 
     wifimodule = new WiFiModule();
 
     wifimodule->RunSetup();
 
     cli->RunSetup();
+    LOG_MESSAGE_TO_SD("Wifi Initilized");
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Wifi Initilized", 95);
     delay(500);
@@ -154,6 +164,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     );
 
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
+    LOG_MESSAGE_TO_SD("Registered Multithread Callbacks");
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
     delay(500);
