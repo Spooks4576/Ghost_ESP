@@ -36,7 +36,7 @@ void SerialCheckTask(void *pvParameters) {
         if (wifimodule->wifi_initialized)
         {   
             if (Serial.available() > 0) {
-                String message = Serial.readString();
+                String message = Serial.readStringUntil('\n');
                 Serial.println(message);
 
                 if (message.startsWith("stop"))
@@ -58,11 +58,6 @@ void SerialCheckTask(void *pvParameters) {
                         BleModule->shutdownBLE();  
                         #endif
                     }
-                }
-                else 
-                {
-                    // Pass to CLI if not Stop Command
-                    QueuedMessage = message;
                 }
             }
         }
