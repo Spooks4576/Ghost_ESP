@@ -10,10 +10,6 @@
 #include <Arduino.h>
 #include <SD.h>
 
-#ifdef NUGGET_BOARD
-#include <Nugget/RubberNugget/NuggetEntryPoint.h>
-#endif
-
 void loop() {
 
 #ifdef DISPLAY_SUPPORT
@@ -37,13 +33,36 @@ if (ts.touched())
 
 void SerialCheckTask(void *pvParameters) {
     while (1) {
-        if (Serial.available() > 0) {
-            String message = Serial.readString();
-            Serial.println(message);
+        if (wifimodule->wifi_initialized)
+        {   
+            if (Serial.available() > 0) {
+                String message = Serial.readString();
+                Serial.println(message);
 
-            for (int i = 0; i < callbacks.size(); ++i) {
-                if (callbacks[i].condition(message)) {
-                    callbacks[i].callback(message);
+                if (message.startsWith("stop"))
+                {
+                    if (HasRanCommand)
+                    {
+                        esp_restart();
+                    }
+                    else 
+                    {
+                        #ifdef OLD_LED
+                        rgbmodule->setColor(1, 1, 1);
+                        #endif
+                        #ifdef NEOPIXEL_PIN
+                        neopixelmodule->strip.setBrightness(0);
+                        #endif
+                        wifimodule->shutdownWiFi();
+                        #ifdef HAS_BT
+                        BleModule->shutdownBLE();  
+                        #endif
+                    }
+                }
+                else 
+                {
+                    // Pass to CLI if not Stop Command
+                    QueuedMessage = message;
                 }
             }
         }
@@ -131,46 +150,10 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     delay(500);
 #endif
 
-    registerCallback(
-          [](String &msg) { return msg == "stop" || msg == "stop\n"; },
-          [](String &msg) { 
-            if (HasRanCommand)
-            {
-                esp_restart();
-            }
-            else 
-            {
-                #ifdef OLD_LED
-                rgbmodule->setColor(1, 1, 1);
-                #endif
-                #ifdef NEOPIXEL_PIN
-                neopixelmodule->strip.setBrightness(0);
-                #endif
-                wifimodule->shutdownWiFi();
-                #ifdef HAS_BT
-                BleModule->shutdownBLE();  
-                #endif
-            }
-            
-        }
-    );
-
-    registerCallback(
-        [](String &msg) { return msg.indexOf("reset") != -1; },
-        [](String &msg) { 
-            Serial.println("Reset command received. Rebooting...");
-            esp_restart();
-        }
-    );
-
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
     LOG_MESSAGE_TO_SD("Registered Multithread Callbacks");
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
     delay(500);
-#endif
-
-#ifdef NUGGET_BOARD
-    NuggetEntryPoint();
 #endif
 }

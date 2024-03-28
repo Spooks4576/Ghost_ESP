@@ -88,11 +88,14 @@ bool WiFiModule::shutdownWiFi() {
   if (this->wifi_initialized) {
     this->wifi_initialized = false; // Stop all other while loops first
     esp_wifi_set_promiscuous(false);
+    WiFi.disconnect();
+    WiFi.mode(WIFI_OFF);
 
     dst_mac = "ff:ff:ff:ff:ff:ff";
   
     esp_wifi_set_mode(WIFI_MODE_NULL);
     esp_wifi_stop();
+    esp_wifi_restore();
     return true;
   }
   else {
