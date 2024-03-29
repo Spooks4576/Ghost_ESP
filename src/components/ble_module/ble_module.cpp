@@ -197,7 +197,6 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
 
         if (message.startsWith("stop"))
         {
-          shutdownWiFi();
           break;
         }
       }
