@@ -26,6 +26,9 @@ Additional board support can be added depending on PlatformIO support and config
 
 Please note that the BLE spam feature may not work on the ESP32 WROOM due to limited resources, which cause the ESP to crash.
 
+## Discord 
+[Ghost_ESP](https://discord.gg/vrYfcZfTK9)
+
 ## Acknowledgments
 
 - A big thank you to [JustCallMeKoKo](https://github.com/justcallmekoko/ESP32Marauder) for providing a base to familiarize myself with the ESP32.
