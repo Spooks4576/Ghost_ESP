@@ -11,23 +11,24 @@
 #include <SD.h>
 
 void loop() {
-
-#ifdef DISPLAY_SUPPORT
-if (ts.touched()) 
-{
-    TS_Point p = ts.getPoint();
-    p.x = map(p.x, 200, 3700, 0, displaymodule->tft.width()); // TODO Move these to Defines For Other Touch Screen Boards
-    p.y = map(p.y, 240, 3800, 0, displaymodule->tft.height());
-    displaymodule->printTouchToSerial(p);
-    displaymodule->checkTouch(p.x, p.y);
-}
-#endif
-
     if (!HasRanCommand)
     {
         double currentTime = millis();
 
         cli->main(currentTime);
+    }
+}
+
+void InputTask(void* PvParameters)
+{
+    while (1)
+    {
+        uint16_t x, y, z;
+        displaymodule->tft.getTouch(&x, &y);
+        z = displaymodule->tft.getTouchRawZ();
+        z = (z < 10) ? 0 : z; // Helps Remove Noise Values
+        displaymodule->printTouchToSerial({x, y, z});
+        displaymodule->checkTouch(x, y);
     }
 }
 
@@ -135,10 +136,12 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     displaymodule->UpdateSplashStatus("Wifi Initilized", 95);
     delay(500);
 #endif
-
+#ifndef DISPLAY_SUPPORT
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
+#endif
     LOG_MESSAGE_TO_SD("Registered Multithread Callbacks");
 #ifdef DISPLAY_SUPPORT
+    xTaskCreate(InputTask, "InputThread", 2048, NULL, 1, NULL);
     displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
     delay(500);
 #endif
