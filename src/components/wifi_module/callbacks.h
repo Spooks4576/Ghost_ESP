@@ -12,6 +12,11 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
   String essid = "";
   String bssid = "";
 
+  if (Serial.available() > 0)
+  {
+    wifimodule->shutdownWiFi();
+  }
+
   if (type == WIFI_PKT_MGMT)
   {
     len -= 4;
@@ -143,6 +148,10 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
   String display_string = "";
   String mac = "";
+  if (Serial.available() > 0)
+  {
+    wifimodule->shutdownWiFi();
+  }
 
   if (type == WIFI_PKT_MGMT)
   {

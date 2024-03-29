@@ -162,6 +162,19 @@ void BLEModule::executeSpamAll()
     BLEInitilized = true;
     while (BLEInitilized)
     {
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
+#endif
+      if (Serial.available() > 0)
+      {
+        String message = Serial.readString();
+
+        if (message.startsWith("stop"))
+        {
+          shutdownBLE();
+          break;
+        }
+      }
       executeSpam(EBLEPayloadType::Apple, false);
       delay(100);
       executeSpam(EBLEPayloadType::Google, false);
@@ -178,6 +191,16 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
     BLEInitilized = Loop;
     while (BLEInitilized && Loop)
     {
+      if (Serial.available() > 0)
+      {
+        String message = Serial.readString();
+
+        if (message.startsWith("stop"))
+        {
+          shutdownWiFi();
+          break;
+        }
+      }
       NimBLEDevice::init("");
 
       NimBLEServer *pServer = NimBLEDevice::createServer();

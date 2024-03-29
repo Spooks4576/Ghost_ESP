@@ -33,7 +33,7 @@ if (ts.touched())
 
 void SerialCheckTask(void *pvParameters) {
     while (1) {
-        if (wifimodule->wifi_initialized)
+        if (HasRanCommand)
         {   
             if (Serial.available() > 0) {
                 String message = Serial.readStringUntil('\n');
@@ -47,16 +47,7 @@ void SerialCheckTask(void *pvParameters) {
                     }
                     else 
                     {
-                        #ifdef OLD_LED
-                        rgbmodule->setColor(1, 1, 1);
-                        #endif
-                        #ifdef NEOPIXEL_PIN
-                        neopixelmodule->strip.setBrightness(0);
-                        #endif
                         wifimodule->shutdownWiFi();
-                        #ifdef HAS_BT
-                        BleModule->shutdownBLE();  
-                        #endif
                     }
                 }
             }

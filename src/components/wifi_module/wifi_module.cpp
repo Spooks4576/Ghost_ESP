@@ -88,14 +88,8 @@ bool WiFiModule::shutdownWiFi() {
   if (this->wifi_initialized) {
     this->wifi_initialized = false; // Stop all other while loops first
     esp_wifi_set_promiscuous(false);
-    WiFi.disconnect();
-    WiFi.mode(WIFI_OFF);
 
     dst_mac = "ff:ff:ff:ff:ff:ff";
-  
-    esp_wifi_set_mode(WIFI_MODE_NULL);
-    esp_wifi_stop();
-    esp_wifi_restore();
     return true;
   }
   else {
@@ -137,15 +131,20 @@ void WiFiModule::Scan(ScanType type)
         this->wifi_initialized = true;
         initTime = millis();
 
-        while (this->wifi_initialized)
+      while (wifi_initialized)
+      {
+        if (Serial.available() > 0)
         {
-          unsigned long startTime = millis();
-          if (millis() - startTime < 3000)
-          {
-            uint8_t set_channel = random(1, 13);
-            esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-          }
+          shutdownWiFi();
         }
+        unsigned long startTime = millis();
+        if (millis() - startTime < 3000)
+        {
+          uint8_t set_channel = random(1, 13);
+          esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+        }
+      }
+
     }
     case ScanType::SCAN_STA:
     {
@@ -167,6 +166,10 @@ void WiFiModule::Scan(ScanType type)
 
       while (this->wifi_initialized)
       {
+        if (Serial.available() > 0)
+        {
+          shutdownWiFi();
+        }
         unsigned long startTime = millis();
         if (millis() - startTime < 3000)
         {
@@ -223,6 +226,16 @@ void WiFiModule::Attack(AttackType type)
     {
       while (wifi_initialized)
       {
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
           for (int i = 0; i < 12; i++)
           {
               for (int x = 0; x < (sizeof(rick_roll)/sizeof(char *)); x++)
@@ -241,6 +254,16 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
     {
       while (wifi_initialized)
       {
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
         broadcastRandomSSID();
         BreatheTask();
         delay(1);
@@ -250,6 +273,16 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
     {
       while (wifi_initialized)
       {
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
         for (int x = 0; x < 12; x++)
         {
           for (int i = 0; i < ssids->size(); i++)
@@ -264,6 +297,16 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
     case AttackType::AT_DeauthAP:
     {
         while(wifi_initialized){
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
         for(int i = 0; i < access_points->size(); i++){
         AccessPoint ap = access_points->get(i);
         if (ap.selected) {

@@ -216,7 +216,6 @@ void CommandLine::runCommand(String input)
         if (bt_type == "apple") {
           Serial.println("Starting Sour Apple attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD("Starting Sour Apple attack.");
-          HasRanCommand = true;
           BleModule->executeSpam(Apple, true);
           return;
         }
@@ -224,7 +223,6 @@ void CommandLine::runCommand(String input)
         if (bt_type == "windows") {
           Serial.println("Starting Swiftpair Spam attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD("Starting Swiftpair Spam attack.");
-          HasRanCommand = true;
           BleModule->executeSpam(Microsoft, true);
           return;
         }
@@ -232,7 +230,6 @@ void CommandLine::runCommand(String input)
         if (bt_type == "samsung") {
           Serial.println("Starting Samsung Spam attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD("Starting Samsung Spam attack.");
-          HasRanCommand = true;
           BleModule->executeSpam(Samsung, true);
           return;
         }
@@ -240,7 +237,6 @@ void CommandLine::runCommand(String input)
         if (bt_type == "google") {
           Serial.println("Starting Google Spam attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD("Starting Google Spam attack.");
-          HasRanCommand = true;
           BleModule->executeSpam(Google, true);
           return;
         }
@@ -249,7 +245,6 @@ void CommandLine::runCommand(String input)
         {
           Serial.println("Starting Spam all attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD("Starting random wifi beacon attack.");
-          HasRanCommand = true;
           BleModule->executeSpamAll();
         }
       }
@@ -270,9 +265,9 @@ void CommandLine::runCommand(String input)
 
           if (israndom != -1)
           {
-            HasRanCommand = true;
             Serial.println("Starting random wifi beacon attack. Stop with " + (String)"stopscan");
             LOG_MESSAGE_TO_SD("Starting random wifi beacon attack.");
+            wifimodule->RunSetup();
             wifimodule->Attack(AT_RandomSSID);
             return;
           }
@@ -281,9 +276,9 @@ void CommandLine::runCommand(String input)
           {
             if (ssids->size() > 0)
             {
-              HasRanCommand = true;
               Serial.println("Starting random wifi list attack. Stop with " + (String)"stopscan");
               LOG_MESSAGE_TO_SD("Starting random wifi list attack.");
+              wifimodule->RunSetup();
               wifimodule->Attack(AT_ListSSID);
             }
             else 
@@ -299,9 +294,9 @@ void CommandLine::runCommand(String input)
           bool IsSelected = access_points->size() > 0;
           if (IsSelected)
           {
-            HasRanCommand = true;
             Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
             LOG_MESSAGE_TO_SD("Starting Deauth attack.");
+            wifimodule->RunSetup();
             wifimodule->Attack(AT_DeauthAP);
           }
           else 
@@ -316,6 +311,7 @@ void CommandLine::runCommand(String input)
         {
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD("Starting Rickroll wifi beacon attack.");
+          wifimodule->RunSetup();
           wifimodule->Attack(AT_Rickroll);
           return;
         }
