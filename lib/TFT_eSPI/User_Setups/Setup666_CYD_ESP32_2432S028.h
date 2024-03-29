@@ -42,8 +42,8 @@
 //#define RPI_DISPLAY_TYPE // 20MHz maximum SPI
 
 // Only define one driver, the other ones must be commented out
-#define ILI9341_DRIVER       // Generic driver for common displays
-//this was the preset// #define ILI9341_2_DRIVER     // Alternative ILI9341 driver, see https://github.com/Bodmer/TFT_eSPI/issues/1172
+//#define ILI9341_DRIVER       // Generic driver for common displays
+#define ILI9341_2_DRIVER     // Alternative ILI9341 driver, see https://github.com/Bodmer/TFT_eSPI/issues/1172
 //#define ST7735_DRIVER      // Define additional parameters below for this display
 //#define ILI9163_DRIVER     // Define additional parameters below for this display
 //#define S6D02A1_DRIVER
@@ -73,7 +73,7 @@
 // For ST7735, ST7789 and ILI9341 ONLY, define the colour order IF the blue and red are swapped on your display
 // Try ONE option at a time to find the correct colour order for your display
 
-//#define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
+//  #define TFT_RGB_ORDER TFT_RGB  // Colour order Red-Green-Blue
 //  #define TFT_RGB_ORDER TFT_BGR  // Colour order Blue-Green-Red
 
 // For M5Stack ESP32 module with integrated ILI9341 display ONLY, remove // in line below
@@ -112,8 +112,8 @@
 // If colours are inverted (white shows as black) then uncomment one of the next
 // 2 lines try both options, one of the options should correct the inversion.
 
-//#define TFT_INVERSION_OFF
- #define TFT_INVERSION_ON
+// #define TFT_INVERSION_ON
+// #define TFT_INVERSION_OFF
 
 
 // ##################################################################################

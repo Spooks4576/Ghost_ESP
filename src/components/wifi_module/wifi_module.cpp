@@ -90,9 +90,6 @@ bool WiFiModule::shutdownWiFi() {
     esp_wifi_set_promiscuous(false);
 
     dst_mac = "ff:ff:ff:ff:ff:ff";
-  
-    esp_wifi_set_mode(WIFI_MODE_NULL);
-    esp_wifi_stop();
     return true;
   }
   else {
@@ -112,10 +109,6 @@ void WiFiModule::Scan(ScanType type)
 {
 #ifdef OLD_LED
   Threadinfo.TargetPin = rgbmodule->greenPin;
-#endif
-
-#ifdef NEOPIXEL_PIN
-neopixelmodule->setColor(neopixelmodule->strip.Color(0, 255, 0));
 #endif
 
   switch (type)
@@ -138,15 +131,20 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(0, 255, 0));
         this->wifi_initialized = true;
         initTime = millis();
 
-        while (this->wifi_initialized)
+      while (wifi_initialized)
+      {
+        if (Serial.available() > 0)
         {
-          unsigned long startTime = millis();
-          if (millis() - startTime < 3000)
-          {
-            uint8_t set_channel = random(1, 13);
-            esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-          }
+          shutdownWiFi();
         }
+        unsigned long startTime = millis();
+        if (millis() - startTime < 3000)
+        {
+          uint8_t set_channel = random(1, 13);
+          esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+        }
+      }
+
     }
     case ScanType::SCAN_STA:
     {
@@ -168,6 +166,10 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(0, 255, 0));
 
       while (this->wifi_initialized)
       {
+        if (Serial.available() > 0)
+        {
+          shutdownWiFi();
+        }
         unsigned long startTime = millis();
         if (millis() - startTime < 3000)
         {
@@ -218,16 +220,22 @@ void WiFiModule::Attack(AttackType type)
   Threadinfo.TargetPin = rgbmodule->redPin;
 #endif
 
-#ifdef NEOPIXEL_PIN
-neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
-#endif
-
   switch (type)
   {
     case AttackType::AT_Rickroll:
     {
       while (wifi_initialized)
       {
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
           for (int i = 0; i < 12; i++)
           {
               for (int x = 0; x < (sizeof(rick_roll)/sizeof(char *)); x++)
@@ -236,6 +244,9 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
               }
           }
           BreatheTask();
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
+#endif
           delay(1);
       }
     }
@@ -243,6 +254,16 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
     {
       while (wifi_initialized)
       {
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
         broadcastRandomSSID();
         BreatheTask();
         delay(1);
@@ -252,6 +273,16 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
     {
       while (wifi_initialized)
       {
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
         for (int x = 0; x < 12; x++)
         {
           for (int i = 0; i < ssids->size(); i++)
@@ -266,6 +297,16 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
     case AttackType::AT_DeauthAP:
     {
         while(wifi_initialized){
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
         for(int i = 0; i < access_points->size(); i++){
         AccessPoint ap = access_points->get(i);
         if (ap.selected) {

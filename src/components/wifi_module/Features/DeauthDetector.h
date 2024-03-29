@@ -73,6 +73,27 @@ void AnalyticsCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
     }
 }
 
+String prepareAnalyticsSummary() {
+    String summary = "WiFi Analytics Summary:\n------------------------------\n";
+
+    for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) {
+        summary += "Monitored Channel: " + String(channelIndex) + "\n";
+        summary += "Monitoring Duration: " +
+            String((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 60000) +
+            " minutes (" +
+            String((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 1000) +
+            " seconds)\n";
+        summary += "Deauthentication Packets: " + String(DeauthConfig.analyticsdata->deauthCount[channelIndex]) + "\n";
+        summary += "Authentication Packets: " + String(DeauthConfig.analyticsdata->authCount[channelIndex]) + "\n";
+        summary += "Beacon Packets: " + String(DeauthConfig.analyticsdata->beaconCount[channelIndex]) + "\n";
+        summary += "Probe Request Packets: " + String(DeauthConfig.analyticsdata->probeReqCount[channelIndex]) + "\n";
+        summary += "Probe Response Packets: " + String(DeauthConfig.analyticsdata->probeRespCount[channelIndex]) + "\n";
+        summary += "Other Packet Types: " + String(DeauthConfig.analyticsdata->otherPktCount[channelIndex]) + "\n";
+        summary += "------------------------------\n";
+    }
+
+    return summary;
+}
 
 void sendWifiAnalitics(String Channel, String SSID, String Password, String WebHookUrl) {
 #ifdef OLD_LED
@@ -91,54 +112,70 @@ if (!WebHookUrl.isEmpty())
         Serial.println("Connecting to WiFi...");
     }
 
-    String host = WebHookUrl.substring(7, WebHookUrl.indexOf('/', 7)); // Skipping 'http://'
-    String path = WebHookUrl.substring(WebHookUrl.indexOf('/', 7));
-    int port = 443; // Or 443 for https
-
-    WiFiClient wifiClient;
-    HttpClient http(wifiClient, host, port);
-    
-    
-    String message;
-    
-    unsigned long duration = DeauthConfig.analyticsdata->endTime - DeauthConfig.analyticsdata->startTime; 
-
-    
-    for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) {
+    if (WebHookUrl.startsWith("http://") || WebHookUrl.startsWith("https://")) {
         
-        String message = "{\"content\": \"\", \"embeds\": [{";
-        message += "\"title\": \"WiFi Analytics Summary - Channel " + String(channelIndex) + "\",";
-        message += "\"color\": 3447003,";
-        message += "\"fields\": [";
-        message += "{\"name\":\"Monitored Channel\",\"value\":\"" + String(channelIndex) + "\",\"inline\":true},";
-        message += "{\"name\":\"Monitoring Duration\",\"value\":\"" + String((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 60000) + " minutes (" + String((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 1000) + " seconds)\",\"inline\":true},";
-        message += "{\"name\":\"Deauthentication Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->deauthCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Authentication Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->authCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Beacon Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->beaconCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Probe Request Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->probeReqCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Probe Response Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->probeRespCount[channelIndex]) + "\",\"inline\":false},";
-        message += "{\"name\":\"Other Packet Types\",\"value\":\"" + String(DeauthConfig.analyticsdata->otherPktCount[channelIndex]) + "\",\"inline\":false}";
-        message += "]}]}";
+        int protocolEndIndex = WebHookUrl.indexOf("://") + 3;
 
         
-        http.beginRequest();
-        http.post(path, "application/json", message);
-       int httpResponseCode = http.responseStatusCode();
-        if (httpResponseCode > 0) {
-            Serial.print("Data for channel ");
-            Serial.print(channelIndex);
-            Serial.println(" sent successfully");
-        } else {
-            Serial.print("Error sending data for channel ");
-            Serial.println(channelIndex);
+        int firstSlashAfterProtocol = WebHookUrl.indexOf('/', protocolEndIndex);
+        
+
+        String host = WebHookUrl.substring(protocolEndIndex, firstSlashAfterProtocol);
+        String path = WebHookUrl.substring(firstSlashAfterProtocol); // Until the end of the string
+
+        
+        Serial.println("Host: " + host);
+        Serial.println("Path: " + path);
+
+
+        int port = 443;
+        
+        String message;
+        
+        unsigned long duration = DeauthConfig.analyticsdata->endTime - DeauthConfig.analyticsdata->startTime; 
+
+        
+        for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) {
+            
+            WiFiClientSecure wifiClient;
+            wifiClient.setInsecure();
+            HttpClient http(wifiClient, host, port);
+
+            String message = "{\"content\": \"\", \"embeds\": [{";
+            message += "\"title\": \"WiFi Analytics Summary - Channel " + String(channelIndex) + "\",";
+            message += "\"color\": 3447003,";
+            message += "\"fields\": [";
+            message += "{\"name\":\"Monitored Channel\",\"value\":\"" + String(channelIndex) + "\",\"inline\":true},";
+            message += "{\"name\":\"Monitoring Duration\",\"value\":\"" + String((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 60000) + " minutes (" + String((DeauthConfig.analyticsdata->endTime[channelIndex] - DeauthConfig.analyticsdata->startTime[channelIndex]) / 1000) + " seconds)\",\"inline\":true},";
+            message += "{\"name\":\"Deauthentication Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->deauthCount[channelIndex]) + "\",\"inline\":false},";
+            message += "{\"name\":\"Authentication Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->authCount[channelIndex]) + "\",\"inline\":false},";
+            message += "{\"name\":\"Beacon Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->beaconCount[channelIndex]) + "\",\"inline\":false},";
+            message += "{\"name\":\"Probe Request Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->probeReqCount[channelIndex]) + "\",\"inline\":false},";
+            message += "{\"name\":\"Probe Response Packets\",\"value\":\"" + String(DeauthConfig.analyticsdata->probeRespCount[channelIndex]) + "\",\"inline\":false},";
+            message += "{\"name\":\"Other Packet Types\",\"value\":\"" + String(DeauthConfig.analyticsdata->otherPktCount[channelIndex]) + "\",\"inline\":false}";
+            message += "]}]}";
+
+            
+            http.beginRequest();
+            http.post(path, "application/json", message);
+            int httpResponseCode = http.responseStatusCode();
+            if (httpResponseCode > 0) {
+                Serial.print("Data for channel ");
+                Serial.print(channelIndex);
+                Serial.println(" sent successfully");
+            } else {
+                Serial.print("Error sending data for channel ");
+                Serial.println(channelIndex);
+            }
+            http.endRequest();
+
+            wifiClient.stop();
+            delay(1000);
         }
-        http.endRequest();
-
-        
-        delay(1000);
+    } else {
+        Serial.println("Invalid URL: does not start with 'http://' or 'https://'");
     }
     WiFi.disconnect();
-
 }
 
 
@@ -168,9 +205,13 @@ for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) {
     Serial.println(DeauthConfig.analyticsdata->otherPktCount[channelIndex]);
     Serial.println("------------------------------");
 }
+
+LOG_RESULTS("PacketReport.txt", "/WifiAnalytics", prepareAnalyticsSummary().c_str());
+
 #ifdef OLD_LED
 rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
 #endif
+
 
 #ifdef NEOPIXEL_PIN
 neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);

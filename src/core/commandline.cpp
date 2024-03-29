@@ -14,6 +14,8 @@ CommandLine::CommandLine() {
 void CommandLine::RunSetup() {
   Serial.println(F("         Ghost ESP     \n"));
   Serial.println(F("       By: Spooky with features from justcallmekoko \n"));
+  LOG_MESSAGE_TO_SD("         Ghost ESP     \n");
+  LOG_MESSAGE_TO_SD(("       By: Spooky with features from justcallmekoko \n"));
 }
 
 String CommandLine::getSerialInput() {
@@ -213,28 +215,28 @@ void CommandLine::runCommand(String input)
         String bt_type = cmd_args.get(bt_type_sw + 1);
         if (bt_type == "apple") {
           Serial.println("Starting Sour Apple attack. Stop with " + (String)"stopscan");
-          HasRanCommand = true;
+          LOG_MESSAGE_TO_SD("Starting Sour Apple attack.");
           BleModule->executeSpam(Apple, true);
           return;
         }
 
         if (bt_type == "windows") {
           Serial.println("Starting Swiftpair Spam attack. Stop with " + (String)"stopscan");
-          HasRanCommand = true;
+          LOG_MESSAGE_TO_SD("Starting Swiftpair Spam attack.");
           BleModule->executeSpam(Microsoft, true);
           return;
         }
 
         if (bt_type == "samsung") {
           Serial.println("Starting Samsung Spam attack. Stop with " + (String)"stopscan");
-          HasRanCommand = true;
+          LOG_MESSAGE_TO_SD("Starting Samsung Spam attack.");
           BleModule->executeSpam(Samsung, true);
           return;
         }
 
         if (bt_type == "google") {
           Serial.println("Starting Google Spam attack. Stop with " + (String)"stopscan");
-          HasRanCommand = true;
+          LOG_MESSAGE_TO_SD("Starting Google Spam attack.");
           BleModule->executeSpam(Google, true);
           return;
         }
@@ -242,7 +244,7 @@ void CommandLine::runCommand(String input)
         if (bt_type == "all")
         {
           Serial.println("Starting Spam all attack. Stop with " + (String)"stopscan");
-          HasRanCommand = true;
+          LOG_MESSAGE_TO_SD("Starting random wifi beacon attack.");
           BleModule->executeSpamAll();
         }
       }
@@ -263,8 +265,9 @@ void CommandLine::runCommand(String input)
 
           if (israndom != -1)
           {
-            HasRanCommand = true;
             Serial.println("Starting random wifi beacon attack. Stop with " + (String)"stopscan");
+            LOG_MESSAGE_TO_SD("Starting random wifi beacon attack.");
+            wifimodule->RunSetup();
             wifimodule->Attack(AT_RandomSSID);
             return;
           }
@@ -273,13 +276,15 @@ void CommandLine::runCommand(String input)
           {
             if (ssids->size() > 0)
             {
-              HasRanCommand = true;
               Serial.println("Starting random wifi list attack. Stop with " + (String)"stopscan");
+              LOG_MESSAGE_TO_SD("Starting random wifi list attack.");
+              wifimodule->RunSetup();
               wifimodule->Attack(AT_ListSSID);
             }
             else 
             {
               Serial.println("Add Some SSIDs...");
+              LOG_MESSAGE_TO_SD("Add Some SSIDs...");
             }
             return;
           }
@@ -289,13 +294,15 @@ void CommandLine::runCommand(String input)
           bool IsSelected = access_points->size() > 0;
           if (IsSelected)
           {
-            HasRanCommand = true;
             Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
+            LOG_MESSAGE_TO_SD("Starting Deauth attack.");
+            wifimodule->RunSetup();
             wifimodule->Attack(AT_DeauthAP);
           }
           else 
           {
             Serial.println("Scan for Access Points First...");
+            LOG_MESSAGE_TO_SD("Scan for Access Points First...");
           }
           return;
         }
@@ -303,6 +310,8 @@ void CommandLine::runCommand(String input)
         if (attack_type == "rickroll")
         {
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
+          LOG_MESSAGE_TO_SD("Starting Rickroll wifi beacon attack.");
+          wifimodule->RunSetup();
           wifimodule->Attack(AT_Rickroll);
           return;
         }
@@ -313,6 +322,7 @@ void CommandLine::runCommand(String input)
     if (cmd_args.get(0) == "scanap")
     {
       Serial.println("Starting to scan access points");
+      LOG_MESSAGE_TO_SD("Starting to scan access points");
       wifimodule->Scan(SCAN_AP);
       return;
     }
@@ -328,6 +338,9 @@ void CommandLine::runCommand(String input)
         RainbowTask();
 #ifdef OLD_LED
         rgbmodule->breatheLED(0, 1000, true);
+#endif
+#ifdef NEOPIXEL_PIN
+        neopixelmodule->breatheLED(0, 1000, true);
 #endif
         RainbowLEDActive = false;
       }
@@ -415,6 +428,7 @@ void CommandLine::runCommand(String input)
           else 
           {
             Serial.println("Type is Invalid....");
+            LOG_MESSAGE_TO_SD("Type is Invalid....");
             return;
           }
 
@@ -433,11 +447,13 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
         else 
         {
           Serial.println("Please Select a Type Of Dial Attack to Perform...");
+          LOG_MESSAGE_TO_SD("Please Select a Type Of Dial Attack to Perform...");
         }
       }
       else 
       {
         Serial.println("SSID and Password are Empty...");
+        LOG_MESSAGE_TO_SD("SSID and Password are Empty...");
       }
     }
 
@@ -446,11 +462,13 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       if (access_points->size() > 0)
       {
         Serial.println("Starting to scan stations");
+        LOG_MESSAGE_TO_SD("Starting to scan stations");
         wifimodule->Scan(SCAN_STA);
       }
       else 
       {
         Serial.println("Please Scan For a Access Point First");
+        LOG_MESSAGE_TO_SD("Please Scan For a Access Point First");
       }
       
       return;
@@ -468,6 +486,8 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
         NumSSids.trim();
         wifimodule->generateSSIDs(NumSSids.toInt());
         Serial.printf("%i Random Ssids Generated\n", NumSSids.toInt());
+        LOG_MESSAGE_TO_SD("Random Ssids Generated\n");
+        LOG_MESSAGE_TO_SD(String(NumSSids.toInt()).c_str());
       }
 
       if (ap_sw != -1 && nn_sw != -1)
@@ -476,6 +496,8 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
         SSIDName.trim();
         wifimodule->addSSID(SSIDName);
         Serial.println("Added SSID " + SSIDName);
+        LOG_MESSAGE_TO_SD("Added SSID ");
+        LOG_MESSAGE_TO_SD(SSIDName.c_str());
       }
     }
 
@@ -507,10 +529,12 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       if (!Selected)
       {
         Serial.println("Did not Select Anything Possible Index out of range");
+        LOG_MESSAGE_TO_SD("Did not Select Anything Possible Index out of range");
       }
       else 
       {
         Serial.println("Successfully Selected The Access Point");
+        LOG_MESSAGE_TO_SD("Successfully Selected The Access Point");
       }
     }
 
@@ -524,16 +548,19 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         wifimodule->ClearList(ClearType::CT_AP);
         Serial.println("Cleared Access Point List");
+        LOG_MESSAGE_TO_SD("Cleared Access Point List");
       }
       else if (ss_sw != -1)
       {
         wifimodule->ClearList(ClearType::CT_SSID);
         Serial.println("Cleared SSID List");
+        LOG_MESSAGE_TO_SD("Cleared SSID List");
       }
       else if (cl_sw != -1)
       {
         wifimodule->ClearList(ClearType::CT_STA);
         Serial.println("Cleared Station List");
+        LOG_MESSAGE_TO_SD("Cleared Station List");
       }
     }
 
@@ -586,7 +613,22 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       }
     } else {
       Serial.println("You did not specify which list to show");
+      LOG_MESSAGE_TO_SD("You did not specify which list to show");
       return;
+    }
+
+    if (cmd_args.get(0) == "stop")
+    {
+      #ifdef OLD_LED
+      rgbmodule->setColor(1, 1, 1);
+      #endif
+      #ifdef NEOPIXEL_PIN
+      neopixelmodule->strip.setBrightness(0);
+      #endif
+      wifimodule->shutdownWiFi();
+      #ifdef HAS_BT
+      BleModule->shutdownBLE();  
+      #endif
     }
   }
 }

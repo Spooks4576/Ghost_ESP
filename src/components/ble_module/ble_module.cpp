@@ -1,5 +1,6 @@
 #include "ble_module.h"
 #include <Arduino.h>
+#include "core/globals.h"
 
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -72,7 +73,6 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         break;
       }
       case Samsung: {
-
         int randval = random(1, 2);
 
         if (randval == 1)
@@ -144,6 +144,7 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         break;
       }
       default: {
+        LOG_MESSAGE_TO_SD(("Please Provide a Company Type"));
         Serial.println("Please Provide a Company Type");
         break;
       }
@@ -161,6 +162,19 @@ void BLEModule::executeSpamAll()
     BLEInitilized = true;
     while (BLEInitilized)
     {
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
+#endif
+      if (Serial.available() > 0)
+      {
+        String message = Serial.readString();
+
+        if (message.startsWith("stop"))
+        {
+          shutdownBLE();
+          break;
+        }
+      }
       executeSpam(EBLEPayloadType::Apple, false);
       delay(100);
       executeSpam(EBLEPayloadType::Google, false);
@@ -177,6 +191,15 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
     BLEInitilized = Loop;
     while (BLEInitilized && Loop)
     {
+      if (Serial.available() > 0)
+      {
+        String message = Serial.readString();
+
+        if (message.startsWith("stop"))
+        {
+          break;
+        }
+      }
       NimBLEDevice::init("");
 
       NimBLEServer *pServer = NimBLEDevice::createServer();
@@ -187,6 +210,9 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       pAdvertising->setAdvertisementData(advertisementData.AdvData);
       pAdvertising->setScanResponseData(advertisementData.ScanData);
       pAdvertising->start();
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
+#endif
       delay(100);
       pAdvertising->stop();
 

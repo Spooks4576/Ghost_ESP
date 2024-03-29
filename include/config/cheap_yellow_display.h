@@ -1,0 +1,13 @@
+#pragma once
+#define DISPLAY_SUPPORT
+#define DISPLAYWIDTH 240
+#define DISPLAYHEIGHT 320
+#define XPT2046_IRQ 36
+#define XPT2046_MOSI 32
+#define XPT2046_MISO 39
+#define XPT2046_CLK 25
+#define XPT2046_CS 33
+#define TOUCH_CS 21
+#define TFT_HOR_RES   320
+#define TFT_VER_RES   240
+#define DRAW_BUF_SIZE (TFT_HOR_RES * TFT_VER_RES / 10 * (LV_COLOR_DEPTH / 8))

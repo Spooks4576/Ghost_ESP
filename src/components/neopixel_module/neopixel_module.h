@@ -15,6 +15,7 @@ public:
     void breatheLED(uint32_t color, int breatheTime, bool FadeOut);
     void rainbow(int strength, int stepDelay);
     void show();
+    uint32_t Wheel(byte WheelPos);
 
 public:
     Adafruit_NeoPixel strip;

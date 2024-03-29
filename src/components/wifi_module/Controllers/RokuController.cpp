@@ -1,4 +1,5 @@
 #include "RokuController.h"
+#include "core/globals.h"
 
 RokuController::RokuController() {
 }
@@ -22,6 +23,7 @@ void RokuController::launchApp(const String& appUrl) {
   httpc.endRequest();
 
   Serial.println("Tried to Launch App");
+  LOG_MESSAGE_TO_SD("Tried to Launch App");
 }
 
 bool RokuController::isRokuDevice(const char* appURL) {
@@ -44,6 +46,7 @@ bool RokuController::isRokuDevice(const char* appURL) {
   int httpResponseCode = httpc.responseStatusCode();
 
   Serial.println("Response IsRokuDevice: " + String(httpResponseCode));
+  LOG_MESSAGE_TO_SD("Response IsRokuDevice: " + String(httpResponseCode));
 
   return (httpResponseCode == 200);
 }

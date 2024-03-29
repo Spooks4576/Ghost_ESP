@@ -71,6 +71,7 @@ inline NeopixelModule* neopixelmodule;
 
 #ifdef DISPLAY_SUPPORT
 #include "../components/display_module/display_module.h"
+#include "../lib/TFT_eSPI/User_Setup.h"
 inline DisplayModule* displaymodule;
 #endif
 
@@ -94,5 +95,15 @@ inline void RainbowTask()
 {
 #ifdef OLD_LED
     rgbmodule->Rainbow(0.1, 4);
+#elif SD_CARD_CS_PIN
+    neopixelmodule->rainbow(255, 4);
 #endif
 }
+
+#ifdef SD_CARD_CS_PIN
+#define LOG_MESSAGE_TO_SD(message) sdCardmodule->logMessage("GhostESP.txt", "logs", message)
+#define LOG_RESULTS(filename, folder, message) sdCardmodule->logMessage(filename, folder, message)
+#else
+#define LOG_MESSAGE_TO_SD(message) // Not Supported do nothing
+#define LOG_RESULTS(filename, folder, message)
+#endif

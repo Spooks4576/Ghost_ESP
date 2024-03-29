@@ -1,4 +1,5 @@
 #include "NetflixController.h"
+#include "core/globals.h"
 
 void NetflixController::launchApp(const String& appUrl) {
     int startPos = appUrl.indexOf('/', 7);
@@ -20,7 +21,9 @@ void NetflixController::launchApp(const String& appUrl) {
 
     if (httpCode == 0) { // 0 Means Success For Netflix
         Serial.println(F("Successfully launched the Netflix app."));
+        LOG_MESSAGE_TO_SD("Successfully launched the Netflix app.");
     } else {
         Serial.println("Failed to launch the Netflix app. HTTP Response Code: " + String(httpCode));
+        LOG_MESSAGE_TO_SD("Failed to launch the Netflix app. HTTP Response Code: " + String(httpCode));
   }
 }

@@ -12,6 +12,11 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
   String essid = "";
   String bssid = "";
 
+  if (Serial.available() > 0)
+  {
+    wifimodule->shutdownWiFi();
+  }
+
   if (type == WIFI_PKT_MGMT)
   {
     len -= 4;
@@ -48,28 +53,37 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
 
       if (!in_list) {
         BreatheTask();
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 300, false);
+#endif
       
         delay(random(0, 10));
+        LOG_RESULTS("ScanResult.txt", "scan", "RSSI: ");
         Serial.print("RSSI: ");
         Serial.print(snifferPacket->rx_ctrl.rssi);
+        LOG_RESULTS("ScanResult.txt", "scan", String(snifferPacket->rx_ctrl.rssi).c_str());
         Serial.print(" Ch: ");
+        LOG_RESULTS("ScanResult.txt", "scan", " Ch: ");
         Serial.print(snifferPacket->rx_ctrl.channel);
+        LOG_RESULTS("ScanResult.txt", "scan", String(snifferPacket->rx_ctrl.channel).c_str());
         Serial.print(" BSSID: ");
+        LOG_RESULTS("ScanResult.txt", "scan", " BSSID: ");
         Serial.print(addr);
+        LOG_RESULTS("ScanResult.txt", "scan", addr);
         display_string.concat(addr);
         Serial.print(" ESSID: ");
+        LOG_RESULTS("ScanResult.txt", "scan", " ESSID: ");
         display_string.concat(" -> ");
         for (int i = 0; i < snifferPacket->payload[37]; i++)
         {
           Serial.print((char)snifferPacket->payload[i + 38]);
           display_string.concat((char)snifferPacket->payload[i + 38]);
           essid.concat((char)snifferPacket->payload[i + 38]);
-
-          
         }
 
         bssid.concat(addr);
-  
+        LOG_RESULTS("ScanResult.txt", "scan", essid.c_str());
+
         int temp_len = display_string.length();
         for (int i = 0; i < 40 - temp_len; i++)
         {
@@ -134,6 +148,10 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
   String display_string = "";
   String mac = "";
+  if (Serial.available() > 0)
+  {
+    wifimodule->shutdownWiFi();
+  }
 
   if (type == WIFI_PKT_MGMT)
   {
@@ -227,6 +245,9 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
   stations->add(sta);
   BreatheTask();
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 300, false);
+#endif
 
 
   Serial.print((String)stations->size() + ": ");
@@ -282,17 +303,25 @@ void deauthSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     {
       delay(random(0, 10));
       Serial.print("RSSI: ");
+      LOG_RESULTS("DeauthSniff.txt", "sniff", "RSSI: ");
       Serial.print(snifferPacket->rx_ctrl.rssi);
+      LOG_RESULTS("DeauthSniff.txt", "sniff", String(snifferPacket->rx_ctrl.rssi).c_str());
       Serial.print(" Ch: ");
+      LOG_RESULTS("DeauthSniff.txt", "sniff", " Ch: ");
       Serial.print(snifferPacket->rx_ctrl.channel);
+      LOG_RESULTS("DeauthSniff.txt", "sniff", String(snifferPacket->rx_ctrl.channel).c_str());
       Serial.print(" BSSID: ");
+      LOG_RESULTS("DeauthSniff.txt", "sniff", " BSSID: ");
       char addr[] = "00:00:00:00:00:00";
       char dst_addr[] = "00:00:00:00:00:00";
       wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
       wifimodule->getMACatoffset(dst_addr, snifferPacket->payload, 4);
       Serial.print(addr);
+      LOG_RESULTS("DeauthSniff.txt", "sniff", addr);
       Serial.print(" -> ");
+      LOG_RESULTS("DeauthSniff.txt", "sniff", " -> ");
       Serial.print(dst_addr);
+      LOG_RESULTS("DeauthSniff.txt", "sniff", dst_addr);
     }
   }
 }

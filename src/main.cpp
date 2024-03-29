@@ -10,29 +10,49 @@
 #include <Arduino.h>
 #include <SD.h>
 
-#ifdef NUGGET_BOARD
-#include <Nugget/RubberNugget/NuggetEntryPoint.h>
-#endif
-
 void loop() {
 
+#ifdef DISPLAY_SUPPORT
+    uint16_t x, y, z;
+    z = displaymodule->tft.getTouchRawZ();
+    z = (z < 12) ? 0 : z; // Helps Remove Noise Values
+
+    if (z > 0)
+    {
+        displaymodule->tft.getTouch(&x, &y);
+        //displaymodule->printTouchToSerial({x, y, z}); // Only Needed When Debugging
+        displaymodule->checkTouch(x, y);
+    }
+#endif
+
+#ifndef DISPLAY_SUPPORT
     if (!HasRanCommand)
     {
         double currentTime = millis();
 
         cli->main(currentTime);
     }
+#endif
 }
 
 void SerialCheckTask(void *pvParameters) {
     while (1) {
-        if (Serial.available() > 0) {
-            String message = Serial.readString();
-            Serial.println(message);
+        if (HasRanCommand)
+        {   
+            if (Serial.available() > 0) {
+                String message = Serial.readStringUntil('\n');
+                Serial.println(message);
 
-            for (int i = 0; i < callbacks.size(); ++i) {
-                if (callbacks[i].condition(message)) {
-                    callbacks[i].callback(message);
+                if (message.startsWith("stop"))
+                {
+                    if (HasRanCommand)
+                    {
+                        esp_restart();
+                    }
+                    else 
+                    {
+                        wifimodule->shutdownWiFi();
+                    }
                 }
             }
         }
@@ -47,7 +67,7 @@ void setup()
     #ifdef DISPLAY_SUPPORT
         Serial.println("About to Init Display");
         displaymodule = new DisplayModule();
-        displaymodule->init();
+        displaymodule->Init();
         Serial.println("Init Display");
     #endif
 
@@ -70,6 +90,11 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
         digitalWrite(SD_CARD_CS_PIN, HIGH);
 
         bool status = sdCardmodule->init();
+
+        if (status)
+        {   
+            LOG_MESSAGE_TO_SD("Mounted SD Card Successfully");
+        }
 #ifdef DISPLAY_SUPPORT
         if (status)
         {
@@ -91,61 +116,35 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     #ifdef HAS_BT
     BleModule = new BLEModule();
     BleModule->init();
+
+    LOG_MESSAGE_TO_SD("Initilized BLE...");
     #ifdef DISPLAY_SUPPORT
         displaymodule->UpdateSplashStatus("Initilized BLE...", 80);
-        delay(100);
+        delay(1000);
         displaymodule->UpdateSplashStatus(esp_get_idf_version(), 80);
     #endif
     #endif
 
     Serial.println("ESP-IDF version is: " + String(esp_get_idf_version()));
+    LOG_MESSAGE_TO_SD("ESP IDF Version = ");
+    LOG_MESSAGE_TO_SD(esp_get_idf_version());
 
     wifimodule = new WiFiModule();
 
     wifimodule->RunSetup();
 
     cli->RunSetup();
+    LOG_MESSAGE_TO_SD("Wifi Initilized");
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Wifi Initilized", 95);
-    delay(100);
+    delay(500);
 #endif
-
-    registerCallback(
-          [](String &msg) { return msg.startsWith("stop"); },
-          [](String &msg) { 
-            if (HasRanCommand)
-            {
-                esp_restart();
-            }
-            else 
-            {
-                #ifdef OLD_LED
-                delay(1000);
-                rgbmodule->setColor(1, 1, 1);
-                #endif
-                wifimodule->shutdownWiFi();
-                #ifdef HAS_BT
-                BleModule->shutdownBLE();  
-                #endif
-            }
-            
-        }
-    );
-
-    registerCallback(
-        [](String &msg) { return msg.indexOf("reset") != -1; },
-        [](String &msg) { 
-            Serial.println("Reset command received. Rebooting...");
-            esp_restart();
-        }
-    );
-
+#ifndef DISPLAY_SUPPORT
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
+#endif
+    LOG_MESSAGE_TO_SD("Registered Multithread Callbacks");
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
-#endif
-
-#ifdef NUGGET_BOARD
-    NuggetEntryPoint();
+    delay(500);
 #endif
 }
