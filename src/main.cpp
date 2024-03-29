@@ -11,25 +11,28 @@
 #include <SD.h>
 
 void loop() {
+
+#ifdef DISPLAY_SUPPORT
+    uint16_t x, y, z;
+    z = displaymodule->tft.getTouchRawZ();
+    z = (z < 12) ? 0 : z; // Helps Remove Noise Values
+
+    if (z > 0)
+    {
+        displaymodule->tft.getTouch(&x, &y);
+        //displaymodule->printTouchToSerial({x, y, z}); // Only Needed When Debugging
+        displaymodule->checkTouch(x, y);
+    }
+#endif
+
+#ifndef DISPLAY_SUPPORT
     if (!HasRanCommand)
     {
         double currentTime = millis();
 
         cli->main(currentTime);
     }
-}
-
-void InputTask(void* PvParameters)
-{
-    while (1)
-    {
-        uint16_t x, y, z;
-        displaymodule->tft.getTouch(&x, &y);
-        z = displaymodule->tft.getTouchRawZ();
-        z = (z < 10) ? 0 : z; // Helps Remove Noise Values
-        displaymodule->printTouchToSerial({x, y, z});
-        displaymodule->checkTouch(x, y);
-    }
+#endif
 }
 
 void SerialCheckTask(void *pvParameters) {
@@ -141,7 +144,6 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
 #endif
     LOG_MESSAGE_TO_SD("Registered Multithread Callbacks");
 #ifdef DISPLAY_SUPPORT
-    xTaskCreate(InputTask, "InputThread", 2048, NULL, 1, NULL);
     displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
     delay(500);
 #endif
