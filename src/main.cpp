@@ -52,6 +52,7 @@ void SerialCheckTask(void *pvParameters) {
                     else 
                     {
                         wifimodule->shutdownWiFi();
+                        sdCardmodule->stopPcapLogging();
                     }
                 }
             }
@@ -134,6 +135,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     wifimodule->RunSetup();
 
     cli->RunSetup();
+
     LOG_MESSAGE_TO_SD("Wifi Initilized");
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Wifi Initilized", 95);

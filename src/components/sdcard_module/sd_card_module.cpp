@@ -23,6 +23,16 @@ bool SDCardModule::init() {
         Serial.println("Directory already exists");
     }
 
+    dirPath = "/pcaps";
+    if (!SD.exists(dirPath)) {
+        if (SD.mkdir(dirPath)) {
+        } else {
+        Serial.println("Directory creation failed");
+        }
+    } else {
+        Serial.println("Directory already exists");
+    }
+
     unsigned int maxNum = 0;
     File root = SD.open("/logs");
     
@@ -83,6 +93,59 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
     else
     {
         return false;
+    }
+}
+
+bool SDCardModule::startPcapLogging(const char *path) {
+    if (!Initlized) return false;
+
+    char newLogFileName[128];
+    sprintf(newLogFileName, "/%s/boot_%u_%s", "pcaps", PcapFileIndex += 1, path);
+    
+    logFile = SD.open(newLogFileName, FILE_WRITE);
+    if (!logFile) {
+        return false;
+    }
+
+    logFile.write((const uint8_t *)&pcapHeader, sizeof(pcapHeader));
+    bufferLength = 0;
+    return true;
+}
+
+bool SDCardModule::logPacket(const char *path, const uint8_t *packet, uint32_t length) {
+    if (!Initlized || !logFile) return false;
+
+    char newLogFileName[128];
+    sprintf(newLogFileName, "/%s/boot_%u_%s", "pcaps", PcapFileIndex, path);
+
+    uint32_t ts_sec = millis();
+    uint32_t ts_usec = micros();
+
+    pcap_packet_header packetHeader = {
+        ts_sec, ts_usec, length, length
+    };
+
+    if (bufferLength + sizeof(packetHeader) + length > maxBufferLength) {
+        flushLog();
+    }
+
+    logFile.write((const uint8_t *)&packetHeader, sizeof(packetHeader));
+    logFile.write(packet, length);
+    bufferLength += sizeof(packetHeader) + length;
+    return true;
+}
+
+void SDCardModule::stopPcapLogging() {
+    if (logFile) {
+        flushLog();
+        logFile.close();
+    }
+}
+
+void SDCardModule::flushLog() {
+    if (logFile) {
+        logFile.flush();
+        bufferLength = 0;
     }
 }
 

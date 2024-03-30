@@ -153,6 +153,15 @@ enum ScanType
     SCAN_STA,
 };
 
+enum SniffType
+{
+    ST_beacon,
+    ST_pmkid,
+    ST_probe,
+    ST_pwn,
+    ST_raw
+};
+
 class WiFiModule
 {
 public:
@@ -161,6 +170,7 @@ public:
     void Attack(AttackType type);
     bool addSSID(String essid);
     void Scan(ScanType type);
+    void Sniff(SniffType Type);
     int generateSSIDs(int count);
     String getApMAC();
     bool shutdownWiFi();

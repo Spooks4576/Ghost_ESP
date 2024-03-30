@@ -95,7 +95,7 @@ inline void RainbowTask()
 {
 #ifdef OLD_LED
     rgbmodule->Rainbow(0.1, 4);
-#elif SD_CARD_CS_PIN
+#elif NEOPIXEL_PIN
     neopixelmodule->rainbow(255, 4);
 #endif
 }

@@ -325,3 +325,65 @@ void deauthSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     }
   }
 }
+
+void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
+{
+  bool send_deauth = false; // false until i can figure out deauth frame bypass
+  
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)snifferPacket->rx_ctrl;
+  int len = snifferPacket->rx_ctrl.sig_len;
+
+  String display_string = "";
+
+  if (type == WIFI_PKT_MGMT)
+  {
+    len -= 4;
+    int fctl = ntohs(frameControl->fctl);
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
+    const WifiMgmtHdr *hdr = &ipkt->hdr;
+  }
+
+  
+  int buff = 0;
+
+
+  if (send_deauth) {
+    if (snifferPacket->payload[0] == 0x80) {    
+      // Build packet
+      
+      deauth_frame_default[10] = snifferPacket->payload[10];
+      deauth_frame_default[11] = snifferPacket->payload[11];
+      deauth_frame_default[12] = snifferPacket->payload[12];
+      deauth_frame_default[13] = snifferPacket->payload[13];
+      deauth_frame_default[14] = snifferPacket->payload[14];
+      deauth_frame_default[15] = snifferPacket->payload[15];
+    
+      deauth_frame_default[16] = snifferPacket->payload[10];
+      deauth_frame_default[17] = snifferPacket->payload[11];
+      deauth_frame_default[18] = snifferPacket->payload[12];
+      deauth_frame_default[19] = snifferPacket->payload[13];
+      deauth_frame_default[20] = snifferPacket->payload[14];
+      deauth_frame_default[21] = snifferPacket->payload[15];      
+    
+      // Send packet
+      esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+      delay(1);
+    }
+  }
+
+  if (((snifferPacket->payload[30] == 0x88 && snifferPacket->payload[31] == 0x8e)|| ( snifferPacket->payload[32] == 0x88 && snifferPacket->payload[33] == 0x8e) )){
+    Serial.println("Received EAPOL:");
+
+    char addr[] = "00:00:00:00:00:00";
+    wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+    display_string.concat(addr);
+
+    int temp_len = display_string.length();
+
+    Serial.println(addr);    
+  }
+
+  sdCardmodule->logPacket("EPOL.pcap", snifferPacket->payload, len);
+}

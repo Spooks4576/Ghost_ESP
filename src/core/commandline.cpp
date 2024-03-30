@@ -501,6 +501,12 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       }
     }
 
+    if (cmd_args.get(0) == "sniffpmkid")
+    {
+      Serial.println("Starting PMKID sniff. Stop with stop scan");
+      wifimodule->Sniff(ST_pmkid);
+    }
+
     if (cmd_args.get(0) == "select")
     {
       int ap_sw = this->argSearch(&cmd_args, "-a");
