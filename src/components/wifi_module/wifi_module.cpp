@@ -88,8 +88,15 @@ bool WiFiModule::shutdownWiFi() {
   if (this->wifi_initialized) {
     this->wifi_initialized = false; // Stop all other while loops first
     esp_wifi_set_promiscuous(false);
+    WiFi.disconnect();
+    WiFi.mode(WIFI_OFF);
 
     dst_mac = "ff:ff:ff:ff:ff:ff";
+
+    esp_wifi_set_mode(WIFI_MODE_NULL);
+    esp_wifi_stop();
+    esp_wifi_restore();
+    esp_wifi_set_promiscuous_rx_cb(NULL); // fixes callback from being called still
     return true;
   }
   else {
@@ -136,6 +143,7 @@ void WiFiModule::Scan(ScanType type)
         if (Serial.available() > 0)
         {
           shutdownWiFi();
+          break;
         }
         unsigned long startTime = millis();
         if (millis() - startTime < 3000)
@@ -169,6 +177,7 @@ void WiFiModule::Scan(ScanType type)
         if (Serial.available() > 0)
         {
           shutdownWiFi();
+          break;
         }
         unsigned long startTime = millis();
         if (millis() - startTime < 3000)

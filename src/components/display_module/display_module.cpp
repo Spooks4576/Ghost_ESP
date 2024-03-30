@@ -77,7 +77,6 @@ void DisplayModule::UpdateSplashStatus(const char* Text, int Percent)
     delay(1000);
     tft.fillScreen(TFT_BLACK);
     IsOnSplash = false;
-    tft.setRotation(1);
     drawMainMenu();
    }
 }
@@ -102,13 +101,22 @@ void DisplayModule::setButtonCallback(int buttonIndex, void (*callback)()) {
 
 void DisplayModule::animateCardPop(const Card &card) {
     int expandAmount = 4;
+    drawCard(card); 
+    JpegDec.decodeArray(card.imageBuffer, card.imagebuffersize);
+
     for (int i = 0; i <= expandAmount; i += 2) {
-        tft.fillRect(card.x - i, card.y - i, card.w + 2*i, card.h + 2*i, card.isSelected ? TFT_RED : card.bgColor);
+        // Expand the card background and outline
         tft.drawRect(card.x - i, card.y - i, card.w + 2*i, card.h + 2*i, TFT_WHITE);  // Card outline
+        if (card.imageBuffer != nullptr) {
+            // Center the image within the expanded area
+            int imgX = card.x - i + (card.w + 2*i - card.w) / 2;
+            int imgY = card.y - i + (card.h + 2*i - card.h) / 2;
+            RenderJpg(imgX, imgY, card.w, card.h);
+        }
         delay(15);
     }
     for (int i = expandAmount; i >= 0; i -= 2) {
-        tft.fillRect(card.x - i, card.y - i, card.w + 2*i, card.h + 2*i, TFT_BLACK);  // Erase previous size
+        tft.fillRect(card.x - i, card.y - i, card.w + 2*i, card.h + 2*i, TFT_BLACK);
         drawCard(card);
         delay(15);
     }
@@ -123,6 +131,7 @@ void DisplayModule::checkTouch(int tx, int ty) {
                 cards[i].isSelected = true;
                 drawCard(cards[i]);
                 drawSelectedLabel(cards[i].title);
+                animateCardPop(cards[i]);
                 LastTouchX = tx;
                 LastTouchY = ty;
             } 
@@ -141,7 +150,7 @@ void DisplayModule::drawSelectedLabel(const String &label) {
     tft.fillRect(0, 0, 240, 30, TFT_BLACK);
     tft.setTextColor(TFT_WHITE);
     tft.setTextSize(1);
-    tft.drawString(label, 5, 10, 2);
+    tft.drawString(label, 50, 10, 2);
 }
 
 void DisplayModule::drawCard(const Card &card) {

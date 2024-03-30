@@ -20,7 +20,7 @@ void loop() {
     if (z > 0)
     {
         displaymodule->tft.getTouch(&x, &y);
-        //displaymodule->printTouchToSerial({x, y, z}); // Only Needed When Debugging
+        displaymodule->printTouchToSerial({x, y, z}); // Only Needed When Debugging
         displaymodule->checkTouch(x, y);
     }
 #endif
