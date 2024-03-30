@@ -56,7 +56,9 @@ void SerialCheckTask(void *pvParameters) {
                     else 
                     {
                         wifimodule->shutdownWiFi();
+                        #ifdef SD_CARD_CS_PIN
                         sdCardmodule->stopPcapLogging();
+                        #endif
                     }
                 }
             }

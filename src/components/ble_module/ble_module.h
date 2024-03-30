@@ -103,6 +103,7 @@ public:
     void executeSpam(EBLEPayloadType type, bool Initlized);
     void generateRandomMac(uint8_t* mac);
     void executeSpamAll();
+    void esp_fill_random(uint8_t* target, size_t size);
     bool BLEInitilized;
     #ifdef HAS_BT
     bool shutdownBLE()

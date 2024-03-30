@@ -77,7 +77,13 @@ void Sspixfer (uint16_t dout)    // Exchange 8 bits of data over SPI
     // tmp = (tmp << 1);                // Shift existing data along
     SPIdin = (SPIdin << 1);             // Shift existing data along
     digitalWrite(TOUCH_CLK,0);          // CLK = 0
+    #ifndef C6DEVKIT
     ets_delay_us(1);                    // Delay
+    #endif
+
+    #ifdef C6DEVKIT
+    esp_rom_delay_us(1);
+    #endif
     // tmp |= digitalRead(TOUCH_MISO);  // Shift data in
     SPIdin |= digitalRead(TOUCH_MISO);  // Shift data in
   }                                     // Go round again

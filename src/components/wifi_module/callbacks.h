@@ -2,6 +2,15 @@
 #include "wifi_module.h"
 #include "../../core/globals.h"
 
+namespace CallBackUtils
+{
+    uint16_t ntohs(uint16_t netshort) {
+      return (netshort >> 8) | (netshort << 8);
+  }
+}
+
+
+
 void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
   wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
   WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
@@ -20,7 +29,7 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
   if (type == WIFI_PKT_MGMT)
   {
     len -= 4;
-    int fctl = ntohs(frameControl->fctl);
+    int fctl = CallBackUtils::ntohs(frameControl->fctl);
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
     const WifiMgmtHdr *hdr = &ipkt->hdr;
 
@@ -156,7 +165,7 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
   if (type == WIFI_PKT_MGMT)
   {
     len -= 4;
-    int fctl = ntohs(frameControl->fctl);
+    int fctl = CallBackUtils::ntohs(frameControl->fctl);
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
     const WifiMgmtHdr *hdr = &ipkt->hdr;
   }
@@ -292,7 +301,7 @@ void deauthSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
   if (type == WIFI_PKT_MGMT)
   {
     len -= 4;
-    int fctl = ntohs(frameControl->fctl);
+    int fctl = CallBackUtils::ntohs(frameControl->fctl);
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
     const WifiMgmtHdr *hdr = &ipkt->hdr;
 
@@ -340,7 +349,7 @@ void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
   if (type == WIFI_PKT_MGMT)
   {
     len -= 4;
-    int fctl = ntohs(frameControl->fctl);
+    int fctl = CallBackUtils::ntohs(frameControl->fctl);
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
     const WifiMgmtHdr *hdr = &ipkt->hdr;
   }
@@ -385,5 +394,7 @@ void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     Serial.println(addr);    
   }
 
+#ifdef SD_CARD_CS_PIN
   sdCardmodule->logPacket("EPOL.pcap", snifferPacket->payload, len);
+#endif
 }

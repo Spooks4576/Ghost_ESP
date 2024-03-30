@@ -20,6 +20,13 @@ void BLEModule::generateRandomMac(uint8_t* mac) {
   mac[0] = (mac[0] & 0xFC) | 0x02;
 }
 
+void BLEModule::esp_fill_random(uint8_t *target, size_t size)
+{
+  for (size_t i = 0; i < size; ++i) {
+    target[i] = rand() % 256; // Generate a random byte
+  }
+}
+
 #ifdef HAS_BT
 BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
     NimBLEAdvertisementData AdvData = NimBLEAdvertisementData();

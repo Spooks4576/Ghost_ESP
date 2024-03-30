@@ -152,14 +152,18 @@ void WiFiModule::Sniff(SniffType Type)
       esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       this->wifi_initialized = true;
       initTime = millis();
+#ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("EPOL.pcap");
+#endif
       static unsigned long lastChangeTime = 0;
       while (wifi_initialized)
       {
         if (Serial.available() > 0)
         {
           shutdownWiFi();
+#ifdef SD_CARD_CS_PIN
           sdCardmodule->stopPcapLogging();
+#endif
           break;
         }
         unsigned long currentTime = millis();
