@@ -137,6 +137,7 @@ void WiFiModule::Scan(ScanType type)
         esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
         this->wifi_initialized = true;
         initTime = millis();
+        static unsigned long lastChangeTime = 0;
 
       while (wifi_initialized)
       {
@@ -145,11 +146,12 @@ void WiFiModule::Scan(ScanType type)
           shutdownWiFi();
           break;
         }
-        unsigned long startTime = millis();
-        if (millis() - startTime < 3000)
+        unsigned long currentTime = millis();
+        if (currentTime - lastChangeTime >= 3000)
         {
           uint8_t set_channel = random(1, 13);
           esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+          lastChangeTime = currentTime;
         }
       }
 
@@ -171,6 +173,7 @@ void WiFiModule::Scan(ScanType type)
       esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       this->wifi_initialized = true;
       initTime = millis();
+      static unsigned long lastChangeTime = 0;
 
       while (this->wifi_initialized)
       {
@@ -179,11 +182,12 @@ void WiFiModule::Scan(ScanType type)
           shutdownWiFi();
           break;
         }
-        unsigned long startTime = millis();
-        if (millis() - startTime < 3000)
+        unsigned long currentTime = millis();
+        if (currentTime - lastChangeTime >= 3000)
         {
           uint8_t set_channel = random(1, 13);
           esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+          lastChangeTime = currentTime;
         }
       }
     }
