@@ -1,6 +1,7 @@
 #pragma once
 #include "wifi_module.h"
 #include "../../core/globals.h"
+#include <ArduinoJson.h>
 
 namespace CallBackUtils
 {
@@ -335,9 +336,241 @@ void deauthSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
   }
 }
 
+void pwnSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
+{ 
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)snifferPacket->rx_ctrl;
+  int len = snifferPacket->rx_ctrl.sig_len;
+
+  String display_string = "";
+  String src = "";
+  String essid = "";
+
+  if (type == WIFI_PKT_MGMT)
+  {
+    len -= 4;
+    int fctl = ntohs(frameControl->fctl);
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
+    const WifiMgmtHdr *hdr = &ipkt->hdr;
+
+    
+    int buf = 0;
+    
+    if ((snifferPacket->payload[0] == 0x80) && (buf == 0))
+    {
+      char addr[] = "00:00:00:00:00:00";
+      wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+      src.concat(addr);
+      if (src == "de:ad:be:ef:de:ad") {
+        
+        
+        delay(random(0, 10));
+        Serial.print("RSSI: ");
+        Serial.print(snifferPacket->rx_ctrl.rssi);
+        Serial.print(" Ch: ");
+        Serial.print(snifferPacket->rx_ctrl.channel);
+        Serial.print(" BSSID: ");
+        Serial.print(addr);
+        display_string.concat("CH: " + (String)snifferPacket->rx_ctrl.channel);
+        Serial.print(" ESSID: ");
+        display_string.concat(" -> ");
+
+
+        for (int i = 0; i < len - 37; i++)
+        {
+          Serial.print((char)snifferPacket->payload[i + 38]);
+          if (isAscii(snifferPacket->payload[i + 38]))
+            essid.concat((char)snifferPacket->payload[i + 38]);
+          else
+            Serial.println("Got non-ascii character: " + (String)(char)snifferPacket->payload[i + 38]);
+        }
+
+        
+        DynamicJsonDocument json(1024);
+        if (deserializeJson(json, essid)) {
+          Serial.println("\nCould not parse Pwnagotchi json");
+          display_string.concat(essid);
+        }
+        else {
+          Serial.println("\nSuccessfully parsed json");
+          String json_output;
+          serializeJson(json, json_output);
+          Serial.println(json_output);
+          display_string.concat(json["name"].as<String>() + " pwnd: " + json["pwnd_tot"].as<String>());
+        }
+  
+        int temp_len = display_string.length();
+        for (int i = 0; i < 40 - temp_len; i++)
+        {
+          display_string.concat(" ");
+        }
+  
+        Serial.print(" ");
+
+        Serial.println();
+
+#ifdef SD_CARD_CS_PIN
+  sdCardmodule->logPacket("PWN.pcap", snifferPacket->payload, len);
+#endif
+      }
+    }
+  }
+}
+
+void beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
+{
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)snifferPacket->rx_ctrl;
+  int len = snifferPacket->rx_ctrl.sig_len;
+
+  String display_string = "";
+  String essid = "";
+
+  if (type == WIFI_PKT_MGMT)
+  {
+    len -= 4;
+    int fctl = ntohs(frameControl->fctl);
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
+    const WifiMgmtHdr *hdr = &ipkt->hdr;
+
+    int buff = 0;
+    if ((snifferPacket->payload[0] == 0x80) && (buff == 0))
+    {
+        bool found = false;
+        uint8_t targ_index = 0;
+        AccessPoint targ_ap;
+
+       
+        for (int i = 0; i < access_points->size(); i++) {
+          if (access_points->get(i).selected) {
+            uint8_t addr[] = {snifferPacket->payload[10],
+                              snifferPacket->payload[11],
+                              snifferPacket->payload[12],
+                              snifferPacket->payload[13],
+                              snifferPacket->payload[14],
+                              snifferPacket->payload[15]};
+            for (int x = 0; x < 6; x++) {
+              if (addr[x] != access_points->get(i).bssid[x]) {
+                found = false;
+                break;
+              }
+              else
+                found = true;
+            }
+            if (found) {
+              targ_ap = access_points->get(i);
+              targ_index = i;
+              break;
+            }
+          }
+        }
+        if (!found)
+          return;
+
+        if ((targ_ap.rssi + 5 < snifferPacket->rx_ctrl.rssi) || (snifferPacket->rx_ctrl.rssi + 5 < targ_ap.rssi)) {
+          targ_ap.rssi = snifferPacket->rx_ctrl.rssi;
+          access_points->set(targ_index, targ_ap);
+          Serial.println((String)access_points->get(targ_index).essid + " RSSI: " + (String)access_points->get(targ_index).rssi);
+          return;
+        }
+#ifdef SD_CARD_CS_PIN
+sdCardmodule->logPacket("BEACON.pcap", snifferPacket->payload, len);
+#endif
+    }
+  }
+}
+
+void probeSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
+
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)snifferPacket->rx_ctrl;
+  int len = snifferPacket->rx_ctrl.sig_len;
+
+  String display_string = "";
+
+  if (type == WIFI_PKT_MGMT)
+  {
+    len -= 4;
+    int fctl = ntohs(frameControl->fctl);
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
+    const WifiMgmtHdr *hdr = &ipkt->hdr;
+
+
+   
+    int buf = 0;
+
+    if ((snifferPacket->payload[0] == 0x40) && (buf == 0))
+    {
+        delay(random(0, 10));
+        Serial.print("RSSI: ");
+        Serial.print(snifferPacket->rx_ctrl.rssi);
+        Serial.print(" Ch: ");
+        Serial.print(snifferPacket->rx_ctrl.channel);
+        Serial.print(" Client: ");
+        char addr[] = "00:00:00:00:00:00";
+        wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+        Serial.print(addr);
+        display_string.concat(addr);
+        Serial.print(" Requesting: ");
+        display_string.concat(" -> ");
+        for (int i = 0; i < snifferPacket->payload[25]; i++)
+        {
+          Serial.print((char)snifferPacket->payload[26 + i]);
+          display_string.concat((char)snifferPacket->payload[26 + i]);
+        }
+        
+        Serial.println();    
+
+#ifdef SD_CARD_CS_PIN
+sdCardmodule->logPacket("PROBE.pcap", snifferPacket->payload, len);
+#endif
+    }
+  }
+}
+
+void rawSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
+{
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)snifferPacket->rx_ctrl;
+  int len = snifferPacket->rx_ctrl.sig_len;
+
+  String display_string = "";
+
+  if (type == WIFI_PKT_MGMT)
+  {
+    len -= 4;
+    int fctl = ntohs(frameControl->fctl);
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
+    const WifiMgmtHdr *hdr = &ipkt->hdr;
+  }
+    Serial.print("RSSI: ");
+    Serial.print(snifferPacket->rx_ctrl.rssi);
+    Serial.print(" Ch: ");
+    Serial.print(snifferPacket->rx_ctrl.channel);
+    Serial.print(" BSSID: ");
+    char addr[] = "00:00:00:00:00:00";
+    wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+    Serial.print(addr);
+
+    display_string.concat(" ");
+    display_string.concat(addr);
+
+    int temp_len = display_string.length();
+
+    Serial.println();
+
+#ifdef SD_CARD_CS_PIN
+  sdCardmodule->logPacket("RAW.pcap", snifferPacket->payload, len);
+#endif
+}
+
 void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 {
-  bool send_deauth = false; // false until i can figure out deauth frame bypass
+  bool send_deauth = true;
   
   wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
   WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;

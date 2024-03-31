@@ -105,6 +105,10 @@ function wifiUtilsMenu() {
     submenu.addItem("Cast V2 Connect", 11);
     submenu.addItem("Dial Connect", 12);
     submenu.addItem("Deauth Detector", 13);
+    submenu.addItem("Sniff Raw", 14);
+    submenu.addItem("Sniff EPOL", 15);
+    submenu.addItem("Sniff Probe", 16);
+    submenu.addItem("Sniff PWN", 17);
 
     let result = submenu.show();
 
@@ -167,6 +171,26 @@ function wifiUtilsMenu() {
     if (result === 13)
     {
         sendSerialCommand("deauthdetector -s SSID -p PASSWORD -w WebHookUrl", 1);
+    }
+
+    if (result === 14)
+    {
+        sendSerialCommand("sniffraw", 1);
+    }
+
+    if (result === 15)
+    {
+        sendSerialCommand("sniffpmkid", 1);
+    }
+
+    if (result === 16)
+    {
+        sendSerialCommand("sniffprobe", 1);
+    }
+
+    if (result === 17)
+    {
+        sendSerialCommand("sniffpwn", 1);
     }
 
     if (result === undefined)

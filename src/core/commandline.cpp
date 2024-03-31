@@ -505,7 +505,37 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
     {
       Serial.println("Starting PMKID sniff. Stop with stop scan");
       wifimodule->Sniff(ST_pmkid);
+      return;
     }
+
+    if (cmd_args.get(0) == "sniffraw")
+    {
+      Serial.println("Starting RAW sniff. Stop with stop scan");
+      wifimodule->Sniff(ST_raw);
+      return;
+    }
+
+    if (cmd_args.get(0) == "sniffbeacon")
+    {
+      Serial.println("Starting Beacon sniff. Stop with stop scan");
+      wifimodule->Sniff(ST_beacon);
+      return;
+    }
+
+    if (cmd_args.get(0) == "sniffprobe")
+    {
+      Serial.println("Starting PROBE sniff. Stop with stop scan");
+      wifimodule->Sniff(ST_probe);
+      return;
+    }
+
+    if (cmd_args.get(0) == "sniffpwn")
+    {
+      Serial.println("Starting PWN sniff. Stop with stop scan");
+      wifimodule->Sniff(ST_pwn);
+      return;
+    }
+
 
     if (cmd_args.get(0) == "select")
     {

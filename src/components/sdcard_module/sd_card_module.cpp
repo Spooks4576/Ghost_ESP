@@ -99,6 +99,27 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
 bool SDCardModule::startPcapLogging(const char *path) {
     if (!Initlized) return false;
 
+    unsigned int maxNum = 0;
+    File root = SD.open("/pcaps");
+    
+    while (true) {
+        File entry = root.openNextFile();
+        if (!entry) {
+            break;
+        }
+        if (strstr(entry.name(), "boot_") == entry.name()) {
+            unsigned int fileNum;
+            int scanned = sscanf(entry.name(), "boot_%u_", &fileNum);
+            if (scanned == 1) {
+                maxNum = max(maxNum, fileNum);
+            }
+        }
+        entry.close();
+    }
+    root.close();
+
+    PcapFileIndex = maxNum;
+
     char newLogFileName[128];
     sprintf(newLogFileName, "/%s/boot_%u_%s", "pcaps", PcapFileIndex += 1, path);
     
