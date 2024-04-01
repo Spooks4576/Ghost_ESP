@@ -67,7 +67,7 @@ function validateNumber(input) {
 function mainMenu() {
     submenu.setHeader("Select a utility:");
     submenu.addItem("Wifi Utils", 0);
-    submenu.addItem("BLE Spam", 1);
+    submenu.addItem("BLE Utils", 1);
     submenu.addItem("LED Utils", 2);
 
     let result = submenu.show();
@@ -200,12 +200,14 @@ function wifiUtilsMenu() {
 }
 
 function bleSpamMenu() {
-    submenu.setHeader("BLE Spam Options:");
+    submenu.setHeader("BLE Options:");
     submenu.addItem("Samsung Spam", 0);
     submenu.addItem("Apple Spam", 1);
     submenu.addItem("Google Spam", 2);
     submenu.addItem("Windows Spam", 3);
-    submenu.addItem("All", 4);
+    submenu.addItem("Kitchen Sink", 4);
+    submenu.addItem("Find the Flippers", 5);
+    submenu.addItem("BLE Spam Detector", 5);
 
     let result = submenu.show();
 
@@ -227,6 +229,15 @@ function bleSpamMenu() {
 
     if (result === 4) {
         sendSerialCommand('blespam -t all', 2);
+    }
+
+    if (result === 5) {
+        sendSerialCommand('findtheflippers', 2);
+    }
+
+    if (result === 6)
+    {
+        sendSerialCommand('detectblespam', 2);
     }
 
     if (result === undefined)
