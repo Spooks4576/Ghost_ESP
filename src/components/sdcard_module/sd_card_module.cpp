@@ -96,7 +96,7 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
     }
 }
 
-bool SDCardModule::startPcapLogging(const char *path) {
+bool SDCardModule::startPcapLogging(const char *path, bool bluetooth) {
     if (!Initlized) return false;
 
     unsigned int maxNum = 0;
@@ -126,6 +126,15 @@ bool SDCardModule::startPcapLogging(const char *path) {
     logFile = SD.open(newLogFileName, FILE_WRITE);
     if (!logFile) {
         return false;
+    }
+
+    if (bluetooth)
+    {
+        pcapHeader.network = 251;
+    }
+    else 
+    {
+        pcapHeader.network = 1;
     }
 
     logFile.write((const uint8_t *)&pcapHeader, sizeof(pcapHeader));

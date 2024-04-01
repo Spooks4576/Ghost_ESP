@@ -261,6 +261,36 @@ void BLEModule::BleSpamDetector()
 #endif
 }
 
+void BLEModule::BleSniff()
+{
+#ifdef HAS_BT
+  NimBLEDevice::init("");
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSnifferCallbacks());
+  NimBLEDevice::getScan()->start(0, nullptr, false);
+
+  #ifdef SD_CARD_CS_PIN
+  sdCardmodule->startPcapLogging("BT.pcap", true);
+  #endif
+
+  while (BLEInitilized)
+  {
+    if (Serial.available() > 0)
+    {
+      String message = Serial.readString();
+
+      if (message.startsWith("stop"))
+      {
+        NimBLEDevice::deinit();
+#ifdef SD_CARD_CS_PIN
+  sdCardmodule->stopPcapLogging();
+#endif
+        break;
+      }
+    }
+  }
+#endif
+}
+
 void BLEModule::findtheflippers()
 {
 #ifdef HAS_BT
@@ -338,7 +368,6 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false)
   }
 }
 
-
 void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
 {
   String payload = String(advertisedDevice->getManufacturerData().c_str());
@@ -380,6 +409,18 @@ void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice
           info.Mac = "";
       }
   }
+}
+
+void BleSnifferCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
+{
+  uint8_t* Payload = advertisedDevice->getPayload();
+  size_t PayloadLen = advertisedDevice->getPayloadLength();
+
+  Serial.println("Packet Recieved");
+
+#ifdef SD_CARD_CS_PIN
+  sdCardmodule->logPacket("BT.pcap", Payload, PayloadLen);
+#endif
 }
 
 #endif

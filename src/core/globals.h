@@ -33,6 +33,16 @@ inline void stringToUint8Array(String inputString, uint8_t* outputArray, int max
     }
 }
 
+inline String bytesToHexString(const uint8_t* bytes, size_t length) {
+    String str = "";
+    for (size_t i = 0; i < length; ++i) {
+        // Convert each byte to Hex and append to the string
+        if (bytes[i] < 16) str += '0'; // Add leading zero for values less than 0x10
+        str += String(bytes[i], HEX);
+    }
+    return str;
+}
+
 inline LinkedList<SerialCallback> callbacks;
 
 inline void registerCallback(const std::function<bool(String&)>& condition, const std::function<void(String&)>& callback) {

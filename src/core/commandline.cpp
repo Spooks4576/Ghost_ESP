@@ -334,6 +334,13 @@ void CommandLine::runCommand(String input)
       #endif
     }
 
+    if (cmd_args.get(0) == "sniffbt")
+    {
+      #ifdef HAS_BT
+      BleModule->BleSniff();
+      #endif
+    }
+
 
 
     if (cmd_args.get(0) == "scanap")

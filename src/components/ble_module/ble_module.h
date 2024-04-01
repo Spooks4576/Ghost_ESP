@@ -105,6 +105,10 @@ class BleSpamDetectorCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     std::map<String, PayloadInfo> payloadInfoMap;
 };
 
+class BleSnifferCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+};
+
 #endif
 
 #ifdef HAS_BT
@@ -126,6 +130,7 @@ public:
 
     void findtheflippers();
     void BleSpamDetector();
+    void BleSniff();
 
     bool BLEInitilized;
     #ifdef HAS_BT

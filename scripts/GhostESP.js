@@ -207,7 +207,8 @@ function bleSpamMenu() {
     submenu.addItem("Windows Spam", 3);
     submenu.addItem("Kitchen Sink", 4);
     submenu.addItem("Find the Flippers", 5);
-    submenu.addItem("BLE Spam Detector", 5);
+    submenu.addItem("BLE Spam Detector", 6);
+    submenu.addItem("Sniff BLE", 7);
 
     let result = submenu.show();
 
@@ -238,6 +239,11 @@ function bleSpamMenu() {
     if (result === 6)
     {
         sendSerialCommand('detectblespam', 2);
+    }
+
+    if (result === 7)
+    {
+        sendSerialCommand('sniffbt', 2);
     }
 
     if (result === undefined)
