@@ -503,36 +503,86 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
 
     if (cmd_args.get(0) == "sniffpmkid")
     {
+
+      int nn_sw = this->argSearch(&cmd_args, "-c");
+
+      if (nn_sw != -1)
+      {
+        int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
+        Serial.println("Starting PMKID sniff. Stop with stop scan");
+        wifimodule->Sniff(ST_pmkid, TargetChannel);
+      }
+
       Serial.println("Starting PMKID sniff. Stop with stop scan");
-      wifimodule->Sniff(ST_pmkid);
+      wifimodule->Sniff(ST_pmkid, 0);
       return;
     }
 
     if (cmd_args.get(0) == "sniffraw")
     {
+
+      int nn_sw = this->argSearch(&cmd_args, "-c");
+
+      if (nn_sw != -1)
+      {
+        int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
+        Serial.println("Starting RAW sniff. Stop with stop scan");
+        wifimodule->Sniff(ST_raw, TargetChannel);
+      }
+
       Serial.println("Starting RAW sniff. Stop with stop scan");
-      wifimodule->Sniff(ST_raw);
+      wifimodule->Sniff(ST_raw, 0);
       return;
     }
 
     if (cmd_args.get(0) == "sniffbeacon")
     {
+
+      int nn_sw = this->argSearch(&cmd_args, "-c");
+
+      if (nn_sw != -1)
+      {
+        int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
+        Serial.println("Starting Beacon sniff. Stop with stop scan");
+        wifimodule->Sniff(ST_beacon, TargetChannel);
+      }
+
       Serial.println("Starting Beacon sniff. Stop with stop scan");
-      wifimodule->Sniff(ST_beacon);
+      wifimodule->Sniff(ST_beacon, 0);
       return;
     }
 
     if (cmd_args.get(0) == "sniffprobe")
     {
+
+      int nn_sw = this->argSearch(&cmd_args, "-c");
+
+      if (nn_sw != -1)
+      {
+        int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
+        Serial.println("Starting PROBE sniff. Stop with stop scan");
+        wifimodule->Sniff(ST_probe, TargetChannel);
+      }
+
       Serial.println("Starting PROBE sniff. Stop with stop scan");
-      wifimodule->Sniff(ST_probe);
+      wifimodule->Sniff(ST_probe, 0);
       return;
     }
 
     if (cmd_args.get(0) == "sniffpwn")
     {
+
+      int nn_sw = this->argSearch(&cmd_args, "-c");
+
+      if (nn_sw != -1)
+      {
+        int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
+        Serial.println("Starting PWN sniff. Stop with stop scan");
+        wifimodule->Sniff(ST_pwn, TargetChannel);
+      }
+
       Serial.println("Starting PWN sniff. Stop with stop scan");
-      wifimodule->Sniff(ST_pwn);
+      wifimodule->Sniff(ST_pwn, 0);
       return;
     }
 

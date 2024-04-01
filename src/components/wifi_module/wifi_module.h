@@ -170,7 +170,7 @@ public:
     void Attack(AttackType type);
     bool addSSID(String essid);
     void Scan(ScanType type);
-    void Sniff(SniffType Type);
+    void Sniff(SniffType Type, int TargetChannel);
     int generateSSIDs(int count);
     String getApMAC();
     bool shutdownWiFi();

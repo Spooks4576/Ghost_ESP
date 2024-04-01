@@ -112,13 +112,15 @@ bool WiFiModule::addSSID(String essid) {
   return true;
 }
 
-void WiFiModule::Sniff(SniffType Type)
+void WiFiModule::Sniff(SniffType Type, int TargetChannel)
 {
 #ifdef OLD_LED
   Threadinfo.TargetPin = rgbmodule->redPin;
 #endif
 
-  int set_channel = random(1, 13);
+
+  bool SetChannel = TargetChannel != 0;
+  int set_channel = TargetChannel == 0 ? random(1, 13) : TargetChannel;
   esp_wifi_init(&cfg);
   esp_wifi_set_storage(WIFI_STORAGE_RAM);
   esp_wifi_set_mode(WIFI_MODE_AP);
@@ -181,7 +183,7 @@ esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
 #endif
     }
   }
-
+  
   static unsigned long lastChangeTime = 0;
   while (wifi_initialized)
   {
@@ -196,8 +198,11 @@ esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
     unsigned long currentTime = millis();
     if (currentTime - lastChangeTime >= 3000)
     {
-      uint8_t set_channel = random(1, 13);
-      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+      if (!SetChannel)
+      {
+        uint8_t set_channel = random(1, 13);
+        esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+      }
       lastChangeTime = currentTime;
       BreatheTask();
 #ifdef NEOPIXEL_PIN
