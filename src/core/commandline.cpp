@@ -539,6 +539,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       Serial.println("- 'attack -t beacon -l': Start Beacon Spam with SSID List.");
       Serial.println("- 'attack -t beacon -r': Start Beacon Spam with Random SSIDs.");
       Serial.println("- 'attack -t rickroll': Start Rickroll Beacon Spam.");
+      Serial.println("- 'attack -t deauth': Start Deauth Attack on the Captured Networks");
       Serial.println("- 'castv2connect -s <SSID> -p <PASSWORD> -v <Device>': Connect to a device using CastV2 protocol.");
       Serial.println("- 'dialconnect -s <SSID> -p <PASSWORD> -t <App> -v <Device>': Connect to a device using DIAL protocol.");
       Serial.println("- 'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>': Detect deauthentication frames.");

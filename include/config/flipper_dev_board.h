@@ -12,3 +12,4 @@
 //#define HAS_GPS false
 //#define GPS_TX 0
 //#define GPS_RX 0
+//#define SUPPORTS_MMC

@@ -195,7 +195,6 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
 
 void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
 #ifdef HAS_BT
-    BLEInitilized = Loop;
     while (BLEInitilized && Loop)
     {
       if (Serial.available() > 0)
@@ -253,7 +252,7 @@ void BLEModule::BleSpamDetector()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::deinit();
+        NimBLEDevice::deinit(true);
         break;
       }
     }
@@ -280,7 +279,7 @@ void BLEModule::BleSniff()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::deinit();
+        NimBLEDevice::deinit(true);
 #ifdef SD_CARD_CS_PIN
   sdCardmodule->stopPcapLogging();
 #endif
@@ -306,7 +305,7 @@ void BLEModule::findtheflippers()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::deinit();
+        NimBLEDevice::deinit(true);
         break;
       }
     }

@@ -5,22 +5,15 @@
 SDCardModule::SDCardModule() : csPin(SD_CARD_CS_PIN) {}
 
 bool SDCardModule::init() {
+#ifdef SD_CARD_CS_PIN
     Initlized = SD.begin(csPin);
-
+#elif SUPPORTS_MMC
+    Initlized = SD_MMC.begin();
+    IsMMCCard = true;
+#endif
     if (!Initlized) {
 
         Serial.println("SD Card initialization failed!");
-        //Serial.println("SD Card initialization failed! Trying MMC...");
-
-        // if (!SD_MMC.begin())
-        // {
-        //     Serial.println("SD MMC Card initialization failed!");
-        //     return false;
-        // }
-        // else 
-        // {
-        //     IsMMCCard = true;
-        // }
 
         return false;
     }

@@ -2,11 +2,11 @@
 
 #include "board_config.h" 
 
-#ifdef SD_CARD_CS_PIN 
+#ifdef SD_CARD_CS_PIN
 
 #include <Arduino.h>
 #include <SD.h>
-#include "SD_MMC.h" 
+#include <SD_MMC.h>
 
 
 struct pcap_global_header {
