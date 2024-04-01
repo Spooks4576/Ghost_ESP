@@ -240,6 +240,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
 
 void BLEModule::BleSpamDetector()
 {
+#ifdef HAS_BT
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSpamDetectorCallbacks());
   NimBLEDevice::getScan()->start(0, nullptr, false);
@@ -257,10 +258,12 @@ void BLEModule::BleSpamDetector()
       }
     }
   }
+#endif
 }
 
 void BLEModule::findtheflippers()
 {
+#ifdef HAS_BT
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new FlipperFinderCallbacks());
   NimBLEDevice::getScan()->start(0, nullptr, false);
@@ -278,7 +281,10 @@ void BLEModule::findtheflippers()
       }
     }
   }
+#endif
 }
+
+#ifdef HAS_BT
 
 void FlipperFinderCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
 {
@@ -375,3 +381,5 @@ void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice
       }
   }
 }
+
+#endif

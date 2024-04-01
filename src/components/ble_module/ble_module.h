@@ -7,6 +7,7 @@
 #include <NimBLEDevice.h>
 #endif
 #include <esp_mac.h>
+#include <Arduino.h>
 
 inline struct {
     uint32_t value;
@@ -94,6 +95,7 @@ struct PayloadInfo {
     String Mac;
 };
 
+#ifdef HAS_BT
 class FlipperFinderCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
@@ -102,6 +104,8 @@ class BleSpamDetectorCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
     std::map<String, PayloadInfo> payloadInfoMap;
 };
+
+#endif
 
 #ifdef HAS_BT
 static void scanCompleteCB(BLEScanResults scanResults);
