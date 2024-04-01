@@ -319,6 +319,23 @@ void CommandLine::runCommand(String input)
       }
     }
 
+    if (cmd_args.get(0) == "findtheflippers")
+    {
+      #ifdef HAS_BT
+      BleModule->findtheflippers();
+      #endif
+    }
+
+    
+    if (cmd_args.get(0) == "detectblespam")
+    {
+      #ifdef HAS_BT
+      BleModule->BleSpamDetector();
+      #endif
+    }
+
+
+
     if (cmd_args.get(0) == "scanap")
     {
       Serial.println("Starting to scan access points");
@@ -526,6 +543,8 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       Serial.println("- 'sniffpwn': Sniff for pwnagotchis in the air.");
       Serial.println("- 'sniffdeauth': Sniff for deauthentication packets in the air.");
       Serial.println("- 'sniffpmkid [-c <channel>]': Sniff for PMKID packets with optional flags for channel");
+      Serial.println("- 'findtheflippers': Detect for Flipper Zeros In Your Area");
+      Serial.println("- 'detectblespam': Detect BLE Spams That Might Be Happening Around You");
     }
 
     if (cmd_args.get(0) == "sniffpmkid")

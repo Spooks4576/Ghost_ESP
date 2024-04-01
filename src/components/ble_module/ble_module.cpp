@@ -237,3 +237,141 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
     }
 #endif
 }
+
+void BLEModule::BleSpamDetector()
+{
+  NimBLEDevice::init("");
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSpamDetectorCallbacks());
+  NimBLEDevice::getScan()->start(0, nullptr, false);
+
+  while (BLEInitilized)
+  {
+    if (Serial.available() > 0)
+    {
+      String message = Serial.readString();
+
+      if (message.startsWith("stop"))
+      {
+        NimBLEDevice::deinit();
+        break;
+      }
+    }
+  }
+}
+
+void BLEModule::findtheflippers()
+{
+  NimBLEDevice::init("");
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new FlipperFinderCallbacks());
+  NimBLEDevice::getScan()->start(0, nullptr, false);
+
+  while (BLEInitilized)
+  {
+    if (Serial.available() > 0)
+    {
+      String message = Serial.readString();
+
+      if (message.startsWith("stop"))
+      {
+        NimBLEDevice::deinit();
+        break;
+      }
+    }
+  }
+}
+
+void FlipperFinderCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
+{
+  String advertisementName = advertisedDevice->getName().c_str();
+  int advertisementRssi = advertisedDevice->getRSSI();
+  String advertisementMac = advertisedDevice->getAddress().toString().c_str();
+
+  if (advertisementName.indexOf("flipper") != -1 || advertisementMac.indexOf("80:e1:26") != -1 || advertisementMac.indexOf("80:e1:27") != -1)
+  {
+    if (advertisedDevice->haveServiceUUID())
+    {
+      String UUID = advertisedDevice->getServiceUUID().toString().c_str();
+      if (UUID.isEmpty())
+      {
+        UUID = advertisedDevice->getServiceDataUUID().toString().c_str();
+      }
+
+      if (UUID.indexOf("0x3082") != -1)
+      {
+        Serial.printf("Found White Flipper Device %s", advertisedDevice->toString().c_str());
+        LOG_MESSAGE_TO_SD("Found White Flipper Device");
+        LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+#endif
+        return;
+      }
+
+      if (UUID.indexOf("0x3081") != -1)
+      {
+        Serial.printf("Found Black Flipper Device %s", advertisedDevice->toString().c_str());
+        LOG_MESSAGE_TO_SD("Found Black Flipper Device");
+        LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+#endif
+        return;
+      }
+
+      if (UUID.indexOf("0x3083") != -1)
+      {
+        Serial.printf("Found Transparent Flipper Device %s", advertisedDevice->toString().c_str());
+        LOG_MESSAGE_TO_SD("Found Transparent Flipper Device");
+        LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+#ifdef NEOPIXEL_PIN
+neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+#endif
+        return;
+      }
+    }
+  }
+}
+
+
+void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
+{
+  String payload = String(advertisedDevice->getManufacturerData().c_str());
+  String MacAddr = String(advertisedDevice->getAddress().toString().c_str());
+
+  if (advertisedDevice->haveServiceUUID())
+  {
+    String UUID = advertisedDevice->getServiceUUID().toString().c_str();
+    if (UUID.isEmpty())
+    {
+      UUID = advertisedDevice->getServiceDataUUID().toString().c_str();
+    }
+
+    if (UUID.indexOf("0x3082") != -1 || UUID.indexOf("0x3083") != -1 || UUID.indexOf("0x3081") != -1)
+    {
+      return; // Ignore Spammy Flipper Zeros
+    }
+  }
+
+  if (payloadInfoMap.find(payload) == payloadInfoMap.end()) {
+      PayloadInfo info = {1, millis(), MacAddr};
+      payloadInfoMap[payload] = info;
+      Serial.println("New payload detected.");
+      LOG_MESSAGE_TO_SD("New payload detected.");
+  } else {
+      PayloadInfo &info = payloadInfoMap[payload];
+      info.count++;
+      unsigned long currentTime = millis();
+      unsigned long detectionWindow = 2000;
+      if (info.count > 20 && (currentTime - info.firstSeenTime) <= detectionWindow || info.Mac == MacAddr) {
+          Serial.println("BLE Spam detected!");
+          LOG_MESSAGE_TO_SD("BLE Spam detected!");
+#ifdef NEOPIXEL_PIN
+          neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 500, false);
+#endif
+      } else if ((currentTime - info.firstSeenTime) > detectionWindow) {
+          info.count = 1;
+          info.firstSeenTime = currentTime;
+          info.Mac = "";
+      }
+  }
+}

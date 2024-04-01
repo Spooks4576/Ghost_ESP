@@ -88,6 +88,21 @@ inline WatchModel* watch_models = new WatchModel[26]
     {0x20, "Green Watch6 Classic 43m"},
 };
 
+struct PayloadInfo {
+    int count;
+    unsigned long firstSeenTime;
+    String Mac;
+};
+
+class FlipperFinderCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+};
+
+class BleSpamDetectorCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+    std::map<String, PayloadInfo> payloadInfoMap;
+};
+
 #ifdef HAS_BT
 static void scanCompleteCB(BLEScanResults scanResults);
 #endif
@@ -104,6 +119,10 @@ public:
     void generateRandomMac(uint8_t* mac);
     void executeSpamAll();
     void esp_fill_random(uint8_t* target, size_t size);
+
+    void findtheflippers();
+    void BleSpamDetector();
+
     bool BLEInitilized;
     #ifdef HAS_BT
     bool shutdownBLE()
