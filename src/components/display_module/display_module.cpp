@@ -77,6 +77,7 @@ void DisplayModule::UpdateSplashStatus(const char* Text, int Percent)
     delay(1000);
     tft.fillScreen(TFT_BLACK);
     IsOnSplash = false;
+    tft.setRotation(0);
     drawMainMenu();
    }
 }
@@ -173,7 +174,7 @@ void DisplayModule::Init()
     IsOnSplash = true;
     mySpi.begin(XPT2046_CLK, XPT2046_MISO, XPT2046_MOSI, XPT2046_CS);
     ts.begin();
-    ts.setRotation(1);
+    ts.setRotation(0);
     tft.init();
     tft.setRotation(0);
     tft.fillScreen(TFT_BLACK);
