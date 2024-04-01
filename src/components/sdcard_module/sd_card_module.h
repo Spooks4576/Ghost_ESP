@@ -1,12 +1,14 @@
 #pragma once
 
-#include "board_config.h" // Include the main configuration header
+#include "board_config.h" 
 
-#ifdef SD_CARD_CS_PIN // Only include this class if the SD card is supported
+#ifdef SD_CARD_CS_PIN 
 
+#include <Arduino.h>
 #include <SD.h>
+#include "SD_MMC.h" 
 
-// Pcap Global Header Format
+
 struct pcap_global_header {
     uint32_t magic_number;   // Magic number
     uint16_t version_major;  // Major version number
@@ -43,6 +45,7 @@ private:
     int csPin;
     int BootNum;
     bool Initlized;
+    bool IsMMCCard;
     int PcapFileIndex;
     File logFile;
     unsigned long bufferLength = 0;
@@ -54,6 +57,14 @@ private:
         65535, // snaplen
         1 // Network - assuming Ethernet
     };
+    FS* createFileSystem(bool isMMCCard) {
+        if (isMMCCard) {
+            return &SD_MMC;
+        } else {
+            return &SD;
+        }
+    }
+    FS* SDI;
 };
 
 #endif // SD_CARD_CS_PIN

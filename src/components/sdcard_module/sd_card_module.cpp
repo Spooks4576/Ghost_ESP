@@ -8,14 +8,30 @@ bool SDCardModule::init() {
     Initlized = SD.begin(csPin);
 
     if (!Initlized) {
+
         Serial.println("SD Card initialization failed!");
+        //Serial.println("SD Card initialization failed! Trying MMC...");
+
+        // if (!SD_MMC.begin())
+        // {
+        //     Serial.println("SD MMC Card initialization failed!");
+        //     return false;
+        // }
+        // else 
+        // {
+        //     IsMMCCard = true;
+        // }
+
         return false;
     }
+
+    SDI = createFileSystem(IsMMCCard);
+
     Serial.println("SD Card initialized.");
 
     const char* dirPath = "/logs";
-    if (!SD.exists(dirPath)) {
-        if (SD.mkdir(dirPath)) {
+    if (!SDI->exists(dirPath)) {
+        if (SDI->mkdir(dirPath)) {
         } else {
         Serial.println("Directory creation failed");
         }
@@ -24,8 +40,8 @@ bool SDCardModule::init() {
     }
 
     dirPath = "/pcaps";
-    if (!SD.exists(dirPath)) {
-        if (SD.mkdir(dirPath)) {
+    if (!SDI->exists(dirPath)) {
+        if (SDI->mkdir(dirPath)) {
         } else {
         Serial.println("Directory creation failed");
         }
@@ -34,7 +50,7 @@ bool SDCardModule::init() {
     }
 
     unsigned int maxNum = 0;
-    File root = SD.open("/logs");
+    File root = SDI->open("/logs");
     
     while (true) {
         File entry = root.openNextFile();
@@ -78,12 +94,12 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
 
         String fullMessage = String(timeString) + message;
 
-        if (!SD.exists("/" + String(foldername)))
+        if (!SDI->exists("/" + String(foldername)))
         {
-            SD.mkdir("/" + String(foldername));
+            SDI->mkdir("/" + String(foldername));
         }
 
-        if (!SD.exists(newLogFileName))
+        if (!SDI->exists(newLogFileName))
         {
             writeFile(newLogFileName, "Begin File");
         }
@@ -123,7 +139,7 @@ bool SDCardModule::startPcapLogging(const char *path, bool bluetooth) {
     char newLogFileName[128];
     sprintf(newLogFileName, "/%s/boot_%u_%s", "pcaps", PcapFileIndex += 1, path);
     
-    logFile = SD.open(newLogFileName, FILE_WRITE);
+    logFile = SDI->open(newLogFileName, FILE_WRITE);
     if (!logFile) {
         return false;
     }
@@ -180,7 +196,7 @@ void SDCardModule::flushLog() {
 }
 
 bool SDCardModule::writeFile(const char *path, const char *message) {
-    File file = SD.open(path, FILE_WRITE);
+    File file = SDI->open(path, FILE_WRITE);
     if (!file) {
         Serial.println("Failed to open file for writing");
         return false;
@@ -195,7 +211,7 @@ bool SDCardModule::writeFile(const char *path, const char *message) {
 }
 
 bool SDCardModule::readFile(const char *path) {
-    File file = SD.open(path);
+    File file = SDI->open(path);
     if (!file) {
         Serial.println("Failed to open file for reading");
         return false;
@@ -209,7 +225,7 @@ bool SDCardModule::readFile(const char *path) {
 }
 
 bool SDCardModule::appendFile(const char *path, const char *message) {
-    File file = SD.open(path, FILE_APPEND);
+    File file = SDI->open(path, FILE_APPEND);
     if (!file) {
         Serial.println("Failed to open file for appending");
         return false;
@@ -224,7 +240,7 @@ bool SDCardModule::appendFile(const char *path, const char *message) {
 }
 
 bool SDCardModule::deleteFile(const char *path) {
-    if (SD.remove(path)) {
+    if (SDI->remove(path)) {
         return true;
     } else {
         Serial.println("Delete failed");
