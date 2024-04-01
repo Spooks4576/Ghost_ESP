@@ -501,6 +501,33 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       }
     }
 
+    if (cmd_args.get(0) == "help")
+    {
+      Serial.println("HELP MENU:");
+      Serial.println("- 'scanap': Scan for WiFi Access Points.");
+      Serial.println("- 'scansta': Scan for WiFi Stations.");
+      Serial.println("- 'list -a': List all Access Points.");
+      Serial.println("- 'list -c': List all WiFi Clients.");
+      Serial.println("- 'select -a <index>': Select an Access Point by index.");
+      Serial.println("- 'select -s <index>': Select a Station by index.");
+      Serial.println("- 'ssid -a -g': Generate and add a random SSID.");
+      Serial.println("- 'ssid -a -n <SSID>': Add a specific SSID.");
+      Serial.println("- 'attack -t beacon -l': Start Beacon Spam with SSID List.");
+      Serial.println("- 'attack -t beacon -r': Start Beacon Spam with Random SSIDs.");
+      Serial.println("- 'attack -t rickroll': Start Rickroll Beacon Spam.");
+      Serial.println("- 'castv2connect -s <SSID> -p <PASSWORD> -v <Device>': Connect to a device using CastV2 protocol.");
+      Serial.println("- 'dialconnect -s <SSID> -p <PASSWORD> -t <App> -v <Device>': Connect to a device using DIAL protocol.");
+      Serial.println("- 'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>': Detect deauthentication frames.");
+      Serial.println("- 'blespam -t <type>': Start BLE spamming of a specific type ('samsung', 'apple', 'google', 'windows', or 'all').");
+      Serial.println("- 'led -p': Activate Rainbow LED pattern.");
+      Serial.println("- 'sniffraw': Sniff raw WiFi packets.");
+      Serial.println("- 'sniffbeacon': Sniff WiFi beacons.");
+      Serial.println("- 'sniffprobe': Sniff WiFi probe requests.");
+      Serial.println("- 'sniffpwn': Sniff for pwnagotchis in the air.");
+      Serial.println("- 'sniffdeauth': Sniff for deauthentication packets in the air.");
+      Serial.println("- 'sniffpmkid [-c <channel>]': Sniff for PMKID packets with optional flags for channel");
+    }
+
     if (cmd_args.get(0) == "sniffpmkid")
     {
 
