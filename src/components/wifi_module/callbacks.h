@@ -411,7 +411,7 @@ void pwnSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
         Serial.println();
 
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket("PWN.pcap", snifferPacket->payload, len);
+  sdCardmodule->logPacket(snifferPacket->payload, len);
 #endif
       }
     }
@@ -476,7 +476,7 @@ void beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
           return;
         }
 #ifdef SD_CARD_CS_PIN
-sdCardmodule->logPacket("BEACON.pcap", snifferPacket->payload, len);
+sdCardmodule->logPacket(snifferPacket->payload, len);
 #endif
     }
   }
@@ -525,7 +525,7 @@ void probeSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
         Serial.println();    
 
 #ifdef SD_CARD_CS_PIN
-sdCardmodule->logPacket("PROBE.pcap", snifferPacket->payload, len);
+sdCardmodule->logPacket(snifferPacket->payload, len);
 #endif
     }
   }
@@ -564,7 +564,7 @@ void rawSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     Serial.println();
 
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket("RAW.pcap", snifferPacket->payload, len);
+  sdCardmodule->logPacket(snifferPacket->payload, len);
 #endif
 }
 
@@ -628,6 +628,6 @@ void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
   }
 
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket("EPOL.pcap", snifferPacket->payload, len);
+  sdCardmodule->logPacket(snifferPacket->payload, len);
 #endif
 }

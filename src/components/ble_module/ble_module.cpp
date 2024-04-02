@@ -195,7 +195,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
 
 void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
 #ifdef HAS_BT
-    while (BLEInitilized && Loop)
+    while (Loop)
     {
       if (Serial.available() > 0)
       {
@@ -240,6 +240,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
 void BLEModule::BleSpamDetector()
 {
 #ifdef HAS_BT
+  shutdownBLE();
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSpamDetectorCallbacks());
   NimBLEDevice::getScan()->start(0, nullptr, false);
@@ -252,7 +253,7 @@ void BLEModule::BleSpamDetector()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::deinit(true);
+        NimBLEDevice::getScan()->stop();
         break;
       }
     }
@@ -263,6 +264,7 @@ void BLEModule::BleSpamDetector()
 void BLEModule::BleSniff()
 {
 #ifdef HAS_BT
+  shutdownBLE();
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSnifferCallbacks());
   NimBLEDevice::getScan()->start(0, nullptr, false);
@@ -279,7 +281,7 @@ void BLEModule::BleSniff()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::deinit(true);
+        NimBLEDevice::getScan()->stop();
 #ifdef SD_CARD_CS_PIN
   sdCardmodule->stopPcapLogging();
 #endif
@@ -293,6 +295,7 @@ void BLEModule::BleSniff()
 void BLEModule::findtheflippers()
 {
 #ifdef HAS_BT
+  shutdownBLE();
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new FlipperFinderCallbacks());
   NimBLEDevice::getScan()->start(0, nullptr, false);
@@ -305,7 +308,7 @@ void BLEModule::findtheflippers()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::deinit(true);
+        NimBLEDevice::getScan()->stop();
         break;
       }
     }
@@ -320,49 +323,46 @@ void FlipperFinderCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
   String advertisementName = advertisedDevice->getName().c_str();
   int advertisementRssi = advertisedDevice->getRSSI();
   String advertisementMac = advertisedDevice->getAddress().toString().c_str();
-
-  if (advertisementName.indexOf("flipper") != -1 || advertisementMac.indexOf("80:e1:26") != -1 || advertisementMac.indexOf("80:e1:27") != -1)
+  
+  if (advertisedDevice->haveServiceUUID())
   {
-    if (advertisedDevice->haveServiceUUID())
+    String UUID = advertisedDevice->getServiceUUID().toString().c_str();
+    if (UUID.isEmpty())
     {
-      String UUID = advertisedDevice->getServiceUUID().toString().c_str();
-      if (UUID.isEmpty())
-      {
-        UUID = advertisedDevice->getServiceDataUUID().toString().c_str();
-      }
+      UUID = advertisedDevice->getServiceDataUUID().toString().c_str();
+    }
 
-      if (UUID.indexOf("0x3082") != -1)
-      {
-        Serial.printf("Found White Flipper Device %s", advertisedDevice->toString().c_str());
-        LOG_MESSAGE_TO_SD("Found White Flipper Device");
-        LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+    if (UUID.indexOf("0x3082") != -1)
+    {
+      Serial.printf("Found White Flipper Device %s", advertisedDevice->toString().c_str());
+      LOG_MESSAGE_TO_SD("Found White Flipper Device");
+      LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
 neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
 #endif
-        return;
-      }
+      return;
+    }
 
-      if (UUID.indexOf("0x3081") != -1)
-      {
-        Serial.printf("Found Black Flipper Device %s", advertisedDevice->toString().c_str());
-        LOG_MESSAGE_TO_SD("Found Black Flipper Device");
-        LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+    if (UUID.indexOf("0x3081") != -1)
+    {
+      Serial.printf("Found Black Flipper Device %s", advertisedDevice->toString().c_str());
+      LOG_MESSAGE_TO_SD("Found Black Flipper Device");
+      LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
 neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
 #endif
-        return;
-      }
+      return;
+    }
 
-      if (UUID.indexOf("0x3083") != -1)
-      {
-        Serial.printf("Found Transparent Flipper Device %s", advertisedDevice->toString().c_str());
-        LOG_MESSAGE_TO_SD("Found Transparent Flipper Device");
-        LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+    if (UUID.indexOf("0x3083") != -1)
+    {
+      Serial.printf("Found Transparent Flipper Device %s", advertisedDevice->toString().c_str());
+      LOG_MESSAGE_TO_SD("Found Transparent Flipper Device");
+      LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
 neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
 #endif
-        return;
-      }
+      return;
     }
   }
 }
@@ -418,7 +418,7 @@ void BleSnifferCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
   Serial.println("Packet Recieved");
 
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket("BT.pcap", Payload, PayloadLen);
+  sdCardmodule->logPacket(Payload, PayloadLen);
 #endif
 }
 

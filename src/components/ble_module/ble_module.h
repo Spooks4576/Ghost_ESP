@@ -137,10 +137,17 @@ public:
     bool shutdownBLE()
     {
         BLEInitilized = false; // Stop While Loops
+        if (pAdvertising)
         pAdvertising->stop();
-        pBLEScan->stop();
+
+        if (pBLEScan)
+        {
+            pBLEScan->stop();
+            pBLEScan->clearResults();
+        }
+
+        NimBLEDevice::getScan()->stop();
         
-        pBLEScan->clearResults();
         NimBLEDevice::deinit();
         return true;
     }

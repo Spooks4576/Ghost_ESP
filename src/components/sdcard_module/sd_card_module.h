@@ -37,7 +37,7 @@ public:
     bool deleteFile(const char *path);
     bool logMessage(const char *logFileName, const char* foldername, String message);
     bool startPcapLogging(const char *path,bool bluetooth = false);
-    bool logPacket(const char *path, const uint8_t *packet, uint32_t length);
+    bool logPacket(const uint8_t *packet, uint32_t length);
     void flushLog();
     void stopPcapLogging();
 

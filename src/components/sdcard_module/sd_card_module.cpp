@@ -41,6 +41,46 @@ bool SDCardModule::init() {
     } else {
         Serial.println("Directory already exists");
     }
+    
+    dirPath = "/pcaps/raw/";
+    if (!SDI->exists(dirPath)) {
+        if (SDI->mkdir(dirPath)) {
+        } else {
+        Serial.println("Directory creation failed");
+        }
+    } else {
+        Serial.println("Directory already exists");
+    }
+
+    dirPath = "/pcaps/epol/";
+    if (!SDI->exists(dirPath)) {
+        if (SDI->mkdir(dirPath)) {
+        } else {
+        Serial.println("Directory creation failed");
+        }
+    } else {
+        Serial.println("Directory already exists");
+    }
+
+    dirPath = "/pcaps/pwn/";
+    if (!SDI->exists(dirPath)) {
+        if (SDI->mkdir(dirPath)) {
+        } else {
+        Serial.println("Directory creation failed");
+        }
+    } else {
+        Serial.println("Directory already exists");
+    }
+
+    dirPath = "/pcaps/probe/";
+    if (!SDI->exists(dirPath)) {
+        if (SDI->mkdir(dirPath)) {
+        } else {
+        Serial.println("Directory creation failed");
+        }
+    } else {
+        Serial.println("Directory already exists");
+    }
 
     unsigned int maxNum = 0;
     File root = SDI->open("/logs");
@@ -108,8 +148,17 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
 bool SDCardModule::startPcapLogging(const char *path, bool bluetooth) {
     if (!Initlized) return false;
 
+    String CutPath = path;
+    CutPath.replace(".pcap", "");
+    CutPath.toLowerCase();
+    
+    if (!SDI->exists("/pcaps/" + CutPath))
+    {
+        SDI->mkdir("/pcaps/" + CutPath);
+    }
+
     unsigned int maxNum = 0;
-    File root = SD.open("/pcaps");
+    File root = SDI->open("/pcaps/" + CutPath);
     
     while (true) {
         File entry = root.openNextFile();
@@ -130,7 +179,7 @@ bool SDCardModule::startPcapLogging(const char *path, bool bluetooth) {
     PcapFileIndex = maxNum;
 
     char newLogFileName[128];
-    sprintf(newLogFileName, "/%s/boot_%u_%s", "pcaps", PcapFileIndex += 1, path);
+    sprintf(newLogFileName, "/%s/%s/boot_%u_%s", "pcaps", CutPath.c_str(), PcapFileIndex += 1, path);
     
     logFile = SDI->open(newLogFileName, FILE_WRITE);
     if (!logFile) {
@@ -151,11 +200,8 @@ bool SDCardModule::startPcapLogging(const char *path, bool bluetooth) {
     return true;
 }
 
-bool SDCardModule::logPacket(const char *path, const uint8_t *packet, uint32_t length) {
+bool SDCardModule::logPacket(const uint8_t *packet, uint32_t length) {
     if (!Initlized || !logFile) return false;
-
-    char newLogFileName[128];
-    sprintf(newLogFileName, "/%s/boot_%u_%s", "pcaps", PcapFileIndex, path);
 
     uint32_t ts_sec = millis();
     uint32_t ts_usec = micros();
