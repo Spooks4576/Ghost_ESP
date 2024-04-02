@@ -498,6 +498,11 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       return;
     }
 
+    if (cmd_args.get(0) == "calibrate")
+    {
+      wifimodule->Calibrate();
+    }
+
     if (cmd_args.get(0) == "ssid")
     {
       int ap_sw = this->argSearch(&cmd_args, "-a");
@@ -543,6 +548,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       Serial.println("- 'castv2connect -s <SSID> -p <PASSWORD> -v <Device>': Connect to a device using CastV2 protocol.");
       Serial.println("- 'dialconnect -s <SSID> -p <PASSWORD> -t <App> -v <Device>': Connect to a device using DIAL protocol.");
       Serial.println("- 'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>': Detect deauthentication frames.");
+      Serial.println("- 'calibrate': Calibrate the most active network. Used for sniffing functions");
       Serial.println("- 'blespam -t <type>': Start BLE spamming of a specific type ('samsung', 'apple', 'google', 'windows', or 'all').");
       Serial.println("- 'led -p': Activate Rainbow LED pattern.");
       Serial.println("- 'sniffraw': Sniff raw WiFi packets.");

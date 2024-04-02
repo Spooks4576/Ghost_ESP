@@ -121,27 +121,14 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
 
   bool SetChannel = TargetChannel != 0;
   int set_channel = TargetChannel == 0 ? random(1, 13) : TargetChannel;
+  if (MostActiveChannel != 0)
+  {
+    set_channel = MostActiveChannel;
+  }
   esp_wifi_init(&cfg);
   esp_wifi_set_storage(WIFI_STORAGE_RAM);
-  esp_wifi_set_mode(WIFI_MODE_AP);
-  esp_err_t err;
-  wifi_config_t conf;
-  err = esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
-  esp_wifi_get_config((wifi_interface_t)WIFI_IF_AP, &conf);
-  conf.ap.ssid[0] = '\0';
-  conf.ap.ssid_len = 0;
-  conf.ap.channel = set_channel;
-  conf.ap.ssid_hidden = 1;
-  conf.ap.max_connection = 0;
-  conf.ap.beacon_interval = 60000;
+  esp_wifi_set_mode(WIFI_MODE_NULL);
 
-  err = esp_wifi_set_config((wifi_interface_t)WIFI_IF_AP, &conf);
-
-  esp_wifi_start();
-  esp_wifi_set_promiscuous(true);
-  esp_wifi_set_promiscuous_filter(&filt);
-
-  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
   this->wifi_initialized = true;
   initTime = millis();
 
@@ -149,6 +136,11 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
   {
     case SniffType::ST_beacon:
     {
+      esp_wifi_start();
+      esp_wifi_set_promiscuous(true);
+      esp_wifi_set_promiscuous_filter(&filt);
+
+      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       esp_wifi_set_promiscuous_rx_cb(&beaconSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("BEACON.pcap");
@@ -156,20 +148,35 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     }
     case SniffType::ST_pmkid:
     {
-      esp_wifi_set_promiscuous_rx_cb(&eapolSnifferCallback);
+      esp_wifi_start();
+      esp_wifi_set_promiscuous(true);
+      esp_wifi_set_promiscuous_filter(&filt);
+
+      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+      esp_wifi_set_promiscuous_rx_cb(eapolSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("EPOL.pcap");
+      sdCardmodule->startPcapLogging("EAPOL.pcap");
 #endif
     }
     case SniffType::ST_probe:
     {
-esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
+      esp_wifi_start();
+      esp_wifi_set_promiscuous(true);
+      esp_wifi_set_promiscuous_filter(&filt);
+
+      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+      esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("PROBE.pcap");
 #endif
     }
     case SniffType::ST_pwn:
     {
+      esp_wifi_start();
+      esp_wifi_set_promiscuous(true);
+      esp_wifi_set_promiscuous_filter(&filt);
+
+      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       esp_wifi_set_promiscuous_rx_cb(&pwnSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("PWN.pcap");
@@ -177,6 +184,11 @@ esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
     }
     case SniffType::ST_raw:
     {
+      esp_wifi_start();
+      esp_wifi_set_promiscuous(true);
+      esp_wifi_set_promiscuous_filter(&filt);
+
+      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       esp_wifi_set_promiscuous_rx_cb(&rawSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("RAW.pcap");
@@ -196,7 +208,7 @@ esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
       break;
     }
     unsigned long currentTime = millis();
-    if (currentTime - lastChangeTime >= 3000)
+    if (currentTime - lastChangeTime >= 3000 && MostActiveChannel == 0)
     {
       if (!SetChannel)
       {
@@ -325,6 +337,60 @@ int WiFiModule::ClearList(ClearType type)
     }
   }
   return num_cleared;
+}
+
+int WiFiModule::findMostActiveWiFiChannel() {
+    int networkCount = WiFi.scanNetworks();
+    Serial.println("Scan complete");
+    
+    if (networkCount == 0) {
+        Serial.println("No networks found");
+        return -1;
+    }
+
+    
+    int channelCount[14] = {0};
+
+
+    for (int i = 0; i < networkCount; ++i) {
+        int channel = WiFi.channel(i);
+        if (channel > 0 && channel < 14) {
+            channelCount[channel]++;
+        }
+    }
+
+
+    int mostActiveChannel = 1;
+    int highestCount = channelCount[1];
+    
+    for (int i = 2; i < 14; ++i) {
+        if (channelCount[i] > highestCount) {
+            mostActiveChannel = i;
+            highestCount = channelCount[i];
+        }
+    }
+
+    Serial.print("Most active channel: ");
+    Serial.println(mostActiveChannel);
+    
+    return mostActiveChannel;
+}
+
+void WiFiModule::Calibrate()
+{
+  int CalibratedChannel = findMostActiveWiFiChannel();
+
+  if (CalibratedChannel != -1)
+  {
+    Serial.printf("Set Calibrated Channel to %i", CalibratedChannel);
+    LOG_MESSAGE_TO_SD("Set Calibrated Channel to " + String(CalibratedChannel));
+    MostActiveChannel = CalibratedChannel;
+  }
+  else
+  {
+    Serial.printf("Failed to Find Any Wifi Networks");
+    LOG_MESSAGE_TO_SD("Failed to Find Any Wifi Networks");
+  }
 }
 
 void WiFiModule::Attack(AttackType type)

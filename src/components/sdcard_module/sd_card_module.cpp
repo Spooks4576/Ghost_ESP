@@ -42,7 +42,7 @@ bool SDCardModule::init() {
         Serial.println("Directory already exists");
     }
     
-    dirPath = "/pcaps/raw/";
+    dirPath = "/pcaps/raw";
     if (!SDI->exists(dirPath)) {
         if (SDI->mkdir(dirPath)) {
         } else {
@@ -52,7 +52,7 @@ bool SDCardModule::init() {
         Serial.println("Directory already exists");
     }
 
-    dirPath = "/pcaps/epol/";
+    dirPath = "/pcaps/epol";
     if (!SDI->exists(dirPath)) {
         if (SDI->mkdir(dirPath)) {
         } else {
@@ -62,7 +62,7 @@ bool SDCardModule::init() {
         Serial.println("Directory already exists");
     }
 
-    dirPath = "/pcaps/pwn/";
+    dirPath = "/pcaps/pwn";
     if (!SDI->exists(dirPath)) {
         if (SDI->mkdir(dirPath)) {
         } else {
@@ -72,7 +72,7 @@ bool SDCardModule::init() {
         Serial.println("Directory already exists");
     }
 
-    dirPath = "/pcaps/probe/";
+    dirPath = "/pcaps/probe";
     if (!SDI->exists(dirPath)) {
         if (SDI->mkdir(dirPath)) {
         } else {

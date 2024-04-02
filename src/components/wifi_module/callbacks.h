@@ -592,8 +592,7 @@ void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 
 
   if (send_deauth) {
-    if (snifferPacket->payload[0] == 0x80) {    
-      // Build packet
+    if (snifferPacket->payload[0] == 0x80) {
       
       deauth_frame_default[10] = snifferPacket->payload[10];
       deauth_frame_default[11] = snifferPacket->payload[11];
@@ -625,9 +624,8 @@ void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     int temp_len = display_string.length();
 
     Serial.println(addr);    
-  }
-
 #ifdef SD_CARD_CS_PIN
   sdCardmodule->logPacket(snifferPacket->payload, len);
 #endif
+  }
 }
