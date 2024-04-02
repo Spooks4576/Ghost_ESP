@@ -127,7 +127,25 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
   }
   esp_wifi_init(&cfg);
   esp_wifi_set_storage(WIFI_STORAGE_RAM);
-  esp_wifi_set_mode(WIFI_MODE_NULL);
+  esp_wifi_set_mode(WIFI_MODE_AP);
+
+  esp_err_t err;
+  wifi_config_t conf;
+  err = esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+
+  esp_wifi_get_config((wifi_interface_t)WIFI_IF_AP, &conf);
+  conf.ap.ssid[0] = '\0';
+  conf.ap.ssid_len = 0;
+  conf.ap.channel = set_channel;
+  conf.ap.ssid_hidden = 1;
+  conf.ap.max_connection = 0;
+  conf.ap.beacon_interval = 60000;
+  err = esp_wifi_set_config((wifi_interface_t)WIFI_IF_AP, &conf);
+  esp_wifi_start();
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_promiscuous_filter(&filt);
+
+  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
 
   this->wifi_initialized = true;
   initTime = millis();
@@ -136,63 +154,44 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
   {
     case SniffType::ST_beacon:
     {
-      esp_wifi_start();
-      esp_wifi_set_promiscuous(true);
-      esp_wifi_set_promiscuous_filter(&filt);
-
-      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+      
       esp_wifi_set_promiscuous_rx_cb(&beaconSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("BEACON.pcap");
 #endif
+      break;    
     }
     case SniffType::ST_pmkid:
     {
-      esp_wifi_start();
-      esp_wifi_set_promiscuous(true);
-      esp_wifi_set_promiscuous_filter(&filt);
-
-      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-      esp_wifi_set_promiscuous_rx_cb(eapolSnifferCallback);
+      esp_wifi_set_promiscuous_rx_cb(&eapolSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("EAPOL.pcap");
 #endif
+     break;
     }
     case SniffType::ST_probe:
     {
-      esp_wifi_start();
-      esp_wifi_set_promiscuous(true);
-      esp_wifi_set_promiscuous_filter(&filt);
-
-      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("PROBE.pcap");
 #endif
+     break;
     }
     case SniffType::ST_pwn:
     {
-      esp_wifi_start();
-      esp_wifi_set_promiscuous(true);
-      esp_wifi_set_promiscuous_filter(&filt);
-
-      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       esp_wifi_set_promiscuous_rx_cb(&pwnSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("PWN.pcap");
 #endif
+      break;
     }
     case SniffType::ST_raw:
     {
-      esp_wifi_start();
-      esp_wifi_set_promiscuous(true);
-      esp_wifi_set_promiscuous_filter(&filt);
-
-      esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       esp_wifi_set_promiscuous_rx_cb(&rawSnifferCallback);
 #ifdef SD_CARD_CS_PIN
       sdCardmodule->startPcapLogging("RAW.pcap");
 #endif
+      break;
     }
   }
   
@@ -267,6 +266,8 @@ void WiFiModule::Scan(ScanType type)
         }
       }
 
+      break;
+
     }
     case ScanType::SCAN_STA:
     {
@@ -302,6 +303,8 @@ void WiFiModule::Scan(ScanType type)
           lastChangeTime = currentTime;
         }
       }
+
+      break;
     }
   }
 }
@@ -320,12 +323,14 @@ int WiFiModule::ClearList(ClearType type)
     {
       int num_cleared = access_points->size();
       access_points->clear();
+      break;
     }
     case ClearType::CT_SSID:
     {
       num_cleared = ssids->size();
       ssids->clear();
       Serial.println("ssids: " + (String)ssids->size());
+      break;
     }
     case ClearType::CT_STA:
     {
@@ -334,6 +339,8 @@ int WiFiModule::ClearList(ClearType type)
 
       for (int i = 0; i < access_points->size(); i++)
         access_points->get(i).stations->clear();
+      
+     break;
     }
   }
   return num_cleared;
@@ -428,6 +435,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
 #endif
           delay(1);
       }
+      break;
     }
     case AttackType::AT_RandomSSID:
     {
@@ -447,6 +455,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
         BreatheTask();
         delay(1);
       }
+      break;
     }
     case AttackType::AT_ListSSID:
     {
@@ -472,6 +481,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
         BreatheTask();
         delay(1);
       }
+      break;
     }
     case AttackType::AT_DeauthAP:
     {
@@ -499,6 +509,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
           BreatheTask();
         }
       }
+      break;
     }
   }
 }
