@@ -192,7 +192,7 @@ bool SDCardModule::startPcapLogging(const char *path, bool bluetooth) {
     }
     else 
     {
-        pcapHeader.network = 1;
+        pcapHeader.network = 105;
     }
 
     logFile.write((const uint8_t *)&pcapHeader, sizeof(pcapHeader));
