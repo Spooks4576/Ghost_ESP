@@ -59,6 +59,9 @@ void SerialCheckTask(void *pvParameters) {
                         #ifdef SD_CARD_CS_PIN
                         sdCardmodule->stopPcapLogging();
                         #endif
+                        #ifdef HAS_BT
+                        BleModule->shutdownBLE();
+                        #endif
                     }
                 }
             }
