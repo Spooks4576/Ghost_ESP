@@ -11,6 +11,7 @@
 #include <LinkedList.h>
 #include <core/images/bt.h>
 #include <core/images/logo.h>
+#include <TFT_eFX.h>
 
 
 inline XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
@@ -32,7 +33,7 @@ enum MenuType
 };
 
 struct Card {
-    int x, y, w, h;
+    int32_t x, y, w, h;
     String title;
     uint16_t bgColor;
     uint16_t fgColor;
@@ -52,6 +53,7 @@ class DisplayModule {
 public:
     SPIClass mySpi = SPIClass(VSPI);
     TFT_eSPI tft = TFT_eSPI();
+    TFT_eFX fex = TFT_eFX(&tft);
     TFT_eSprite spr = TFT_eSprite(&tft);
     uint16_t backgroundColor, buttonColor, textColor, buttonTextColor;
     bool IsOnSplash;

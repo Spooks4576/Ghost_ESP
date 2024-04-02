@@ -88,8 +88,15 @@ bool WiFiModule::shutdownWiFi() {
   if (this->wifi_initialized) {
     this->wifi_initialized = false; // Stop all other while loops first
     esp_wifi_set_promiscuous(false);
+    WiFi.disconnect();
+    WiFi.mode(WIFI_OFF);
 
     dst_mac = "ff:ff:ff:ff:ff:ff";
+
+    esp_wifi_set_mode(WIFI_MODE_NULL);
+    esp_wifi_stop();
+    esp_wifi_restore();
+    esp_wifi_set_promiscuous_rx_cb(NULL); // fixes callback from being called still
     return true;
   }
   else {
@@ -103,6 +110,117 @@ bool WiFiModule::addSSID(String essid) {
   Serial.println(ssids->get(ssids->size() - 1).essid);
 
   return true;
+}
+
+void WiFiModule::Sniff(SniffType Type, int TargetChannel)
+{
+#ifdef OLD_LED
+  Threadinfo.TargetPin = rgbmodule->redPin;
+#endif
+
+
+  bool SetChannel = TargetChannel != 0;
+  int set_channel = TargetChannel == 0 ? random(1, 13) : TargetChannel;
+  if (MostActiveChannel != 0)
+  {
+    set_channel = MostActiveChannel;
+  }
+  esp_wifi_init(&cfg);
+  esp_wifi_set_storage(WIFI_STORAGE_RAM);
+  esp_wifi_set_mode(WIFI_MODE_AP);
+
+  esp_err_t err;
+  wifi_config_t conf;
+  err = esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+
+  esp_wifi_get_config((wifi_interface_t)WIFI_IF_AP, &conf);
+  conf.ap.ssid[0] = '\0';
+  conf.ap.ssid_len = 0;
+  conf.ap.channel = set_channel;
+  conf.ap.ssid_hidden = 1;
+  conf.ap.max_connection = 0;
+  conf.ap.beacon_interval = 60000;
+  err = esp_wifi_set_config((wifi_interface_t)WIFI_IF_AP, &conf);
+  esp_wifi_start();
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_promiscuous_filter(&filt);
+
+  esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+
+  this->wifi_initialized = true;
+  initTime = millis();
+
+ switch (Type)
+  {
+    case SniffType::ST_beacon:
+    {
+      
+      esp_wifi_set_promiscuous_rx_cb(&beaconSnifferCallback);
+#ifdef SD_CARD_CS_PIN
+      sdCardmodule->startPcapLogging("BEACON.pcap");
+#endif
+      break;    
+    }
+    case SniffType::ST_pmkid:
+    {
+      esp_wifi_set_promiscuous_rx_cb(&eapolSnifferCallback);
+#ifdef SD_CARD_CS_PIN
+      sdCardmodule->startPcapLogging("EAPOL.pcap");
+#endif
+     break;
+    }
+    case SniffType::ST_probe:
+    {
+      esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
+#ifdef SD_CARD_CS_PIN
+      sdCardmodule->startPcapLogging("PROBE.pcap");
+#endif
+     break;
+    }
+    case SniffType::ST_pwn:
+    {
+      esp_wifi_set_promiscuous_rx_cb(&pwnSnifferCallback);
+#ifdef SD_CARD_CS_PIN
+      sdCardmodule->startPcapLogging("PWN.pcap");
+#endif
+      break;
+    }
+    case SniffType::ST_raw:
+    {
+      esp_wifi_set_promiscuous_rx_cb(&rawSnifferCallback);
+#ifdef SD_CARD_CS_PIN
+      sdCardmodule->startPcapLogging("RAW.pcap");
+#endif
+      break;
+    }
+  }
+  
+  static unsigned long lastChangeTime = 0;
+  while (wifi_initialized)
+  {
+    if (Serial.available() > 0)
+    {
+      shutdownWiFi();
+#ifdef SD_CARD_CS_PIN
+      sdCardmodule->stopPcapLogging();
+#endif
+      break;
+    }
+    unsigned long currentTime = millis();
+    if (currentTime - lastChangeTime >= 3000 && MostActiveChannel == 0)
+    {
+      if (!SetChannel)
+      {
+        uint8_t set_channel = random(1, 13);
+        esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+      }
+      lastChangeTime = currentTime;
+      BreatheTask();
+#ifdef NEOPIXEL_PIN
+      neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 255), 1000, false);
+#endif
+    }
+  }
 }
 
 void WiFiModule::Scan(ScanType type)
@@ -130,20 +248,25 @@ void WiFiModule::Scan(ScanType type)
         esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
         this->wifi_initialized = true;
         initTime = millis();
+        static unsigned long lastChangeTime = 0;
 
       while (wifi_initialized)
       {
         if (Serial.available() > 0)
         {
           shutdownWiFi();
+          break;
         }
-        unsigned long startTime = millis();
-        if (millis() - startTime < 3000)
+        unsigned long currentTime = millis();
+        if (currentTime - lastChangeTime >= 3000)
         {
           uint8_t set_channel = random(1, 13);
           esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+          lastChangeTime = currentTime;
         }
       }
+
+      break;
 
     }
     case ScanType::SCAN_STA:
@@ -163,20 +286,25 @@ void WiFiModule::Scan(ScanType type)
       esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       this->wifi_initialized = true;
       initTime = millis();
+      static unsigned long lastChangeTime = 0;
 
       while (this->wifi_initialized)
       {
         if (Serial.available() > 0)
         {
           shutdownWiFi();
+          break;
         }
-        unsigned long startTime = millis();
-        if (millis() - startTime < 3000)
+        unsigned long currentTime = millis();
+        if (currentTime - lastChangeTime >= 3000)
         {
           uint8_t set_channel = random(1, 13);
           esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+          lastChangeTime = currentTime;
         }
       }
+
+      break;
     }
   }
 }
@@ -195,12 +323,14 @@ int WiFiModule::ClearList(ClearType type)
     {
       int num_cleared = access_points->size();
       access_points->clear();
+      break;
     }
     case ClearType::CT_SSID:
     {
       num_cleared = ssids->size();
       ssids->clear();
       Serial.println("ssids: " + (String)ssids->size());
+      break;
     }
     case ClearType::CT_STA:
     {
@@ -209,9 +339,65 @@ int WiFiModule::ClearList(ClearType type)
 
       for (int i = 0; i < access_points->size(); i++)
         access_points->get(i).stations->clear();
+      
+     break;
     }
   }
   return num_cleared;
+}
+
+int WiFiModule::findMostActiveWiFiChannel() {
+    int networkCount = WiFi.scanNetworks();
+    Serial.println("Scan complete");
+    
+    if (networkCount == 0) {
+        Serial.println("No networks found");
+        return -1;
+    }
+
+    
+    int channelCount[14] = {0};
+
+
+    for (int i = 0; i < networkCount; ++i) {
+        int channel = WiFi.channel(i);
+        if (channel > 0 && channel < 14) {
+            channelCount[channel]++;
+        }
+    }
+
+
+    int mostActiveChannel = 1;
+    int highestCount = channelCount[1];
+    
+    for (int i = 2; i < 14; ++i) {
+        if (channelCount[i] > highestCount) {
+            mostActiveChannel = i;
+            highestCount = channelCount[i];
+        }
+    }
+
+    Serial.print("Most active channel: ");
+    Serial.println(mostActiveChannel);
+    
+    return mostActiveChannel;
+}
+
+void WiFiModule::Calibrate()
+{
+  int CalibratedChannel = findMostActiveWiFiChannel();
+
+  if (CalibratedChannel != -1)
+  {
+    Serial.printf("Set Calibrated Channel to %i", CalibratedChannel);
+    LOG_MESSAGE_TO_SD("Set Calibrated Channel to " + String(CalibratedChannel));
+    MostActiveChannel = CalibratedChannel;
+  }
+  else
+  {
+    Serial.printf("Failed to Find Any Wifi Networks");
+    LOG_MESSAGE_TO_SD("Failed to Find Any Wifi Networks");
+  }
 }
 
 void WiFiModule::Attack(AttackType type)
@@ -249,6 +435,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
 #endif
           delay(1);
       }
+      break;
     }
     case AttackType::AT_RandomSSID:
     {
@@ -268,6 +455,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
         BreatheTask();
         delay(1);
       }
+      break;
     }
     case AttackType::AT_ListSSID:
     {
@@ -293,6 +481,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
         BreatheTask();
         delay(1);
       }
+      break;
     }
     case AttackType::AT_DeauthAP:
     {
@@ -320,6 +509,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
           BreatheTask();
         }
       }
+      break;
     }
   }
 }

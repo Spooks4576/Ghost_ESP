@@ -14,11 +14,11 @@ void NeopixelModule::init() {
 
 void NeopixelModule::breatheLED(uint32_t color, int breatheTime, bool FadeOut) {
     int fadeAmount = 5;
-    int wait = breatheTime / ((255 / fadeAmount) * 2);
+    int wait = breatheTime / ((150 / fadeAmount) * 2);
 
     if (FadeOut) {
        
-        for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
+        for (int brightness = 150; brightness >= 0; brightness -= fadeAmount) {
             setColor(color);
             strip.setBrightness(brightness);
             strip.show(); 
@@ -26,14 +26,14 @@ void NeopixelModule::breatheLED(uint32_t color, int breatheTime, bool FadeOut) {
         }
     } else {
        
-        for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
+        for (int brightness = 0; brightness <= 150; brightness += fadeAmount) {
             setColor(color);
             strip.setBrightness(brightness);
             strip.show();
             delay(wait);
         }
       
-        for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
+        for (int brightness = 150; brightness >= 0; brightness -= fadeAmount) {
             setColor(color);
             strip.setBrightness(brightness);
             strip.show();
@@ -44,7 +44,7 @@ void NeopixelModule::breatheLED(uint32_t color, int breatheTime, bool FadeOut) {
 
 void NeopixelModule::rainbow(int strength, int stepDelay) {
     
-    strength = max(0, min(strength, 255));
+    strength = max(0, min(strength, 150));
    
     strip.setBrightness(strength);
 

@@ -10,6 +10,10 @@
 #include <Arduino.h>
 #include <SD.h>
 
+extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3){
+  return 0;
+}
+
 void loop() {
 
 #ifdef DISPLAY_SUPPORT
@@ -20,7 +24,7 @@ void loop() {
     if (z > 0)
     {
         displaymodule->tft.getTouch(&x, &y);
-        //displaymodule->printTouchToSerial({x, y, z}); // Only Needed When Debugging
+        displaymodule->printTouchToSerial({x, y, z}); // Only Needed When Debugging
         displaymodule->checkTouch(x, y);
     }
 #endif
@@ -52,6 +56,12 @@ void SerialCheckTask(void *pvParameters) {
                     else 
                     {
                         wifimodule->shutdownWiFi();
+                        #ifdef SD_CARD_CS_PIN
+                        sdCardmodule->stopPcapLogging();
+                        #endif
+                        #ifdef HAS_BT
+                        BleModule->shutdownBLE();
+                        #endif
                     }
                 }
             }
@@ -134,6 +144,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     wifimodule->RunSetup();
 
     cli->RunSetup();
+
     LOG_MESSAGE_TO_SD("Wifi Initilized");
 #ifdef DISPLAY_SUPPORT
     displaymodule->UpdateSplashStatus("Wifi Initilized", 95);

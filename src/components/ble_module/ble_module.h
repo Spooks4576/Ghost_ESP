@@ -7,6 +7,7 @@
 #include <NimBLEDevice.h>
 #endif
 #include <esp_mac.h>
+#include <Arduino.h>
 
 inline struct {
     uint32_t value;
@@ -88,6 +89,28 @@ inline WatchModel* watch_models = new WatchModel[26]
     {0x20, "Green Watch6 Classic 43m"},
 };
 
+struct PayloadInfo {
+    int count;
+    unsigned long firstSeenTime;
+    String Mac;
+};
+
+#ifdef HAS_BT
+class FlipperFinderCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+};
+
+class BleSpamDetectorCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+    std::map<String, PayloadInfo> payloadInfoMap;
+};
+
+class BleSnifferCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+};
+
+#endif
+
 #ifdef HAS_BT
 static void scanCompleteCB(BLEScanResults scanResults);
 #endif
@@ -103,15 +126,28 @@ public:
     void executeSpam(EBLEPayloadType type, bool Initlized);
     void generateRandomMac(uint8_t* mac);
     void executeSpamAll();
+    void esp_fill_random(uint8_t* target, size_t size);
+
+    void findtheflippers();
+    void BleSpamDetector();
+    void BleSniff();
+
     bool BLEInitilized;
     #ifdef HAS_BT
     bool shutdownBLE()
     {
         BLEInitilized = false; // Stop While Loops
+        if (pAdvertising)
         pAdvertising->stop();
-        pBLEScan->stop();
+
+        if (pBLEScan)
+        {
+            pBLEScan->stop();
+            pBLEScan->clearResults();
+        }
+
+        NimBLEDevice::getScan()->stop();
         
-        pBLEScan->clearResults();
         NimBLEDevice::deinit();
         return true;
     }

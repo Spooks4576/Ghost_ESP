@@ -153,6 +153,15 @@ enum ScanType
     SCAN_STA,
 };
 
+enum SniffType
+{
+    ST_beacon,
+    ST_pmkid,
+    ST_probe,
+    ST_pwn,
+    ST_raw
+};
+
 class WiFiModule
 {
 public:
@@ -161,6 +170,7 @@ public:
     void Attack(AttackType type);
     bool addSSID(String essid);
     void Scan(ScanType type);
+    void Sniff(SniffType Type, int TargetChannel);
     int generateSSIDs(int count);
     String getApMAC();
     bool shutdownWiFi();
@@ -168,6 +178,8 @@ public:
     void insertWPA2Info(uint8_t *packet, int ssidLength);
     void insertTimestamp(uint8_t *packet);
     void RunSetup();
+    int findMostActiveWiFiChannel();
+    void Calibrate();
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
     void broadcastSetSSID(const char* ESSID, uint8_t channel);
     void sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) ;
@@ -179,5 +191,6 @@ public:
     bool wifi_initialized;
     bool BeaconSpamming;
     uint8_t initTime;
+    int MostActiveChannel;
     LinkedList<BeaconPacket> BeaconsToBroadcast;
 };
