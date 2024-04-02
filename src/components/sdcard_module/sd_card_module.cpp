@@ -52,7 +52,7 @@ bool SDCardModule::init() {
         Serial.println("Directory already exists");
     }
 
-    dirPath = "/pcaps/epol";
+    dirPath = "/pcaps/eapol";
     if (!SDI->exists(dirPath)) {
         if (SDI->mkdir(dirPath)) {
         } else {
