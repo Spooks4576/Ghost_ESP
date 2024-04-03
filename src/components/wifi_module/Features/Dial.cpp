@@ -280,22 +280,28 @@ String DIALClient::extractApplicationURL(HttpClient& httpc) {
   int maxHeadersRead = 1000;
   int readCount = 0;
 
+  Serial.println("Starting to read headers to find Application-URL...");
+
   while (httpc.connected() && readCount < maxHeadersRead) {
     headerChar = httpc.readHeader();
     if (headerChar == '\n') {
       consecutiveNewlines++;
+      Serial.println("New line detected. Consecutive newlines: " + String(consecutiveNewlines));
 
       currentLine.trim();
       currentLine.toLowerCase();
+      Serial.println("Processed current line: " + currentLine);
+
       if (currentLine.startsWith("application-url:")) {
           appUrl = currentLine.substring(currentLine.indexOf(':') + 1); // +1 just to skip over the colon
           appUrl.trim();  // This will remove any leading or trailing whitespaces
+          Serial.println("Application-URL found: " + appUrl);
           break;
       }
       currentLine = "";
 
       if (consecutiveNewlines >= 2) {
-
+        Serial.println("Detected end of headers.");
         break;
       }
     } else if (headerChar != '\r') {
@@ -304,6 +310,13 @@ String DIALClient::extractApplicationURL(HttpClient& httpc) {
     }
     readCount++;
   }
+
+  if (appUrl.isEmpty()) {
+    Serial.println("Application-URL not found within the first " + String(maxHeadersRead) + " header characters.");
+  } else {
+    Serial.println("Extracted Application-URL: " + appUrl);
+  }
+
   return appUrl;
 }
 
