@@ -29,6 +29,7 @@ public:
     void UpdateSplashStatus(const char* Text, int Percent);
     void Init();
     void FillScreen(lv_color_t color);
+    void HandleAnimations(unsigned long Millis, unsigned long LastTick);
 };
 
 #endif

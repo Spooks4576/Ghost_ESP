@@ -30,9 +30,9 @@ void loop() {
         displaymodule->checkTouch(point);
     }
     lv_tick_inc(millis() - lastTick);
+    displaymodule->HandleAnimations(millis(), lastTick);
     lastTick = millis();
     lv_timer_handler();
-    delay(5);
 #endif
 #ifndef DISPLAY_SUPPORT
     if (!HasRanCommand)
@@ -46,6 +46,7 @@ void loop() {
 
 void SerialCheckTask(void *pvParameters) {
     while (1) {
+        #ifndef DISPLAY_SUPPORT
         if (HasRanCommand)
         {   
             if (Serial.available() > 0) {
@@ -72,6 +73,7 @@ void SerialCheckTask(void *pvParameters) {
             }
         }
         vTaskDelay(50 / portTICK_PERIOD_MS);
+        #endif;
     }
 }
 
@@ -150,16 +152,10 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     cli->RunSetup();
 
     LOG_MESSAGE_TO_SD("Wifi Initilized");
-#ifdef DISPLAY_SUPPORT
-    displaymodule->UpdateSplashStatus("Wifi Initilized", 95);
-    delay(500);
-#endif
+    
 #ifndef DISPLAY_SUPPORT
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
 #endif
+
     LOG_MESSAGE_TO_SD("Registered Multithread Callbacks");
-#ifdef DISPLAY_SUPPORT
-    displaymodule->UpdateSplashStatus("Ghost ESP...", 100);
-    delay(500);
-#endif
 }

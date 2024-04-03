@@ -1,24 +1,11 @@
 #include "splashscreen.h"
+#include "../UI/Animations/Scaleinout.h"
 
 void SplashScreen::UpdateSplash(const char* Text, int Progress)
 {
-    RenderTextBox(Text, 80, 50, 0, 45);
 
-    if (!TextObjects[0])
+    if (Progress > 666)
     {
-        Serial.println("Failed to Create Text Box!!!");
-        return;
-    }
-
-    if (!ImageObjects[0])
-    {
-        Serial.println("Failed to Create Image!!!");
-        return;
-    }
-
-    if (Progress > 99)
-    {
-        delay(2000);
         Destroy(MenuType::MT_MainMenu);
     }
 }   
@@ -34,5 +21,17 @@ void SplashScreen::HandleTouch(TS_Point P)
 
 void SplashScreen::Render()
 {
-   RenderJpg(&logo, 280, 40, 0, 45);
+   RenderJpg(&logo, 240, 40, 0, 45);
+}
+
+void SplashScreen::HandleAnimations(unsigned long millis, unsigned long LastTick)
+{
+    if (millis >= 5000 && !PlayedAnim) {
+
+        PlayedAnim = true;
+        Serial.println(millis);
+        animate_image_scale(ImageObjects[0]);
+
+        LastMillis = millis;
+    }
 }

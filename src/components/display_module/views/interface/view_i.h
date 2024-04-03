@@ -31,6 +31,7 @@ public:
 
     const char* ViewID;
     bool Debugging;
+    bool PlayedAnim = false;
     LinkedList<lv_obj_t*> ImageObjects;
     LinkedList<lv_obj_t*> TextObjects;
     void RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, int TextObjectIndex, int angle);
@@ -40,6 +41,8 @@ public:
     void (*UpdateRotationCallback)(int);
     void (*DestroyCallback)(ViewInterface* Interface, MenuType Nextmenu);
     virtual void Render() = 0;
+    virtual void HandleAnimations(unsigned long Millis, unsigned long LastTick) = 0;
+    unsigned long LastMillis;
     void Destroy(MenuType type)
     {
         DestroyCallback(this, type);

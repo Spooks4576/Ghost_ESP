@@ -37,6 +37,7 @@ void DisplayModule::Destroy(ViewInterface* Interface, MenuType Nextmenu)
         }
     }
     delete Interface;
+    lv_obj_del(lv_scr_act());
     displaymodule->FillScreen(lv_color_black());
     RenderMenuType(Nextmenu);
 }
@@ -110,6 +111,14 @@ void DisplayModule::FillScreen(lv_color_t color)
     lv_style_set_bg_color(&style, color); 
     lv_style_set_bg_opa(&style, LV_OPA_COVER);
     lv_obj_add_style(lv_scr_act(), &style, LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void DisplayModule::HandleAnimations(unsigned long Millis, unsigned long LastTick)
+{
+    for (int i = 0; i < Views.size(); i++) 
+    {
+        Views[i]->HandleAnimations(Millis, LastTick);
+    }
 }
 
 void DisplayModule::Init()

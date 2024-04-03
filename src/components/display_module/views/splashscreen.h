@@ -23,4 +23,5 @@ public:
     void UpdateSplash(const char* text, int Progress);
     virtual void HandleTouch(TS_Point P) override;
     virtual void Render() override;
+    virtual void HandleAnimations(unsigned long Millis, unsigned long LastTick) override;
 };
