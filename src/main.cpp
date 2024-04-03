@@ -14,6 +14,8 @@ extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32
   return 0;
 }
 
+uint32_t lastTick = 0;
+
 void loop() {
 
 #ifdef DISPLAY_SUPPORT
@@ -27,10 +29,11 @@ void loop() {
         TS_Point point{x, y, z};
         displaymodule->checkTouch(point);
     }
-
+    lv_tick_inc(millis() - lastTick);
+    lastTick = millis();
     lv_timer_handler();
+    delay(5);
 #endif
-
 #ifndef DISPLAY_SUPPORT
     if (!HasRanCommand)
     {
@@ -82,7 +85,6 @@ void setup()
         displaymodule->Init();
         Serial.println("Init Display");
     #endif
-
     
     #ifdef OLD_LED
         rgbmodule = new RGBLedModule(LED_R, LED_G, LED_B);
@@ -157,7 +159,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
 #endif
     LOG_MESSAGE_TO_SD("Registered Multithread Callbacks");
 #ifdef DISPLAY_SUPPORT
-    displaymodule->UpdateSplashStatus("Registered Multithread Callbacks", 100);
+    displaymodule->UpdateSplashStatus("Ghost ESP...", 100);
     delay(500);
 #endif
 }

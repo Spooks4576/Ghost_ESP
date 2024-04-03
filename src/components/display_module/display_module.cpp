@@ -1,5 +1,45 @@
 #include "display_module.h"
 #ifdef DISPLAY_SUPPORT
+#include "core/globals.h"
+
+void DisplayModule::RenderMenuType(MenuType Type)
+{
+    switch (Type)
+    {
+        case MenuType::MT_MainMenu:
+        {
+            break;
+        }
+        case MenuType::MT_WifiUtilsMenu:
+        {
+            break;
+        }
+        case MenuType::MT_BluetoothMenu:
+        {
+            break;
+        }
+        case MenuType::MT_LEDUtils:
+        {
+            break;
+        }
+    }
+}
+
+void DisplayModule::Destroy(ViewInterface* Interface, MenuType Nextmenu)
+{
+
+    for (int i = 0; i < displaymodule->Views.size(); i++)
+    {
+        if (displaymodule->Views[i]->ViewID == Interface->ViewID)
+        {
+            displaymodule->Views.remove(i);
+            break;
+        }
+    }
+    delete Interface;
+    displaymodule->FillScreen(lv_color_black());
+    RenderMenuType(Nextmenu);
+}
 
 void DisplayModule::SetTouchRotation(int Index)
 {
@@ -78,18 +118,21 @@ void DisplayModule::Init()
     draw_buf = new uint8_t[DRAW_BUF_SIZE];
     disp = lv_tft_espi_create(TFT_HOR_RES, TFT_VER_RES, draw_buf, DRAW_BUF_SIZE);
     ts.begin();
-    SetTouchRotation(1);
+    SetTouchRotation(0);
     ViewInterface* SplashI = new SplashScreen("splash");
     Views.add(SplashI);
 
-    // After Registering all the Views Register Callbacks
+    // After Registering Views Register Callbacks
 
     for (int i = 0; i < Views.size(); i++) 
     {
         Views[i]->UpdateRotationCallback = this->SetTouchRotation;
+        Views[i]->DestroyCallback = this->Destroy;
     }
 
     FillScreen(lv_color_black());
+
+    SplashI->Render();
 }
 
 #endif

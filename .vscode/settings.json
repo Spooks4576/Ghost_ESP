@@ -63,7 +63,8 @@
         "streambuf": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "view_i.h": "c"
     },
     "cmake.sourceDirectory": "D:/github/ESP32_Marauder_Rewrite/.pio/libdeps/esp32_dev/AsyncTCP-esphome"
 }

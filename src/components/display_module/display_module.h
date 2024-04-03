@@ -5,14 +5,8 @@
 
 #ifdef DISPLAY_SUPPORT
 #include "views/splashscreen.h"
-
-enum MenuType
-{
-    MT_MainMenu,
-    MT_BluetoothMenu,
-    MT_WifiUtilsMenu,
-    MT_LEDUtils,
-};
+LV_IMG_DECLARE(ui_img_spooky_logo_png);
+LV_FONT_DECLARE(ui_font_Font1);
 
 inline lv_display_t * disp;
 
@@ -28,7 +22,9 @@ public:
     int LastTouchX, LastTouchY;
     uint8_t* draw_buf;
 
+    static void RenderMenuType(MenuType Type);
     static void SetTouchRotation(int Index);
+    static void Destroy(ViewInterface* Interface, MenuType Nextmenu);
     void checkTouch(TS_Point p);
     void UpdateSplashStatus(const char* Text, int Percent);
     void Init();

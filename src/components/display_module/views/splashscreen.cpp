@@ -2,7 +2,7 @@
 
 void SplashScreen::UpdateSplash(const char* Text, int Progress)
 {
-    RenderTextBox(Text, 0, 0, 0);
+    RenderTextBox(Text, 80, 50, 0, 45);
 
     if (!TextObjects[0])
     {
@@ -10,9 +10,16 @@ void SplashScreen::UpdateSplash(const char* Text, int Progress)
         return;
     }
 
+    if (!ImageObjects[0])
+    {
+        Serial.println("Failed to Create Image!!!");
+        return;
+    }
+
     if (Progress > 99)
     {
-        // TODO Handle Callback
+        delay(2000);
+        Destroy(MenuType::MT_MainMenu);
     }
 }   
 
@@ -27,5 +34,5 @@ void SplashScreen::HandleTouch(TS_Point P)
 
 void SplashScreen::Render()
 {
-    // Update Splash Status Handles this
+   RenderJpg(&logo, 280, 40, 0, 45);
 }
