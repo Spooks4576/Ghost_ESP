@@ -274,47 +274,48 @@ String DIALClient::concatenatePaths(const String& base, const String& appUrl) {
 
 String DIALClient::extractApplicationURL(HttpClient& httpc) {
   String appUrl;
-  char headerChar;
-  String currentLine = "";
-  int consecutiveNewlines = 0;
-  int maxHeadersRead = 1000;
+  bool headerEnd = false;
   int readCount = 0;
+  const int maxHeadersRead = 1000;
+  String headerLine = ""; 
 
-  Serial.println("Starting to read headers to find Application-URL...");
+  Serial.println(F("Starting to read headers to find Application-URL..."));
 
-  while (httpc.connected() && readCount < maxHeadersRead) {
-    headerChar = httpc.readHeader();
-    if (headerChar == '\n') {
-      consecutiveNewlines++;
-      Serial.println("New line detected. Consecutive newlines: " + String(consecutiveNewlines));
+  while (httpc.connected() && readCount < maxHeadersRead && !headerEnd) {
+    if (httpc.available()) {
+      char c = httpc.read();
+      readCount++;
 
-      currentLine.trim();
-      currentLine.toLowerCase();
-      Serial.println("Processed current line: " + currentLine);
-
-      if (currentLine.startsWith("application-url:")) {
-          appUrl = currentLine.substring(currentLine.indexOf(':') + 1); // +1 just to skip over the colon
-          appUrl.trim();  // This will remove any leading or trailing whitespaces
-          Serial.println("Application-URL found: " + appUrl);
-          break;
+      if (c == '\n' || c == '\r') {
+        if (headerLine.length() > 0) {
+          Serial.println(headerLine);
+          if (headerLine.startsWith("Application-URL:")) {
+            appUrl = headerLine.substring(headerLine.indexOf(':') + 1);
+            appUrl.trim();
+            Serial.println(("Application-URL found: ") + appUrl);
+            break;
+          }
+          headerLine = "";
+        }
+      } else {
+        headerLine += c;
       }
-      currentLine = "";
 
-      if (consecutiveNewlines >= 2) {
-        Serial.println("Detected end of headers.");
-        break;
+
+      if (c == '\n') {
+        if (httpc.available() && httpc.peek() == '\n') {
+          headerEnd = true;
+        } else if (!httpc.available()) {
+          headerEnd = true;
+        }
       }
-    } else if (headerChar != '\r') {
-      consecutiveNewlines = 0;
-      currentLine += headerChar;
     }
-    readCount++;
   }
 
   if (appUrl.isEmpty()) {
-    Serial.println("Application-URL not found within the first " + String(maxHeadersRead) + " header characters.");
+    Serial.println(("Application-URL not found within the first ") + String(maxHeadersRead) + (" header characters."));
   } else {
-    Serial.println("Extracted Application-URL: " + appUrl);
+    Serial.println(("Extracted Application-URL: ") + appUrl);
   }
 
   return appUrl;
