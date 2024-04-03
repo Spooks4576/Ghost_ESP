@@ -24,9 +24,11 @@ void loop() {
     if (z > 0)
     {
         displaymodule->tft.getTouch(&x, &y);
-        displaymodule->printTouchToSerial({x, y, z}); // Only Needed When Debugging
-        displaymodule->checkTouch(x, y);
+        TS_Point point{x, y, z};
+        displaymodule->checkTouch(point);
     }
+
+    lv_timer_handler();
 #endif
 
 #ifndef DISPLAY_SUPPORT

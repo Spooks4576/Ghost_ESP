@@ -13,12 +13,6 @@ class WiFiModule;
 inline WiFiModule* wifimodule;
 inline bool RainbowLEDActive;
 
-struct SerialCallback {
-    std::function<bool(String&)> condition;
-    std::function<void(String&)> callback;
-    int CallbackID;
-};
-
 
 inline void stringToUint8Array(String inputString, uint8_t* outputArray, int maxOutputLength) {
     int byteIndex = 0;
@@ -41,17 +35,6 @@ inline String bytesToHexString(const uint8_t* bytes, size_t length) {
         str += String(bytes[i], HEX);
     }
     return str;
-}
-
-inline LinkedList<SerialCallback> callbacks;
-
-inline void registerCallback(const std::function<bool(String&)>& condition, const std::function<void(String&)>& callback) {
-    int CallbackID = callbacks.size() + 1;
-    callbacks.add({condition, callback, CallbackID});
-}
-
-inline void clearCallbacks() {
-    callbacks.clear();
 }
 
 #ifdef HAS_BT
