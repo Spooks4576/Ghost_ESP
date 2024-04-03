@@ -281,41 +281,17 @@ String DIALClient::extractApplicationURL(HttpClient& httpc) {
 
   Serial.println(F("Starting to read headers to find Application-URL..."));
 
-  while (httpc.connected() && readCount < maxHeadersRead && !headerEnd) {
-    if (httpc.available()) {
-      char c = httpc.read();
-      readCount++;
-
-      if (c == '\n' || c == '\r') {
-        if (headerLine.length() > 0) {
-          Serial.println(headerLine);
-          if (headerLine.startsWith("Application-URL:")) {
-            appUrl = headerLine.substring(headerLine.indexOf(':') + 1);
-            appUrl.trim();
-            Serial.println(("Application-URL found: ") + appUrl);
-            break;
-          }
-          headerLine = "";
-        }
-      } else {
-        headerLine += c;
-      }
-
-
-      if (c == '\n') {
-        if (httpc.available() && httpc.peek() == '\n') {
-          headerEnd = true;
-        } else if (!httpc.available()) {
-          headerEnd = true;
-        }
-      }
+  while(httpc.headerAvailable())
+  {
+    String headerName = httpc.readHeaderName();
+    String headerValue = httpc.readHeaderValue();
+    Serial.println(headerName);
+    Serial.println(headerValue);
+    if (headerName == "Application-URL") // Application URL Does not have a : even though it displays like that
+    {
+      appUrl = headerValue;
+      break;
     }
-  }
-
-  if (appUrl.isEmpty()) {
-    Serial.println(("Application-URL not found within the first ") + String(maxHeadersRead) + (" header characters."));
-  } else {
-    Serial.println(("Extracted Application-URL: ") + appUrl);
   }
 
   return appUrl;
