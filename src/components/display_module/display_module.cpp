@@ -8,6 +8,14 @@ void DisplayModule::RenderMenuType(MenuType Type)
     {
         case MenuType::MT_MainMenu:
         {
+            ViewInterface* MM = new MainMenu("mainmenu");
+            displaymodule->Views.add(MM);
+            for (int i = 0; i < displaymodule->Views.size(); i++) 
+            {
+                displaymodule->Views[i]->UpdateRotationCallback = displaymodule->SetTouchRotation;
+                displaymodule->Views[i]->DestroyCallback = displaymodule->Destroy;
+            }
+            MM->Render();
             break;
         }
         case MenuType::MT_WifiUtilsMenu:

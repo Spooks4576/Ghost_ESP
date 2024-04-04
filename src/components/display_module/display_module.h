@@ -5,6 +5,7 @@
 
 #ifdef DISPLAY_SUPPORT
 #include "views/splashscreen.h"
+#include "views/mainmenu.h"
 LV_IMG_DECLARE(ui_img_spooky_logo_png);
 LV_FONT_DECLARE(ui_font_Font1);
 

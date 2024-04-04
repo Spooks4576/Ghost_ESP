@@ -34,6 +34,7 @@ public:
     bool PlayedAnim = false;
     LinkedList<lv_obj_t*> ImageObjects;
     LinkedList<lv_obj_t*> TextObjects;
+    LinkedList<lv_obj_t*> OtherObjects;
     void RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, int TextObjectIndex, int angle);
     void RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coord_t y, int ImageObjectIndex, int angle);
     void printTouchToSerial(TS_Point P);
