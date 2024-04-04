@@ -19,6 +19,8 @@ public:
 
     const char* Text;
     int Progress;
+    bool isOnSplash;
+    lv_anim_t* BootAnim;
     const char* lastSplashText = "";
     void UpdateSplash(const char* text, int Progress);
     virtual void HandleTouch(TS_Point P) override;

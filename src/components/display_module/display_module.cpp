@@ -37,7 +37,7 @@ void DisplayModule::Destroy(ViewInterface* Interface, MenuType Nextmenu)
         }
     }
     delete Interface;
-    lv_obj_del(lv_scr_act());
+    Serial.println("Destroy.....");
     displaymodule->FillScreen(lv_color_black());
     RenderMenuType(Nextmenu);
 }
@@ -117,7 +117,10 @@ void DisplayModule::HandleAnimations(unsigned long Millis, unsigned long LastTic
 {
     for (int i = 0; i < Views.size(); i++) 
     {
-        Views[i]->HandleAnimations(Millis, LastTick);
+        if (Views[i])
+        {
+            Views[i]->HandleAnimations(Millis, LastTick);
+        }
     }
 }
 

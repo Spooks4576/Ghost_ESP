@@ -26,12 +26,20 @@ void SplashScreen::Render()
 
 void SplashScreen::HandleAnimations(unsigned long millis, unsigned long LastTick)
 {
-    if (millis >= 5000 && !PlayedAnim) {
+    if (millis >= 1000 && !PlayedAnim) {
 
         PlayedAnim = true;
+        isOnSplash = true;
         Serial.println(millis);
-        animate_image_scale(ImageObjects[0]);
+        BootAnim = animate_image_scale(ImageObjects[0]);
 
         LastMillis = millis;
+    }
+
+    if (millis >= 6000 && PlayedAnim && isOnSplash) {
+        isOnSplash = false;
+        lv_anim_del_all();
+        lv_obj_del(ImageObjects[0]);
+        Destroy(MenuType::MT_MainMenu);
     }
 }
