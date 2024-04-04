@@ -9,11 +9,61 @@ void MainMenu::HandleAnimations(unsigned long Millis, unsigned long LastTick)
 void MainMenu::Render()
 {
     status_bar = create_status_bar(lv_scr_act());
+    grid_container = create_grid_container(lv_scr_act());
+    CreateGridButtons();
+}
+
+void MainMenu::CreateGridButtons()
+{
+    for (int i = 0; i < 9; i++) 
+    {
+
+
+        
+
+
+        lv_obj_t *btn = lv_btn_create(grid_container);
+
+        lv_obj_set_size(btn, 50, 50);
+
+        lv_obj_set_style_transform_angle(btn, 900, 0);
+        lv_obj_set_style_transform_pivot_x(btn, lv_obj_get_width(btn) / 2, 0);
+        lv_obj_set_style_transform_pivot_y(btn, lv_obj_get_height(btn) / 2, 0);
+
+        static lv_style_t style_btn;
+        lv_style_init(&style_btn);
+        lv_style_set_bg_color(&style_btn, lv_color_hex(0x158FCA));
+        lv_style_set_bg_opa(&style_btn, LV_OPA_COVER);
+        lv_style_set_radius(&style_btn, 10);
+        lv_obj_add_style(btn, &style_btn, 0);
+    }
 }
 
 void MainMenu::UpdateWifiChannelStatus(int Channel)
 {
     lv_label_set_text(WifiChannelLabel, String("CH: " + Channel).c_str());
+}
+
+lv_obj_t* MainMenu::create_grid_container(lv_obj_t * parent)
+{
+    lv_obj_t *lgrid_container = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(lgrid_container, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_flow(lgrid_container, LV_FLEX_FLOW_COLUMN_WRAP);
+    lv_obj_set_style_border_width(lgrid_container, 0, LV_PART_MAIN);
+    lv_obj_set_style_transform_pivot_x(lgrid_container, lv_obj_get_width(lgrid_container) / 2, 0);
+    lv_obj_set_style_transform_pivot_y(lgrid_container, lv_obj_get_height(lgrid_container) / 2, 0);   
+    lv_obj_set_style_outline_width(lgrid_container, 0, LV_PART_MAIN);
+    lv_obj_set_flex_align(lgrid_container, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_pos(lgrid_container, 50, 0);
+    static lv_style_t style_grid;
+    lv_style_init(&style_grid);
+    lv_style_set_bg_opa(&style_grid, LV_OPA_TRANSP);
+    lv_style_set_grid_column_dsc_array(&style_grid, grid_col_dsc);
+    lv_style_set_grid_row_dsc_array(&style_grid, grid_row_dsc);
+    lv_style_set_layout(&style_grid, LV_LAYOUT_GRID);
+
+    lv_obj_add_style(lgrid_container, &style_grid, 0);
+    return lgrid_container;
 }
 
 void MainMenu::HandleTouch(TS_Point P)
@@ -28,14 +78,14 @@ lv_obj_t * MainMenu::add_battery_module(lv_obj_t * status_bar) {
     lv_obj_set_style_transform_pivot_x(battery_icon, lv_obj_get_width(battery_icon) / 2, 0);
     lv_obj_set_style_transform_pivot_y(battery_icon, lv_obj_get_height(battery_icon) / 2, 0);   
     lv_obj_set_pos(battery_icon, 8, 200);
-    lv_obj_set_style_text_color(battery_icon, lv_color_hex(0x89C289), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(battery_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
     flashIcon = lv_label_create(status_bar);
     lv_label_set_text(flashIcon, LV_SYMBOL_CHARGE);
     lv_obj_set_style_transform_angle(flashIcon, 900, 0);
     lv_obj_set_style_transform_pivot_x(flashIcon, lv_obj_get_width(flashIcon) / 2, 0);
     lv_obj_set_style_transform_pivot_y(flashIcon, lv_obj_get_height(flashIcon) / 2, 0);   
     lv_obj_set_pos(flashIcon, 8, 185);
-    lv_obj_set_style_text_color(flashIcon, lv_color_hex(0x89C289), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(flashIcon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
     return battery_icon;
 }
 
@@ -48,7 +98,7 @@ lv_obj_t* MainMenu::add_version_module(lv_obj_t * status_bar)
     lv_obj_set_style_transform_pivot_y(version, lv_obj_get_height(version) / 2, 0);   
     lv_obj_set_pos(version, 8, 0);
     lv_obj_set_style_text_font(version, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(version, lv_color_hex(0x89C289), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(version, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
     return version;
 }
 
@@ -78,7 +128,7 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_transform_pivot_x(bt_icon, lv_obj_get_width(bt_icon) / 2, 0);
     lv_obj_set_style_transform_pivot_y(bt_icon, lv_obj_get_height(bt_icon) / 2, 0);   
     lv_obj_set_pos(bt_icon, 8, xOffset -= 16);
-    lv_obj_set_style_text_color(bt_icon, lv_color_hex(0x89C289), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(bt_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
 #endif
 
 #ifdef SD_CARD_CS_PIN
@@ -89,7 +139,7 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_transform_pivot_x(sd_icon, lv_obj_get_width(sd_icon) / 2, 0);
     lv_obj_set_style_transform_pivot_y(sd_icon, lv_obj_get_height(sd_icon) / 2, 0);   
     lv_obj_set_pos(sd_icon, 8, xOffset -= 20);
-    lv_obj_set_style_text_color(sd_icon, lv_color_hex(0x89C289), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(sd_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
 #endif
 
     lv_obj_t* wifi_icon = lv_label_create(status_bar);
@@ -99,6 +149,6 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_transform_pivot_x(wifi_icon, lv_obj_get_width(wifi_icon) / 2, 0);
     lv_obj_set_style_transform_pivot_y(wifi_icon, lv_obj_get_height(wifi_icon) / 2, 0);   
     lv_obj_set_pos(wifi_icon, 8, xOffset -= 23);
-    lv_obj_set_style_text_color(wifi_icon, lv_color_hex(0x89C289), LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(wifi_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
     return status_bar;
 }

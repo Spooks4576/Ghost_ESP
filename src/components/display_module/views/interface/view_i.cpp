@@ -27,7 +27,7 @@ void ViewInterface::RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, 
     lv_obj_set_scrollbar_mode(ImageObjects[TextObjectIndex], LV_SCROLLBAR_MODE_OFF);
 }
 
-void ViewInterface::RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coord_t y, int ImageObjectIndex, int angle)
+void ViewInterface::RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coord_t y, int ImageObjectIndex, int angle, bool ScaleUp)
 {
 
     if (ImageObjectIndex < 0 || ImageObjectIndex >= ImageObjects.size()) 
@@ -44,6 +44,11 @@ void ViewInterface::RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coor
     lv_obj_set_style_transform_angle(ImageObjects[ImageObjectIndex], angle * 100, LV_PART_MAIN);
 
     lv_obj_set_scrollbar_mode(ImageObjects[ImageObjectIndex], LV_SCROLLBAR_MODE_OFF);
+
+    if (ScaleUp)
+    {
+        lv_img_set_zoom(ImageObjects[ImageObjectIndex], 504);
+    }
 }
 
 void ViewInterface::printTouchToSerial(TS_Point p)

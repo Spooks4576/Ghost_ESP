@@ -36,7 +36,7 @@ public:
     LinkedList<lv_obj_t*> TextObjects;
     LinkedList<lv_obj_t*> OtherObjects;
     void RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, int TextObjectIndex, int angle);
-    void RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coord_t y, int ImageObjectIndex, int angle);
+    void RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coord_t y, int ImageObjectIndex, int angle, bool ScaleUp = false);
     void printTouchToSerial(TS_Point P);
     virtual void HandleTouch(TS_Point P) = 0;
     void (*UpdateRotationCallback)(int);
