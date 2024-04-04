@@ -26,7 +26,7 @@ void SplashScreen::Render()
 
 void SplashScreen::HandleAnimations(unsigned long millis, unsigned long LastTick)
 {
-    if (millis >= 1000 && !PlayedAnim) {
+    if (millis >= 700 && !PlayedAnim) {
 
         PlayedAnim = true;
         isOnSplash = true;
@@ -36,7 +36,7 @@ void SplashScreen::HandleAnimations(unsigned long millis, unsigned long LastTick
         LastMillis = millis;
     }
 
-    if (millis >= 6000 && PlayedAnim && isOnSplash) {
+    if (millis >= 5700 && PlayedAnim && isOnSplash) {
         isOnSplash = false;
         lv_anim_del_all();
         lv_obj_del(ImageObjects[0]);

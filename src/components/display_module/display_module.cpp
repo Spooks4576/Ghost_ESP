@@ -118,6 +118,7 @@ void DisplayModule::FillScreen(lv_color_t color)
     lv_style_init(&style);
     lv_style_set_bg_color(&style, color); 
     lv_style_set_bg_opa(&style, LV_OPA_COVER);
+    lv_obj_set_scrollbar_mode(lv_scr_act(), LV_SCROLLBAR_MODE_OFF);
     lv_obj_add_style(lv_scr_act(), &style, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
@@ -136,9 +137,9 @@ void DisplayModule::Init()
 {
     lv_init();
     draw_buf = new uint8_t[DRAW_BUF_SIZE];
-    disp = lv_tft_espi_create(TFT_HOR_RES, TFT_VER_RES, draw_buf, DRAW_BUF_SIZE);
+    disp = lv_tft_espi_create(TFT_VER_RES, TFT_HOR_RES, draw_buf, DRAW_BUF_SIZE);
     ts.begin();
-    SetTouchRotation(0);
+    SetTouchRotation(1);
     ViewInterface* SplashI = new SplashScreen("splash");
     Views.add(SplashI);
 
