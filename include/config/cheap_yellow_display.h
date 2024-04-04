@@ -1,4 +1,5 @@
 #pragma once
+#define HAS_BT
 #define DISPLAY_SUPPORT
 #define DISPLAYWIDTH 240
 #define DISPLAYHEIGHT 320

@@ -143,6 +143,8 @@ void DisplayModule::Init()
     ViewInterface* SplashI = new SplashScreen("splash");
     Views.add(SplashI);
 
+    lv_display_set_resolution(disp, TFT_VER_RES, TFT_HOR_RES);
+
     // After Registering Views Register Callbacks
 
     for (int i = 0; i < Views.size(); i++) 
