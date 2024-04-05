@@ -93,6 +93,21 @@ inline const char* rick_roll[8] = {
       "08 and hurt you"
 };
 
+inline const char* KarmaSSIDs[] = {
+        "ShawOpen",
+        "D-LINK",
+        "attwifi",
+        "NETGEAR",
+        "NETGEAR24",
+        "netgear11",
+        "Apple",
+        "NETGEAR23",
+        "Wi-Fi Arnet",
+        "Linksys2",
+        "holidayinn",
+        "Starbucks WiFi"
+};
+
 inline char alfa[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 struct ssid {
@@ -144,7 +159,8 @@ enum AttackType
     AT_RandomSSID,
     AT_Rickroll,
     AT_DeauthAP,
-    AT_ListSSID
+    AT_ListSSID,
+    AT_Karma
 };
 
 enum ScanType

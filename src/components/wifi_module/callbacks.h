@@ -10,8 +10,6 @@ namespace CallBackUtils
   }
 }
 
-
-
 void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
   wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
   WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
@@ -33,9 +31,7 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
     int fctl = CallBackUtils::ntohs(frameControl->fctl);
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
     const WifiMgmtHdr *hdr = &ipkt->hdr;
-
-  
-      int buf = 0;
+    int buf = 0;
 
 
     if ((snifferPacket->payload[0] == 0x80) && (buf == 0))

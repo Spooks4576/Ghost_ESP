@@ -144,8 +144,6 @@ bool MainMenu::is_point_inside_button(TS_Point p, lv_obj_t* btn) {
     int btn_x = lv_obj_get_x(btn);
     int btn_y = lv_obj_get_y(btn);
 
-    btn_x -= 320;
-
     int btn_width = lv_obj_get_width(btn);
     int btn_height = lv_obj_get_height(btn);
     

@@ -316,6 +316,13 @@ void CommandLine::runCommand(String input)
           return;
         }
 
+        if (attack_type == "karma")
+        {
+          Serial.println("Starting Karma wifi beacon attack. Stop with " + (String)"stopscan");
+          LOG_MESSAGE_TO_SD("Starting Karma wifi beacon attack.");
+          wifimodule->RunSetup();
+          wifimodule->Attack(AT_Karma);
+        }
       }
     }
 
@@ -543,6 +550,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       Serial.println("- 'ssid -a -n <SSID>': Add a specific SSID.");
       Serial.println("- 'attack -t beacon -l': Start Beacon Spam with SSID List.");
       Serial.println("- 'attack -t beacon -r': Start Beacon Spam with Random SSIDs.");
+      Serial.println("- 'attack -t karma': Start Beacon Spam with Known SSIDs.");
       Serial.println("- 'attack -t rickroll': Start Rickroll Beacon Spam.");
       Serial.println("- 'attack -t deauth': Start Deauth Attack on the Captured Networks");
       Serial.println("- 'castv2connect -s <SSID> -p <PASSWORD> -v <Device>': Connect to a device using CastV2 protocol.");

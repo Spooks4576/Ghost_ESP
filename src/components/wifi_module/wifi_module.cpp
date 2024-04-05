@@ -511,6 +511,31 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
       }
       break;
     }
+    case AT_Karma:
+    {
+      while (wifi_initialized)
+      {
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
+        for (int i = 0; i < 12; i++)
+        {
+          for (int x = 0; x < (sizeof(KarmaSSIDs)/sizeof(char *)); x++)
+          {
+            broadcastSetSSID(KarmaSSIDs[x], i);
+          }
+        }
+        BreatheTask();
+        delay(1);
+      }
+    }
   }
 }
 

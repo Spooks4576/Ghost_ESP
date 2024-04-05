@@ -80,7 +80,7 @@ inline LEDThreads Threadinfo;
 inline void BreatheTask()
 {
 #ifdef OLD_LED
-    rgbmodule->breatheLED(Threadinfo.TargetPin, 500);
+    rgbmodule->breatheLED(Threadinfo.TargetPin, 100);
 #endif
 }
 
