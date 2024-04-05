@@ -140,9 +140,18 @@ void MainMenu::HandleTouch(TS_Point P)
 }
 
 bool MainMenu::is_point_inside_button(TS_Point p, lv_obj_t* btn) {
-    lv_area_t btn_area;
-    lv_obj_get_coords(btn, &btn_area);
-    return (p.x >= btn_area.x1 && p.x <= btn_area.x2 && p.y >= btn_area.y1 && p.y <= btn_area.y2);
+
+    int btn_x = lv_obj_get_x(btn);
+    int btn_y = lv_obj_get_y(btn);
+
+    btn_x -= 320;
+
+    int btn_width = lv_obj_get_width(btn);
+    int btn_height = lv_obj_get_height(btn);
+    
+
+    return (p.x >= btn_x && p.x <= (btn_x + btn_width) &&
+            p.y >= btn_y && p.y <= (btn_y + btn_height));
 }
 
 lv_obj_t * MainMenu::add_battery_module(lv_obj_t * status_bar) {
