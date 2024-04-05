@@ -8,7 +8,9 @@ Ghost ESP is a firmware designed for ESP32 microcontrollers, offering a comprehe
 - Station scanning
 - SSID spamming
 - BLE spamming for major brands (iOS, Windows, Android, Samsung)
+- Detect BLE Spam and Flipper Devices around you
 - DIAL connect to interact with DIAL-enabled devices (YouTube, Netflix, Roku)
+- Chromecast V2 Connect For Youtube for newer Chromecast Devices (Google Home, Google Chromecast)
 - Rainbow LED mode
 
 ## Board Support
@@ -17,8 +19,8 @@ Ghost ESP firmware supports the following ESP32 boards:
 - ESP32 Wroom
 - ESP32 S2
 - ESP32 C3
-- ESP32 C6
 - ESP32 S3
+- ESP32 C6 (Coming Soon)
 
 Additional board support can be added depending on PlatformIO support and configuration in the main project's platformio.ini file..
 
