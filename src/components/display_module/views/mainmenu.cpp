@@ -31,7 +31,7 @@ void MainMenu::CreateGridButtons()
 
         static lv_style_t style_btn;
         lv_style_init(&style_btn);
-        lv_style_set_bg_color(&style_btn, lv_color_hex(0x158FCA));
+        lv_style_set_bg_color(&style_btn, lv_color_hex(0x000));
         lv_style_set_bg_opa(&style_btn, LV_OPA_COVER);
         lv_style_set_radius(&style_btn, 10);
         lv_obj_add_style(btn, &style_btn, 0);
