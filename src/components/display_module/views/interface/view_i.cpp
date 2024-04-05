@@ -41,10 +41,18 @@ void ViewInterface::RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coor
     }
     lv_obj_set_pos(ImageObjects[ImageObjectIndex], x, y);
 
+    lv_obj_set_style_transform_pivot_x(ImageObjects[ImageObjectIndex], lv_obj_get_width(ImageObjects[ImageObjectIndex]) / 2, 0);
+    lv_obj_set_style_transform_pivot_y(ImageObjects[ImageObjectIndex], lv_obj_get_height(ImageObjects[ImageObjectIndex]) / 2, 0);
+
+    static lv_style_t style_btn;
+    lv_style_init(&style_btn);
+    lv_style_set_radius(&style_btn, 10);
+    lv_obj_add_style(ImageObjects[ImageObjectIndex], &style_btn, 0);
+
     lv_obj_set_style_transform_angle(ImageObjects[ImageObjectIndex], angle * 100, LV_PART_MAIN);
 
     lv_obj_set_scrollbar_mode(ImageObjects[ImageObjectIndex], LV_SCROLLBAR_MODE_OFF);
-
+    
     if (ScaleUp)
     {
         lv_img_set_zoom(ImageObjects[ImageObjectIndex], 504);

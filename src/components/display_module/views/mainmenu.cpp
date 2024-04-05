@@ -17,12 +17,11 @@ void MainMenu::CreateGridButtons()
 {
     for (int i = 0; i < 9; i++) 
     {
-
-
-        
-
-
         lv_obj_t *btn = lv_btn_create(grid_container);
+        if (i == 1)
+        {
+            RenderJpg(&bt, 100, 50, 0, 45);
+        }
 
         lv_obj_set_size(btn, 50, 50);
 
