@@ -11,6 +11,7 @@ void MainMenu::Render()
     status_bar = create_status_bar(lv_scr_act());
     grid_container = create_grid_container(lv_scr_act());
     CreateGridButtons();
+    Debugging = true;
 }
 
 void MainMenu::CreateGridButtons()
@@ -20,7 +21,17 @@ void MainMenu::CreateGridButtons()
         lv_obj_t *btn = lv_btn_create(grid_container);
         if (i == 1)
         {
-            RenderJpg(&bt, 100, 50, 0, 45);
+            RenderJpg(&bt_img, 245, 25, 0, 45);
+        }
+
+        if (i == 2)
+        {
+            RenderJpg(&WiFi_img, 245, 95, 1, 45);
+        }
+
+        if (i == 3)
+        {
+            RenderJpg(&led_img, 245, 165, 2, 45);
         }
 
         lv_obj_set_size(btn, 50, 50);
@@ -68,6 +79,28 @@ lv_obj_t* MainMenu::create_grid_container(lv_obj_t * parent)
 void MainMenu::HandleTouch(TS_Point P)
 {
 
+    if (Debugging)
+    {
+        lv_obj_t *circle = lv_obj_create(lv_scr_act());
+        lv_obj_set_size(circle, 20, 20);
+        lv_obj_set_pos(circle, P.x, P.y);
+
+        // Apply a style to make it look like a circle
+        static lv_style_t style_circle;
+        lv_style_init(&style_circle);
+        lv_style_set_radius(&style_circle, LV_RADIUS_CIRCLE);
+        lv_style_set_bg_opa(&style_circle, LV_OPA_COVER);
+        lv_style_set_bg_color(&style_circle, lv_palette_main(LV_PALETTE_RED));
+        lv_style_set_border_color(&style_circle, lv_palette_main(LV_PALETTE_RED));
+        lv_style_set_border_width(&style_circle, 2);
+
+        lv_obj_add_style(circle, &style_circle, 0);
+        
+        lv_timer_t *timer = lv_timer_create([](lv_timer_t *timer){
+            lv_obj_del(static_cast<lv_obj_t*>(timer->user_data));
+            lv_timer_del(timer);
+        }, 2000, circle);
+    }
 }
 
 lv_obj_t * MainMenu::add_battery_module(lv_obj_t * status_bar) {

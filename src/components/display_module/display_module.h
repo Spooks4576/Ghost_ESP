@@ -8,7 +8,9 @@
 #include "views/mainmenu.h"
 LV_IMG_DECLARE(ui_img_spooky_logo_png);
 LV_FONT_DECLARE(ui_font_Font1);
-LV_IMG_DECLARE(bt);
+LV_IMG_DECLARE(bt_img);
+LV_IMG_DECLARE(WiFi_img);
+LV_IMG_DECLARE(led_img);
 
 inline lv_display_t * disp;
 

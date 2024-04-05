@@ -26,6 +26,7 @@ void loop() {
     if (z > 0)
     {
         displaymodule->tft.getTouch(&x, &y);
+        y = 240 - y;    
         TS_Point point{x, y, z};
         displaymodule->checkTouch(point);
     }
