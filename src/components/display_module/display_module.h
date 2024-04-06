@@ -25,6 +25,8 @@ public:
     LinkedList<ViewInterface*> Views;
     int LastTouchX, LastTouchY;
     uint8_t* draw_buf;
+    lv_obj_t * tCScreen;
+    lv_indev_t* indev;
 
     static void RenderMenuType(MenuType Type);
     static void SetTouchRotation(int Index);

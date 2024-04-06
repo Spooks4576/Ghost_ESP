@@ -19,17 +19,6 @@ uint32_t lastTick = 0;
 void loop() {
 
 #ifdef DISPLAY_SUPPORT
-    uint16_t x, y, z;
-    z = displaymodule->tft.getTouchRawZ();
-    z = (z < 12) ? 0 : z; // Helps Remove Noise Values
-
-    if (z > 0)
-    {
-        displaymodule->tft.getTouch(&x, &y);
-        y = 240 - y;    
-        TS_Point point{x, y, z};
-        displaymodule->checkTouch(point);
-    }
     lv_tick_inc(millis() - lastTick);
     displaymodule->HandleAnimations(millis(), lastTick);
     lastTick = millis();

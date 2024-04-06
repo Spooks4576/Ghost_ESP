@@ -19,6 +19,7 @@ void MainMenu::CreateGridButtons()
     for (int i = 0; i < 9; i++) 
     {
         lv_obj_t *btn = lv_btn_create(grid_container);
+        lv_obj_set_scrollbar_mode(btn, LV_SCROLLBAR_MODE_OFF);
         if (i == 1)
         {
             RenderJpg(&bt_img, 245, 25, 0, 45);
@@ -64,6 +65,7 @@ lv_obj_t* MainMenu::create_grid_container(lv_obj_t * parent)
 {
     lv_obj_t *lgrid_container = lv_obj_create(lv_scr_act());
     lv_obj_set_size(lgrid_container, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_scrollbar_mode(lgrid_container, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_flex_flow(lgrid_container, LV_FLEX_FLOW_COLUMN_WRAP);
     lv_obj_set_style_border_width(lgrid_container, 0, LV_PART_MAIN);
     lv_obj_set_style_transform_pivot_x(lgrid_container, lv_obj_get_width(lgrid_container) / 2, 0);
@@ -180,6 +182,7 @@ lv_obj_t* MainMenu::add_version_module(lv_obj_t * status_bar)
     lv_obj_set_pos(version, 8, 0);
     lv_obj_set_style_text_font(version, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(version, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(version, LV_SCROLLBAR_MODE_OFF);
     return version;
 }
 
@@ -231,5 +234,9 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_transform_pivot_y(wifi_icon, lv_obj_get_height(wifi_icon) / 2, 0);   
     lv_obj_set_pos(wifi_icon, 8, xOffset -= 23);
     lv_obj_set_style_text_color(wifi_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(wifi_icon, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(bt_icon, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(batteryversion, LV_SCROLLBAR_MODE_OFF);
     return status_bar;
 }

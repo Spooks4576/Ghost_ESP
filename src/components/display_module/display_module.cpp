@@ -2,6 +2,33 @@
 #ifdef DISPLAY_SUPPORT
 #include "core/globals.h"
 
+void tc_finish_cb(
+        lv_event_t *event
+    ) {
+    displaymodule->Views[0]->Render();
+}
+
+void DriverReadCallback(lv_indev_t* indev_drv, lv_indev_data_t* data) 
+{
+    uint16_t x, y, z;
+    z = displaymodule->tft.getTouchRawZ();
+
+    if (z > 12) {
+        bool touchReadSuccess = displaymodule->tft.getTouch(&x, &y);
+        if (touchReadSuccess) {
+            y = 240 - y;
+            data->point.x = x;
+            data->point.y = y;
+            data->state = LV_INDEV_STATE_PR;
+            displaymodule->checkTouch({x, y, z});
+        } else {
+            data->state = LV_INDEV_STATE_REL;
+        }
+    } else {
+        data->state = LV_INDEV_STATE_REL;
+    }
+}
+
 void DisplayModule::RenderMenuType(MenuType Type)
 {
     switch (Type)
@@ -126,7 +153,7 @@ void DisplayModule::HandleAnimations(unsigned long Millis, unsigned long LastTic
 {
     for (int i = 0; i < Views.size(); i++) 
     {
-        if (Views[i])
+        if (Views[i] && Views[i]->HasRendered)
         {
             Views[i]->HandleAnimations(Millis, LastTick);
         }
@@ -154,6 +181,10 @@ void DisplayModule::Init()
     }
 
     FillScreen(lv_color_black());
+
+    indev = lv_indev_create();
+    lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
+    lv_indev_set_read_cb(indev, DriverReadCallback);
 
     SplashI->Render();
 }

@@ -309,6 +309,11 @@ void WiFiModule::Scan(ScanType type)
   }
 }
 
+void WiFiModule::LaunchEvilPortal()
+{
+  
+}
+
 void WiFiModule::getMACatoffset(char *addr, uint8_t* data, uint16_t offset) {
   sprintf(addr, "%02x:%02x:%02x:%02x:%02x:%02x", data[offset+0], data[offset+1], data[offset+2], data[offset+3], data[offset+4], data[offset+5]);
 }

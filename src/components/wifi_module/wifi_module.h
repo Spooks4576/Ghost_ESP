@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <Arduino.h>
 #include <LinkedList.h>
+#include <DNSServer.h>
+#include <AsyncTCP.h>
 #include <WiFi.h>
 #include "esp_wifi_types.h"
 #include "esp_wifi.h"
@@ -195,6 +197,7 @@ public:
     void insertTimestamp(uint8_t *packet);
     void RunSetup();
     int findMostActiveWiFiChannel();
+    void LaunchEvilPortal();
     void Calibrate();
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
     void broadcastSetSSID(const char* ESSID, uint8_t channel);

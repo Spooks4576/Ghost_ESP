@@ -31,6 +31,7 @@ public:
 
     const char* ViewID;
     bool Debugging;
+    bool HasRendered;
     bool PlayedAnim = false;
     LinkedList<lv_obj_t*> ImageObjects;
     LinkedList<lv_obj_t*> TextObjects;
