@@ -8,6 +8,7 @@ void MainMenu::HandleAnimations(unsigned long Millis, unsigned long LastTick)
 
 void MainMenu::Render()
 {
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
     status_bar = create_status_bar(lv_scr_act());
     grid_container = create_grid_container(lv_scr_act());
     CreateGridButtons();
@@ -182,7 +183,6 @@ lv_obj_t* MainMenu::add_version_module(lv_obj_t * status_bar)
     lv_obj_set_pos(version, 8, 0);
     lv_obj_set_style_text_font(version, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_color(version, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
-    lv_obj_set_scrollbar_mode(version, LV_SCROLLBAR_MODE_OFF);
     return version;
 }
 
@@ -194,7 +194,6 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_outline_width(status_bar, 0, LV_PART_MAIN);
     lv_obj_set_style_bg_color(status_bar, lv_color_hex(0x2A2A2A), 0);
     lv_obj_set_style_bg_opa(status_bar, LV_OPA_COVER, 0);
-    lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_layout(status_bar, LV_LAYOUT_NONE);
 
     lv_obj_align(status_bar, LV_ALIGN_RIGHT_MID, 0, 0);
@@ -234,9 +233,5 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_transform_pivot_y(wifi_icon, lv_obj_get_height(wifi_icon) / 2, 0);   
     lv_obj_set_pos(wifi_icon, 8, xOffset -= 23);
     lv_obj_set_style_text_color(wifi_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
-    lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_scrollbar_mode(wifi_icon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_scrollbar_mode(bt_icon, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_scrollbar_mode(batteryversion, LV_SCROLLBAR_MODE_OFF);
     return status_bar;
 }
