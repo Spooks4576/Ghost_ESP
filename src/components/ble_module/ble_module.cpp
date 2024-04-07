@@ -151,8 +151,8 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         break;
       }
       default: {
-        LOG_MESSAGE_TO_SD(("Please Provide a Company Type"));
-        Serial.println("Please Provide a Company Type");
+        LOG_MESSAGE_TO_SD(F("Please Provide a Company Type"));
+        Serial.println(F("Please Provide a Company Type"));
         break;
       }
     }
@@ -335,7 +335,7 @@ void FlipperFinderCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
     if (UUID.indexOf("0x3082") != -1)
     {
       Serial.printf("Found White Flipper Device %s", advertisedDevice->toString().c_str());
-      LOG_MESSAGE_TO_SD("Found White Flipper Device");
+      LOG_MESSAGE_TO_SD(F("Found White Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
 neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
@@ -346,7 +346,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false)
     if (UUID.indexOf("0x3081") != -1)
     {
       Serial.printf("Found Black Flipper Device %s", advertisedDevice->toString().c_str());
-      LOG_MESSAGE_TO_SD("Found Black Flipper Device");
+      LOG_MESSAGE_TO_SD(F("Found Black Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
 neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
@@ -357,7 +357,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false)
     if (UUID.indexOf("0x3083") != -1)
     {
       Serial.printf("Found Transparent Flipper Device %s", advertisedDevice->toString().c_str());
-      LOG_MESSAGE_TO_SD("Found Transparent Flipper Device");
+      LOG_MESSAGE_TO_SD(F("Found Transparent Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
 neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
@@ -389,16 +389,16 @@ void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice
   if (payloadInfoMap.find(payload) == payloadInfoMap.end()) {
       PayloadInfo info = {1, millis(), MacAddr};
       payloadInfoMap[payload] = info;
-      Serial.println("New payload detected.");
-      LOG_MESSAGE_TO_SD("New payload detected.");
+      Serial.println(F("New payload detected."));
+      LOG_MESSAGE_TO_SD(F("New payload detected."));
   } else {
       PayloadInfo &info = payloadInfoMap[payload];
       info.count++;
       unsigned long currentTime = millis();
       unsigned long detectionWindow = 2000;
       if (info.count > 20 && (currentTime - info.firstSeenTime) <= detectionWindow || info.Mac == MacAddr) {
-          Serial.println("BLE Spam detected!");
-          LOG_MESSAGE_TO_SD("BLE Spam detected!");
+          Serial.println(F("BLE Spam detected!"));
+          LOG_MESSAGE_TO_SD(F("BLE Spam detected!"));
 #ifdef NEOPIXEL_PIN
           neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 500, false);
 #endif
@@ -415,7 +415,7 @@ void BleSnifferCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
   uint8_t* Payload = advertisedDevice->getPayload();
   size_t PayloadLen = advertisedDevice->getPayloadLength();
 
-  Serial.println("Packet Recieved");
+  Serial.println(F("Packet Recieved"));
 
 #ifdef SD_CARD_CS_PIN
   sdCardmodule->logPacket(Payload, PayloadLen);

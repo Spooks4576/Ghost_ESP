@@ -2,12 +2,6 @@
 #ifdef DISPLAY_SUPPORT
 #include "core/globals.h"
 
-void tc_finish_cb(
-        lv_event_t *event
-    ) {
-    displaymodule->Views[0]->Render();
-}
-
 void DriverReadCallback(lv_indev_t* indev_drv, lv_indev_data_t* data) 
 {
     uint16_t x, y, z;

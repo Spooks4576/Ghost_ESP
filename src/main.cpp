@@ -72,10 +72,10 @@ void setup()
     Serial.begin(115200);
 
     #ifdef DISPLAY_SUPPORT
-        Serial.println("About to Init Display");
+        Serial.println(F("About to Init Display"));
         displaymodule = new DisplayModule();
         displaymodule->Init();
-        Serial.println("Init Display");
+        Serial.println(F("Init Display"));
     #endif
     
     #ifdef OLD_LED
@@ -123,7 +123,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     BleModule = new BLEModule();
     BleModule->init();
 
-    LOG_MESSAGE_TO_SD("Initilized BLE...");
+    LOG_MESSAGE_TO_SD(F("Initilized BLE..."));
     #ifdef DISPLAY_SUPPORT
         displaymodule->UpdateSplashStatus("Initilized BLE...", 80);
         delay(1000);
@@ -132,7 +132,7 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
     #endif
 
     Serial.println("ESP-IDF version is: " + String(esp_get_idf_version()));
-    LOG_MESSAGE_TO_SD("ESP IDF Version = ");
+    LOG_MESSAGE_TO_SD(F("ESP IDF Version = "));
     LOG_MESSAGE_TO_SD(esp_get_idf_version());
 
     wifimodule = new WiFiModule();
@@ -141,11 +141,11 @@ displaymodule->UpdateSplashStatus("Attempting to Mount SD Card", 25);
 
     cli->RunSetup();
 
-    LOG_MESSAGE_TO_SD("Wifi Initilized");
+    LOG_MESSAGE_TO_SD(F("Wifi Initilized"));
     
 #ifndef DISPLAY_SUPPORT
     xTaskCreate(SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
 #endif
 
-    LOG_MESSAGE_TO_SD("Registered Multithread Callbacks");
+    LOG_MESSAGE_TO_SD(F("Registered Multithread Callbacks"));
 }
