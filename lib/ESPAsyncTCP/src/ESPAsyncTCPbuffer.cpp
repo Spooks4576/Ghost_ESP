@@ -24,7 +24,6 @@
 
 
 #include <Arduino.h>
-#include <debug.h>
 
 #include "ESPAsyncTCPbuffer.h"
 
@@ -32,7 +31,7 @@
 AsyncTCPbuffer::AsyncTCPbuffer(AsyncClient* client) {
     if(client == NULL) {
         DEBUG_ASYNC_TCP("[A-TCP] client is null!!!\n");
-        panic();
+        //panic();
     }
 
     _client = client;
@@ -124,7 +123,7 @@ size_t AsyncTCPbuffer::write(const uint8_t *data, size_t len) {
             cbuf * next = new (std::nothrow) cbuf(TCP_MSS);
             if(next == NULL) {
                 DEBUG_ASYNC_TCP("[A-TCP] run out of Heap!\n");
-                panic();
+                //panic();
             } else {
                 DEBUG_ASYNC_TCP("[A-TCP] new cbuf\n");
             }
@@ -221,7 +220,8 @@ void AsyncTCPbuffer::onDisconnect(AsyncTCPbufferDisconnectCb cb) {
 
 IPAddress AsyncTCPbuffer::remoteIP() {
     if(!_client) {
-        return IPAddress(0U);
+        IPAddress ip;
+        return ip;
     }
     return _client->remoteIP();
 }
@@ -466,7 +466,7 @@ size_t AsyncTCPbuffer::_handleRxBuffer(uint8_t *buf, size_t len) {
         if(BufferAvailable > 0) {
             uint8_t * b = new (std::nothrow) uint8_t[BufferAvailable];
             if(b == NULL){
-              panic(); //TODO: What action should this be ?
+              //panic(); //TODO: What action should this be ?
             }
             _RXbuffer->peek((char *) b, BufferAvailable);
             r = _cbRX(b, BufferAvailable);

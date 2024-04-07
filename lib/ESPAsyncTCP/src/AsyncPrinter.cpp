@@ -45,7 +45,7 @@ AsyncPrinter::AsyncPrinter(AsyncClient *client, size_t txBufLen)
   _attachCallbacks();
   _tx_buffer = new (std::nothrow) cbuf(_tx_buffer_size);
   if(_tx_buffer == NULL) {
-    panic(); //What should we do?
+    //panic(); //What should we do?
   }
 }
 
@@ -68,7 +68,7 @@ int AsyncPrinter::connect(IPAddress ip, uint16_t port){
     return 0;
   _client = new (std::nothrow) AsyncClient();
   if (_client == NULL) {
-    panic();
+    //panic();
   }
 
   _client->onConnect([](void *obj, AsyncClient *c){ ((AsyncPrinter*)(obj))->_onConnect(c); }, this);
@@ -85,7 +85,7 @@ int AsyncPrinter::connect(const char *host, uint16_t port){
     return 0;
   _client = new (std::nothrow) AsyncClient();
   if (_client == NULL) {
-    panic();
+    //panic();
   }
 
   _client->onConnect([](void *obj, AsyncClient *c){ ((AsyncPrinter*)(obj))->_onConnect(c); }, this);
@@ -106,7 +106,7 @@ void AsyncPrinter::_onConnect(AsyncClient *c){
   }
   _tx_buffer = new (std::nothrow) cbuf(_tx_buffer_size);
   if(_tx_buffer) {
-    panic();
+    //panic();
   }
 
   _attachCallbacks();
@@ -127,7 +127,7 @@ AsyncPrinter & AsyncPrinter::operator=(const AsyncPrinter &other){
   }
   _tx_buffer = new (std::nothrow) cbuf(other._tx_buffer_size);
   if(_tx_buffer == NULL) {
-    panic();
+    //panic();
   }
 
   _client = other._client;
@@ -179,7 +179,7 @@ size_t AsyncPrinter::_sendBuffer(){
     available= sendable;
   char *out = new (std::nothrow) char[available];
   if (out == NULL) {
-    panic(); // Connection should be aborted instead
+    //panic(); // Connection should be aborted instead
   }
 
   _tx_buffer->read(out, available);

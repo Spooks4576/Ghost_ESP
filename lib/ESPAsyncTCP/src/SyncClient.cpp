@@ -22,7 +22,6 @@
 #include "SyncClient.h"
 #include "ESPAsyncTCP.h"
 #include "cbuf.h"
-#include <interrupts.h>
 
 #define DEBUG_ESP_SYNC_CLIENT
 #if defined(DEBUG_ESP_SYNC_CLIENT) && !defined(SYNC_CLIENT_DEBUG)
