@@ -31,6 +31,9 @@ Please note that the BLE spam feature may not work on the ESP32 WROOM due to lim
 ## Discord 
 [Ghost_ESP](https://discord.gg/vrYfcZfTK9)
 
+## Flashing Tutorial 
+[Tutorial](https://github.com/Spooks4576/Ghost_ESP/blob/main/docs/HOWTOFLASH.md)
+
 ## Acknowledgments
 
 - A big thank you to [JustCallMeKoKo](https://github.com/justcallmekoko/ESP32Marauder) for providing a base to familiarize myself with the ESP32.
