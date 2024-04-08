@@ -70,6 +70,7 @@ function mainMenu() {
     submenu.addItem("BLE Utils", 1);
     submenu.addItem("LED Utils", 2);
     submenu.addItem("Evil Portal", 3);
+    submenu.addItem("USB Emulation", 4);
 
     let result = submenu.show();
 
@@ -88,6 +89,11 @@ function mainMenu() {
     if (result === 3)
     {
         sendSerialCommand("evilportal -s KillShot", 1);
+    }
+
+    if (result === 4)
+    {
+        promptUSBType();
     }
 
     if (result === undefined) {
@@ -276,6 +282,133 @@ function ledUtilsMenu() {
     if (result === undefined)
     {
         mainMenu();
+    }
+}
+
+function promptUSBType(){
+    submenu.setHeader("Pick USB Type:");
+    submenu.addItem("Nintendo Switch", 0);
+    submenu.addItem("PS5 / DualSense", 1);
+    submenu.addItem("Xbox One", 2);
+
+    let result = submenu.show();
+    if (result === 0) {
+        promptNSWControls();
+    }
+
+    if (result === undefined)
+    {
+        mainMenu();
+    }
+}
+
+function promptNSWControls(){
+    submenu.setHeader("Pick Button Press:");
+    submenu.addItem("Button: Y", 0);
+    submenu.addItem("Button: B", 1);
+    submenu.addItem("Button: A", 2);
+    submenu.addItem("Button: X", 3);
+    submenu.addItem("Button: -", 4);
+    submenu.addItem("Button: +", 5);
+    submenu.addItem("Button: Share", 6);
+    submenu.addItem("Button: Home", 7);
+    submenu.addItem("Button: LB", 8);
+    submenu.addItem("Button: RB", 9);
+    submenu.addItem("Button: LT", 10);
+    submenu.addItem("Button: RT",11);
+    submenu.addItem("Button: L-Thumb", 12);
+    submenu.addItem("Button: R-Thumb",13);
+    submenu.addItem("Button: Up", 14);
+    submenu.addItem("Button: Left",15);
+    submenu.addItem("Button: Down", 16);
+    submenu.addItem("Button: Right",17);
+    submenu.addItem("Button: L-Stick-Up", 18);
+    submenu.addItem("Button: L-Stick-Left",19);
+    submenu.addItem("Button: L-Stick-Down", 20);
+    submenu.addItem("Button: L-Stick-Right",21);
+    submenu.addItem("Button: R-Stick-Up", 22);
+    submenu.addItem("Button: R-Stick-Left",23);
+    submenu.addItem("Button: R-Stick-Down", 24);
+    submenu.addItem("Button: R-Stick-Right",25);
+
+    let result = submenu.show;
+    if (result === 0){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_Y", 4);
+    }
+    if (result === 1){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_B", 4);
+    }
+    if (result === 2){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_A", 4);
+    }
+    if (result === 3){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_X", 4);
+    }
+    if (result === 4){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_MINUS", 4);
+    }
+    if (result === 5){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_PLUS", 4);
+    }
+    if (result === 6){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_SHARE", 4);
+    }
+    if (result === 7){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_HOME", 4);
+    }
+    if (result === 9){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_LBUMPER", 4);
+    }
+    if (result === 9){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_RBUMPER", 4);
+    }
+    if (result === 10){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_LTRIGGER", 4);
+    }
+    if (result === 11){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_RTRIGGER", 4);
+    }
+    if (result === 12){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_LTHUMBSTICK", 4);
+    }
+    if (result === 13){
+        sendSerialCommand("usbcontrol -t nsw -b BUTTON_RTHUMBSTICK", 4);
+    }
+    if (result === 14){
+        sendSerialCommand("usbcontrol -t nsw -b DPAD_UP", 4);
+    }
+    if (result === 15){
+        sendSerialCommand("usbcontrol -t nsw -b DPAD_LEFT", 4);
+    }
+    if (result === 16){
+        sendSerialCommand("usbcontrol -t nsw -b DPAD_DOWN", 4);
+    }
+    if (result === 17){
+        sendSerialCommand("usbcontrol -t nsw -b DPAD_RIGHT", 4);
+    }
+    if (result === 18){
+        sendSerialCommand("usbcontrol -t nsw -b LSTICK_UP", 4);
+    }
+    if (result === 19){
+        sendSerialCommand("usbcontrol -t nsw -b LSTICK_LEFT", 4);
+    }
+    if (result === 20){
+        sendSerialCommand("usbcontrol -t nsw -b LSTICK_DOWN", 4);
+    }
+    if (result === 21){
+        sendSerialCommand("usbcontrol -t nsw -b LSTICK_RIGHT", 4);
+    }
+    if (result === 22){
+        sendSerialCommand("usbcontrol -t nsw -b RSTICK_UP", 4);
+    }
+    if (result === 23){
+        sendSerialCommand("usbcontrol -t nsw -b RSTICK_LEFT", 4);
+    }
+    if (result === 24){
+        sendSerialCommand("usbcontrol -t nsw -b RSTICK_DOWN", 4);
+    }
+    if (result === 25){
+        sendSerialCommand("usbcontrol -t nsw -b RSTICK_RIGHT", 4);
     }
 }
 
