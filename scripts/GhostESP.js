@@ -44,6 +44,10 @@ function receiveSerialData(menutype) {
     {
         ledUtilsMenu();
     }
+    if (menutype === 4)
+    {
+        promptUSBType();
+    }
 }
 
 function promptForText(header, defaultValue) {
@@ -331,7 +335,7 @@ function promptNSWControls(){
     submenu.addItem("Button: R-Stick-Down", 24);
     submenu.addItem("Button: R-Stick-Right",25);
 
-    let result = submenu.show;
+    let result = submenu.show();
     if (result === 0){
         sendSerialCommand("usbcontrol -t nsw -b BUTTON_Y", 4);
     }
