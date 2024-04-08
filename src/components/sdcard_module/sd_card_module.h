@@ -40,7 +40,7 @@ public:
     bool logPacket(const uint8_t *packet, uint32_t length);
     void flushLog();
     void stopPcapLogging();
-
+    FS* SDI;
 private:
     int csPin;
     int BootNum;
@@ -64,7 +64,6 @@ private:
             return &SD;
         }
     }
-    FS* SDI;
 };
 
 #endif // SD_CARD_CS_PIN

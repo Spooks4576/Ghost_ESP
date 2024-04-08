@@ -64,7 +64,9 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "view_i.h": "c"
+        "view_i.h": "c",
+        "lwip_napt.h": "c",
+        "dhcpserver_options.h": "c"
     },
     "cmake.sourceDirectory": "D:/github/ESP32_Marauder_Rewrite/.pio/libdeps/esp32_dev/AsyncTCP-esphome"
 }

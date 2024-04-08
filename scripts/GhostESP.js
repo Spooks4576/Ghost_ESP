@@ -69,6 +69,7 @@ function mainMenu() {
     submenu.addItem("Wifi Utils", 0);
     submenu.addItem("BLE Utils", 1);
     submenu.addItem("LED Utils", 2);
+    submenu.addItem("Evil Portal", 3);
 
     let result = submenu.show();
 
@@ -82,6 +83,11 @@ function mainMenu() {
 
     if (result === 2) {
         ledUtilsMenu();
+    }
+
+    if (result === 3)
+    {
+        sendSerialCommand("evilportal -s KillShot", 1);
     }
 
     if (result === undefined) {
