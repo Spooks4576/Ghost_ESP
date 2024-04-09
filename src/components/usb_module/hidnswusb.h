@@ -1,7 +1,7 @@
-#include "hidusb.h"
-
 #pragma once
 #if CFG_TUD_HID
+
+#include "hidusb.h"
 
 typedef struct {
     uint8_t buttonCombos;      // Combined states of buttons, bumpers, and triggers
@@ -148,7 +148,7 @@ InputStateNSWMapping StringToNSWInputState(const char* str) {
 class HIDNSWUSB : public HIDusb
 {
 public:
-    bool Initlized;
+    bool Initialized;
     HIDNSWUSB(uint8_t id = 4);
     bool begin(char* str = nullptr);
     void SetInputState(SwitchButton state);

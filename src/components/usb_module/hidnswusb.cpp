@@ -25,7 +25,7 @@ bool HIDNSWUSB::begin(char* str)
     EspTinyUSB::hid_report_desc_len += TUD_HID_DESC_LEN;
     log_d("begin len: %d", EspTinyUSB::hid_report_desc_len);
 
-    Initlized = true;
+    Initialized = true;
     return EspTinyUSB::begin(str, 6);
 }
 

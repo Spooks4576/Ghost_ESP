@@ -405,11 +405,13 @@ void CommandLine::runCommand(String input)
 
       if (ScriptMode != -1)
       {
-        if (!usbmodule.NSWUsb.Initlized)
+#if CFG_TUD_HID
+        if (!usbmodule.NSWUsb.Initialized)
         {
-          usbmodule.NSWUsb.begin("NSW Wireless Controller");
+          usbmodule.NSWUsb.begin("Wireless Controller");
         }
         delay(100);
+#endif
         static String jsonScript;
         while (Serial.available()) {
           char c = Serial.read();
@@ -430,7 +432,9 @@ void CommandLine::runCommand(String input)
 
         if (typeString == "nsw")
         {
-          if (!usbmodule.NSWUsb.Initlized)
+#if CFG_TUD_HID
+          usbmodule.SelectedType = USBType::Nintendo_Switch;
+          if (!usbmodule.NSWUsb.Initialized)
           {
             usbmodule.NSWUsb.begin("NSW Wireless Controller");
             delay(100);
@@ -439,6 +443,23 @@ void CommandLine::runCommand(String input)
           usbmodule.NSWUsb.SetInputState(StringToNSWInputState(Button.c_str()).state);
           delay(500);
           usbmodule.NSWUsb.SetInputState(NONE);
+#endif
+        }
+        else if (typeString == "xinput")
+        {
+          #if CFG_TUD_HID
+          usbmodule.SelectedType = USBType::Xbox_One;
+          if (!usbmodule.NSWUsb.Initialized)
+          {
+            usbmodule.XInputUsb.begin("Xbox Wireless Controller");
+            delay(100);
+          }
+
+          Serial.println(StringToXInputInputState(Button.c_str()).name);
+          usbmodule.XInputUsb.SetInputState(StringToXInputInputState(Button.c_str()).state);
+          delay(500);
+          usbmodule.XInputUsb.SetInputState(Xbox_NONE);
+          #endif
         }
       }
 
@@ -851,18 +872,40 @@ void CommandLine::executeJsonScript(const char* Json) {
     int delayTime = cmd["delay"];
 
     if (strcmp(type, "nsw") == 0) {
+      usbmodule.SelectedType = USBType::Nintendo_Switch;
       if (buttons.is<JsonArray>()) { 
         for (const char* button : buttons.as<JsonArray>()) {
           Serial.println(button);
+          #if CFG_TUD_HID
           usbmodule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
+          #endif
         }
       } else {
         const char* button = buttons;
         Serial.println(button);
+        #if CFG_TUD_HID
         usbmodule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
+        #endif
       }
     }
-
+    if (strcmp(type, "xinput") == 0)
+    {
+      usbmodule.SelectedType = USBType::Xbox_One;
+      if (buttons.is<JsonArray>()) { 
+        for (const char* button : buttons.as<JsonArray>()) {
+          Serial.println(button);
+          #if CFG_TUD_HID
+          usbmodule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
+          #endif
+        }
+      } else {
+        const char* button = buttons;
+        Serial.println(button);
+        #if CFG_TUD_HID
+        usbmodule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
+        #endif
+      }
+    }
     delay(delayTime);
   }
 }

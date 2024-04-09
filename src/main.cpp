@@ -36,7 +36,17 @@ void loop() {
 
 void SerialCheckTask(void *pvParameters) {
     while (1) {
-        usbmodule.NSWUsb.sendReport();
+        #if CFG_TUD_HID
+        if (usbmodule.SelectedType == USBType::Nintendo_Switch)
+        {
+            usbmodule.NSWUsb.sendReport();
+        }
+        else if (usbmodule.SelectedType == USBType::Xbox_One)
+        {
+            usbmodule.XInputUsb.sendReport();
+        }
+        #endif
+            
         #ifndef DISPLAY_SUPPORT
         if (HasRanCommand)
         {   

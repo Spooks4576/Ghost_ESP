@@ -294,17 +294,107 @@ function ledUtilsMenu() {
 function promptUSBType(){
     submenu.setHeader("Pick USB Type:");
     submenu.addItem("Nintendo Switch", 0);
-    submenu.addItem("PS5 / DualSense", 1);
-    submenu.addItem("Xbox One", 2);
+    submenu.addItem("Xbox One", 1);
+    submenu.addItem("PS5 / DualSense", 2);
+    submenu.addItem("Choose Script", 3);
 
     let result = submenu.show();
     if (result === 0) {
         promptNSWControls();
     }
 
+    if (result === 1)
+    {
+        promptXInputControls();
+    }
+
+    if (result === 3)
+    {
+        let path = dialog.pickFile("/ext", "*");
+
+        let data = storage.read(path);
+
+        sendSerialCommand("usbcontrol -s \n" + arraybuf_to_string(data) + "\n \f", 4);
+    }
+
     if (result === undefined)
     {
         mainMenu();
+    }
+}
+
+function promptXInputControls()
+{
+    submenu.setHeader("Pick Button Press:");
+    submenu.addItem("Button: Y", 0);
+    submenu.addItem("Button: B", 1);
+    submenu.addItem("Button: A", 2);
+    submenu.addItem("Button: X", 3);
+    submenu.addItem("Button: Back", 4);
+    submenu.addItem("Button: Start", 5);
+    submenu.addItem("Button: Home", 6);
+    submenu.addItem("Button: LB", 7);
+    submenu.addItem("Button: RB", 8);
+    submenu.addItem("Button: LT", 9);
+    submenu.addItem("Button: RT",10);
+    submenu.addItem("Button: L-Thumb", 11);
+    submenu.addItem("Button: R-Thumb",12);
+    submenu.addItem("Button: Up", 13);
+    submenu.addItem("Button: Left",14);
+    submenu.addItem("Button: Down", 15);
+    submenu.addItem("Button: Right",16);
+
+    let result = submenu.show();
+    if (result === 0){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_Y", 4);
+    }
+    if (result === 1){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_B", 4);
+    }
+    if (result === 2){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_A", 4);
+    }
+    if (result === 3){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_X", 4);
+    }
+    if (result === 4){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_BACK", 4);
+    }
+    if (result === 5){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_START", 4);
+    }
+    if (result === 6){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_HOME", 4);
+    }
+    if (result === 7){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_LBUMPER", 4);
+    }
+    if (result === 8){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_RBUMPER", 4);
+    }
+    if (result === 9){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_LTRIGGER", 4);
+    }
+    if (result === 10){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_RTRIGGER", 4);
+    }
+    if (result === 11){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_LTHUMBSTICK", 4);
+    }
+    if (result === 12){
+        sendSerialCommand("usbcontrol -t xinput -b BUTTON_RTHUMBSTICK", 4);
+    }
+    if (result === 13){
+        sendSerialCommand("usbcontrol -t xinput -b DPAD_UP", 4);
+    }
+    if (result === 14){
+        sendSerialCommand("usbcontrol -t xinput -b DPAD_LEFT", 4);
+    }
+    if (result === 15){
+        sendSerialCommand("usbcontrol -t xinput -b DPAD_DOWN", 4);
+    }
+    if (result === 16){
+        sendSerialCommand("usbcontrol -t xinput -b DPAD_RIGHT", 4);
     }
 }
 
@@ -336,7 +426,6 @@ function promptNSWControls(){
     submenu.addItem("Button: R-Stick-Left",23);
     submenu.addItem("Button: R-Stick-Down", 24);
     submenu.addItem("Button: R-Stick-Right",25);
-    submenu.addItem("Choose Script", 26);
 
     let result = submenu.show();
     if (result === 0){
@@ -416,14 +505,6 @@ function promptNSWControls(){
     }
     if (result === 25){
         sendSerialCommand("usbcontrol -t nsw -b RSTICK_RIGHT", 4);
-    }
-    if (result === 26)
-    {
-        let path = dialog.pickFile("/ext", "*");
-
-        let data = storage.read(path);
-
-        sendSerialCommand("usbcontrol -s \n" + arraybuf_to_string(data) + "\n \f", 4);
     }
 }
 
