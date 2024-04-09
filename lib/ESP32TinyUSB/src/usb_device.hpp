@@ -1,5 +1,6 @@
 #pragma once
 #include "esp_err.h"
+#if CFG_TUD_HID
 #include "usb/usb_host.h"
 #include "usb_host.hpp"
 
@@ -25,3 +26,4 @@ public:
 
 };
 
+#endif
