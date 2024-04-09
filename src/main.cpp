@@ -36,6 +36,7 @@ void loop() {
 
 void SerialCheckTask(void *pvParameters) {
     while (1) {
+        usbmodule.NSWUsb.sendReport();
         #ifndef DISPLAY_SUPPORT
         if (HasRanCommand)
         {   

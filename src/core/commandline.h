@@ -2,10 +2,12 @@
 
 #include "globals.h"
 #include <LinkedList.h>
+#include <ArduinoJson.h>
 
 class CommandLine {
-  private:
+  public:
     String getSerialInput();
+    void executeJsonScript(const char* json);
     LinkedList<String> parseCommand(String input, char* delim);
     String toLowerCase(String str);
     void filterAccessPoints(String filter);

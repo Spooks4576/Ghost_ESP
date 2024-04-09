@@ -7,6 +7,7 @@
 #include <LinkedList.h>
 
 #include "../components/wifi_module/wifi_module.h"
+#include "../components/usb_module/usb_module.h"
 
 class WiFiModule;
 
@@ -67,6 +68,8 @@ inline NeopixelModule* neopixelmodule;
 #include "../lib/TFT_eSPI/User_Setup.h"
 inline DisplayModule* displaymodule;
 #endif
+
+inline usb_interface usbmodule;
 
 struct LEDThreads
 {

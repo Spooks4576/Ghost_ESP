@@ -397,6 +397,53 @@ void CommandLine::runCommand(String input)
       }
     }
 
+    if (cmd_args.get(0) == F("usbcontrol"))
+    {
+      int type = this->argSearch(&cmd_args, "-t");
+      int button = this->argSearch(&cmd_args, "-b");
+      int ScriptMode = this->argSearch(&cmd_args, "-s");
+
+      if (ScriptMode != -1)
+      {
+        if (!usbmodule.NSWUsb.Initlized)
+        {
+          usbmodule.NSWUsb.begin("NSW Wireless Controller");
+        }
+        delay(100);
+        static String jsonScript;
+        while (Serial.available()) {
+          char c = Serial.read();
+          if (c == '\f') {
+            executeJsonScript(jsonScript.c_str());
+            jsonScript = "";
+            return;
+          } else {
+            jsonScript += c;
+          }
+        }
+      }
+
+      if (type != -1 && button != -1)
+      {
+        String typeString = cmd_args.get(type + 1);
+        String Button = cmd_args.get(button + 1);
+
+        if (typeString == "nsw")
+        {
+          if (!usbmodule.NSWUsb.Initlized)
+          {
+            usbmodule.NSWUsb.begin("NSW Wireless Controller");
+            delay(100);
+          }
+          Serial.println(StringToNSWInputState(Button.c_str()).name);
+          usbmodule.NSWUsb.SetInputState(StringToNSWInputState(Button.c_str()).state);
+          delay(500);
+          usbmodule.NSWUsb.SetInputState(NONE);
+        }
+      }
+
+    }
+
     if (cmd_args.get(0) == F("deauthdetector"))
     {
       HasRanCommand = true;
@@ -784,5 +831,38 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       BleModule->shutdownBLE();  
       #endif
     }
+  }
+}
+
+void CommandLine::executeJsonScript(const char* Json) {
+  StaticJsonDocument<512> doc;
+  DeserializationError error = deserializeJson(doc, Json);
+
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+
+  JsonArray sequence = doc["sequence"];
+  for (JsonObject cmd : sequence) {
+    const char* type = cmd["type"];
+    auto buttons = cmd["buttons"];
+    int delayTime = cmd["delay"];
+
+    if (strcmp(type, "nsw") == 0) {
+      if (buttons.is<JsonArray>()) { 
+        for (const char* button : buttons.as<JsonArray>()) {
+          Serial.println(button);
+          usbmodule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
+        }
+      } else {
+        const char* button = buttons;
+        Serial.println(button);
+        usbmodule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
+      }
+    }
+
+    delay(delayTime);
   }
 }

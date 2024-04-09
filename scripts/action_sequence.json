@@ -1,0 +1,837 @@
+{
+    "sequence": [
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 88
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 71
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 63
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 71
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 31
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 39
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 55
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 96
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 72
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 15
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 87
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 55
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 55
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 79
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 72
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 71
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 47
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_DOWN",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 80
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 15
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 40
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 63
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 47
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 31
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 95
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 39
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_DOWN",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 95
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 31
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_DOWN",
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 39
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_DOWN",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 24
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 87
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 15
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 55
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 23
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 39
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 87
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 72
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 55
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 64
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 48
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 72
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 47
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_DOWN",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 39
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 31
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 39
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_DOWN",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 80
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 47
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 63
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 8
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 87
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 31
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 96
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_DOWN",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 64
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 71
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 56
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 48
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 63
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 31
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 31
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 79
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 31
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 95
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_DOWN",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 55
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 72
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 71
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 47
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 72
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 32
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 47
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 95
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 88
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 80
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 87
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 63
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 39
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 95
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 96
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 79
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 48
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 55
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 71
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_LEFT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 64
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 79
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 7
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 23
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "DPAD_RIGHT",
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 80
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 79
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 71
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 79
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 80
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 80
+        },
+        {
+            "type": "nsw",
+            "buttons": [
+                "BUTTON_B"
+            ],
+            "action": "press",
+            "delay": 63
+        }
+    ]
+}

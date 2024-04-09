@@ -3,10 +3,12 @@ let serial = require("serial");
 let keyboard = require("keyboard");
 let textbox = require("textbox");
 let dialog = require("dialog");
+let storage = require("storage");
 
 serial.setup("usart", 115200);
 
 let shouldexit = false;
+let path = "/ext/storage.test";
 
 function sendSerialCommand(command, menutype) {
     serial.write(command);
@@ -334,6 +336,7 @@ function promptNSWControls(){
     submenu.addItem("Button: R-Stick-Left",23);
     submenu.addItem("Button: R-Stick-Down", 24);
     submenu.addItem("Button: R-Stick-Right",25);
+    submenu.addItem("Choose Script", 26);
 
     let result = submenu.show();
     if (result === 0){
@@ -414,6 +417,14 @@ function promptNSWControls(){
     if (result === 25){
         sendSerialCommand("usbcontrol -t nsw -b RSTICK_RIGHT", 4);
     }
+    if (result === 26)
+    {
+        let path = dialog.pickFile("/ext", "*");
+
+        let data = storage.read(path);
+
+        sendSerialCommand("usbcontrol -s \n" + arraybuf_to_string(data) + "\n \f", 4);
+    }
 }
 
 function mainLoop() {
@@ -427,6 +438,15 @@ function mainLoop() {
             // If the user cancels, it will loop back and show the main menu again.
         }
     }
+}
+
+function arraybuf_to_string(arraybuf) {
+    let string = "";
+    let data_view = Uint8Array(arraybuf);
+    for (let i = 0; i < data_view.length; i++) {
+        string += chr(data_view[i]);
+    }
+    return string;
 }
 
 
