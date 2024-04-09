@@ -1,6 +1,8 @@
 #include "Arduino.h"
 #include "hal/usb_hal.h"
+#if CFG_TUD_HID
 #include "soc/usb_periph.h"
+#endif
 #include "driver/periph_ctrl.h"
 #include "driver/gpio.h"
 #if CONFIG_IDF_TARGET_ESP32S3
