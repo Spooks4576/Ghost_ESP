@@ -1,5 +1,7 @@
 #include "esp_log.h"
+#if CFG_TUD_HID
 #include "usb_device.hpp"
+
 
 
 
@@ -48,4 +50,5 @@ esp_err_t USBhostDevice::allocate(size_t _size)
     return err;
 }
 
+#endif
 
