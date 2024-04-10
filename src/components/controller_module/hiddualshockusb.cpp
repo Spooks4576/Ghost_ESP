@@ -15,6 +15,10 @@ bool HIDDualShockUSB::begin(char* str)
     _VID = 0x054C;
     _PID = 0x05C4;
 
+    strings.manufacturer = "Sony Interactive Entertainment";
+    strings.product = "DualShock Wireless Controller";
+    strings.serial = "4d1e55b2-f16f-11cf-88cb-001111000030";
+
     uint8_t desc_hid_report[PS4_REPORT_DESCRIPTOR_SIZE];
 
     for(size_t i = 0; i < PS4_REPORT_DESCRIPTOR_SIZE; ++i) {

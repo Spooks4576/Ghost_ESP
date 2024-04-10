@@ -14,7 +14,11 @@ bool HIDXInputUSB::begin(char* str)
 {
     _VID = 0x045E; 
     _PID = 0x02D1;
-    uint8_t const desc_hid_report[] = {*XboxOneS_1914_HIDDescriptor};
+    uint8_t desc_hid_report[283];
+
+    for(size_t i = 0; i < 283; ++i) {
+        desc_hid_report[i] = pgm_read_byte_near(XboxOneS_1914_HIDDescriptor + i);
+    }
     // Interface number, string index, protocol, report descriptor len, EP In & Out address, size & polling interval
     uint8_t hid[] = {TUD_HID_DESCRIPTOR(ifIdx++, 6, HID_ITF_PROTOCOL_NONE, 283, (uint8_t)(_EPNUM_HID | 0x80), CFG_TUD_HID_BUFSIZE, 10)};
     memcpy(&desc_configuration[total], hid, sizeof(hid));

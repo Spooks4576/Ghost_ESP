@@ -60,6 +60,12 @@ void SerialCheckTask(void *pvParameters) {
             controllermodule.DualShockUSB.sendReport();
             #endif
         }
+        else if (controllermodule.SelectedType == ControllerType::DualSense)
+        {
+            #if CFG_TUD_HID
+            controllermodule.DualSenseUSB.sendReport();
+            #endif
+        }
         
 
         #ifndef DISPLAY_SUPPORT

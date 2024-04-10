@@ -475,20 +475,34 @@ void CommandLine::runCommand(String input)
         else if (typeString == "dualshock")
         {
 #if CFG_TUD_HID
-          controllermodule.SelectedType = ControllerType::Dualshock;
-          if (!controllermodule.DualShockUSB.Initialized)
-          {
-            controllermodule.DualShockUSB.begin("Playstation Wireless Controller");
-            delay(100);
-          }
-          Serial.println(StringToDualShockInputState(Button.c_str()).name);
-          controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(Button.c_str()).state);
-          delay(500);
-          controllermodule.DualShockUSB.SetInputState(PS4_NONE);
+        controllermodule.SelectedType = ControllerType::Dualshock;
+        if (!controllermodule.DualShockUSB.Initialized)
+        {
+          controllermodule.DualShockUSB.begin("Playstation Wireless Controller");
+          delay(100);
+        }
+        Serial.println(StringToDualShockInputState(Button.c_str()).name);
+        controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(Button.c_str()).state);
+        delay(500);
+        controllermodule.DualShockUSB.SetInputState(PS4_NONE);
+#endif
+      }
+      else if (typeString == "dualsense")
+      {
+#if CFG_TUD_HID
+        controllermodule.SelectedType = ControllerType::DualSense;
+        if (!controllermodule.DualSenseUSB.Initialized)
+        {
+          controllermodule.DualSenseUSB.begin("Playstation Wireless Controller");
+          delay(100);
+        }
+        Serial.println(StringToDualSenseInputState(Button.c_str()).name);
+        controllermodule.DualSenseUSB.SetInputState(StringToDualSenseInputState(Button.c_str()).state);
+        delay(500);
+        controllermodule.DualSenseUSB.SetInputState(PS5_NONE);
 #endif
         }
       }
-
     }
 
     if (cmd_args.get(0) == F("deauthdetector"))
@@ -947,6 +961,24 @@ void CommandLine::executeJsonScript(const char* Json) {
         Serial.println(button);
         #if CFG_TUD_HID
         controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
+        #endif
+      }
+    }
+    if (strcmp(type, "dualsense") == 0)
+    {
+      controllermodule.SelectedType = ControllerType::DualSense;
+      if (buttons.is<JsonArray>()) { 
+        for (const char* button : buttons.as<JsonArray>()) {
+          Serial.println(button);
+          #if CFG_TUD_HID
+          controllermodule.DualSenseUSB.SetInputState(StringToDualSenseInputState(button).state);
+          #endif
+        }
+      } else {
+        const char* button = buttons;
+        Serial.println(button);
+        #if CFG_TUD_HID
+        controllermodule.DualSenseUSB.SetInputState(StringToDualSenseInputState(button).state);
         #endif
       }
     }

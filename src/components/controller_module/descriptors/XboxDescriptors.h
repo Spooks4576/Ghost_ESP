@@ -25,7 +25,7 @@
 #define XBOX_OUTPUT_REPORT_ID 0x03
 #define XBOX_EXTRA_OUTPUT_REPORT_ID 0x04
 
-static const uint8_t XboxOneS_1914_HIDDescriptor[] 
+static const uint8_t XboxOneS_1914_HIDDescriptor[] PROGMEM 
 {
     0x05, 0x01,                 //(GLOBAL) USAGE_PAGE         0x0001 Generic Desktop Page 
     0x09, 0x05,                 //(LOCAL)  USAGE              0x00010005 Game Pad (Application Collection)  

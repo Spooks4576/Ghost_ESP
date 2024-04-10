@@ -2,6 +2,7 @@
 #include "hidnswusb.h"
 #include "hidxinput.h"
 #include "hiddualshockusb.h"
+#include "hiddualsenseusb.h"
 #ifdef HAS_BT
 #include <BleConnectionStatus.h>
 
@@ -16,6 +17,7 @@ typedef enum
     Nintendo_Switch,
     Xbox_One,
     Dualshock,
+    DualSense
 } ControllerType;
 
 typedef enum 
@@ -38,6 +40,7 @@ public:
     HIDNSWUSB NSWUsb;
     HIDXInputUSB XInputUsb;
     HIDDualShockUSB DualShockUSB;
+    HIDDualSenseUSB DualSenseUSB;
 #endif
 #ifdef HAS_BT
     XboxGamepadDevice* XboxBT;
