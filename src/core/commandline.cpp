@@ -402,6 +402,7 @@ void CommandLine::runCommand(String input)
       int type = this->argSearch(&cmd_args, "-t");
       int button = this->argSearch(&cmd_args, "-b");
       int ScriptMode = this->argSearch(&cmd_args, "-s");
+      int ConnectionType = this->argSearch(&cmd_args, "-c");
 
       if (ScriptMode != -1)
       {
@@ -418,10 +419,11 @@ void CommandLine::runCommand(String input)
         }
       }
 
-      if (type != -1 && button != -1)
+      if (type != -1 && button != -1 && ConnectionType != -1)
       {
         String typeString = cmd_args.get(type + 1);
         String Button = cmd_args.get(button + 1);
+        String ConnectionTypeString = cmd_args.get(ConnectionType + 1);
 
         if (typeString == "nsw")
         {
@@ -442,7 +444,7 @@ void CommandLine::runCommand(String input)
         {
           #if CFG_TUD_HID
           controllermodule.SelectedType = ControllerType::Xbox_One;
-          if (!controllermodule.NSWUsb.Initialized)
+          if (!controllermodule.XInputUsb.Initialized)
           {
             controllermodule.XInputUsb.begin("Xbox Wireless Controller");
             delay(100);
@@ -453,6 +455,37 @@ void CommandLine::runCommand(String input)
           delay(500);
           controllermodule.XInputUsb.SetInputState(Xbox_NONE);
           #endif
+          #ifdef HAS_BT
+          controllermodule.SelectedType = ControllerType::Xbox_One;
+          if (!g_compositeHID.isConnected())
+          {
+            XboxOneSControllerDeviceConfiguration* config = new XboxOneSControllerDeviceConfiguration();
+            BLEHostConfiguration hostConfig = config->getIdealHostConfiguration();
+            controllermodule.XboxBT = new XboxGamepadDevice(config);
+            g_compositeHID.addDevice(controllermodule.XboxBT);
+            g_compositeHID.begin(hostConfig);
+            delay(100);
+          }
+          Serial.println(Button.c_str());
+          controllermodule.XboxBT->press(getXboxButtonValue(Button.c_str()));
+          delay(500);
+          controllermodule.XboxBT->release(getXboxButtonValue(Button.c_str()));
+          #endif
+        }
+        else if (typeString == "dualshock")
+        {
+#if CFG_TUD_HID
+          controllermodule.SelectedType = ControllerType::Dualshock;
+          if (!controllermodule.DualShockUSB.Initialized)
+          {
+            controllermodule.DualShockUSB.begin("Playstation Wireless Controller");
+            delay(100);
+          }
+          Serial.println(StringToDualShockInputState(Button.c_str()).name);
+          controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(Button.c_str()).state);
+          delay(500);
+          controllermodule.DualShockUSB.SetInputState(PS4_NONE);
+#endif
         }
       }
 
@@ -896,6 +929,24 @@ void CommandLine::executeJsonScript(const char* Json) {
         Serial.println(button);
         #if CFG_TUD_HID
         controllermodule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
+        #endif
+      }
+    }
+    if (strcmp(type, "dualshock") == 0)
+    {
+      controllermodule.SelectedType = ControllerType::Dualshock;
+      if (buttons.is<JsonArray>()) { 
+        for (const char* button : buttons.as<JsonArray>()) {
+          Serial.println(button);
+          #if CFG_TUD_HID
+          controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
+          #endif
+        }
+      } else {
+        const char* button = buttons;
+        Serial.println(button);
+        #if CFG_TUD_HID
+        controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
         #endif
       }
     }

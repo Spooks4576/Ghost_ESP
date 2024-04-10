@@ -1,6 +1,8 @@
 #ifndef NSW_DESCRIPTORS_H
 #define NSW_DESCRIPTORS_H
 
+#include <stdint.h>
+
 #define NSW_HID_REPORT_DESCRIPTOR \
   0x05, 0x01,                    /* Usage Page (Generic Desktop) */ \
   0x09, 0x05,                    /* Usage (Game Pad) */ \

@@ -36,16 +36,31 @@ void loop() {
 
 void SerialCheckTask(void *pvParameters) {
     while (1) {
-        #if CFG_TUD_HID
         if (controllermodule.SelectedType == ControllerType::Nintendo_Switch)
         {
+            #if CFG_TUD_HID
             controllermodule.NSWUsb.sendReport();
+            #endif
         }
         else if (controllermodule.SelectedType == ControllerType::Xbox_One)
         {
+            #if CFG_TUD_HID
             controllermodule.XInputUsb.sendReport();
+            #endif
+            #ifdef HAS_BT
+            if (g_compositeHID.isConnected())
+            {
+                controllermodule.XboxBT->sendGamepadReport();
+            }
+            #endif
         }
-        #endif
+        else if (controllermodule.SelectedType == ControllerType::Dualshock)
+        {
+            #if CFG_TUD_HID
+            controllermodule.DualShockUSB.sendReport();
+            #endif
+        }
+        
 
         #ifndef DISPLAY_SUPPORT
         if (HasRanCommand)

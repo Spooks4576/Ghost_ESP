@@ -1,0 +1,46 @@
+// Included in this file are two sample packets captured via Wireshark.
+// The first is captured from a latest model XBox Series X wireless controller
+
+// Xbox wireless controller 1914 - pressing right trigger
+char packet_bytes_controller[] = {
+  0x01, // Report ID
+  0x22, // ?
+  0x17, // Size (23 bytes)
+  0x00, // Seperator before size is counted
+  
+  // Counting from here onwards there are 23 bytes
+  0x13, 0x00, 0x04, 0x00, 0x1b, 0x1e, 0x00, //unknown?
+  0xa6, 0x81, // X axis
+  0x1d, 0x7c, // Y axis
+  0x4c, 0x81, // Z axis
+  0xe8, 0x81, // rZ axis
+  0x00, 0x00, // Brake (Left trigger)
+  0xa0, 0x01, // Accelerator (Right trigger)
+  0x00,       // Hat switch
+  0x00, 0x00, // Button bitflags
+  0x00        // Share button
+};
+
+// The second is a packet from our ESP32 controller
+// ESP32
+
+char packet_bytes_esp32[] = {
+  0x01, // Report ID
+  0x22, // ?
+  0x17, // Size (23 bytes)
+  0x00, // Size seperator
+  // Counting from here onwards there are 23 bytes
+
+  0x13, 0x00, 0x04, 0x00, 0x1b, //unknown but identical to a real controller
+  0x23, 0x00, // Unknown and differs from a normal controller but still seems to work
+
+  0x00, 0x00, // X axis
+  0x00, 0x00, // Y axis
+  0x00, 0x00, // Z axis
+  0x00, 0x00, // rZ axis
+  0x16, 0x03, // Brake (Left trigger)
+  0x15, 0x03, // Accelerator (Right trigger)
+  0x00,       // Hat switch
+  0x00, 0x00, // Button bitflags
+  0x00        // Share button
+};
