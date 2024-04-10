@@ -8,13 +8,20 @@ typedef enum
 {
     Nintendo_Switch,
     Xbox_One
-} USBType;
+} ControllerType;
 
-struct usb_interface
+typedef enum 
+{
+    BLE,
+    USB
+} ConnectionType;
+
+struct controller_interface
 {
 public:
     bool UsbConnected;
-    USBType SelectedType;
+    ControllerType SelectedType;
+    ConnectionType SelectedConnection;
 #if CFG_TUD_HID
     HIDNSWUSB NSWUsb;
     HIDXInputUSB XInputUsb;

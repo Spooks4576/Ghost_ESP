@@ -7,7 +7,7 @@
 #include <LinkedList.h>
 
 #include "../components/wifi_module/wifi_module.h"
-#include "../components/usb_module/usb_module.h"
+#include "../components/controller_module/controller_module.h"
 
 class WiFiModule;
 
@@ -69,7 +69,7 @@ inline NeopixelModule* neopixelmodule;
 inline DisplayModule* displaymodule;
 #endif
 
-inline usb_interface usbmodule;
+inline controller_interface controllermodule;
 
 struct LEDThreads
 {

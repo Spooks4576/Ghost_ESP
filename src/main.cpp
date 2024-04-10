@@ -37,16 +37,16 @@ void loop() {
 void SerialCheckTask(void *pvParameters) {
     while (1) {
         #if CFG_TUD_HID
-        if (usbmodule.SelectedType == USBType::Nintendo_Switch)
+        if (controllermodule.SelectedType == ControllerType::Nintendo_Switch)
         {
-            usbmodule.NSWUsb.sendReport();
+            controllermodule.NSWUsb.sendReport();
         }
-        else if (usbmodule.SelectedType == USBType::Xbox_One)
+        else if (controllermodule.SelectedType == ControllerType::Xbox_One)
         {
-            usbmodule.XInputUsb.sendReport();
+            controllermodule.XInputUsb.sendReport();
         }
         #endif
-            
+
         #ifndef DISPLAY_SUPPORT
         if (HasRanCommand)
         {   
@@ -74,7 +74,7 @@ void SerialCheckTask(void *pvParameters) {
             }
         }
         vTaskDelay(50 / portTICK_PERIOD_MS);
-        #endif;
+        #endif
     }
 }
 
