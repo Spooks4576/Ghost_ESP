@@ -29,7 +29,7 @@ Additional board support can be added depending on PlatformIO support and config
 Please note that the BLE spam feature may not work on the ESP32 WROOM due to limited resources, which cause the ESP to crash.
 
 ## Discord 
-[Ghost_ESP](https://discord.gg/vrYfcZfTK9)
+[Ghost_Esp](https://discord.gg/vZt6jpBwJV)
 
 ## Flashing Tutorial 
 [Tutorial](https://github.com/Spooks4576/Ghost_ESP/blob/main/docs/HOWTOFLASH.md)
