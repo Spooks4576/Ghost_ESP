@@ -8,6 +8,7 @@
 #endif
 #include <esp_mac.h>
 #include <Arduino.h>
+#include <set>
 
 inline struct {
     uint32_t value;
@@ -109,6 +110,13 @@ class BleSnifferCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
 
+class BleAirTagCallbacks : public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+    std::set<String> foundDevices;
+    unsigned int airTagCount = 0;
+    int scanTime = 1;
+};
+
 #endif
 
 #ifdef HAS_BT
@@ -130,6 +138,7 @@ public:
 
     void findtheflippers();
     void BleSpamDetector();
+    void AirTagScanner();
     void BleSniff();
 
     bool BLEInitilized;

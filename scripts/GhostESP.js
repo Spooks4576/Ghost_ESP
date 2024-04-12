@@ -226,7 +226,8 @@ function bleSpamMenu() {
     submenu.addItem("Kitchen Sink", 4);
     submenu.addItem("Find the Flippers", 5);
     submenu.addItem("BLE Spam Detector", 6);
-    submenu.addItem("Sniff BLE", 7);
+    submenu.addItem("Scan For Airtags", 7);
+    submenu.addItem("Sniff BLE", 8);
 
     let result = submenu.show();
 
@@ -260,6 +261,11 @@ function bleSpamMenu() {
     }
 
     if (result === 7)
+    {
+        sendSerialCommand('airtagscan', 2);
+    }
+
+    if (result === 8)
     {
         sendSerialCommand('sniffbt', 2);
     }

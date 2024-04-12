@@ -183,11 +183,8 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
         }
       }
       executeSpam(EBLEPayloadType::Apple, false);
-      delay(100);
       executeSpam(EBLEPayloadType::Google, false);
-      delay(100);
       executeSpam(EBLEPayloadType::Microsoft, false);
-      delay(100);
       executeSpam(EBLEPayloadType::Samsung, false);
     }
 #endif
@@ -285,6 +282,30 @@ void BLEModule::BleSniff()
 #ifdef SD_CARD_CS_PIN
   sdCardmodule->stopPcapLogging();
 #endif
+        break;
+      }
+    }
+  }
+#endif
+}
+
+void BLEModule::AirTagScanner()
+{
+#ifdef HAS_BT
+  shutdownBLE();
+  NimBLEDevice::init("");
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleAirTagCallbacks());
+  NimBLEDevice::getScan()->start(0, nullptr, false);
+
+  while (BLEInitilized)
+  {
+    if (Serial.available() > 0)
+    {
+      String message = Serial.readString();
+
+      if (message.startsWith("stop"))
+      {
+        NimBLEDevice::getScan()->stop();
         break;
       }
     }
@@ -420,6 +441,54 @@ void BleSnifferCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
 #ifdef SD_CARD_CS_PIN
   sdCardmodule->logPacket(Payload, PayloadLen);
 #endif
+}
+
+// Credit to https://github.com/MatthewKuKanich for the AirTag Research
+void BleAirTagCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
+{
+  uint8_t* payLoad = advertisedDevice->getPayload();
+  size_t payLoadLength = advertisedDevice->getPayloadLength();
+
+  // searches both "1E FF 4C 00" and "4C 00 12 19" as the payload can differ slightly
+  bool patternFound = false;
+  for (int i = 0; i <= payLoadLength - 4; i++) {
+    if (payLoad[i] == 0x1E && payLoad[i+1] == 0xFF && payLoad[i+2] == 0x4C && payLoad[i+3] == 0x00) {
+      patternFound = true;
+      break;
+    }
+    if (payLoad[i] == 0x4C && payLoad[i+1] == 0x00 && payLoad[i+2] == 0x12 && payLoad[i+3] == 0x19) {
+      patternFound = true;
+      break;
+    }
+  }
+
+  if (patternFound) {
+    String macAddress = advertisedDevice->getAddress().toString().c_str();
+    macAddress.toUpperCase();
+
+    if (foundDevices.find(macAddress) == foundDevices.end()) {
+      foundDevices.insert(macAddress);
+      airTagCount++;
+
+      int rssi = advertisedDevice->getRSSI();
+
+      Serial.println("AirTag found!");
+      Serial.print("Tag: ");
+      Serial.println(airTagCount);
+      Serial.print("MAC Address: ");
+      Serial.println(macAddress);
+      Serial.print("RSSI: ");
+      Serial.print(rssi);
+      Serial.println(" dBm");
+      Serial.print("Payload Data: ");
+      LOG_MESSAGE_TO_SD("AirTag Found! Tag: " + String(airTagCount) + " Mac Address: " + macAddress + "RSSI: " + String(rssi) + "dbm;");
+      for (size_t i = 0; i < payLoadLength; i++) {
+        Serial.printf("%02X ", payLoad[i]);
+      }
+
+      Serial.println("\n");
+    }
+  }
 }
 
 #endif

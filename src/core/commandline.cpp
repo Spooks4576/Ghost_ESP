@@ -333,6 +333,12 @@ void CommandLine::runCommand(String input)
       #endif
     }
 
+    if (cmd_args.get(0) == F("airtagscan"))
+    {
+      #ifdef HAS_BT
+      BleModule->AirTagScanner();
+      #endif
+    }
     
     if (cmd_args.get(0) == F("detectblespam"))
     {
