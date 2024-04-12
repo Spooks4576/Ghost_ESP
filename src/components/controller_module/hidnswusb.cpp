@@ -14,6 +14,12 @@ bool HIDNSWUSB::begin(char* str)
 {
     _VID = 0x20d6;
     _PID = 0xa713;
+
+    strings.manufacturer = "Nintendo";
+    strings.product = "Nintendo Switch Pro Controller";
+    strings.serial = "4d1e55b2-f16f-11cf-88cb-001111000030";
+
+
     uint8_t const desc_hid_report[] = {NSW_HID_REPORT_DESCRIPTOR};
     // Interface number, string index, protocol, report descriptor len, EP In & Out address, size & polling interval
     uint8_t hid[] = {TUD_HID_DESCRIPTOR(ifIdx++, 6, HID_ITF_PROTOCOL_NONE, 94, (uint8_t)(_EPNUM_HID | 0x80), CFG_TUD_HID_BUFSIZE, 10)};

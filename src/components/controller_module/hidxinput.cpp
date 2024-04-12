@@ -13,19 +13,24 @@ HIDXInputUSB::HIDXInputUSB(uint8_t id)
 bool HIDXInputUSB::begin(char* str)
 {
     _VID = 0x045E; 
-    _PID = 0x02D1;
-    uint8_t desc_hid_report[283];
+    _PID = 0x02FF;
 
-    for(size_t i = 0; i < 283; ++i) {
-        desc_hid_report[i] = pgm_read_byte_near(XboxOneS_1914_HIDDescriptor + i);
+    strings.manufacturer = "Microsoft";
+    strings.product = "Xbox One Controller";
+    strings.serial = "4d1e55b2-f16f-11cf-88cb-001111000030";
+
+    uint8_t desc_hid_report[107];
+
+    for(size_t i = 0; i < 107; ++i) {
+        desc_hid_report[i] = pgm_read_byte_near(XboxControllerReport + i);
     }
     // Interface number, string index, protocol, report descriptor len, EP In & Out address, size & polling interval
-    uint8_t hid[] = {TUD_HID_DESCRIPTOR(ifIdx++, 6, HID_ITF_PROTOCOL_NONE, 283, (uint8_t)(_EPNUM_HID | 0x80), CFG_TUD_HID_BUFSIZE, 10)};
+    uint8_t hid[] = {TUD_HID_DESCRIPTOR(ifIdx++, 6, HID_ITF_PROTOCOL_NONE, 107, (uint8_t)(_EPNUM_HID | 0x80), CFG_TUD_HID_BUFSIZE, 10)};
     memcpy(&desc_configuration[total], hid, sizeof(hid));
     total += sizeof(hid);
     count++;
 
-    memcpy(&hid_report_desc[EspTinyUSB::hid_report_desc_len], (uint8_t *)desc_hid_report, 283);
+    memcpy(&hid_report_desc[EspTinyUSB::hid_report_desc_len], (uint8_t *)desc_hid_report, 107);
     EspTinyUSB::hid_report_desc_len += TUD_HID_DESC_LEN;
     log_d("begin len: %d", EspTinyUSB::hid_report_desc_len);
 
