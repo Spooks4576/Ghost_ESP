@@ -1,20 +1,20 @@
 #include "display_module.h"
 #ifdef DISPLAY_SUPPORT
-#include "core/globals.h"
+#include <core/system_manager.h>
 
 void DriverReadCallback(lv_indev_t* indev_drv, lv_indev_data_t* data) 
 {
     uint16_t x, y, z;
-    z = displaymodule->tft.getTouchRawZ();
+    z = SystemManager::getInstance().displayModule->tft.getTouchRawZ();
 
     if (z > 12) {
-        bool touchReadSuccess = displaymodule->tft.getTouch(&x, &y);
+        bool touchReadSuccess = SystemManager::getInstance().displayModule->tft.getTouch(&x, &y);
         if (touchReadSuccess) {
             y = 240 - y;
             data->point.x = x;
             data->point.y = y;
             data->state = LV_INDEV_STATE_PR;
-            displaymodule->checkTouch({x, y, z});
+            SystemManager::getInstance().displayModule->checkTouch({x, y, z});
         } else {
             data->state = LV_INDEV_STATE_REL;
         }
@@ -30,11 +30,11 @@ void DisplayModule::RenderMenuType(MenuType Type)
         case MenuType::MT_MainMenu:
         {
             ViewInterface* MM = new MainMenu("mainmenu");
-            displaymodule->Views.add(MM);
-            for (int i = 0; i < displaymodule->Views.size(); i++) 
+            SystemManager::getInstance().displayModule->Views.add(MM);
+            for (int i = 0; i < SystemManager::getInstance().displayModule->Views.size(); i++) 
             {
-                displaymodule->Views[i]->UpdateRotationCallback = displaymodule->SetTouchRotation;
-                displaymodule->Views[i]->DestroyCallback = displaymodule->Destroy;
+                SystemManager::getInstance().displayModule->Views[i]->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+                SystemManager::getInstance().displayModule->Views[i]->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
             }
             MM->Render();
             break;
@@ -57,17 +57,17 @@ void DisplayModule::RenderMenuType(MenuType Type)
 void DisplayModule::Destroy(ViewInterface* Interface, MenuType Nextmenu)
 {
 
-    for (int i = 0; i < displaymodule->Views.size(); i++)
+    for (int i = 0; i < SystemManager::getInstance().displayModule->Views.size(); i++)
     {
-        if (displaymodule->Views[i]->ViewID == Interface->ViewID)
+        if (SystemManager::getInstance().displayModule->Views[i]->ViewID == Interface->ViewID)
         {
-            displaymodule->Views.remove(i);
+            SystemManager::getInstance().displayModule->Views.remove(i);
             break;
         }
     }
     delete Interface;
     Serial.println("Destroy.....");
-    displaymodule->FillScreen(lv_color_black());
+    SystemManager::getInstance().displayModule->FillScreen(lv_color_black());
     RenderMenuType(Nextmenu);
 }
 

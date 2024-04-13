@@ -1,5 +1,5 @@
 #include "mainmenu.h"
-#include <core/globals.h>
+#include <core/system_manager.h>
 
 void MainMenu::HandleAnimations(unsigned long Millis, unsigned long LastTick)
 {

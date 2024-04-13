@@ -2,8 +2,6 @@
 
 #include "board_config.h" // Ensure this is compatible with your board configurations
 
-#ifdef NEOPIXEL_PIN  // Only compile if the project has a Neopixel pin defined
-
 #include <Adafruit_NeoPixel.h>
 
 class NeopixelModule {
@@ -22,5 +20,3 @@ public:
     uint16_t numPixels;
     uint8_t pin;
 };
-
-#endif

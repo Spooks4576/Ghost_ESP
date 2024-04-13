@@ -1,5 +1,5 @@
 #include "Dial.h"
-#include "core/globals.h"
+#include <core/system_manager.h>
 
 const int MAX_RETRIES = 50;
 const int RETRY_DELAY = 500;

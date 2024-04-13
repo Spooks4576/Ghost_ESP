@@ -1,7 +1,5 @@
 #include "neopixel_module.h"
 
-#ifdef NEOPIXEL_PIN
-
 NeopixelModule::NeopixelModule(uint16_t numPixels, uint8_t pin)
 : strip(numPixels, pin, NEO_GRB + NEO_KHZ800), numPixels(numPixels), pin(pin) {}
 
@@ -84,5 +82,3 @@ void NeopixelModule::setPixelColor(uint16_t n, uint32_t color) {
 void NeopixelModule::show() {
     strip.show();
 }
-
-#endif

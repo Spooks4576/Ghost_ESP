@@ -1,5 +1,5 @@
 #include "NetflixController.h"
-#include "core/globals.h"
+#include <core/system_manager.h>
 
 void NetflixController::launchApp(const String& appUrl) {
     int startPos = appUrl.indexOf('/', 7);

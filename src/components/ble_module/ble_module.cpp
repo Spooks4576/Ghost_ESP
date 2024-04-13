@@ -1,6 +1,6 @@
 #include "ble_module.h"
 #include <Arduino.h>
-#include "core/globals.h"
+#include <Core/system_manager.h>
 
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -170,7 +170,7 @@ void BLEModule::executeSpamAll()
     while (BLEInitilized)
     {
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 0, 255), 300, false);
 #endif
       if (Serial.available() > 0)
       {
@@ -214,7 +214,7 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       pAdvertising->setScanResponseData(advertisementData.ScanData);
       pAdvertising->start();
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 0, 255), 300, false);
 #endif
       delay(100);
       pAdvertising->stop();
@@ -267,7 +267,7 @@ void BLEModule::BleSniff()
   NimBLEDevice::getScan()->start(0, nullptr, false);
 
   #ifdef SD_CARD_CS_PIN
-  sdCardmodule->startPcapLogging("BT.pcap", true);
+  SystemManager::getInstance().sdCardModule.startPcapLogging("BT.pcap", true);
   #endif
 
   while (BLEInitilized)
@@ -280,7 +280,7 @@ void BLEModule::BleSniff()
       {
         NimBLEDevice::getScan()->stop();
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->stopPcapLogging();
+SystemManager::getInstance().sdCardModule.stopPcapLogging();
 #endif
         break;
       }
@@ -359,7 +359,7 @@ void FlipperFinderCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
       LOG_MESSAGE_TO_SD(F("Found White Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
       return;
     }
@@ -370,7 +370,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false)
       LOG_MESSAGE_TO_SD(F("Found Black Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
       return;
     }
@@ -381,7 +381,7 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false)
       LOG_MESSAGE_TO_SD(F("Found Transparent Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
       return;
     }
@@ -421,7 +421,7 @@ void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice
           Serial.println(F("BLE Spam detected!"));
           LOG_MESSAGE_TO_SD(F("BLE Spam detected!"));
 #ifdef NEOPIXEL_PIN
-          neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 500, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 200, false);
 #endif
       } else if ((currentTime - info.firstSeenTime) > detectionWindow) {
           info.count = 1;
@@ -439,7 +439,7 @@ void BleSnifferCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
   Serial.println(F("Packet Recieved"));
 
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket(Payload, PayloadLen);
+  SystemManager::getInstance().sdCardModule.logPacket(Payload, PayloadLen);
 #endif
 }
 

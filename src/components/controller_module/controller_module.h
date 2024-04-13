@@ -45,8 +45,43 @@ public:
 #ifdef HAS_BT
     XboxGamepadDevice* XboxBT;
 #endif
+
+    void loop()
+    {
+        if (SelectedType == ControllerType::Nintendo_Switch)
+        {
+            #if CFG_TUD_HID
+            NSWUsb.sendReport();
+            #endif
+        }
+        else if (SelectedType == ControllerType::Xbox_One)
+        {
+            #if CFG_TUD_HID
+            XInputUsb.sendReport();
+            #endif
+            #ifdef HAS_BT
+            if (g_compositeHID.isConnected())
+            {
+                XboxBT->sendGamepadReport();
+            }
+            #endif
+        }
+        else if (SelectedType == ControllerType::Dualshock)
+        {
+            #if CFG_TUD_HID
+            DualShockUSB.sendReport();
+            #endif
+        }
+        else if (SelectedType == ControllerType::DualSense)
+        {
+            #if CFG_TUD_HID
+            DualSenseUSB.sendReport();
+            #endif
+        }
+    }
 };
 
+#ifdef HAS_BT
 inline uint16_t getXboxButtonValue(const char* buttonName) {
     if (strcmp(buttonName, "BUTTON_A") == 0) return XBOX_BUTTON_A;
     else if (strcmp(buttonName, "BUTTON_B") == 0) return XBOX_BUTTON_B;
@@ -65,3 +100,4 @@ inline uint16_t getXboxButtonValue(const char* buttonName) {
     else if (strcmp(buttonName, "DPAD_LEFT") == 0) return XBOX_BUTTON_DPAD_WEST;
     else return 0; // Unknown button
 }
+#endif

@@ -2,8 +2,9 @@
 #define NSW_DESCRIPTORS_H
 
 #include <stdint.h>
+#include <Arduino.h>
 
-#define NSW_HID_REPORT_DESCRIPTOR \
+#define NSW_HID_REPORT_DESCRIPTOR PROGMEM \
   0x05, 0x01,                    /* Usage Page (Generic Desktop) */ \
   0x09, 0x05,                    /* Usage (Game Pad) */ \
   0xA1, 0x01,                    /* Collection (Application) */ \

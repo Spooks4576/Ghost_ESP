@@ -216,28 +216,28 @@ void CommandLine::runCommand(String input)
         if (bt_type == F("apple")) {
           Serial.println("Starting Sour Apple attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD(F("Starting Sour Apple attack."));
-          BleModule->executeSpam(Apple, true);
+          SystemManager::getInstance().bleModule->executeSpam(Apple, true);
           return;
         }
 
         if (bt_type == F("windows")) {
           Serial.println("Starting Swiftpair Spam attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD(F("Starting Swiftpair Spam attack."));
-          BleModule->executeSpam(Microsoft, true);
+          SystemManager::getInstance().bleModule->executeSpam(Microsoft, true);
           return;
         }
 
         if (bt_type == F("samsung")) {
           Serial.println("Starting Samsung Spam attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD(F("Starting Samsung Spam attack."));
-          BleModule->executeSpam(Samsung, true);
+          SystemManager::getInstance().bleModule->executeSpam(Samsung, true);
           return;
         }
 
         if (bt_type == F("google")) {
           Serial.println("Starting Google Spam attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD(F("Starting Google Spam attack."));
-          BleModule->executeSpam(Google, true);
+          SystemManager::getInstance().bleModule->executeSpam(Google, true);
           return;
         }
 
@@ -245,7 +245,7 @@ void CommandLine::runCommand(String input)
         {
           Serial.println("Starting Spam all attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD(F("Starting random wifi beacon attack."));
-          BleModule->executeSpamAll();
+          SystemManager::getInstance().bleModule->executeSpamAll();
         }
       }
       #endif
@@ -267,8 +267,8 @@ void CommandLine::runCommand(String input)
           {
             Serial.println("Starting random wifi beacon attack. Stop with " + (String)"stopscan");
             LOG_MESSAGE_TO_SD(F("Starting random wifi beacon attack."));
-            wifimodule->RunSetup();
-            wifimodule->Attack(AT_RandomSSID);
+            SystemManager::getInstance().wifiModule.RunSetup();
+            SystemManager::getInstance().wifiModule.Attack(AT_RandomSSID);
             return;
           }
 
@@ -278,8 +278,8 @@ void CommandLine::runCommand(String input)
             {
               Serial.println("Starting random wifi list attack. Stop with " + (String)"stopscan");
               LOG_MESSAGE_TO_SD(F("Starting random wifi list attack."));
-              wifimodule->RunSetup();
-              wifimodule->Attack(AT_ListSSID);
+              SystemManager::getInstance().wifiModule.RunSetup();
+              SystemManager::getInstance().wifiModule.Attack(AT_ListSSID);
             }
             else 
             {
@@ -296,8 +296,8 @@ void CommandLine::runCommand(String input)
           {
             Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
             LOG_MESSAGE_TO_SD(F("Starting Deauth attack."));
-            wifimodule->RunSetup();
-            wifimodule->Attack(AT_DeauthAP);
+            SystemManager::getInstance().wifiModule.RunSetup();
+            SystemManager::getInstance().wifiModule.Attack(AT_DeauthAP);
           }
           else 
           {
@@ -311,8 +311,8 @@ void CommandLine::runCommand(String input)
         {
           Serial.println("Starting Rickroll wifi beacon attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD(F("Starting Rickroll wifi beacon attack."));
-          wifimodule->RunSetup();
-          wifimodule->Attack(AT_Rickroll);
+          SystemManager::getInstance().wifiModule.RunSetup();
+          SystemManager::getInstance().wifiModule.Attack(AT_Rickroll);
           return;
         }
 
@@ -320,8 +320,8 @@ void CommandLine::runCommand(String input)
         {
           Serial.println("Starting Karma wifi beacon attack. Stop with " + (String)"stopscan");
           LOG_MESSAGE_TO_SD(F("Starting Karma wifi beacon attack."));
-          wifimodule->RunSetup();
-          wifimodule->Attack(AT_Karma);
+          SystemManager::getInstance().wifiModule.RunSetup();
+          SystemManager::getInstance().wifiModule.Attack(AT_Karma);
         }
       }
     }
@@ -329,28 +329,28 @@ void CommandLine::runCommand(String input)
     if (cmd_args.get(0) == F("findtheflippers"))
     {
       #ifdef HAS_BT
-      BleModule->findtheflippers();
+      SystemManager::getInstance().bleModule->findtheflippers();
       #endif
     }
 
     if (cmd_args.get(0) == F("airtagscan"))
     {
       #ifdef HAS_BT
-      BleModule->AirTagScanner();
+      SystemManager::getInstance().bleModule->AirTagScanner();
       #endif
     }
     
     if (cmd_args.get(0) == F("detectblespam"))
     {
       #ifdef HAS_BT
-      BleModule->BleSpamDetector();
+      SystemManager::getInstance().bleModule->BleSpamDetector();
       #endif
     }
 
     if (cmd_args.get(0) == F("sniffbt"))
     {
       #ifdef HAS_BT
-      BleModule->BleSniff();
+      SystemManager::getInstance().bleModule->BleSniff();
       #endif
     }
 
@@ -360,26 +360,42 @@ void CommandLine::runCommand(String input)
     {
       Serial.println("Starting to scan access points");
       LOG_MESSAGE_TO_SD("Starting to scan access points");
-      wifimodule->Scan(SCAN_AP);
+      SystemManager::getInstance().wifiModule.Scan(SCAN_AP);
       return;
     }
 
     if (cmd_args.get(0) == F("led"))
     {
-      if (!RainbowLEDActive)
+      if (!SystemManager::getInstance().RainbowLEDActive)
       {
-        RainbowLEDActive = true;
-        RainbowTask();
-        RainbowTask();
-        RainbowTask();
-        RainbowTask();
+        SystemManager::getInstance().RainbowLEDActive = true;
 #ifdef OLD_LED
-        rgbmodule->breatheLED(0, 1000, true);
+    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
+#elif NEOPIXEL_PIN
+    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
+#endif
+#ifdef OLD_LED
+    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
+#elif NEOPIXEL_PIN
+    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
+#endif
+#ifdef OLD_LED
+    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
+#elif NEOPIXEL_PIN
+    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
+#endif
+#ifdef OLD_LED
+    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
+#elif NEOPIXEL_PIN
+    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
+#endif
+#ifdef OLD_LED
+        SystemManager::getInstance().rgbModule->breatheLED(0, 1000, true);
 #endif
 #ifdef NEOPIXEL_PIN
-        neopixelmodule->breatheLED(0, 1000, true);
+        SystemManager::getInstance().neopixelModule->breatheLED(0, 1000, true);
 #endif
-        RainbowLEDActive = false;
+         SystemManager::getInstance().RainbowLEDActive = false;
       }
       return;
     }
@@ -434,78 +450,78 @@ void CommandLine::runCommand(String input)
         if (typeString == "nsw")
         {
 #if CFG_TUD_HID
-          controllermodule.SelectedType = ControllerType::Nintendo_Switch;
-          if (!controllermodule.NSWUsb.Initialized)
+          SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Nintendo_Switch;
+          if (!SystemManager::getInstance().ControllerModule.NSWUsb.Initialized)
           {
-            controllermodule.NSWUsb.begin("NSW Wireless Controller");
+            SystemManager::getInstance().ControllerModule.NSWUsb.begin("NSW Wireless Controller");
             delay(100);
           }
           Serial.println(StringToNSWInputState(Button.c_str()).name);
-          controllermodule.NSWUsb.SetInputState(StringToNSWInputState(Button.c_str()).state);
+          SystemManager::getInstance().ControllerModule.NSWUsb.SetInputState(StringToNSWInputState(Button.c_str()).state);
           delay(500);
-          controllermodule.NSWUsb.SetInputState(NONE);
+          SystemManager::getInstance().ControllerModule.NSWUsb.SetInputState(NONE);
 #endif
         }
         else if (typeString == "xinput")
         {
           #if CFG_TUD_HID
-          controllermodule.SelectedType = ControllerType::Xbox_One;
-          if (!controllermodule.XInputUsb.Initialized)
+          SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Xbox_One;
+          if (!SystemManager::getInstance().ControllerModule.XInputUsb.Initialized)
           {
-            controllermodule.XInputUsb.begin("Xbox Wireless Controller");
+            SystemManager::getInstance().ControllerModule.XInputUsb.begin("Xbox Wireless Controller");
             delay(100);
           }
 
           Serial.println(StringToXInputInputState(Button.c_str()).name);
-          controllermodule.XInputUsb.SetInputState(StringToXInputInputState(Button.c_str()).state);
+          SystemManager::getInstance().ControllerModule.XInputUsb.SetInputState(StringToXInputInputState(Button.c_str()).state);
           delay(500);
-          controllermodule.XInputUsb.SetInputState(Xbox_NONE);
+          SystemManager::getInstance().ControllerModule.XInputUsb.SetInputState(Xbox_NONE);
           #endif
           #ifdef HAS_BT
-          controllermodule.SelectedType = ControllerType::Xbox_One;
+          SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Xbox_One;
           if (!g_compositeHID.isConnected())
           {
             XboxOneSControllerDeviceConfiguration* config = new XboxOneSControllerDeviceConfiguration();
             BLEHostConfiguration hostConfig = config->getIdealHostConfiguration();
-            controllermodule.XboxBT = new XboxGamepadDevice(config);
-            g_compositeHID.addDevice(controllermodule.XboxBT);
+            SystemManager::getInstance().ControllerModule.XboxBT = new XboxGamepadDevice(config);
+            g_compositeHID.addDevice(SystemManager::getInstance().ControllerModule.XboxBT);
             g_compositeHID.begin(hostConfig);
             delay(100);
           }
           Serial.println(Button.c_str());
-          controllermodule.XboxBT->press(getXboxButtonValue(Button.c_str()));
+          SystemManager::getInstance().ControllerModule.XboxBT->press(getXboxButtonValue(Button.c_str()));
           delay(500);
-          controllermodule.XboxBT->release(getXboxButtonValue(Button.c_str()));
+          SystemManager::getInstance().ControllerModule.XboxBT->release(getXboxButtonValue(Button.c_str()));
           #endif
         }
         else if (typeString == "dualshock")
         {
 #if CFG_TUD_HID
-        controllermodule.SelectedType = ControllerType::Dualshock;
-        if (!controllermodule.DualShockUSB.Initialized)
+        SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Dualshock;
+        if (!SystemManager::getInstance().ControllerModule.DualShockUSB.Initialized)
         {
-          controllermodule.DualShockUSB.begin("Playstation Wireless Controller");
+          SystemManager::getInstance().ControllerModule.DualShockUSB.begin("Playstation Wireless Controller");
           delay(100);
         }
         Serial.println(StringToDualShockInputState(Button.c_str()).name);
-        controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(Button.c_str()).state);
+        SystemManager::getInstance().ControllerModule.DualShockUSB.SetInputState(StringToDualShockInputState(Button.c_str()).state);
         delay(500);
-        controllermodule.DualShockUSB.SetInputState(PS4_NONE);
+        SystemManager::getInstance().ControllerModule.DualShockUSB.SetInputState(PS4_NONE);
 #endif
       }
       else if (typeString == "dualsense")
       {
 #if CFG_TUD_HID
-        controllermodule.SelectedType = ControllerType::DualSense;
-        if (!controllermodule.DualSenseUSB.Initialized)
+        SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::DualSense;
+        if (!SystemManager::getInstance().ControllerModule.DualSenseUSB.Initialized)
         {
-          controllermodule.DualSenseUSB.begin("Playstation Wireless Controller");
+          SystemManager::getInstance().ControllerModule.DualSenseUSB.begin("Playstation Wireless Controller");
           delay(100);
         }
         Serial.println(StringToDualSenseInputState(Button.c_str()).name);
-        controllermodule.DualSenseUSB.SetInputState(StringToDualSenseInputState(Button.c_str()).state);
+        SystemManager::getInstance().ControllerModule.DualSenseUSB.SetInputState(StringToDualSenseInputState(Button.c_str()).state);
         delay(500);
-        controllermodule.DualSenseUSB.SetInputState(PS5_NONE);
+        SystemManager::getInstance().ControllerModule.DualSenseUSB.SetInputState(PS5_NONE);
 #endif
         }
       }
@@ -579,10 +595,10 @@ void CommandLine::runCommand(String input)
 
           DIALClient* dial = new DIALClient(Value.c_str(), SSID.c_str(), Password.c_str(), controller);
 #ifdef OLD_LED
-rgbmodule->setColor(LOW, HIGH, LOW);
+SystemManager::getInstance().rgbModule->setColor(LOW, HIGH, LOW);
 #endif
 #ifdef NEOPIXEL_PIN
-neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
+SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0));
 #endif
           dial->Execute();
           delete dial;
@@ -608,7 +624,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         Serial.println(F("Starting to scan stations"));
         LOG_MESSAGE_TO_SD(F("Starting to scan stations"));
-        wifimodule->Scan(SCAN_STA);
+        SystemManager::getInstance().wifiModule.Scan(SCAN_STA);
       }
       else 
       {
@@ -621,7 +637,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
 
     if (cmd_args.get(0) == F("calibrate"))
     {
-      wifimodule->Calibrate();
+      SystemManager::getInstance().wifiModule.Calibrate();
     }
 
     if (cmd_args.get(0) == F("ssid"))
@@ -634,7 +650,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         String NumSSids = cmd_args.get(ss_sw + 1);
         NumSSids.trim();
-        wifimodule->generateSSIDs(NumSSids.toInt());
+        SystemManager::getInstance().wifiModule.generateSSIDs(NumSSids.toInt());
         Serial.printf("%i Random Ssids Generated\n", NumSSids.toInt());
         LOG_MESSAGE_TO_SD(F("Random Ssids Generated\n"));
         LOG_MESSAGE_TO_SD(String(NumSSids.toInt()).c_str());
@@ -644,7 +660,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         String SSIDName = cmd_args.get(nn_sw + 1);
         SSIDName.trim();
-        wifimodule->addSSID(SSIDName);
+        SystemManager::getInstance().wifiModule.addSSID(SSIDName);
         Serial.println("Added SSID " + SSIDName);
         LOG_MESSAGE_TO_SD(F("Added SSID "));
         LOG_MESSAGE_TO_SD(SSIDName.c_str());
@@ -692,11 +708,11 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
-        wifimodule->Sniff(ST_pmkid, TargetChannel);
+        SystemManager::getInstance().wifiModule.Sniff(ST_pmkid, TargetChannel);
       }
 
       Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
-      wifimodule->Sniff(ST_pmkid, 0);
+      SystemManager::getInstance().wifiModule.Sniff(ST_pmkid, 0);
       return;
     }
 
@@ -709,11 +725,11 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting RAW sniff. Stop with stop scan"));
-        wifimodule->Sniff(ST_raw, TargetChannel);
+        SystemManager::getInstance().wifiModule.Sniff(ST_raw, TargetChannel);
       }
 
       Serial.println(F("Starting RAW sniff. Stop with stop scan"));
-      wifimodule->Sniff(ST_raw, 0);
+      SystemManager::getInstance().wifiModule.Sniff(ST_raw, 0);
       return;
     }
 
@@ -726,11 +742,11 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting Beacon sniff. Stop with stop scan"));
-        wifimodule->Sniff(ST_beacon, TargetChannel);
+        SystemManager::getInstance().wifiModule.Sniff(ST_beacon, TargetChannel);
       }
 
       Serial.println(F("Starting Beacon sniff. Stop with stop scan"));
-      wifimodule->Sniff(ST_beacon, 0);
+      SystemManager::getInstance().wifiModule.Sniff(ST_beacon, 0);
       return;
     }
 
@@ -743,11 +759,11 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PROBE sniff. Stop with stop scan"));
-        wifimodule->Sniff(ST_probe, TargetChannel);
+        SystemManager::getInstance().wifiModule.Sniff(ST_probe, TargetChannel);
       }
 
       Serial.println(F("Starting PROBE sniff. Stop with stop scan"));
-      wifimodule->Sniff(ST_probe, 0);
+      SystemManager::getInstance().wifiModule.Sniff(ST_probe, 0);
       return;
     }
 
@@ -760,11 +776,11 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
       {
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PWN sniff. Stop with stop scan"));
-        wifimodule->Sniff(ST_pwn, TargetChannel);
+        SystemManager::getInstance().wifiModule.Sniff(ST_pwn, TargetChannel);
       }
 
       Serial.println(F("Starting PWN sniff. Stop with stop scan"));
-      wifimodule->Sniff(ST_pwn, 0);
+      SystemManager::getInstance().wifiModule.Sniff(ST_pwn, 0);
       return;
     }
 
@@ -814,19 +830,19 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
 
       if (ap_sw != -1)
       {
-        wifimodule->ClearList(ClearType::CT_AP);
+        SystemManager::getInstance().wifiModule.ClearList(ClearType::CT_AP);
         Serial.println(F("Cleared Access Point List"));
         LOG_MESSAGE_TO_SD(F("Cleared Access Point List"));
       }
       else if (ss_sw != -1)
       {
-        wifimodule->ClearList(ClearType::CT_SSID);
+        SystemManager::getInstance().wifiModule.ClearList(ClearType::CT_SSID);
         Serial.println(F("Cleared SSID List"));
         LOG_MESSAGE_TO_SD(F("Cleared SSID List"));
       }
       else if (cl_sw != -1)
       {
-        wifimodule->ClearList(ClearType::CT_STA);
+        SystemManager::getInstance().wifiModule.ClearList(ClearType::CT_STA);
         Serial.println(F("Cleared Station List"));
         LOG_MESSAGE_TO_SD(F("Cleared Station List"));
       }
@@ -866,7 +882,7 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
         if (access_points->get(x).stations != nullptr) {
           Serial.println("[" + (String)x + "] " + access_points->get(x).essid + " " + (String)access_points->get(x).rssi + ":");
           for (int i = 0; i < access_points->get(x).stations->size(); i++) {
-            wifimodule->getMACatoffset(sta_mac, stations->get(access_points->get(x).stations->get(i)).mac, 0);
+            SystemManager::getInstance().wifiModule.getMACatoffset(sta_mac, stations->get(access_points->get(x).stations->get(i)).mac, 0);
             if (stations->get(access_points->get(x).stations->get(i)).selected) {
               Serial.print("  [" + (String)access_points->get(x).stations->get(i) + "] ");
               Serial.print(sta_mac);
@@ -888,14 +904,14 @@ neopixelmodule->setColor(neopixelmodule->strip.Color(255, 0, 0));
     if (cmd_args.get(0) == F("stop"))
     {
       #ifdef OLD_LED
-      rgbmodule->setColor(1, 1, 1);
+      SystemManager::getInstance().rgbModule->setColor(1, 1, 1);
       #endif
       #ifdef NEOPIXEL_PIN
-      neopixelmodule->strip.setBrightness(0);
+      SystemManager::getInstance().neopixelModule->strip.setBrightness(0);
       #endif
-      wifimodule->shutdownWiFi();
+      SystemManager::getInstance().wifiModule.shutdownWiFi();
       #ifdef HAS_BT
-      BleModule->shutdownBLE();  
+      SystemManager::getInstance().bleModule->shutdownBLE();
       #endif
     }
   }
@@ -918,73 +934,73 @@ void CommandLine::executeJsonScript(const char* Json) {
     int delayTime = cmd["delay"];
 
     if (strcmp(type, "nsw") == 0) {
-      controllermodule.SelectedType = ControllerType::Nintendo_Switch;
+      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Nintendo_Switch;
       if (buttons.is<JsonArray>()) { 
         for (const char* button : buttons.as<JsonArray>()) {
           Serial.println(button);
           #if CFG_TUD_HID
-          controllermodule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
+          SystemManager::getInstance().ControllerModule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
           #endif
         }
       } else {
         const char* button = buttons;
         Serial.println(button);
         #if CFG_TUD_HID
-        controllermodule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
+        SystemManager::getInstance().ControllerModule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
         #endif
       }
     }
     if (strcmp(type, "xinput") == 0)
     {
-      controllermodule.SelectedType = ControllerType::Xbox_One;
+      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Xbox_One;
       if (buttons.is<JsonArray>()) { 
         for (const char* button : buttons.as<JsonArray>()) {
           Serial.println(button);
           #if CFG_TUD_HID
-          controllermodule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
+          SystemManager::getInstance().ControllerModule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
           #endif
         }
       } else {
         const char* button = buttons;
         Serial.println(button);
         #if CFG_TUD_HID
-        controllermodule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
+        SystemManager::getInstance().ControllerModule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
         #endif
       }
     }
     if (strcmp(type, "dualshock") == 0)
     {
-      controllermodule.SelectedType = ControllerType::Dualshock;
+      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Dualshock;
       if (buttons.is<JsonArray>()) { 
         for (const char* button : buttons.as<JsonArray>()) {
           Serial.println(button);
           #if CFG_TUD_HID
-          controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
+          SystemManager::getInstance().ControllerModule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
           #endif
         }
       } else {
         const char* button = buttons;
         Serial.println(button);
         #if CFG_TUD_HID
-        controllermodule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
+        SystemManager::getInstance().ControllerModule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
         #endif
       }
     }
     if (strcmp(type, "dualsense") == 0)
     {
-      controllermodule.SelectedType = ControllerType::DualSense;
+      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::DualSense;
       if (buttons.is<JsonArray>()) { 
         for (const char* button : buttons.as<JsonArray>()) {
           Serial.println(button);
           #if CFG_TUD_HID
-          controllermodule.DualSenseUSB.SetInputState(StringToDualSenseInputState(button).state);
+          SystemManager::getInstance().ControllerModule.DualSenseUSB.SetInputState(StringToDualSenseInputState(button).state);
           #endif
         }
       } else {
         const char* button = buttons;
         Serial.println(button);
         #if CFG_TUD_HID
-        controllermodule.DualSenseUSB.SetInputState(StringToDualSenseInputState(button).state);
+        SystemManager::getInstance().ControllerModule.DualSenseUSB.SetInputState(StringToDualSenseInputState(button).state);
         #endif
       }
     }

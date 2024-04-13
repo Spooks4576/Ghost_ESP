@@ -3,6 +3,7 @@
 #define XBOX_DESCRIPTORS_H
 
 #include <stdint.h>
+#include <Arduino.h>
 
 #define VENDOR_BLUETOOTH_SOURCE 0x01
 #define VENDOR_USB_SOURCE 0x02

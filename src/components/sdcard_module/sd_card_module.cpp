@@ -1,6 +1,8 @@
 #include "sd_card_module.h"
 
-#ifdef SD_CARD_CS_PIN
+#ifndef SD_CARD_CS_PIN
+#define SD_CARD_CS_PIN 0
+#endif
 
 SDCardModule::SDCardModule() : csPin(SD_CARD_CS_PIN) {}
 
@@ -286,5 +288,3 @@ bool SDCardModule::deleteFile(const char *path) {
         return false;
     }
 }
-
-#endif // SD_CARD_CS_PIN

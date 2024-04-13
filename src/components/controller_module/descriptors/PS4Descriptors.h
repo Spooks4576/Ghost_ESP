@@ -4,6 +4,7 @@
 #define PS4_REPORT_DESCRIPTOR_SIZE 483
 
 #include <stdint.h>
+#include <Arduino.h>
 
 const uint8_t ps4_report_descriptor[PS4_REPORT_DESCRIPTOR_SIZE] PROGMEM = {
     0x05, 0x01,                    // Usage Page (Generic Desktop),

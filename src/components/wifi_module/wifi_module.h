@@ -10,7 +10,7 @@
 
 const wifi_promiscuous_filter_t filt = {.filter_mask=WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA};
 
-inline uint8_t packet[128] = { 0x80, 0x00, 0x00, 0x00, //Frame Control, Duration
+uint8_t packet[128] PROGMEM = { 0x80, 0x00, 0x00, 0x00, //Frame Control, Duration
                     /*4*/   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, //Destination address 
                     /*10*/  0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //Source address - overwritten later
                     /*16*/  0x01, 0x02, 0x03, 0x04, 0x05, 0x06, //BSSID - overwritten to the same as the source address
@@ -22,7 +22,7 @@ inline uint8_t packet[128] = { 0x80, 0x00, 0x00, 0x00, //Frame Control, Duration
                     /*36*/  0x00
                     };
 
-    inline uint8_t prob_req_packet[128] = {0x40, 0x00, 0x00, 0x00, 
+    uint8_t prob_req_packet[128] PROGMEM = {0x40, 0x00, 0x00, 0x00, 
                                   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // Destination
                                   0x01, 0x02, 0x03, 0x04, 0x05, 0x06, // Source
                                   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, // Dest
@@ -32,7 +32,7 @@ inline uint8_t packet[128] = { 0x80, 0x00, 0x00, 0x00, //Frame Control, Duration
                                   /* SSID */
                                   };
 
-    inline uint8_t deauth_frame_default[26] = {
+    uint8_t deauth_frame_default[26] PROGMEM = {
                               0xc0, 0x00, 0x3a, 0x01,
                               0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
                               0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -84,7 +84,7 @@ struct mac_addr {
     }
 };
 
-inline const char* rick_roll[8] = {
+const char* rick_roll[8] = {
       "01 Never gonna give you up",
       "02 Never gonna let you down",
       "03 Never gonna run around",
@@ -95,7 +95,7 @@ inline const char* rick_roll[8] = {
       "08 and hurt you"
 };
 
-inline const char* KarmaSSIDs[] = {
+const char* KarmaSSIDs[] = {
         "ShawOpen",
         "D-LINK",
         "attwifi",
@@ -110,7 +110,7 @@ inline const char* KarmaSSIDs[] = {
         "Starbucks WiFi"
 };
 
-inline char alfa[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+char alfa[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 struct ssid {
   String essid;
@@ -139,15 +139,13 @@ struct BeaconPacket{
     int channel;
 };
 
-class CommandLine;
 
-inline CommandLine* cli;
-inline LinkedList<AccessPoint>* access_points;
-inline LinkedList<ssid>* ssids;
-inline LinkedList<Station>* stations;
-inline String PROGMEM version_number;
-inline String PROGMEM board_target;
-inline bool HasRanCommand;
+LinkedList<AccessPoint>* access_points;
+LinkedList<ssid>* ssids;
+LinkedList<Station>* stations;
+String PROGMEM version_number;
+String PROGMEM board_target;
+bool HasRanCommand;
 
 enum ClearType
 {

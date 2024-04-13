@@ -1,7 +1,7 @@
 #pragma once
 #include "wifi_module.h"
-#include "../../core/globals.h"
 #include <ArduinoJson.h>
+#include <core/system_manager.h>
 
 namespace CallBackUtils
 {
@@ -22,7 +22,7 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
 
   if (Serial.available() > 0)
   {
-    wifimodule->shutdownWiFi();
+    SystemManager::getInstance().wifiModule.shutdownWiFi();
   }
 
   if (type == WIFI_PKT_MGMT)
@@ -37,7 +37,7 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
     if ((snifferPacket->payload[0] == 0x80) && (buf == 0))
     {
       char addr[] = "00:00:00:00:00:00";
-      wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+      SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
 
       bool in_list = false;
       bool mac_match = true;
@@ -58,9 +58,11 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
       }
 
       if (!in_list) {
-        BreatheTask();
+#ifdef OLD_LED
+        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 100);
+#endif
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 300, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 300, false);
 #endif
       
         delay(random(0, 10));
@@ -156,7 +158,7 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
   String mac = "";
   if (Serial.available() > 0)
   {
-    wifimodule->shutdownWiFi();
+    SystemManager::getInstance().wifiModule.shutdownWiFi();
   }
 
   if (type == WIFI_PKT_MGMT)
@@ -195,7 +197,7 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
         if (offsets[y] == 10)
           ap_is_src = true;
         ap_index = i;
-        wifimodule->getMACatoffset(ap_addr, snifferPacket->payload, offsets[y]);
+        SystemManager::getInstance().wifiModule.getMACatoffset(ap_addr, snifferPacket->payload, offsets[y]);
         break;
       }
     }
@@ -231,7 +233,7 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
     }
   }
 
-  wifimodule->getMACatoffset(dst_addr, snifferPacket->payload, 4);
+  SystemManager::getInstance().wifiModule.getMACatoffset(dst_addr, snifferPacket->payload, 4);
 
   // Check if dest is broadcast
   if ((in_list) || (strcmp(dst_addr, "ff:ff:ff:ff:ff:ff") == 0))
@@ -250,9 +252,11 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
                 false};
 
   stations->add(sta);
-  BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 100);
+#endif
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 300, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 300, false);
 #endif
 
 
@@ -264,12 +268,12 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 300, false);
     Serial.print("ap: ");
     Serial.print(ap_addr);
     Serial.print(" -> sta: ");
-    wifimodule->getMACatoffset(sta_addr, snifferPacket->payload, 4);
+    SystemManager::getInstance().wifiModule.getMACatoffset(sta_addr, snifferPacket->payload, 4);
     Serial.println(sta_addr);
   }
   else {
     Serial.print("sta: ");
-    wifimodule->getMACatoffset(sta_addr, snifferPacket->payload, 10);
+    SystemManager::getInstance().wifiModule.getMACatoffset(sta_addr, snifferPacket->payload, 10);
     Serial.print(sta_addr);
     Serial.print(" -> ap: ");
     Serial.println(ap_addr);
@@ -320,8 +324,8 @@ void deauthSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
       LOG_RESULTS("DeauthSniff.txt", "sniff", " BSSID: ");
       char addr[] = "00:00:00:00:00:00";
       char dst_addr[] = "00:00:00:00:00:00";
-      wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
-      wifimodule->getMACatoffset(dst_addr, snifferPacket->payload, 4);
+      SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
+      SystemManager::getInstance().wifiModule.getMACatoffset(dst_addr, snifferPacket->payload, 4);
       Serial.print(addr);
       LOG_RESULTS("DeauthSniff.txt", "sniff", addr);
       Serial.print(" -> ");
@@ -356,7 +360,7 @@ void pwnSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     if ((snifferPacket->payload[0] == 0x80) && (buf == 0))
     {
       char addr[] = "00:00:00:00:00:00";
-      wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+      SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
       src.concat(addr);
       if (src == "de:ad:be:ef:de:ad") {
         
@@ -407,7 +411,7 @@ void pwnSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
         Serial.println();
 
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket(snifferPacket->payload, len);
+SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
 #endif
       }
     }
@@ -472,7 +476,7 @@ void beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
           return;
         }
 #ifdef SD_CARD_CS_PIN
-sdCardmodule->logPacket(snifferPacket->payload, len);
+SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
 #endif
     }
   }
@@ -507,7 +511,7 @@ void probeSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
         Serial.print(snifferPacket->rx_ctrl.channel);
         Serial.print(" Client: ");
         char addr[] = "00:00:00:00:00:00";
-        wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+        SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
         Serial.print(addr);
         display_string.concat(addr);
         Serial.print(" Requesting: ");
@@ -521,7 +525,7 @@ void probeSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
         Serial.println();    
 
 #ifdef SD_CARD_CS_PIN
-sdCardmodule->logPacket(snifferPacket->payload, len);
+SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
 #endif
     }
   }
@@ -549,7 +553,7 @@ void rawSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     Serial.print(snifferPacket->rx_ctrl.channel);
     Serial.print(" BSSID: ");
     char addr[] = "00:00:00:00:00:00";
-    wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+    SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
     Serial.print(addr);
 
     display_string.concat(" ");
@@ -560,7 +564,7 @@ void rawSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     Serial.println();
 
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket(snifferPacket->payload, len);
+  SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
 #endif
 }
 
@@ -614,14 +618,14 @@ void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     Serial.println("Received EAPOL:");
 
     char addr[] = "00:00:00:00:00:00";
-    wifimodule->getMACatoffset(addr, snifferPacket->payload, 10);
+    SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
     display_string.concat(addr);
 
     int temp_len = display_string.length();
 
     Serial.println(addr);    
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket(snifferPacket->payload, len);
+  SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
 #endif
   }
 }

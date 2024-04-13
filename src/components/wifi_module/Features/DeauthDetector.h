@@ -1,8 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "../wifi_module.h"
-#include "esp_wifi_types.h" 
-#include <core/globals.h>
+#include "esp_wifi_types.h"
 #include <HTTPClient.h>
 const int MAX_CHANNELS = 12;
 
@@ -97,11 +96,11 @@ String prepareAnalyticsSummary() {
 
 void sendWifiAnalitics(String Channel, String SSID, String Password, String WebHookUrl) {
 #ifdef OLD_LED
-rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 1000);
 #endif
 
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 1000, false);
 #endif
 
 if (!WebHookUrl.isEmpty())
@@ -209,12 +208,12 @@ for (int channelIndex = 1; channelIndex < MAX_CHANNELS; channelIndex++) {
 LOG_RESULTS("PacketReport.txt", "/WifiAnalytics", prepareAnalyticsSummary().c_str());
 
 #ifdef OLD_LED
-rgbmodule->breatheLED(rgbmodule->greenPin, 1000);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 1000);
 #endif
 
 
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 1000, false);
 #endif
 
 delete DeauthConfig.analyticsdata;
@@ -254,24 +253,24 @@ void InitDeauthDetector(String Channel, String SSID, String Password, String Web
         if (millis() - DeauthConfig.lastCheckTime > DeauthConfig.checkInterval) {
             if (DeauthConfig.deauthCount > DeauthConfig.deauthThreshold) {
                 #ifdef OLD_LED
-                if (!RainbowLEDActive)
+                if (!SystemManager::getInstance().RainbowLEDActive)
                 {
-                    rgbmodule->breatheLED(rgbmodule->redPin, 500);
+                    SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 500);
                 }
                 #endif
                 #ifdef NEOPIXEL_PIN
-                neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 1000, false);
+                SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 1000, false);
                 #endif
             } else {
                 #ifdef OLD_LED
-                if (!RainbowLEDActive)
+                if (!SystemManager::getInstance().RainbowLEDActive)
                 {
-                    rgbmodule->breatheLED(rgbmodule->greenPin, 500);
+                    SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 500);
                 }
                
                 #endif
                 #ifdef NEOPIXEL_PIN
-                neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 255, 0), 1000, false);
+                SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 1000, false);
                 #endif
             }
             DeauthConfig.deauthCount = 0;

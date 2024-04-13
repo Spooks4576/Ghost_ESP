@@ -1,8 +1,6 @@
 #pragma once
 
-#include "board_config.h" 
-
-#ifdef SD_CARD_CS_PIN
+#include "board_config.h"
 
 #include <Arduino.h>
 #include <SD.h>
@@ -59,11 +57,13 @@ private:
     };
     FS* createFileSystem(bool isMMCCard) {
         if (isMMCCard) {
+            #ifdef SOC_SDMMC_HOST_SUPPORTED
             return &SD_MMC;
+            #else
+            return nullptr;
+            #endif
         } else {
             return &SD;
         }
     }
 };
-
-#endif // SD_CARD_CS_PIN

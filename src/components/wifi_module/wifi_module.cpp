@@ -114,11 +114,6 @@ bool WiFiModule::addSSID(String essid) {
 
 void WiFiModule::Sniff(SniffType Type, int TargetChannel)
 {
-#ifdef OLD_LED
-  Threadinfo.TargetPin = rgbmodule->redPin;
-#endif
-
-
   bool SetChannel = TargetChannel != 0;
   int set_channel = TargetChannel == 0 ? random(1, 13) : TargetChannel;
   if (MostActiveChannel != 0)
@@ -157,7 +152,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
       
       esp_wifi_set_promiscuous_rx_cb(&beaconSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("BEACON.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("BEACON.pcap");
 #endif
       break;    
     }
@@ -165,7 +160,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       esp_wifi_set_promiscuous_rx_cb(&eapolSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("EAPOL.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("EAPOL.pcap");
 #endif
      break;
     }
@@ -173,7 +168,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("PROBE.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("PROBE.pcap");
 #endif
      break;
     }
@@ -181,7 +176,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       esp_wifi_set_promiscuous_rx_cb(&pwnSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("PWN.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("PWN.pcap");
 #endif
       break;
     }
@@ -189,7 +184,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       esp_wifi_set_promiscuous_rx_cb(&rawSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("RAW.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("RAW.pcap");
 #endif
       break;
     }
@@ -202,7 +197,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       shutdownWiFi();
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->stopPcapLogging();
+      SystemManager::getInstance().sdCardModule.stopPcapLogging();
 #endif
       break;
     }
@@ -215,9 +210,11 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
         esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       }
       lastChangeTime = currentTime;
-      BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
 #ifdef NEOPIXEL_PIN
-      neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 255), 1000, false);
+      SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 255), 1000, false);
 #endif
     }
   }
@@ -225,10 +222,6 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
 
 void WiFiModule::Scan(ScanType type)
 {
-#ifdef OLD_LED
-  Threadinfo.TargetPin = rgbmodule->greenPin;
-#endif
-
   switch (type)
   {
     case ScanType::SCAN_AP:
@@ -407,10 +400,6 @@ void WiFiModule::Calibrate()
 
 void WiFiModule::Attack(AttackType type)
 {
-#ifdef OLD_LED
-  Threadinfo.TargetPin = rgbmodule->redPin;
-#endif
-
   switch (type)
   {
     case AttackType::AT_Rickroll:
@@ -434,9 +423,11 @@ void WiFiModule::Attack(AttackType type)
                 broadcastSetSSID(rick_roll[x], i);
               }
           }
-          BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 300, false);
 #endif
           delay(1);
       }
@@ -457,7 +448,9 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
           }
         }
         broadcastRandomSSID();
-        BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
         delay(1);
       }
       break;
@@ -483,7 +476,9 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
             broadcastSetSSID(ssids->get(i).essid.c_str(), x);
           }
         }
-        BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
         delay(1);
       }
       break;
@@ -511,7 +506,9 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
               }
             }
           }
-          BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
         }
       }
       break;
@@ -537,7 +534,9 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
             broadcastSetSSID(KarmaSSIDs[x], i);
           }
         }
-        BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
         delay(1);
       }
     }
