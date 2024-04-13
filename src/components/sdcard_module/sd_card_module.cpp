@@ -251,18 +251,15 @@ bool SDCardModule::writeFile(const char *path, const char *message) {
     return true;
 }
 
-bool SDCardModule::readFile(const char *path) {
+File SDCardModule::readFile(const char *path) {
     File file = SDI->open(path);
     if (!file) {
         Serial.println("Failed to open file for reading");
-        return false;
+        return file;
     }
     Serial.print("Read from file: ");
-    while (file.available()) {
-        Serial.write(file.read());
-    }
-    file.close();
-    return true;
+    Serial.println(path);
+    return file;
 }
 
 bool SDCardModule::appendFile(const char *path, const char *message) {

@@ -30,7 +30,7 @@ public:
     SDCardModule();
     bool init();
     bool writeFile(const char *path, const char *message);
-    bool readFile(const char *path);
+    File readFile(const char *path);
     bool appendFile(const char *path, const char *message);
     bool deleteFile(const char *path);
     bool logMessage(const char *logFileName, const char* foldername, String message);
@@ -39,7 +39,7 @@ public:
     void flushLog();
     void stopPcapLogging();
     FS* SDI;
-private:
+public:
     int csPin;
     int BootNum;
     bool Initlized;

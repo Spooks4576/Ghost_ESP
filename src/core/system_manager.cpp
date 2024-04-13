@@ -1,5 +1,14 @@
 #include "system_manager.h"
 #include "../core/commandline.h"
+#include <components/gps_module/gps_module.h>
+
+void SystemManager::initGPSModule()
+{
+#ifdef HAS_GPS
+    gpsModule = new gps_module();
+#endif
+}
+
 void SystemManager::setup()
 {
     Serial.begin(115200);
@@ -8,6 +17,7 @@ void SystemManager::setup()
     initSDCard();
     initBLE();
     initWiFi();
+    initGPSModule();
     CommandLine::getInstance().RunSetup();
     Serial.println("System initialized");
 }

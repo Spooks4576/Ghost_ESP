@@ -76,6 +76,7 @@ function mainMenu() {
     submenu.addItem("BLE Utils", 1);
     submenu.addItem("LED Utils", 2);
     submenu.addItem("Controller Emulation", 3);
+    submenu.addItem("GPS Module Street Test", 4);
 
     let result = submenu.show();
 
@@ -94,6 +95,11 @@ function mainMenu() {
     if (result === 3)
     {
         promptUSBType();
+    }
+
+    if (result === 4)
+    {
+        sendSerialCommand("streetdetector", 0);
     }
 
     if (result === undefined) {

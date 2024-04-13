@@ -7,6 +7,7 @@
 #include <components/wifi_module/Features/Dial.h>
 #include "../components/wifi_module/Features/DeauthDetector.h"
 #include <components/wifi_module/Features/ESPmDNSHelper.h>
+#include <components/gps_module/gps_module.h>
 
 CommandLine::CommandLine() {
 }
@@ -417,6 +418,18 @@ void CommandLine::runCommand(String input)
           ESPmDNSHelper* helper = new ESPmDNSHelper(SSID.c_str(), Password.c_str(), "", Value.c_str(), "233637DE");
         }
       }
+    }
+
+    if (cmd_args.get(0) == F("streetdetector"))
+    {
+      #ifdef HAS_GPS
+      SystemManager::getInstance().gpsModule->setup();
+      
+      while (!SystemManager::getInstance().gpsModule->Stop)
+      {
+        SystemManager::getInstance().gpsModule->streetloop();
+      }
+      #endif
     }
 
     if (cmd_args.get(0) == F("usbcontrol"))

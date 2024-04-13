@@ -4,11 +4,12 @@
 #include <components/sdcard_module/sd_card_module.h>
 #include <components/rgb_led_module/rgb_led_module.h>
 #include <components/neopixel_module/neopixel_module.h>
-#include <components/gps_module/gps_module.h>
 #include <components/controller_module/controller_module.h>
 #include <components/ble_module/ble_module.h>
 #include <components/display_module/display_module.h>
 #include "../lib/TFT_eSPI/User_Setup.h"
+
+class gps_module;
 
 class SystemManager {
 public:
@@ -62,6 +63,7 @@ public:
     DisplayModule* displayModule;
 #endif
     SDCardModule sdCardModule;
+    gps_module* gpsModule;
     BLEModule* bleModule;
     RGBLedModule* rgbModule;
     NeopixelModule* neopixelModule;
@@ -93,6 +95,8 @@ public:
         sdCardModule.init();
 #endif
     }
+
+    void initGPSModule();
 
     void initBLE() {
 #ifdef HAS_BT
