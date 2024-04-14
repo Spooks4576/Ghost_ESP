@@ -1,6 +1,6 @@
 #include "ble_module.h"
 #include <Arduino.h>
-#include <Core/system_manager.h>
+#include "core/system_manager.h"
 
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
