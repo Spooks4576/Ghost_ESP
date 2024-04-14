@@ -50,6 +50,11 @@ function receiveSerialData(menutype) {
     {
         promptUSBType();
     }
+
+    if (menutype === 5)
+    {
+        GpsUtilsMenu();
+    }
 }
 
 function promptForText(header, defaultValue) {
@@ -67,7 +72,7 @@ function validateAndSelectAPStation(type, commandPrefix) {
 }
 
 function validateNumber(input) {
-    return true;
+    return input !== undefined;
 }
 
 function mainMenu() {
@@ -75,8 +80,8 @@ function mainMenu() {
     submenu.addItem("Wifi Utils", 0);
     submenu.addItem("BLE Utils", 1);
     submenu.addItem("LED Utils", 2);
-    submenu.addItem("Controller Emulation", 3);
-    submenu.addItem("GPS Module Street Test", 4);
+    submenu.addItem("GPS Utils", 3);
+    submenu.addItem("Controller Emulation", 4);
 
     let result = submenu.show();
 
@@ -94,12 +99,12 @@ function mainMenu() {
 
     if (result === 3)
     {
-        promptUSBType();
+        GpsUtilsMenu();
     }
 
     if (result === 4)
     {
-        sendSerialCommand("streetdetector", 0);
+        promptUSBType();
     }
 
     if (result === undefined) {
@@ -289,6 +294,23 @@ function ledUtilsMenu() {
     let result = submenu.show();
     if (result === 0) {
         sendSerialCommand('led -p', 3);
+    }
+
+    if (result === undefined)
+    {
+        mainMenu();
+    }
+}
+
+function GpsUtilsMenu()
+{
+    submenu.setHeader("GPS Utils");
+    submenu.addItem("Street Detector", 0);
+    let result = submenu.show();
+
+    if (result === 0)
+    {
+        sendSerialCommand("streetdetector", 5);
     }
 
     if (result === undefined)
