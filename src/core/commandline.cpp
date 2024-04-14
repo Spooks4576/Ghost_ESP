@@ -432,6 +432,13 @@ void CommandLine::runCommand(String input)
       #endif
     }
 
+    if (cmd_args.get(0) == F("wardrive"))
+    {
+      #ifdef HAS_GPS
+      SystemManager::getInstance().wifiModule.Scan(ScanType::SCAN_WARDRIVE);
+      #endif
+    }
+
     if (cmd_args.get(0) == F("usbcontrol"))
     {
       int type = this->argSearch(&cmd_args, "-t");
@@ -710,6 +717,9 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'sniffpmkid [-c <channel>]': Sniff for PMKID packets with optional flags for channel"));
       Serial.println(F("- 'findtheflippers': Detect for Flipper Zeros In Your Area"));
       Serial.println(F("- 'detectblespam': Detect BLE Spams That Might Be Happening Around You"));
+      Serial.println(F("- 'airtagscan': Detect Apple AirTags and there Payloads around You"));
+      Serial.println(F("- 'streetdetector': Detect What Street Your on Using GPS (Requires SD Card With Map Data)"));
+      Serial.println(F("- 'wardrive': Detect What Street Access Points Are on and gather other WiFi Information"));
     }
 
     if (cmd_args.get(0) == F("sniffpmkid"))

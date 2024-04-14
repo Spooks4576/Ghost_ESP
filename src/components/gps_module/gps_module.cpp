@@ -66,6 +66,75 @@ double gps_module::degToRad(double degrees) {
   return degrees * (M_PI / 180);
 }
 
+String gps_module::GetDateAndTime()
+{
+  String datetime; 
+  datetime += gps.date.year();
+  datetime += "-";
+  datetime += gps.date.month();
+  datetime += "-";
+  datetime += gps.date.day();
+  datetime += " ";
+  datetime += gps.time.hour();
+  datetime += ":";
+  datetime += gps.time.minute();
+  datetime += ":";
+  datetime += gps.time.second();
+  return datetime;
+}
+
+void gps_module::WarDrivingLoop()
+{
+#ifdef HAS_GPS
+  while (Serial2.available() > 0 && !Stop) 
+  {
+    char c = Serial2.read();
+
+    gps.encode(c);
+#endif
+
+    if (Serial.available() > 0)
+    {
+      Stop = true;
+    }
+
+  
+    unsigned long currentMillis = millis();
+    if (currentMillis - lastUpdate >= updateInterval) {
+        lastUpdate = currentMillis;
+
+#ifdef HAS_GPS
+      if (gps.location.isValid() && gps.location.isUpdated()) {
+        String streetName = findClosestStreet(gps.location.lat(), gps.location.lng());
+        Serial.println(streetName);
+        int Networks = WiFi.scanNetworks();
+        
+        for (int i = 0; i < Networks; i++)
+        {
+          String SSID = WiFi.SSID(i);
+          String BSSID = WiFi.BSSIDstr(i);
+          int Channel = WiFi.channel(i);
+          int RSSI = WiFi.RSSI(i);
+          String SecurityType = G_Utils::authTypeToString(WiFi.encryptionType(i));
+
+          String Message = G_Utils::formatString("%s, %s, %s, %s, %i, %i, %f, %f, %f, %f", BSSID.c_str(), SSID.c_str(), SecurityType.c_str(), GetDateAndTime().c_str(), Channel, RSSI, gps.location.lat(), gps.location.lng(), gps.altitude.meters(), 2.5 * gps.hdop.hdop() / 10);
+          String MessageWithStreet = G_Utils::formatString("%s, %s, %s, %s, %i, %i, %f, %f, %f, %f, %s", BSSID.c_str(), SSID.c_str(), SecurityType.c_str(), GetDateAndTime().c_str(), Channel, RSSI, gps.location.lat(), gps.location.lng(), gps.altitude.meters(), 2.5 * gps.hdop.hdop() / 10, streetName.c_str());
+          LOG_RESULTS("wardiving.csv", "gps", Message);
+          LOG_RESULTS("wardiving_withstreets.csv", "gps", MessageWithStreet);
+          Serial.println("Logged Info At " + streetName);
+        }
+        uint8_t set_channel = random(1, 13);
+        esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+      } else {
+        Serial.println("GPS signal not found");
+      }
+#endif
+    }
+#ifdef HAS_GPS
+  }
+#endif
+}
+
 void gps_module::streetloop() 
 {
 #ifdef HAS_GPS

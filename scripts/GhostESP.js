@@ -306,11 +306,17 @@ function GpsUtilsMenu()
 {
     submenu.setHeader("GPS Utils");
     submenu.addItem("Street Detector", 0);
+    submenu.addItem("Wardrive", 1);
     let result = submenu.show();
 
     if (result === 0)
     {
         sendSerialCommand("streetdetector", 5);
+    }
+
+    if (result === 1)
+    {
+        sendSerialCommand("wardrive", 5);
     }
 
     if (result === undefined)

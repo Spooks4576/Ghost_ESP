@@ -167,6 +167,7 @@ enum ScanType
 {
     SCAN_AP,
     SCAN_STA,
+    SCAN_WARDRIVE
 };
 
 enum SniffType

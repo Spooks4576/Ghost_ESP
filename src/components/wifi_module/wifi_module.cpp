@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <Arduino.h>
+#include <components/gps_module/gps_module.h>
 #include "callbacks.h"
 
 String WiFiModule::freeRAM()
@@ -298,6 +299,15 @@ void WiFiModule::Scan(ScanType type)
       }
 
       break;
+    }
+    case ScanType::SCAN_WARDRIVE:
+    {
+      SystemManager::getInstance().gpsModule->setup();
+
+      while (!SystemManager::getInstance().gpsModule->Stop)
+      {
+        SystemManager::getInstance().gpsModule->WarDrivingLoop();
+      }
     }
   }
 }

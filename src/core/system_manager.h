@@ -147,4 +147,41 @@ namespace G_Utils
         }
         return str;
     }
+
+    String formatString(const char* format, ...) 
+    {
+        char buffer[500];
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buffer, sizeof(buffer), format, args);
+        va_end(args);
+        return String(buffer);
+    }
+
+    String authTypeToString(wifi_auth_mode_t type)
+    {
+        switch (type)
+        {
+            case wifi_auth_mode_t::WIFI_AUTH_OPEN:
+                return "OPEN";
+            case wifi_auth_mode_t::WIFI_AUTH_WEP:
+                return "WEP";
+            case wifi_auth_mode_t::WIFI_AUTH_WPA_PSK:
+                return "WPA_PSK";
+            case wifi_auth_mode_t::WIFI_AUTH_WPA2_PSK:
+                return "WPA2_PSK";
+            case wifi_auth_mode_t::WIFI_AUTH_WPA_WPA2_PSK:
+                return "WPA_WPA2_PSK";
+            case wifi_auth_mode_t::WIFI_AUTH_WPA2_ENTERPRISE:
+                return "WPA2_ENTERPRISE";
+            case wifi_auth_mode_t::WIFI_AUTH_WPA3_PSK:
+                return "WPA3_PSK";
+            case wifi_auth_mode_t::WIFI_AUTH_WPA2_WPA3_PSK:
+                return "WPA2_WPA3_PSK";
+            case wifi_auth_mode_t::WIFI_AUTH_WAPI_PSK:
+                return "WAPI_PSK";
+            default:
+                return "UNKNOWN";
+        }
+    }
 }

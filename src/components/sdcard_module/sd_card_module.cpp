@@ -136,7 +136,7 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
 
         if (!SDI->exists(newLogFileName))
         {
-            writeFile(newLogFileName, "Begin File");
+            writeFile(newLogFileName, "");
         }
         
         return appendFile(newLogFileName, fullMessage.c_str());
