@@ -2,7 +2,7 @@
 #if CFG_TUD_HID
 
 #include "hidusb.h"
-#include "descriptors/PS4Descriptors.h"
+#include "../descriptors/PS4Descriptors.h"
 
 
 typedef struct {

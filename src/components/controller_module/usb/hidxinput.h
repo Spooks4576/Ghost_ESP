@@ -2,7 +2,7 @@
 #if CFG_TUD_HID
 
 #include "hidusb.h"
-#include "descriptors/XboxDescriptors.h"
+#include "../descriptors/XboxDescriptors.h"
 
 // Button bitmasks
 #define XBOX_BUTTON_A 0x01

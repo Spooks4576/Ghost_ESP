@@ -2,7 +2,7 @@
 #if CFG_TUD_HID
 
 #include "hidusb.h"
-#include "descriptors/NSWDescriptors.h"
+#include "../descriptors/NSWDescriptors.h"
 
 typedef struct {
     uint8_t buttonCombos;      // Combined states of buttons, bumpers, and triggers

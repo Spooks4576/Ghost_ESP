@@ -1,8 +1,8 @@
 #pragma once
-#include "hidnswusb.h"
-#include "hidxinput.h"
-#include "hiddualshockusb.h"
-#include "hiddualsenseusb.h"
+#include "usb/hidnswusb.h"
+#include "usb/hidxinput.h"
+#include "usb/hiddualshockusb.h"
+#include "usb/hiddualsenseusb.h"
 #ifdef HAS_BT
 #include <BleConnectionStatus.h>
 

@@ -2,7 +2,7 @@
 #if CFG_TUD_HID
 
 #include "hidusb.h"
-#include "descriptors/PS5Descriptors.h"
+#include "../descriptors/PS5Descriptors.h"
 
 typedef struct {
     uint8_t axes0;                  // Left stick X axis
