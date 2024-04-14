@@ -1,7 +1,7 @@
 #include "gps_module.h"
 
 String gps_module::findClosestStreet(double lat, double lng) {
-    String filename = "/mapdata/streets.csv";  // Path to the CSV file containing all streets
+    String filename = "/mapdata/streets.csv";
 
     if (!MapData || !MapData.name() || String(MapData.name()) != filename) {
         if (MapData) {
@@ -14,7 +14,7 @@ String gps_module::findClosestStreet(double lat, double lng) {
         }
     }
 
-    MapData.seek(0); // Go to the beginning of the file
+    MapData.seek(0);
 
     String closestStreet;
     double minDistance = 999999999;
@@ -29,7 +29,7 @@ String gps_module::findClosestStreet(double lat, double lng) {
 
         double streetLat = line.substring(fourthComma + 1, fifthComma).toDouble();
         double streetLng = line.substring(fifthComma + 1).toDouble();
-        String streetName = line.substring(secondComma + 1, thirdComma); // Corrected index for street name
+        String streetName = line.substring(secondComma + 1, thirdComma);
 
         double distance = calculateDistance(lat, lng, streetLat, streetLng);
 
@@ -91,7 +91,7 @@ void gps_module::streetloop()
         Serial.print("Latitude: "); Serial.println(gps.location.lat(), 6);
         Serial.print("Longitude: "); Serial.println(gps.location.lng(), 6);
         Serial.print("Satellites: "); Serial.println(gps.satellites.value());
-        Serial.print("Altitude: "); Serial.println(gps.altitude.meters());
+        Serial.print("Altitude: "); Serial.println(gps.altitude.kilometers());
         Serial.print("Speed: "); Serial.println(gps.speed.kmph());
         Serial.println(streetName);
         LOG_RESULTS("streets.txt", "gps", "Visited " + streetName);

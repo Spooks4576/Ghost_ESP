@@ -18,7 +18,7 @@ public:
     bool Initilized;
     bool Stop;
     unsigned long lastUpdate = 0;
-    long updateInterval = 5000;
+    long updateInterval = 1000;
 
     void setup();
     void streetloop();
