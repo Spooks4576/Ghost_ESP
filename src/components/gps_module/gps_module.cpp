@@ -69,6 +69,7 @@ double gps_module::degToRad(double degrees) {
 String gps_module::GetDateAndTime()
 {
   String datetime; 
+#ifdef HAS_GPS
   datetime += gps.date.year();
   datetime += "-";
   datetime += gps.date.month();
@@ -80,6 +81,7 @@ String gps_module::GetDateAndTime()
   datetime += gps.time.minute();
   datetime += ":";
   datetime += gps.time.second();
+#endif
   return datetime;
 }
 
