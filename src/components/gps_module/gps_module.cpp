@@ -68,10 +68,11 @@ double gps_module::degToRad(double degrees) {
 
 void gps_module::streetloop() 
 {
+#ifdef HAS_GPS
   while (Serial2.available() > 0 && !Stop) 
   {
     char c = Serial2.read();
-#ifdef HAS_GPS
+
     gps.encode(c);
 #endif
 
@@ -100,7 +101,9 @@ void gps_module::streetloop()
       }
 #endif
     }
+#ifdef HAS_GPS
   }
+#endif
 }
 
 void gps_module::setup()
