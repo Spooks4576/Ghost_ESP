@@ -127,7 +127,7 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
         char newLogFileName[128];
         sprintf(newLogFileName, "/%s/boot_%u_%s", foldername, BootNum, logFileName);
 
-        String fullMessage = String(timeString) + message;
+        String fullMessage = message;
 
         if (!SDI->exists("/" + String(foldername)))
         {
