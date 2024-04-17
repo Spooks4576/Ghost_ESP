@@ -7,6 +7,7 @@
 #include <WiFi.h>
 #include "esp_wifi_types.h"
 #include "esp_wifi.h"
+#include <WiFiClientSecure.h>
 
 const wifi_promiscuous_filter_t filt = {.filter_mask=WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA};
 
@@ -191,6 +192,7 @@ public:
     int generateSSIDs(int count);
     String getApMAC();
     bool shutdownWiFi();
+    void SendWebRequest(const char* SSID, const char* Password, String requestType, String url, String data = "");
     void broadcastRandomSSID();
     void insertWPA2Info(uint8_t *packet, int ssidLength);
     void insertTimestamp(uint8_t *packet);
@@ -210,5 +212,7 @@ public:
     bool BeaconSpamming;
     uint8_t initTime;
     int MostActiveChannel;
+    bool EnableBLEWardriving;
     LinkedList<BeaconPacket> BeaconsToBroadcast;
+    WiFiClientSecure wifiClientSecure;
 };

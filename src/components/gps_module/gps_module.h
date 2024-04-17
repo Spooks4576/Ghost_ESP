@@ -21,7 +21,7 @@ public:
     long updateInterval = 1000;
 
     void WarDrivingLoop();
-    void setup();
+    void setup(bool EnableBLEScans = false);
     void streetloop();
     String GetDateAndTime();
     String findClosestStreet(double lat, double lng);

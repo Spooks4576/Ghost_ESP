@@ -1,7 +1,6 @@
 #pragma once
-#if CFG_TUD_HID
 
-#include "hidusb.h"
+#include "btcontroller_i.h"
 #include "../descriptors/NSWDescriptors.h"
 
 typedef struct {
@@ -19,7 +18,6 @@ typedef struct {
     uint8_t rightStickY;      // Right Stick vertical movement: 00 (up) to FF (down), 80 (neutral)
     uint8_t reserved;
 } __attribute((packed)) hid_nsw_report_t;
-
 
 typedef enum {
     BUTTON_Y,
@@ -98,17 +96,20 @@ InputStateNSWMapping StringToNSWInputState(const char* str) {
     return {"", NONE};
 }
 
-class HIDNSWUSB : public HIDusb
+#ifdef HAS_BT
+
+class NSWController : public BTHIDDevice, public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks
 {
 public:
-    bool Initialized;
-    HIDNSWUSB(uint8_t id = 4);
-    bool begin(char* str = nullptr);
+
+    virtual void onConnect(NimBLEServer* pServer) override;
+    virtual void onDisconnect(NimBLEServer* pServer) override;
+    virtual void onWrite(NimBLECharacteristic* me) override;
+    virtual void connect() override;
+    virtual void sendreport() override;
     void SetInputState(SwitchButton state);
 
-
-    void sendReport();
-    hid_nsw_report_t report;
+    hid_nsw_report_t* report;
 };
 
 #endif

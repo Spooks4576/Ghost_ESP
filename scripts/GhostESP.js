@@ -81,7 +81,6 @@ function mainMenu() {
     submenu.addItem("BLE Utils", 1);
     submenu.addItem("LED Utils", 2);
     submenu.addItem("GPS Utils", 3);
-    submenu.addItem("Controller Emulation", 4);
 
     let result = submenu.show();
 
@@ -128,12 +127,13 @@ function wifiUtilsMenu() {
     submenu.addItem("Cast V2 Connect", 11);
     submenu.addItem("Dial Connect", 12);
     submenu.addItem("Deauth Detector", 13);
-    submenu.addItem("Sniff Raw", 14);
-    submenu.addItem("Sniff EPOL", 15);
-    submenu.addItem("Sniff Probe", 16);
-    submenu.addItem("Sniff PWN", 17);
-    submenu.addItem("Calibrate", 18);
-
+    submenu.addItem("Deauth Stations", 14);
+    submenu.addItem("Sniff Raw", 15);
+    submenu.addItem("Sniff EPOL", 16);
+    submenu.addItem("Sniff Probe", 17);
+    submenu.addItem("Sniff PWN", 18);
+    submenu.addItem("Calibrate", 19);
+    
     let result = submenu.show();
 
     if (result === 0) {
@@ -199,25 +199,30 @@ function wifiUtilsMenu() {
 
     if (result === 14)
     {
-        sendSerialCommand("sniffraw", 1);
+        sendSerialCommand("deauth", 1);
     }
 
     if (result === 15)
     {
-        sendSerialCommand("sniffpmkid", 1);
+        sendSerialCommand("sniffraw", 1);
     }
 
     if (result === 16)
     {
-        sendSerialCommand("sniffprobe", 1);
+        sendSerialCommand("sniffpmkid", 1);
     }
 
     if (result === 17)
     {
-        sendSerialCommand("sniffpwn", 1);
+        sendSerialCommand("sniffprobe", 1);
     }
 
     if (result === 18)
+    {
+        sendSerialCommand("sniffpwn", 1);
+    }
+
+    if (result === 19)
     {
         sendSerialCommand("calibrate", 1);
     }
@@ -328,10 +333,9 @@ function GpsUtilsMenu()
 function promptUSBType(){
     submenu.setHeader("Pick USB Type:");
     submenu.addItem("Nintendo Switch", 0);
-    submenu.addItem("Xbox One", 1);
-    submenu.addItem("PS5 / DualSense", 2);
-    submenu.addItem("PS4 / DualShock", 3)
-    submenu.addItem("Choose Script", 4);
+    submenu.addItem("Playstation", 1)
+    //submenu.addItem("Xbox One", 1);
+    submenu.addItem("Choose Script", 2);
 
     let result = submenu.show();
     if (result === 0) {
@@ -340,26 +344,26 @@ function promptUSBType(){
 
     if (result === 1)
     {
-        promptXInputControls();
+        promptplaystationControls();
     }
 
     if (result === 2)
-    {
-        promptDualSenseControls();
-    }
-
-    if (result === 3)
-    {
-        promptDualShockControls();
-    }
-
-    if (result === 4)
     {
         let path = dialog.pickFile("/ext", "*");
 
         let data = storage.read(path);
 
-        sendSerialCommand("usbcontrol -s \n" + arraybuf_to_string(data) + "\n \f", 4);
+        sendSerialCommand("controller -s \n" + arraybuf_to_string(data) + "\n \f", 4);
+    }
+
+    if (result === 3)
+    {
+        
+    }
+
+    if (result === 4)
+    {
+        
     }
 
     if (result === undefined)
@@ -391,59 +395,59 @@ function promptXInputControls()
 
     let result = submenu.show();
     if (result === 0){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_Y -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_Y", 4);
     }
     if (result === 1){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_B -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_B", 4);
     }
     if (result === 2){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_A -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_A", 4);
     }
     if (result === 3){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_X -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_X", 4);
     }
     if (result === 4){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_BACK -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_BACK", 4);
     }
     if (result === 5){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_START -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_START", 4);
     }
     if (result === 6){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_HOME -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_HOME", 4);
     }
     if (result === 7){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_LBUMPER -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_LBUMPER", 4);
     }
     if (result === 8){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_RBUMPER -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_RBUMPER", 4);
     }
     if (result === 9){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_LTRIGGER -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_LTRIGGER", 4);
     }
     if (result === 10){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_RTRIGGER -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_RTRIGGER", 4);
     }
     if (result === 11){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_LTHUMBSTICK -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_LTHUMBSTICK", 4);
     }
     if (result === 12){
-        sendSerialCommand("usbcontrol -t xinput -b BUTTON_RTHUMBSTICK -c USB", 4);
+        sendSerialCommand("controller -t xinput -b BUTTON_RTHUMBSTICK", 4);
     }
     if (result === 13){
-        sendSerialCommand("usbcontrol -t xinput -b DPAD_UP -c USB" , 4);
+        sendSerialCommand("controller -t xinput -b DPAD_UP" , 4);
     }
     if (result === 14){
-        sendSerialCommand("usbcontrol -t xinput -b DPAD_LEFT -c USB ", 4);
+        sendSerialCommand("controller -t xinput -b DPAD_LEFT ", 4);
     }
     if (result === 15){
-        sendSerialCommand("usbcontrol -t xinput -b DPAD_DOWN -c USB", 4);
+        sendSerialCommand("controller -t xinput -b DPAD_DOWN", 4);
     }
     if (result === 16){
-        sendSerialCommand("usbcontrol -t xinput -b DPAD_RIGHT -c USB", 4);
+        sendSerialCommand("controller -t xinput -b DPAD_RIGHT", 4);
     }
 }
 
-function promptDualShockControls()
+function promptplaystationControls()
 {
     submenu.setHeader("Pick Button Press:");
     submenu.addItem("Button: Triangle", 0);
@@ -452,7 +456,7 @@ function promptDualShockControls()
     submenu.addItem("Button: Square", 3);
     submenu.addItem("Button: Back", 4);
     submenu.addItem("Button: Start", 5);
-    submenu.addItem("Button: Home", 6);
+    submenu.addItem("Button: PS", 6);
     submenu.addItem("Button: LB", 7);
     submenu.addItem("Button: RB", 8);
     submenu.addItem("Button: LT", 9);
@@ -466,133 +470,57 @@ function promptDualShockControls()
 
     let result = submenu.show();
     if (result === 0){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_Y -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_Y", 4);
     }
     if (result === 1){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_B -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_B", 4);
     }
     if (result === 2){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_A -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_A", 4);
     }
     if (result === 3){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_X -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_X", 4);
     }
     if (result === 4){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_BACK -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_BACK", 4);
     }
     if (result === 5){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_START -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_START", 4);
     }
     if (result === 6){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_HOME -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_HOME", 4);
     }
     if (result === 7){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_LBUMPER -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_LBUMPER", 4);
     }
     if (result === 8){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_RBUMPER -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_RBUMPER", 4);
     }
     if (result === 9){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_LTRIGGER -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_LTRIGGER", 4);
     }
     if (result === 10){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_RTRIGGER -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_RTRIGGER", 4);
     }
     if (result === 11){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_LTHUMBSTICK -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_LTHUMBSTICK", 4);
     }
     if (result === 12){
-        sendSerialCommand("usbcontrol -t dualshock -b BUTTON_RTHUMBSTICK -c USB", 4);
+        sendSerialCommand("controller -t playstation -b BUTTON_RTHUMBSTICK", 4);
     }
     if (result === 13){
-        sendSerialCommand("usbcontrol -t dualshock -b DPAD_UP -c USB" , 4);
+        sendSerialCommand("controller -t playstation -b DPAD_UP" , 4);
     }
     if (result === 14){
-        sendSerialCommand("usbcontrol -t dualshock -b DPAD_LEFT -c USB ", 4);
+        sendSerialCommand("controller -t playstation -b DPAD_LEFT ", 4);
     }
     if (result === 15){
-        sendSerialCommand("usbcontrol -t dualshock -b DPAD_DOWN -c USB", 4);
+        sendSerialCommand("controller -t playstation -b DPAD_DOWN", 4);
     }
     if (result === 16){
-        sendSerialCommand("usbcontrol -t dualshock -b DPAD_RIGHT -c USB", 4);
+        sendSerialCommand("controller -t playstation -b DPAD_RIGHT", 4);
     }
 }
-
-function promptDualSenseControls()
-{
-    submenu.setHeader("Pick Button Press:");
-    submenu.addItem("Button: Triangle", 0);
-    submenu.addItem("Button: Circle", 1);
-    submenu.addItem("Button: Cross", 2);
-    submenu.addItem("Button: Square", 3);
-    submenu.addItem("Button: Back", 4);
-    submenu.addItem("Button: Start", 5);
-    submenu.addItem("Button: Home", 6);
-    submenu.addItem("Button: LB", 7);
-    submenu.addItem("Button: RB", 8);
-    submenu.addItem("Button: LT", 9);
-    submenu.addItem("Button: RT",10);
-    submenu.addItem("Button: L-Thumb", 11);
-    submenu.addItem("Button: R-Thumb",12);
-    submenu.addItem("Button: Up", 13);
-    submenu.addItem("Button: Left",14);
-    submenu.addItem("Button: Down", 15);
-    submenu.addItem("Button: Right",16);
-
-    let result = submenu.show();
-    if (result === 0){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_Y -c USB", 4);
-    }
-    if (result === 1){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_B -c USB", 4);
-    }
-    if (result === 2){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_A -c USB", 4);
-    }
-    if (result === 3){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_X -c USB", 4);
-    }
-    if (result === 4){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_BACK -c USB", 4);
-    }
-    if (result === 5){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_START -c USB", 4);
-    }
-    if (result === 6){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_HOME -c USB", 4);
-    }
-    if (result === 7){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_LBUMPER -c USB", 4);
-    }
-    if (result === 8){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_RBUMPER -c USB", 4);
-    }
-    if (result === 9){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_LTRIGGER -c USB", 4);
-    }
-    if (result === 10){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_RTRIGGER -c USB", 4);
-    }
-    if (result === 11){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_LTHUMBSTICK -c USB", 4);
-    }
-    if (result === 12){
-        sendSerialCommand("usbcontrol -t dualsense -b BUTTON_RTHUMBSTICK -c USB", 4);
-    }
-    if (result === 13){
-        sendSerialCommand("usbcontrol -t dualsense -b DPAD_UP -c USB" , 4);
-    }
-    if (result === 14){
-        sendSerialCommand("usbcontrol -t dualsense -b DPAD_LEFT -c USB ", 4);
-    }
-    if (result === 15){
-        sendSerialCommand("usbcontrol -t dualsense -b DPAD_DOWN -c USB", 4);
-    }
-    if (result === 16){
-        sendSerialCommand("usbcontrol -t dualsense -b DPAD_RIGHT -c USB", 4);
-    }
-}
-
 
 function promptNSWControls(){
     submenu.setHeader("Pick Button Press:");
@@ -625,82 +553,82 @@ function promptNSWControls(){
 
     let result = submenu.show();
     if (result === 0){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_Y", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_Y", 4);
     }
     if (result === 1){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_B", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_B", 4);
     }
     if (result === 2){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_A", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_A", 4);
     }
     if (result === 3){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_X", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_X", 4);
     }
     if (result === 4){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_MINUS", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_MINUS", 4);
     }
     if (result === 5){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_PLUS", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_PLUS", 4);
     }
     if (result === 6){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_SHARE", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_SHARE", 4);
     }
     if (result === 7){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_HOME", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_HOME", 4);
     }
     if (result === 9){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_LBUMPER", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_LBUMPER", 4);
     }
     if (result === 9){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_RBUMPER", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_RBUMPER", 4);
     }
     if (result === 10){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_LTRIGGER", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_LTRIGGER", 4);
     }
     if (result === 11){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_RTRIGGER", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_RTRIGGER", 4);
     }
     if (result === 12){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_LTHUMBSTICK", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_LTHUMBSTICK", 4);
     }
     if (result === 13){
-        sendSerialCommand("usbcontrol -t nsw -b BUTTON_RTHUMBSTICK", 4);
+        sendSerialCommand("controller -t nsw -b BUTTON_RTHUMBSTICK", 4);
     }
     if (result === 14){
-        sendSerialCommand("usbcontrol -t nsw -b DPAD_UP", 4);
+        sendSerialCommand("controller -t nsw -b DPAD_UP", 4);
     }
     if (result === 15){
-        sendSerialCommand("usbcontrol -t nsw -b DPAD_LEFT", 4);
+        sendSerialCommand("controller -t nsw -b DPAD_LEFT", 4);
     }
     if (result === 16){
-        sendSerialCommand("usbcontrol -t nsw -b DPAD_DOWN", 4);
+        sendSerialCommand("controller -t nsw -b DPAD_DOWN", 4);
     }
     if (result === 17){
-        sendSerialCommand("usbcontrol -t nsw -b DPAD_RIGHT", 4);
+        sendSerialCommand("controller -t nsw -b DPAD_RIGHT", 4);
     }
     if (result === 18){
-        sendSerialCommand("usbcontrol -t nsw -b LSTICK_UP", 4);
+        sendSerialCommand("controller -t nsw -b LSTICK_UP", 4);
     }
     if (result === 19){
-        sendSerialCommand("usbcontrol -t nsw -b LSTICK_LEFT", 4);
+        sendSerialCommand("controller -t nsw -b LSTICK_LEFT", 4);
     }
     if (result === 20){
-        sendSerialCommand("usbcontrol -t nsw -b LSTICK_DOWN", 4);
+        sendSerialCommand("controller -t nsw -b LSTICK_DOWN", 4);
     }
     if (result === 21){
-        sendSerialCommand("usbcontrol -t nsw -b LSTICK_RIGHT", 4);
+        sendSerialCommand("controller -t nsw -b LSTICK_RIGHT", 4);
     }
     if (result === 22){
-        sendSerialCommand("usbcontrol -t nsw -b RSTICK_UP", 4);
+        sendSerialCommand("controller -t nsw -b RSTICK_UP", 4);
     }
     if (result === 23){
-        sendSerialCommand("usbcontrol -t nsw -b RSTICK_LEFT", 4);
+        sendSerialCommand("controller -t nsw -b RSTICK_LEFT", 4);
     }
     if (result === 24){
-        sendSerialCommand("usbcontrol -t nsw -b RSTICK_DOWN", 4);
+        sendSerialCommand("controller -t nsw -b RSTICK_DOWN", 4);
     }
     if (result === 25){
-        sendSerialCommand("usbcontrol -t nsw -b RSTICK_RIGHT", 4);
+        sendSerialCommand("controller -t nsw -b RSTICK_RIGHT", 4);
     }
 }
 

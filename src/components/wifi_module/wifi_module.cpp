@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <components/gps_module/gps_module.h>
 #include "callbacks.h"
+#include <ArduinoHttpClient.h>
 
 String WiFiModule::freeRAM()
 {
@@ -302,7 +303,7 @@ void WiFiModule::Scan(ScanType type)
     }
     case ScanType::SCAN_WARDRIVE:
     {
-      SystemManager::getInstance().gpsModule->setup();
+      SystemManager::getInstance().gpsModule->setup(EnableBLEWardriving);
 
       while (!SystemManager::getInstance().gpsModule->Stop)
       {
@@ -405,6 +406,72 @@ void WiFiModule::Calibrate()
   {
     Serial.printf("Failed to Find Any Wifi Networks");
     LOG_MESSAGE_TO_SD("Failed to Find Any Wifi Networks");
+  }
+}
+
+void WiFiModule::SendWebRequest(const char* SSID, const char* Password, String requestType, String url, String data) 
+{
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("Connecting to WiFi...");
+        WiFi.begin(SSID, Password);
+
+        int maxAttempts = 10, attempt = 0;
+        while (WiFi.status() != WL_CONNECTED && attempt < maxAttempts) {
+            delay(1000);
+            Serial.print(".");
+            attempt++;
+        }
+        Serial.println();
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.println("Connected to WiFi");
+        } else {
+            Serial.println("Failed to connect to WiFi");
+            return;
+        }
+    }
+
+    String requestTypeLower = requestType;
+    requestTypeLower.toLowerCase();
+
+    HttpClient httpClient = HttpClient(wifiClientSecure, url, 443); 
+
+    httpClient.beginRequest();
+    httpClient.sendHeader("User-Agent", "ESP32");
+    httpClient.sendHeader("Content-Type", "application/json");
+
+    if (requestTypeLower == "get") {
+        Serial.println("Sending GET request to " + url);
+        httpClient.get(url.c_str());
+    } else if (requestTypeLower == "post") {
+        Serial.println("Sending POST request to " + url);
+        Serial.println("Data: " + data);
+        httpClient.post(url.c_str(), "application/json", data.length(), reinterpret_cast<const byte*>(data.c_str()));
+    } else if (requestTypeLower == "put") {
+        Serial.println("Sending PUT request to " + url);
+        Serial.println("Data: " + data);
+        httpClient.put(url.c_str(), "application/json", data.length(), reinterpret_cast<const byte*>(data.c_str()));
+    } else if (requestTypeLower == "delete") {
+        Serial.println("Sending DELETE request to " + url);
+        httpClient.del(url.c_str());
+    } else {
+        Serial.println("Invalid request type");
+        httpClient.endRequest();
+        return;
+    }
+
+    httpClient.endRequest();
+
+    int statusCode = httpClient.responseStatusCode();
+    if (statusCode > 0) {
+        String Body = httpClient.responseBody();
+        Serial.print("HTTP Response code: ");
+        Serial.println(statusCode);
+        LOG_MESSAGE_TO_SD(Body);
+        Serial.println(Body);
+    } else {
+        Serial.print("Error on sending request: ");
+        Serial.println(statusCode);
   }
 }
 

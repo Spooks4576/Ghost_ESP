@@ -1,6 +1,7 @@
 #include "ble_module.h"
 #include <Arduino.h>
 #include "core/system_manager.h"
+#include "components/gps_module/gps_module.h"
 
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -258,6 +259,16 @@ void BLEModule::BleSpamDetector()
 #endif
 }
 
+void BLEModule::InitWarDriveCallback()
+{
+#ifdef HAS_BT
+  shutdownBLE();
+  NimBLEDevice::init("");
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new WarDriveBTCallbacks());
+  NimBLEDevice::getScan()->start(0, nullptr, false);
+#endif
+}
+
 void BLEModule::BleSniff()
 {
 #ifdef HAS_BT
@@ -386,6 +397,19 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
       return;
     }
   }
+}
+
+void WarDriveBTCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
+{
+  #ifdef HAS_BT
+  #ifdef HAS_GPS
+  if (SystemManager::getInstance().gpsModule->gps.location.isValid() && SystemManager::getInstance().gpsModule->gps.location.isUpdated())
+  {
+    String Message = G_Utils::formatString("BLE Device Info: %s, Lat: %f, Lng: %f", advertisedDevice->toString().c_str(), SystemManager::getInstance().gpsModule->gps.location.lat(), SystemManager::getInstance().gpsModule->gps.location.lng());
+    LOG_RESULTS("bt_wardrive.txt", "gps", Message);
+  }
+  #endif
+  #endif
 }
 
 void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)

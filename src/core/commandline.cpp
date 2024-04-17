@@ -14,9 +14,9 @@ CommandLine::CommandLine() {
 
 void CommandLine::RunSetup() {
   Serial.println(F("         Ghost ESP     \n"));
-  Serial.println(F("       By: Spooky with features from justcallmekoko \n"));
+  Serial.println(F("       By: Spooky\n"));
   LOG_MESSAGE_TO_SD(F("         Ghost ESP     \n"));
-  LOG_MESSAGE_TO_SD(F("       By: Spooky with features from justcallmekoko \n"));
+  LOG_MESSAGE_TO_SD(F("       By: Spooky\n"));
 }
 
 String CommandLine::getSerialInput() {
@@ -434,12 +434,15 @@ void CommandLine::runCommand(String input)
 
     if (cmd_args.get(0) == F("wardrive"))
     {
+      int EnableBLE = this->argSearch(&cmd_args, "-b");
+
       #ifdef HAS_GPS
+      SystemManager::getInstance().wifiModule.EnableBLEWardriving = EnableBLE != -1;
       SystemManager::getInstance().wifiModule.Scan(ScanType::SCAN_WARDRIVE);
       #endif
     }
 
-    if (cmd_args.get(0) == F("usbcontrol"))
+    if (cmd_args.get(0) == F("controller"))
     {
       int type = this->argSearch(&cmd_args, "-t");
       int button = this->argSearch(&cmd_args, "-b");
@@ -461,88 +464,78 @@ void CommandLine::runCommand(String input)
         }
       }
 
-      if (type != -1 && button != -1 && ConnectionType != -1)
+      if (type != -1 && button != -1)
       {
         String typeString = cmd_args.get(type + 1);
         String Button = cmd_args.get(button + 1);
-        String ConnectionTypeString = cmd_args.get(ConnectionType + 1);
 
         if (typeString == "nsw")
         {
-#if CFG_TUD_HID
+#ifdef HAS_BT
           SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Nintendo_Switch;
-          if (!SystemManager::getInstance().ControllerModule.NSWUsb.Initialized)
+          if (!SystemManager::getInstance().ControllerModule.NSW.Initilized)
           {
-            SystemManager::getInstance().ControllerModule.NSWUsb.begin("NSW Wireless Controller");
+            SystemManager::getInstance().ControllerModule.NSW.connect();
             delay(100);
           }
           Serial.println(StringToNSWInputState(Button.c_str()).name);
-          SystemManager::getInstance().ControllerModule.NSWUsb.SetInputState(StringToNSWInputState(Button.c_str()).state);
+          SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(Button.c_str()).state);
           delay(500);
-          SystemManager::getInstance().ControllerModule.NSWUsb.SetInputState(NONE);
+          SystemManager::getInstance().ControllerModule.NSW.SetInputState(NONE);
 #endif
         }
         else if (typeString == "xinput")
         {
-          #if CFG_TUD_HID
-          SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Xbox_One;
-          if (!SystemManager::getInstance().ControllerModule.XInputUsb.Initialized)
-          {
-            SystemManager::getInstance().ControllerModule.XInputUsb.begin("Xbox Wireless Controller");
-            delay(100);
-          }
 
-          Serial.println(StringToXInputInputState(Button.c_str()).name);
-          SystemManager::getInstance().ControllerModule.XInputUsb.SetInputState(StringToXInputInputState(Button.c_str()).state);
-          delay(500);
-          SystemManager::getInstance().ControllerModule.XInputUsb.SetInputState(Xbox_NONE);
-          #endif
-          #ifdef HAS_BT
-          SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Xbox_One;
-          if (!g_compositeHID.isConnected())
-          {
-            XboxOneSControllerDeviceConfiguration* config = new XboxOneSControllerDeviceConfiguration();
-            BLEHostConfiguration hostConfig = config->getIdealHostConfiguration();
-            SystemManager::getInstance().ControllerModule.XboxBT = new XboxGamepadDevice(config);
-            g_compositeHID.addDevice(SystemManager::getInstance().ControllerModule.XboxBT);
-            g_compositeHID.begin(hostConfig);
-            delay(100);
-          }
-          Serial.println(Button.c_str());
-          SystemManager::getInstance().ControllerModule.XboxBT->press(getXboxButtonValue(Button.c_str()));
-          delay(500);
-          SystemManager::getInstance().ControllerModule.XboxBT->release(getXboxButtonValue(Button.c_str()));
-          #endif
+
         }
-        else if (typeString == "dualshock")
+        else if (typeString == "playstation")
         {
-#if CFG_TUD_HID
-        SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Dualshock;
-        if (!SystemManager::getInstance().ControllerModule.DualShockUSB.Initialized)
+#ifdef HAS_BT
+        SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Playstation;
+        if (!SystemManager::getInstance().ControllerModule.Playstation.Initilized)
         {
-          SystemManager::getInstance().ControllerModule.DualShockUSB.begin("Playstation Wireless Controller");
+          SystemManager::getInstance().ControllerModule.Playstation.connect();
           delay(100);
         }
-        Serial.println(StringToDualShockInputState(Button.c_str()).name);
-        SystemManager::getInstance().ControllerModule.DualShockUSB.SetInputState(StringToDualShockInputState(Button.c_str()).state);
+        Serial.println(StringToPSInputState(Button.c_str()).name);
+        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(Button.c_str()).state);
         delay(500);
-        SystemManager::getInstance().ControllerModule.DualShockUSB.SetInputState(PS4_NONE);
+        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(PS_NONE);
 #endif
+        }
       }
-      else if (typeString == "dualsense")
+    }
+
+    if (cmd_args.get(0) == F("sendwebrequest"))
+    {
+      int SSID = this->argSearch(&cmd_args, "-s");
+      int Password = this->argSearch(&cmd_args, "-p");
+      int type = this->argSearch(&cmd_args, "-t");
+      int Url = this->argSearch(&cmd_args, "-u");
+      int Payload = this->argSearch(&cmd_args, "-l");
+
+      if (SSID == -1 || Password == -1)
       {
-#if CFG_TUD_HID
-        SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::DualSense;
-        if (!SystemManager::getInstance().ControllerModule.DualSenseUSB.Initialized)
+        Serial.println("Empty Wifi Name or Password");
+        return;
+      }
+
+      if (type != -1 && Url != -1)
+      {
+        String SSIDString = cmd_args.get(SSID + 1);
+        String PasswordString = cmd_args.get(Password + 1);
+        String TypeString = cmd_args.get(type + 1);
+        String UrlString = cmd_args.get(Url + 1);
+
+        if (Payload != -1)
         {
-          SystemManager::getInstance().ControllerModule.DualSenseUSB.begin("Playstation Wireless Controller");
-          delay(100);
+          String PayloadString = cmd_args.get(Payload + 1);
+          SystemManager::getInstance().wifiModule.SendWebRequest(SSIDString.c_str(), PasswordString.c_str(), TypeString, UrlString, PayloadString);
         }
-        Serial.println(StringToDualSenseInputState(Button.c_str()).name);
-        SystemManager::getInstance().ControllerModule.DualSenseUSB.SetInputState(StringToDualSenseInputState(Button.c_str()).state);
-        delay(500);
-        SystemManager::getInstance().ControllerModule.DualSenseUSB.SetInputState(PS5_NONE);
-#endif
+        else 
+        {
+          SystemManager::getInstance().wifiModule.SendWebRequest(SSIDString.c_str(), PasswordString.c_str(), TypeString, UrlString);
         }
       }
     }
@@ -705,6 +698,7 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'attack -t deauth': Start Deauth Attack on the Captured Networks"));
       Serial.println(F("- 'castv2connect -s <SSID> -p <PASSWORD> -v <Device>': Connect to a device using CastV2 protocol."));
       Serial.println(F("- 'dialconnect -s <SSID> -p <PASSWORD> -t <App> -v <Device>': Connect to a device using DIAL protocol."));
+      Serial.println(F("- 'deauth': Deauth Scanned Stations of Scanned Access Points."));
       Serial.println(F("- 'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>': Detect deauthentication frames."));
       Serial.println(F("- 'calibrate': Calibrate the most active network. Used for sniffing functions"));
       Serial.println(F("- 'blespam -t <type>': Start BLE spamming of a specific type ('samsung', 'apple', 'google', 'windows', or 'all')."));
@@ -719,7 +713,7 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'detectblespam': Detect BLE Spams That Might Be Happening Around You"));
       Serial.println(F("- 'airtagscan': Detect Apple AirTags and there Payloads around You"));
       Serial.println(F("- 'streetdetector': Detect What Street Your on Using GPS (Requires SD Card With Map Data)"));
-      Serial.println(F("- 'wardrive': Detect What Street Access Points Are on and gather other WiFi Information"));
+      Serial.println(F("- 'wardrive [-b EnableBLEScanning (May Crash After a while if enabled)]': Detect What Street Access Points Are on and gather other WiFi Information"));
     }
 
     if (cmd_args.get(0) == F("sniffpmkid"))
@@ -961,70 +955,38 @@ void CommandLine::executeJsonScript(const char* Json) {
       if (buttons.is<JsonArray>()) { 
         for (const char* button : buttons.as<JsonArray>()) {
           Serial.println(button);
-          #if CFG_TUD_HID
-          SystemManager::getInstance().ControllerModule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
-          #endif
+#ifdef HAS_BT
+          SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(button).state);
+#endif
         }
       } else {
         const char* button = buttons;
         Serial.println(button);
-        #if CFG_TUD_HID
-        SystemManager::getInstance().ControllerModule.NSWUsb.SetInputState(StringToNSWInputState(button).state);
-        #endif
+#ifdef HAS_BT
+        SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(button).state);
+#endif
       }
     }
     if (strcmp(type, "xinput") == 0)
     {
-      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Xbox_One;
-      if (buttons.is<JsonArray>()) { 
-        for (const char* button : buttons.as<JsonArray>()) {
-          Serial.println(button);
-          #if CFG_TUD_HID
-          SystemManager::getInstance().ControllerModule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
-          #endif
-        }
-      } else {
-        const char* button = buttons;
-        Serial.println(button);
-        #if CFG_TUD_HID
-        SystemManager::getInstance().ControllerModule.XInputUsb.SetInputState(StringToXInputInputState(button).state);
-        #endif
-      }
+      
     }
-    if (strcmp(type, "dualshock") == 0)
+    if (strcmp(type, "playstation") == 0)
     {
-      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Dualshock;
+      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Playstation;
       if (buttons.is<JsonArray>()) { 
         for (const char* button : buttons.as<JsonArray>()) {
           Serial.println(button);
-          #if CFG_TUD_HID
-          SystemManager::getInstance().ControllerModule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
-          #endif
+#ifdef HAS_BT
+          SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(button).state);
+#endif
         }
       } else {
         const char* button = buttons;
         Serial.println(button);
-        #if CFG_TUD_HID
-        SystemManager::getInstance().ControllerModule.DualShockUSB.SetInputState(StringToDualShockInputState(button).state);
-        #endif
-      }
-    }
-    if (strcmp(type, "dualsense") == 0)
-    {
-      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::DualSense;
-      if (buttons.is<JsonArray>()) { 
-        for (const char* button : buttons.as<JsonArray>()) {
-          Serial.println(button);
-          #if CFG_TUD_HID
-          SystemManager::getInstance().ControllerModule.DualSenseUSB.SetInputState(StringToDualSenseInputState(button).state);
-          #endif
-        }
-      } else {
-        const char* button = buttons;
-        Serial.println(button);
-        #if CFG_TUD_HID
-        SystemManager::getInstance().ControllerModule.DualSenseUSB.SetInputState(StringToDualSenseInputState(button).state);
-        #endif
+#ifdef HAS_BT
+        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(button).state);
+#endif
       }
     }
     delay(delayTime);

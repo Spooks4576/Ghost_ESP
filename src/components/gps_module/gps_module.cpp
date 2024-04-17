@@ -177,7 +177,7 @@ void gps_module::streetloop()
 #endif
 }
 
-void gps_module::setup()
+void gps_module::setup(bool EnableBLEScans)
 {
     if (SystemManager::getInstance().sdCardModule.Initlized)
     {
@@ -186,6 +186,10 @@ void gps_module::setup()
 #endif
     Initilized = true;
     Stop = false;
+#ifdef HAS_BT
+  if (EnableBLEScans)
+  SystemManager::getInstance().bleModule->InitWarDriveCallback();
+#endif
     Serial.println("Initilized GPS Serial");
     }
     else 
