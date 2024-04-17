@@ -8,8 +8,11 @@ Ghost ESP is a firmware designed for ESP32 microcontrollers, offering a comprehe
 - Station scanning
 - SSID spamming
 - BLE spamming for major brands (iOS, Windows, Android, Samsung)
+- BLE Detectors for various devices like flipper zeros and apple air tags
 - DIAL connect to interact with DIAL-enabled devices (YouTube, Netflix, Roku)
 - Rainbow LED mode
+- Street Detector
+- Wardriving WiFi and BLE
 
 ## Board Support
 
