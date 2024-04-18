@@ -1,8 +1,6 @@
 #include "rgb_led_module.h"
 #include <Arduino.h>
 
-#ifdef OLD_LED
-
 void RGBLedModule::init() {
     pinMode(redPin, OUTPUT);
     pinMode(greenPin, OUTPUT);
@@ -119,5 +117,3 @@ void RGBLedModule::setColor(int red, int green, int blue) {
     digitalWrite(greenPin, pwmGreen);
     digitalWrite(bluePin, pwmBlue);
 }
-
-#endif

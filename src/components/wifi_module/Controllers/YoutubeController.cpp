@@ -1,10 +1,15 @@
 #include "YoutubeController.h"
-#include "core/globals.h"
+#include <core/system_manager.h>
 
 
 void YoutubeController::launchApp(const String& appUrl) {
   int startPos = appUrl.indexOf('/', 7);
   String basePath = (startPos != -1) ? appUrl.substring(startPos) : "/";
+
+   
+    if (!basePath.endsWith("/")) {
+        basePath += "/";
+    }
 
   String youtubePath = basePath + "YouTube";
 
@@ -37,7 +42,7 @@ int YoutubeController::checkAppStatus(const String& appUrl, Device& device_I) {
 
     int startPos = appUrl.indexOf('/', 7);
     String basePath = (startPos != -1) ? appUrl.substring(startPos) : "/";
-    String youtubePath = basePath + "YouTube";
+    String youtubePath = basePath + "/YouTube";
 
     Serial.println("[checkYouTubeAppStatus] Connecting to IP: " + extractedIp.toString() + " Port: " + String(extractedPort));
     LOG_MESSAGE_TO_SD("[checkYouTubeAppStatus] Connecting to IP: " + extractedIp.toString() + " Port: " + String(extractedPort));

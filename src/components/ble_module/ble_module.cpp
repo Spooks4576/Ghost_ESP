@@ -1,6 +1,7 @@
 #include "ble_module.h"
 #include <Arduino.h>
-#include "core/globals.h"
+#include "core/system_manager.h"
+#include "components/gps_module/gps_module.h"
 
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -151,8 +152,8 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         break;
       }
       default: {
-        LOG_MESSAGE_TO_SD(("Please Provide a Company Type"));
-        Serial.println("Please Provide a Company Type");
+        LOG_MESSAGE_TO_SD(F("Please Provide a Company Type"));
+        Serial.println(F("Please Provide a Company Type"));
         break;
       }
     }
@@ -170,7 +171,7 @@ void BLEModule::executeSpamAll()
     while (BLEInitilized)
     {
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 0, 255), 300, false);
 #endif
       if (Serial.available() > 0)
       {
@@ -183,11 +184,8 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
         }
       }
       executeSpam(EBLEPayloadType::Apple, false);
-      delay(100);
       executeSpam(EBLEPayloadType::Google, false);
-      delay(100);
       executeSpam(EBLEPayloadType::Microsoft, false);
-      delay(100);
       executeSpam(EBLEPayloadType::Samsung, false);
     }
 #endif
@@ -217,7 +215,7 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       pAdvertising->setScanResponseData(advertisementData.ScanData);
       pAdvertising->start();
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(0, 0, 255), 300, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 0, 255), 300, false);
 #endif
       delay(100);
       pAdvertising->stop();
@@ -261,6 +259,16 @@ void BLEModule::BleSpamDetector()
 #endif
 }
 
+void BLEModule::InitWarDriveCallback()
+{
+#ifdef HAS_BT
+  shutdownBLE();
+  NimBLEDevice::init("");
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new WarDriveBTCallbacks());
+  NimBLEDevice::getScan()->start(0, nullptr, false);
+#endif
+}
+
 void BLEModule::BleSniff()
 {
 #ifdef HAS_BT
@@ -270,7 +278,7 @@ void BLEModule::BleSniff()
   NimBLEDevice::getScan()->start(0, nullptr, false);
 
   #ifdef SD_CARD_CS_PIN
-  sdCardmodule->startPcapLogging("BT.pcap", true);
+  SystemManager::getInstance().sdCardModule.startPcapLogging("BT.pcap", true);
   #endif
 
   while (BLEInitilized)
@@ -283,8 +291,32 @@ void BLEModule::BleSniff()
       {
         NimBLEDevice::getScan()->stop();
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->stopPcapLogging();
+SystemManager::getInstance().sdCardModule.stopPcapLogging();
 #endif
+        break;
+      }
+    }
+  }
+#endif
+}
+
+void BLEModule::AirTagScanner()
+{
+#ifdef HAS_BT
+  shutdownBLE();
+  NimBLEDevice::init("");
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleAirTagCallbacks());
+  NimBLEDevice::getScan()->start(0, nullptr, false);
+
+  while (BLEInitilized)
+  {
+    if (Serial.available() > 0)
+    {
+      String message = Serial.readString();
+
+      if (message.startsWith("stop"))
+      {
+        NimBLEDevice::getScan()->stop();
         break;
       }
     }
@@ -335,10 +367,10 @@ void FlipperFinderCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
     if (UUID.indexOf("0x3082") != -1)
     {
       Serial.printf("Found White Flipper Device %s", advertisedDevice->toString().c_str());
-      LOG_MESSAGE_TO_SD("Found White Flipper Device");
+      LOG_MESSAGE_TO_SD(F("Found White Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
       return;
     }
@@ -346,10 +378,10 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false)
     if (UUID.indexOf("0x3081") != -1)
     {
       Serial.printf("Found Black Flipper Device %s", advertisedDevice->toString().c_str());
-      LOG_MESSAGE_TO_SD("Found Black Flipper Device");
+      LOG_MESSAGE_TO_SD(F("Found Black Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
       return;
     }
@@ -357,14 +389,27 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false)
     if (UUID.indexOf("0x3083") != -1)
     {
       Serial.printf("Found Transparent Flipper Device %s", advertisedDevice->toString().c_str());
-      LOG_MESSAGE_TO_SD("Found Transparent Flipper Device");
+      LOG_MESSAGE_TO_SD(F("Found Transparent Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 140, 0), 500, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
       return;
     }
   }
+}
+
+void WarDriveBTCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
+{
+  #ifdef HAS_BT
+  #ifdef HAS_GPS
+  if (SystemManager::getInstance().gpsModule->gps.location.isValid() && SystemManager::getInstance().gpsModule->gps.location.isUpdated())
+  {
+    String Message = G_Utils::formatString("BLE Device Info: %s, Lat: %f, Lng: %f", advertisedDevice->toString().c_str(), SystemManager::getInstance().gpsModule->gps.location.lat(), SystemManager::getInstance().gpsModule->gps.location.lng());
+    LOG_RESULTS("bt_wardrive.txt", "gps", Message);
+  }
+  #endif
+  #endif
 }
 
 void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
@@ -389,18 +434,18 @@ void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice
   if (payloadInfoMap.find(payload) == payloadInfoMap.end()) {
       PayloadInfo info = {1, millis(), MacAddr};
       payloadInfoMap[payload] = info;
-      Serial.println("New payload detected.");
-      LOG_MESSAGE_TO_SD("New payload detected.");
+      Serial.println(F("New payload detected."));
+      LOG_MESSAGE_TO_SD(F("New payload detected."));
   } else {
       PayloadInfo &info = payloadInfoMap[payload];
       info.count++;
       unsigned long currentTime = millis();
       unsigned long detectionWindow = 2000;
       if (info.count > 20 && (currentTime - info.firstSeenTime) <= detectionWindow || info.Mac == MacAddr) {
-          Serial.println("BLE Spam detected!");
-          LOG_MESSAGE_TO_SD("BLE Spam detected!");
+          Serial.println(F("BLE Spam detected!"));
+          LOG_MESSAGE_TO_SD(F("BLE Spam detected!"));
 #ifdef NEOPIXEL_PIN
-          neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 500, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 200, false);
 #endif
       } else if ((currentTime - info.firstSeenTime) > detectionWindow) {
           info.count = 1;
@@ -415,11 +460,59 @@ void BleSnifferCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
   uint8_t* Payload = advertisedDevice->getPayload();
   size_t PayloadLen = advertisedDevice->getPayloadLength();
 
-  Serial.println("Packet Recieved");
+  Serial.println(F("Packet Recieved"));
 
 #ifdef SD_CARD_CS_PIN
-  sdCardmodule->logPacket(Payload, PayloadLen);
+  SystemManager::getInstance().sdCardModule.logPacket(Payload, PayloadLen);
 #endif
+}
+
+// Credit to https://github.com/MatthewKuKanich for the AirTag Research
+void BleAirTagCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
+{
+  uint8_t* payLoad = advertisedDevice->getPayload();
+  size_t payLoadLength = advertisedDevice->getPayloadLength();
+
+  // searches both "1E FF 4C 00" and "4C 00 12 19" as the payload can differ slightly
+  bool patternFound = false;
+  for (int i = 0; i <= payLoadLength - 4; i++) {
+    if (payLoad[i] == 0x1E && payLoad[i+1] == 0xFF && payLoad[i+2] == 0x4C && payLoad[i+3] == 0x00) {
+      patternFound = true;
+      break;
+    }
+    if (payLoad[i] == 0x4C && payLoad[i+1] == 0x00 && payLoad[i+2] == 0x12 && payLoad[i+3] == 0x19) {
+      patternFound = true;
+      break;
+    }
+  }
+
+  if (patternFound) {
+    String macAddress = advertisedDevice->getAddress().toString().c_str();
+    macAddress.toUpperCase();
+
+    if (foundDevices.find(macAddress) == foundDevices.end()) {
+      foundDevices.insert(macAddress);
+      airTagCount++;
+
+      int rssi = advertisedDevice->getRSSI();
+
+      Serial.println("AirTag found!");
+      Serial.print("Tag: ");
+      Serial.println(airTagCount);
+      Serial.print("MAC Address: ");
+      Serial.println(macAddress);
+      Serial.print("RSSI: ");
+      Serial.print(rssi);
+      Serial.println(" dBm");
+      Serial.print("Payload Data: ");
+      LOG_MESSAGE_TO_SD("AirTag Found! Tag: " + String(airTagCount) + " Mac Address: " + macAddress + "RSSI: " + String(rssi) + "dbm;");
+      for (size_t i = 0; i < payLoadLength; i++) {
+        Serial.printf("%02X ", payLoad[i]);
+      }
+
+      Serial.println("\n");
+    }
+  }
 }
 
 #endif

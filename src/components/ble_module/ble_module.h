@@ -8,6 +8,7 @@
 #endif
 #include <esp_mac.h>
 #include <Arduino.h>
+#include <set>
 
 inline struct {
     uint32_t value;
@@ -109,6 +110,17 @@ class BleSnifferCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
 
+class BleAirTagCallbacks : public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+    std::set<String> foundDevices;
+    unsigned int airTagCount = 0;
+    int scanTime = 1;
+};
+
+class WarDriveBTCallbacks : public NimBLEAdvertisedDeviceCallbacks {
+    void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+};
+
 #endif
 
 #ifdef HAS_BT
@@ -130,7 +142,9 @@ public:
 
     void findtheflippers();
     void BleSpamDetector();
+    void AirTagScanner();
     void BleSniff();
+    void InitWarDriveCallback();
 
     bool BLEInitilized;
     #ifdef HAS_BT
@@ -165,9 +179,9 @@ public:
     void fill_samsungbud_byte(uint8_t *array) {
         int randomIndex = rand() % NUM_MODELS;
         uint32_t value = buds_models[randomIndex].value;
-        array[17] = (value >> 24) & 0xFF; // 17th byte
-        array[18] = (value >> 16) & 0xFF;  // 18th byte
-        array[20] = (value >> 8) & 0xFF; // 20th byte, note the change in order due to byte significance
+        array[17] = (value >> 24) & 0xFF;
+        array[18] = (value >> 16) & 0xFF;
+        array[20] = (value >> 8) & 0xFF;
     }
 
     #endif

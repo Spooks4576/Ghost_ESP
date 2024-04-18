@@ -1,8 +1,6 @@
 #pragma once
 
-#include "board_config.h" 
-
-#ifdef SD_CARD_CS_PIN
+#include "board_config.h"
 
 #include <Arduino.h>
 #include <SD.h>
@@ -32,7 +30,7 @@ public:
     SDCardModule();
     bool init();
     bool writeFile(const char *path, const char *message);
-    bool readFile(const char *path);
+    File readFile(const char *path);
     bool appendFile(const char *path, const char *message);
     bool deleteFile(const char *path);
     bool logMessage(const char *logFileName, const char* foldername, String message);
@@ -40,8 +38,8 @@ public:
     bool logPacket(const uint8_t *packet, uint32_t length);
     void flushLog();
     void stopPcapLogging();
-
-private:
+    FS* SDI;
+public:
     int csPin;
     int BootNum;
     bool Initlized;
@@ -59,12 +57,13 @@ private:
     };
     FS* createFileSystem(bool isMMCCard) {
         if (isMMCCard) {
+            #ifdef SOC_SDMMC_HOST_SUPPORTED
             return &SD_MMC;
+            #else
+            return nullptr;
+            #endif
         } else {
             return &SD;
         }
     }
-    FS* SDI;
 };
-
-#endif // SD_CARD_CS_PIN

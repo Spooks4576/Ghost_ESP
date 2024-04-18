@@ -24,7 +24,9 @@
 #include "stddef.h"
 #include "WString.h"
 
-template <typename T>
+namespace WebServer
+{
+  template <typename T>
 class LinkedListNode {
     T _value;
   public:
@@ -195,8 +197,6 @@ public:
     return false;
   }
 };
-
-
-
+}
 
 #endif /* STRINGARRAY_H_ */

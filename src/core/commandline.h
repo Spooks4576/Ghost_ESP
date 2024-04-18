@@ -1,11 +1,17 @@
 #pragma once
 
-#include "globals.h"
+#include <core/system_manager.h>
 #include <LinkedList.h>
+#include <ArduinoJson.h>
 
 class CommandLine {
-  private:
+  public:
+    static CommandLine& getInstance() {
+        static CommandLine instance;
+        return instance;
+    }
     String getSerialInput();
+    void executeJsonScript(const char* json);
     LinkedList<String> parseCommand(String input, char* delim);
     String toLowerCase(String str);
     void filterAccessPoints(String filter);

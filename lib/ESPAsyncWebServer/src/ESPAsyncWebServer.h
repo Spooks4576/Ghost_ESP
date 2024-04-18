@@ -141,7 +141,7 @@ class AsyncWebServerRequest {
     AsyncWebServer* _server;
     AsyncWebHandler* _handler;
     AsyncWebServerResponse* _response;
-    StringArray _interestingHeaders;
+    WebServer::StringArray _interestingHeaders;
     ArDisconnectHandler _onDisconnectfn;
 
     String _temp;
@@ -163,9 +163,9 @@ class AsyncWebServerRequest {
     size_t _contentLength;
     size_t _parsedLength;
 
-    LinkedList<AsyncWebHeader *> _headers;
-    LinkedList<AsyncWebParameter *> _params;
-    LinkedList<String *> _pathParams;
+    WebServer::LinkedList<AsyncWebHeader *> _headers;
+    WebServer::LinkedList<AsyncWebParameter *> _params;
+    WebServer::LinkedList<String *> _pathParams;
 
     uint8_t _multiParseState;
     uint8_t _boundaryPosition;
@@ -358,7 +358,7 @@ typedef enum {
 class AsyncWebServerResponse {
   protected:
     int _code;
-    LinkedList<AsyncWebHeader *> _headers;
+    WebServer::LinkedList<AsyncWebHeader *> _headers;
     String _contentType;
     size_t _contentLength;
     bool _sendContentLength;
@@ -397,8 +397,8 @@ typedef std::function<void(AsyncWebServerRequest *request, uint8_t *data, size_t
 class AsyncWebServer {
   protected:
     AsyncServer _server;
-    LinkedList<AsyncWebRewrite*> _rewrites;
-    LinkedList<AsyncWebHandler*> _handlers;
+    WebServer::LinkedList<AsyncWebRewrite*> _rewrites;
+    WebServer::LinkedList<AsyncWebHandler*> _handlers;
     AsyncCallbackWebHandler* _catchAllHandler;
 
   public:
@@ -439,7 +439,7 @@ class AsyncWebServer {
 };
 
 class DefaultHeaders {
-  using headers_t = LinkedList<AsyncWebHeader *>;
+  using headers_t = WebServer::LinkedList<AsyncWebHeader *>;
   headers_t _headers;
   
   DefaultHeaders()

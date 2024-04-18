@@ -153,7 +153,7 @@ size_t AsyncEventSourceMessage::send(AsyncClient *client) {
 // Client
 
 AsyncEventSourceClient::AsyncEventSourceClient(AsyncWebServerRequest *request, AsyncEventSource *server)
-: _messageQueue(LinkedList<AsyncEventSourceMessage *>([](AsyncEventSourceMessage *m){ delete  m; }))
+: _messageQueue(WebServer::LinkedList<AsyncEventSourceMessage *>([](AsyncEventSourceMessage *m){ delete  m; }))
 {
   _client = request->client();
   _server = server;
@@ -252,7 +252,7 @@ void AsyncEventSourceClient::_runQueue(){
 
 AsyncEventSource::AsyncEventSource(const String& url)
   : _url(url)
-  , _clients(LinkedList<AsyncEventSourceClient *>([](AsyncEventSourceClient *c){ delete c; }))
+  , _clients(WebServer::LinkedList<AsyncEventSourceClient *>([](AsyncEventSourceClient *c){ delete c; }))
   , _connectcb(NULL)
 {}
 

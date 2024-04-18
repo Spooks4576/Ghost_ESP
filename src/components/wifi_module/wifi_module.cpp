@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <Arduino.h>
+#include <components/gps_module/gps_module.h>
 #include "callbacks.h"
+#include <ArduinoHttpClient.h>
 
 String WiFiModule::freeRAM()
 {
@@ -114,11 +116,6 @@ bool WiFiModule::addSSID(String essid) {
 
 void WiFiModule::Sniff(SniffType Type, int TargetChannel)
 {
-#ifdef OLD_LED
-  Threadinfo.TargetPin = rgbmodule->redPin;
-#endif
-
-
   bool SetChannel = TargetChannel != 0;
   int set_channel = TargetChannel == 0 ? random(1, 13) : TargetChannel;
   if (MostActiveChannel != 0)
@@ -157,7 +154,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
       
       esp_wifi_set_promiscuous_rx_cb(&beaconSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("BEACON.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("BEACON.pcap");
 #endif
       break;    
     }
@@ -165,7 +162,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       esp_wifi_set_promiscuous_rx_cb(&eapolSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("EAPOL.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("EAPOL.pcap");
 #endif
      break;
     }
@@ -173,7 +170,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       esp_wifi_set_promiscuous_rx_cb(&probeSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("PROBE.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("PROBE.pcap");
 #endif
      break;
     }
@@ -181,7 +178,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       esp_wifi_set_promiscuous_rx_cb(&pwnSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("PWN.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("PWN.pcap");
 #endif
       break;
     }
@@ -189,7 +186,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       esp_wifi_set_promiscuous_rx_cb(&rawSnifferCallback);
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->startPcapLogging("RAW.pcap");
+      SystemManager::getInstance().sdCardModule.startPcapLogging("RAW.pcap");
 #endif
       break;
     }
@@ -202,7 +199,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       shutdownWiFi();
 #ifdef SD_CARD_CS_PIN
-      sdCardmodule->stopPcapLogging();
+      SystemManager::getInstance().sdCardModule.stopPcapLogging();
 #endif
       break;
     }
@@ -215,9 +212,11 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
         esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       }
       lastChangeTime = currentTime;
-      BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
 #ifdef NEOPIXEL_PIN
-      neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 255), 1000, false);
+      SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 255), 1000, false);
 #endif
     }
   }
@@ -225,10 +224,6 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
 
 void WiFiModule::Scan(ScanType type)
 {
-#ifdef OLD_LED
-  Threadinfo.TargetPin = rgbmodule->greenPin;
-#endif
-
   switch (type)
   {
     case ScanType::SCAN_AP:
@@ -306,7 +301,21 @@ void WiFiModule::Scan(ScanType type)
 
       break;
     }
+    case ScanType::SCAN_WARDRIVE:
+    {
+      SystemManager::getInstance().gpsModule->setup(EnableBLEWardriving);
+
+      while (!SystemManager::getInstance().gpsModule->Stop)
+      {
+        SystemManager::getInstance().gpsModule->WarDrivingLoop();
+      }
+    }
   }
+}
+
+void WiFiModule::LaunchEvilPortal()
+{
+  
 }
 
 void WiFiModule::getMACatoffset(char *addr, uint8_t* data, uint16_t offset) {
@@ -400,12 +409,74 @@ void WiFiModule::Calibrate()
   }
 }
 
+void WiFiModule::SendWebRequest(const char* SSID, const char* Password, String requestType, String url, String data) 
+{
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("Connecting to WiFi...");
+        WiFi.begin(SSID, Password);
+
+        int maxAttempts = 10, attempt = 0;
+        while (WiFi.status() != WL_CONNECTED && attempt < maxAttempts) {
+            delay(1000);
+            Serial.print(".");
+            attempt++;
+        }
+        Serial.println();
+
+        if (WiFi.status() == WL_CONNECTED) {
+            Serial.println("Connected to WiFi");
+        } else {
+            Serial.println("Failed to connect to WiFi");
+            return;
+        }
+    }
+
+    String requestTypeLower = requestType;
+    requestTypeLower.toLowerCase();
+
+    HttpClient httpClient = HttpClient(wifiClientSecure, url, 443); 
+
+    httpClient.beginRequest();
+    httpClient.sendHeader("User-Agent", "ESP32");
+    httpClient.sendHeader("Content-Type", "application/json");
+
+    if (requestTypeLower == "get") {
+        Serial.println("Sending GET request to " + url);
+        httpClient.get(url.c_str());
+    } else if (requestTypeLower == "post") {
+        Serial.println("Sending POST request to " + url);
+        Serial.println("Data: " + data);
+        httpClient.post(url.c_str(), "application/json", data.length(), reinterpret_cast<const byte*>(data.c_str()));
+    } else if (requestTypeLower == "put") {
+        Serial.println("Sending PUT request to " + url);
+        Serial.println("Data: " + data);
+        httpClient.put(url.c_str(), "application/json", data.length(), reinterpret_cast<const byte*>(data.c_str()));
+    } else if (requestTypeLower == "delete") {
+        Serial.println("Sending DELETE request to " + url);
+        httpClient.del(url.c_str());
+    } else {
+        Serial.println("Invalid request type");
+        httpClient.endRequest();
+        return;
+    }
+
+    httpClient.endRequest();
+
+    int statusCode = httpClient.responseStatusCode();
+    if (statusCode > 0) {
+        String Body = httpClient.responseBody();
+        Serial.print("HTTP Response code: ");
+        Serial.println(statusCode);
+        LOG_MESSAGE_TO_SD(Body);
+        Serial.println(Body);
+    } else {
+        Serial.print("Error on sending request: ");
+        Serial.println(statusCode);
+  }
+}
+
 void WiFiModule::Attack(AttackType type)
 {
-#ifdef OLD_LED
-  Threadinfo.TargetPin = rgbmodule->redPin;
-#endif
-
   switch (type)
   {
     case AttackType::AT_Rickroll:
@@ -429,9 +500,11 @@ void WiFiModule::Attack(AttackType type)
                 broadcastSetSSID(rick_roll[x], i);
               }
           }
-          BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
 #ifdef NEOPIXEL_PIN
-neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 300, false);
 #endif
           delay(1);
       }
@@ -452,7 +525,9 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
           }
         }
         broadcastRandomSSID();
-        BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
         delay(1);
       }
       break;
@@ -478,7 +553,9 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
             broadcastSetSSID(ssids->get(i).essid.c_str(), x);
           }
         }
-        BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
         delay(1);
       }
       break;
@@ -506,10 +583,39 @@ neopixelmodule->breatheLED(neopixelmodule->strip.Color(255, 0, 0), 300, false);
               }
             }
           }
-          BreatheTask();
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
         }
       }
       break;
+    }
+    case AT_Karma:
+    {
+      while (wifi_initialized)
+      {
+        if (Serial.available() > 0)
+        {
+          String message = Serial.readString();
+
+          if (message.startsWith("stop"))
+          {
+            shutdownWiFi();
+            break;
+          }
+        }
+        for (int i = 0; i < 12; i++)
+        {
+          for (int x = 0; x < (sizeof(KarmaSSIDs)/sizeof(char *)); x++)
+          {
+            broadcastSetSSID(KarmaSSIDs[x], i);
+          }
+        }
+#ifdef OLD_LED
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
+        delay(1);
+      }
     }
   }
 }

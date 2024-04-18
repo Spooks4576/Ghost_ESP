@@ -1,5 +1,5 @@
 #include "RokuController.h"
-#include "core/globals.h"
+#include <core/system_manager.h>
 
 RokuController::RokuController() {
 }

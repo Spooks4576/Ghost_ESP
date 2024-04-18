@@ -1,5 +1,5 @@
 #include "Dial.h"
-#include "core/globals.h"
+#include <core/system_manager.h>
 
 const int MAX_RETRIES = 50;
 const int RETRY_DELAY = 500;
@@ -274,36 +274,26 @@ String DIALClient::concatenatePaths(const String& base, const String& appUrl) {
 
 String DIALClient::extractApplicationURL(HttpClient& httpc) {
   String appUrl;
-  char headerChar;
-  String currentLine = "";
-  int consecutiveNewlines = 0;
-  int maxHeadersRead = 1000;
+  bool headerEnd = false;
   int readCount = 0;
+  const int maxHeadersRead = 1000;
+  String headerLine = ""; 
 
-  while (httpc.connected() && readCount < maxHeadersRead) {
-    headerChar = httpc.readHeader();
-    if (headerChar == '\n') {
-      consecutiveNewlines++;
+  Serial.println(F("Starting to read headers to find Application-URL..."));
 
-      currentLine.trim();
-      currentLine.toLowerCase();
-      if (currentLine.startsWith("application-url:")) {
-          appUrl = currentLine.substring(currentLine.indexOf(':') + 1); // +1 just to skip over the colon
-          appUrl.trim();  // This will remove any leading or trailing whitespaces
-          break;
-      }
-      currentLine = "";
-
-      if (consecutiveNewlines >= 2) {
-
-        break;
-      }
-    } else if (headerChar != '\r') {
-      consecutiveNewlines = 0;
-      currentLine += headerChar;
+  while(httpc.headerAvailable())
+  {
+    String headerName = httpc.readHeaderName();
+    String headerValue = httpc.readHeaderValue();
+    Serial.println(headerName);
+    Serial.println(headerValue);
+    if (headerName == "Application-URL") // Application URL Does not have a : even though it displays like that
+    {
+      appUrl = headerValue;
+      break;
     }
-    readCount++;
   }
+
   return appUrl;
 }
 

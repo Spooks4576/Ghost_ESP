@@ -1,6 +1,8 @@
 #include "sd_card_module.h"
 
-#ifdef SD_CARD_CS_PIN
+#ifndef SD_CARD_CS_PIN
+#define SD_CARD_CS_PIN 0
+#endif
 
 SDCardModule::SDCardModule() : csPin(SD_CARD_CS_PIN) {}
 
@@ -125,7 +127,7 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
         char newLogFileName[128];
         sprintf(newLogFileName, "/%s/boot_%u_%s", foldername, BootNum, logFileName);
 
-        String fullMessage = String(timeString) + message;
+        String fullMessage = message;
 
         if (!SDI->exists("/" + String(foldername)))
         {
@@ -134,7 +136,7 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
 
         if (!SDI->exists(newLogFileName))
         {
-            writeFile(newLogFileName, "Begin File");
+            writeFile(newLogFileName, "");
         }
         
         return appendFile(newLogFileName, fullMessage.c_str());
@@ -249,18 +251,15 @@ bool SDCardModule::writeFile(const char *path, const char *message) {
     return true;
 }
 
-bool SDCardModule::readFile(const char *path) {
+File SDCardModule::readFile(const char *path) {
     File file = SDI->open(path);
     if (!file) {
         Serial.println("Failed to open file for reading");
-        return false;
+        return file;
     }
     Serial.print("Read from file: ");
-    while (file.available()) {
-        Serial.write(file.read());
-    }
-    file.close();
-    return true;
+    Serial.println(path);
+    return file;
 }
 
 bool SDCardModule::appendFile(const char *path, const char *message) {
@@ -286,5 +285,3 @@ bool SDCardModule::deleteFile(const char *path) {
         return false;
     }
 }
-
-#endif // SD_CARD_CS_PIN
