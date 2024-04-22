@@ -197,17 +197,8 @@ void CommandLine::runCommand(String input)
     }
 
     LinkedList<String> cmd_args = this->parseCommand(input, " ");
+    
 
-    if (cmd_args.get(0) == F("gpsdata"))
-    {
-        #ifdef HAS_GPS
-            // if (gpsmodule->getGpsModuleStatus()) {
-            //     Serial.println("Getting GPS Data. Stop with stopscan");
-
-            //   HasRanCommand = true;
-            // }
-        #endif
-    }
     if (cmd_args.get(0) == F("blespam"))
     {
       #ifdef HAS_BT

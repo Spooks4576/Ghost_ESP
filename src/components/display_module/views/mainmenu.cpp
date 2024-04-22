@@ -170,6 +170,8 @@ lv_obj_t * MainMenu::add_battery_module(lv_obj_t * status_bar) {
     lv_obj_set_style_transform_pivot_y(flashIcon, lv_obj_get_height(flashIcon) / 2, 0);   
     lv_obj_set_pos(flashIcon, 8, 185);
     lv_obj_set_style_text_color(flashIcon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(flashIcon, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(battery_icon, LV_SCROLLBAR_MODE_OFF);
     return battery_icon;
 }
 
@@ -195,6 +197,7 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_bg_color(status_bar, lv_color_hex(0x2A2A2A), 0);
     lv_obj_set_style_bg_opa(status_bar, LV_OPA_COVER, 0);
     lv_obj_set_layout(status_bar, LV_LAYOUT_NONE);
+    lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
 
     lv_obj_align(status_bar, LV_ALIGN_RIGHT_MID, 0, 0);
 
@@ -212,6 +215,7 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_transform_pivot_y(bt_icon, lv_obj_get_height(bt_icon) / 2, 0);   
     lv_obj_set_pos(bt_icon, 8, xOffset -= 16);
     lv_obj_set_style_text_color(bt_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(bt_icon, LV_SCROLLBAR_MODE_OFF);
 #endif
 
 #ifdef SD_CARD_CS_PIN
@@ -223,6 +227,7 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_transform_pivot_y(sd_icon, lv_obj_get_height(sd_icon) / 2, 0);   
     lv_obj_set_pos(sd_icon, 8, xOffset -= 20);
     lv_obj_set_style_text_color(sd_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(sd_icon, LV_SCROLLBAR_MODE_OFF);
 #endif
 
     lv_obj_t* wifi_icon = lv_label_create(status_bar);
@@ -233,5 +238,6 @@ lv_obj_t * MainMenu::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_transform_pivot_y(wifi_icon, lv_obj_get_height(wifi_icon) / 2, 0);   
     lv_obj_set_pos(wifi_icon, 8, xOffset -= 23);
     lv_obj_set_style_text_color(wifi_icon, lv_color_hex(0x158FCA), LV_STATE_DEFAULT);
+    lv_obj_set_scrollbar_mode(wifi_icon, LV_SCROLLBAR_MODE_OFF);
     return status_bar;
 }
