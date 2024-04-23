@@ -433,71 +433,6 @@ void CommandLine::runCommand(String input)
       #endif
     }
 
-    if (cmd_args.get(0) == F("controller"))
-    {
-      int type = this->argSearch(&cmd_args, "-t");
-      int button = this->argSearch(&cmd_args, "-b");
-      int ScriptMode = this->argSearch(&cmd_args, "-s");
-      int ConnectionType = this->argSearch(&cmd_args, "-c");
-
-      if (ScriptMode != -1)
-      {
-        static String jsonScript;
-        while (Serial.available()) {
-          char c = Serial.read();
-          if (c == '\f') {
-            executeJsonScript(jsonScript.c_str());
-            jsonScript = "";
-            return;
-          } else {
-            jsonScript += c;
-          }
-        }
-      }
-
-      if (type != -1 && button != -1)
-      {
-        String typeString = cmd_args.get(type + 1);
-        String Button = cmd_args.get(button + 1);
-
-        if (typeString == "nsw")
-        {
-#ifdef HAS_BT
-          SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Nintendo_Switch;
-          if (!SystemManager::getInstance().ControllerModule.NSW.Initilized)
-          {
-            SystemManager::getInstance().ControllerModule.NSW.connect();
-            delay(100);
-          }
-          Serial.println(StringToNSWInputState(Button.c_str()).name);
-          SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(Button.c_str()).state);
-          delay(500);
-          SystemManager::getInstance().ControllerModule.NSW.SetInputState(NONE);
-#endif
-        }
-        else if (typeString == "xinput")
-        {
-
-
-        }
-        else if (typeString == "playstation")
-        {
-#ifdef HAS_BT
-        SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Playstation;
-        if (!SystemManager::getInstance().ControllerModule.Playstation.Initilized)
-        {
-          SystemManager::getInstance().ControllerModule.Playstation.connect();
-          delay(100);
-        }
-        Serial.println(StringToPSInputState(Button.c_str()).name);
-        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(Button.c_str()).state);
-        delay(500);
-        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(PS_NONE);
-#endif
-        }
-      }
-    }
-
     if (cmd_args.get(0) == F("sendwebrequest"))
     {
       int SSID = this->argSearch(&cmd_args, "-s");
@@ -940,46 +875,5 @@ void CommandLine::executeJsonScript(const char* Json) {
     const char* type = cmd["type"];
     auto buttons = cmd["buttons"];
     int delayTime = cmd["delay"];
-
-    if (strcmp(type, "nsw") == 0) {
-      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Nintendo_Switch;
-      if (buttons.is<JsonArray>()) { 
-        for (const char* button : buttons.as<JsonArray>()) {
-          Serial.println(button);
-#ifdef HAS_BT
-          SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(button).state);
-#endif
-        }
-      } else {
-        const char* button = buttons;
-        Serial.println(button);
-#ifdef HAS_BT
-        SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(button).state);
-#endif
-      }
-    }
-    if (strcmp(type, "xinput") == 0)
-    {
-      
-    }
-    if (strcmp(type, "playstation") == 0)
-    {
-      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Playstation;
-      if (buttons.is<JsonArray>()) { 
-        for (const char* button : buttons.as<JsonArray>()) {
-          Serial.println(button);
-#ifdef HAS_BT
-          SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(button).state);
-#endif
-        }
-      } else {
-        const char* button = buttons;
-        Serial.println(button);
-#ifdef HAS_BT
-        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(button).state);
-#endif
-      }
-    }
-    delay(delayTime);
   }
 }

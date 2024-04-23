@@ -4,7 +4,9 @@
 
 #include <Arduino.h>
 #include <SD.h>
+#ifdef SUPPORTS_MMC
 #include <SD_MMC.h>
+#endif
 
 
 struct pcap_global_header {
@@ -57,7 +59,7 @@ public:
     };
     FS* createFileSystem(bool isMMCCard) {
         if (isMMCCard) {
-            #ifdef SOC_SDMMC_HOST_SUPPORTED
+            #ifdef SUPPORTS_MMC
             return &SD_MMC;
             #else
             return nullptr;
