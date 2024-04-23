@@ -254,7 +254,7 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 3000)
+        if (currentTime - lastChangeTime >= 2000)
         {
           lastchannel++ % 13;
           uint8_t set_channel = lastchannel;
@@ -284,6 +284,7 @@ void WiFiModule::Scan(ScanType type)
       this->wifi_initialized = true;
       initTime = millis();
       static unsigned long lastChangeTime = 0;
+      static int lastchannel = 0;
 
       while (this->wifi_initialized)
       {
@@ -293,9 +294,10 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 3000)
+        if (currentTime - lastChangeTime >= 2000)
         {
-          uint8_t set_channel = random(1, 13);
+          lastchannel++ % 13;
+          uint8_t set_channel = lastchannel;
           esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
           lastChangeTime = currentTime;
         }
