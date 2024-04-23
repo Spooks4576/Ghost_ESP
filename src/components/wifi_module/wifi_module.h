@@ -141,9 +141,9 @@ struct BeaconPacket{
 };
 
 
-LinkedList<AccessPoint>* access_points;
-LinkedList<ssid>* ssids;
-LinkedList<Station>* stations;
+inline LinkedList<AccessPoint>* access_points;
+inline LinkedList<ssid>* ssids;
+inline LinkedList<Station>* stations;
 String PROGMEM version_number;
 String PROGMEM board_target;
 bool HasRanCommand;

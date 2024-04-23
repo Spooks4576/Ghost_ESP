@@ -689,7 +689,6 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'attack -t deauth': Start Deauth Attack on the Captured Networks"));
       Serial.println(F("- 'castv2connect -s <SSID> -p <PASSWORD> -v <Device>': Connect to a device using CastV2 protocol."));
       Serial.println(F("- 'dialconnect -s <SSID> -p <PASSWORD> -t <App> -v <Device>': Connect to a device using DIAL protocol."));
-      Serial.println(F("- 'deauth': Deauth Scanned Stations of Scanned Access Points."));
       Serial.println(F("- 'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>': Detect deauthentication frames."));
       Serial.println(F("- 'calibrate': Calibrate the most active network. Used for sniffing functions"));
       Serial.println(F("- 'blespam -t <type>': Start BLE spamming of a specific type ('samsung', 'apple', 'google', 'windows', or 'all')."));
@@ -908,20 +907,20 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       LOG_MESSAGE_TO_SD(F("You did not specify which list to show"));
       return;
     }
+  }
 
-    if (cmd_args.get(0) == F("stop"))
-    {
-      #ifdef OLD_LED
-      SystemManager::getInstance().rgbModule->setColor(1, 1, 1);
-      #endif
-      #ifdef NEOPIXEL_PIN
-      SystemManager::getInstance().neopixelModule->strip.setBrightness(0);
-      #endif
-      SystemManager::getInstance().wifiModule.shutdownWiFi();
-      #ifdef HAS_BT
-      SystemManager::getInstance().bleModule->shutdownBLE();
-      #endif
-    }
+  if (cmd_args.get(0) == F("stop"))
+  {
+    #ifdef OLD_LED
+    SystemManager::getInstance().rgbModule->setColor(1, 1, 1);
+    #endif
+    #ifdef NEOPIXEL_PIN
+    SystemManager::getInstance().neopixelModule->strip.setBrightness(0);
+    #endif
+    SystemManager::getInstance().wifiModule.shutdownWiFi();
+    #ifdef HAS_BT
+    SystemManager::getInstance().bleModule->shutdownBLE();
+    #endif
   }
 }
 
