@@ -7,6 +7,7 @@
 
 LV_IMAGE_DECLARE(logo);
 LV_FONT_DECLARE(strike);
+LV_FONT_DECLARE(Juma);
 
 enum MenuType
 {
@@ -37,6 +38,7 @@ public:
     LinkedList<lv_obj_t*> TextObjects;
     LinkedList<lv_obj_t*> OtherObjects;
     void RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, int TextObjectIndex, int angle);
+    lv_obj_t * RenderImageToButton(lv_obj_t *parent, const lv_img_dsc_t *img_src, int angle, int x, int y, int width, int height);
     void RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coord_t y, int ImageObjectIndex, int angle, bool ScaleUp = false);
     void printTouchToSerial(TS_Point P);
     virtual void HandleTouch(TS_Point P) = 0;

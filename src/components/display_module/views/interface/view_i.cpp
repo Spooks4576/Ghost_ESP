@@ -27,6 +27,25 @@ void ViewInterface::RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, 
     lv_obj_set_scrollbar_mode(ImageObjects[TextObjectIndex], LV_SCROLLBAR_MODE_OFF);
 }
 
+lv_obj_t * ViewInterface::RenderImageToButton(lv_obj_t *parent, const lv_img_dsc_t *img_src, int angle, int x, int y, int width, int height) {
+    lv_obj_t *btn = lv_imagebutton_create(parent);
+    lv_obj_set_pos(btn, x, y);
+    lv_obj_set_size(btn, width, height);
+
+    // Set image for the released and pressed state
+    lv_imagebutton_set_src(btn, LV_IMAGEBUTTON_STATE_RELEASED, NULL, img_src, NULL);
+    lv_imagebutton_set_src(btn, LV_IMAGEBUTTON_STATE_PRESSED, NULL, img_src, NULL);
+
+    // Handle angle
+    if (angle != 0) {
+        lv_obj_set_style_transform_angle(btn, angle * 10, LV_PART_MAIN);
+        lv_obj_set_style_transform_pivot_x(btn, width / 2, LV_PART_MAIN); 
+        lv_obj_set_style_transform_pivot_y(btn, height / 2, LV_PART_MAIN);
+    }
+
+    return btn;
+}
+
 void ViewInterface::RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coord_t y, int ImageObjectIndex, int angle, bool ScaleUp)
 {
 

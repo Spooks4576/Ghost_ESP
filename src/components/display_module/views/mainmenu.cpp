@@ -11,49 +11,78 @@ void MainMenu::Render()
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
     status_bar = create_status_bar(lv_scr_act());
     grid_container = create_grid_container(lv_scr_act());
+    grid_label_container = create_grid_container(lv_scr_act());
     CreateGridButtons();
     Debugging = true;
 }
 
 void MainMenu::CreateGridButtons()
 {
-    for (int i = 0; i < 9; i++) 
+    for (int i = 0; i < 3; i++) 
     {
-        lv_obj_t *btn = lv_btn_create(grid_container);
-        lv_obj_set_scrollbar_mode(btn, LV_SCROLLBAR_MODE_OFF);
+        lv_obj_t *btn = nullptr;
+        if (i == 0)
+        {
+            btn = RenderImageToButton(grid_container, &bt_img, 45, 0, 0, 50, 50);
+            OtherObjects.add(btn);
+            lv_obj_t *label = lv_label_create(grid_label_container); 
+            lv_label_set_text(label, "BT");
+            static lv_style_t label_text_style;
+            lv_style_init(&label_text_style);
+            lv_style_set_text_font(&label_text_style, &Juma);
+            lv_style_set_text_color(&label_text_style, lv_color_white());
+            lv_obj_add_style(label, &label_text_style, 0);
+            lv_obj_set_style_transform_angle(label, 900, 0);
+            lv_obj_set_style_transform_pivot_x(label, lv_obj_get_width(label) / 2, 0);
+            lv_obj_set_style_transform_pivot_y(label, lv_obj_get_height(label) / 2, 0);
+        }
+
         if (i == 1)
         {
-            RenderJpg(&bt_img, 245, 25, 0, 45);
+            btn = RenderImageToButton(grid_container, &WiFi_img, 45, 0, 0, 50, 50);
             OtherObjects.add(btn);
-            lv_obj_set_pos(btn, 245, 25);
+            lv_obj_t *label = lv_label_create(grid_label_container); 
+            lv_label_set_text(label, "WiFi");
+            static lv_style_t label_text_style;
+            lv_style_init(&label_text_style);
+            lv_style_set_text_font(&label_text_style, &Juma);
+            lv_style_set_text_color(&label_text_style, lv_color_white());
+            lv_obj_add_style(label, &label_text_style, 0);
+            lv_obj_set_style_transform_angle(label, 900, 0);
+            lv_obj_set_style_transform_pivot_x(label, lv_obj_get_width(label) / 2, 0);
+            lv_obj_set_style_transform_pivot_y(label, lv_obj_get_height(label) / 2, 0);
         }
 
         if (i == 2)
         {
-            RenderJpg(&WiFi_img, 245, 95, 1, 45);
+            btn = RenderImageToButton(grid_container, &led_img, 45, 0, 0, 50, 50);
             OtherObjects.add(btn);
-            lv_obj_set_pos(btn, 245, 95);
+            lv_obj_t *label = lv_label_create(grid_label_container);
+            lv_label_set_text(label, "LED");
+            static lv_style_t label_text_style;
+            lv_style_init(&label_text_style);
+            lv_style_set_text_font(&label_text_style, &Juma);
+            lv_style_set_text_color(&label_text_style, lv_color_white());
+            lv_obj_add_style(label, &label_text_style, 0);
+            lv_obj_set_style_transform_angle(label, 900, 0);
+            lv_obj_set_style_transform_pivot_x(label, lv_obj_get_width(label) / 2, 0);
+            lv_obj_set_style_transform_pivot_y(label, lv_obj_get_height(label) / 2, 0);
         }
 
-        if (i == 3)
+        if (btn)
         {
-            RenderJpg(&led_img, 245, 165, 2, 45);
-            OtherObjects.add(btn);
-            lv_obj_set_pos(btn, 245, 165);
+            lv_obj_set_scrollbar_mode(btn, LV_SCROLLBAR_MODE_OFF);
+            lv_obj_set_style_transform_angle(btn, 900, 0);
+            lv_obj_set_style_transform_pivot_x(btn, lv_obj_get_width(btn) / 2, 0);
+            lv_obj_set_style_transform_pivot_y(btn, lv_obj_get_height(btn) / 2, 0);
+
+            static lv_style_t style_btn;
+            lv_style_init(&style_btn);
+            lv_style_set_bg_color(&style_btn, lv_color_hex(0x000));
+            lv_style_set_bg_opa(&style_btn, LV_OPA_COVER);
+            lv_style_set_radius(&style_btn, 10);
+            lv_obj_add_style(btn, &style_btn, 0);
         }
-
-        lv_obj_set_size(btn, 50, 50);
-
-        lv_obj_set_style_transform_angle(btn, 900, 0);
-        lv_obj_set_style_transform_pivot_x(btn, lv_obj_get_width(btn) / 2, 0);
-        lv_obj_set_style_transform_pivot_y(btn, lv_obj_get_height(btn) / 2, 0);
-
-        static lv_style_t style_btn;
-        lv_style_init(&style_btn);
-        lv_style_set_bg_color(&style_btn, lv_color_hex(0x000));
-        lv_style_set_bg_opa(&style_btn, LV_OPA_COVER);
-        lv_style_set_radius(&style_btn, 10);
-        lv_obj_add_style(btn, &style_btn, 0);
     }
 }
 
@@ -143,16 +172,47 @@ void MainMenu::HandleTouch(TS_Point P)
 }
 
 bool MainMenu::is_point_inside_button(TS_Point p, lv_obj_t* btn) {
-
     int btn_x = lv_obj_get_x(btn);
     int btn_y = lv_obj_get_y(btn);
-
     int btn_width = lv_obj_get_width(btn);
     int btn_height = lv_obj_get_height(btn);
-    
 
-    return (p.x >= btn_x && p.x <= (btn_x + btn_width) &&
-            p.y >= btn_y && p.y <= (btn_y + btn_height));
+    // Calculate bounding box limits
+    int min_x = btn_x;
+    int max_x = btn_x + btn_width;
+    int min_y = btn_y;
+    int max_y = btn_y + btn_height;
+
+    // Debugging output (using Serial)
+    Serial.print("Touch Point: (");
+    Serial.print(p.x);
+    Serial.print(", ");
+    Serial.print(p.y);
+    Serial.println(")");
+
+    Serial.print("Button Position: (");
+    Serial.print(btn_x);
+    Serial.print(", ");
+    Serial.print(btn_y);
+    Serial.println(")");
+
+    Serial.print("Button Size: (");
+    Serial.print(btn_width);
+    Serial.print(", ");
+    Serial.print(btn_height);
+    Serial.println(")");
+
+    Serial.print("Bounding Box: (Min: ");
+    Serial.print(min_x); 
+    Serial.print(", ");
+    Serial.print(min_y);
+    Serial.print("), (Max: ");
+    Serial.print(max_x);
+    Serial.print(", ");
+    Serial.println(max_y);
+
+    // Check if point lies within bounding box limits
+    return (p.x >= min_x && p.x <= max_x && p.y >= min_y && p.y <= max_y);
 }
 
 lv_obj_t * MainMenu::add_battery_module(lv_obj_t * status_bar) {

@@ -26,6 +26,7 @@ lv_obj_t * WifiChannelLabel;
 LinkedList<lv_obj_t*> SBIcons;
 
 lv_obj_t* grid_container;
+lv_obj_t* grid_label_container;
 
 lv_obj_t * add_battery_module(lv_obj_t * status_bar);
 lv_obj_t * create_status_bar(lv_obj_t * parent);

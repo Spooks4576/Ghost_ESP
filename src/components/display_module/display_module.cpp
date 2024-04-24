@@ -73,7 +73,7 @@ void DisplayModule::Destroy(ViewInterface* Interface, MenuType Nextmenu)
 
 void DisplayModule::SetTouchRotation(int Index)
 {
-    ts.setRotation(Index);
+    //ts.setRotation(Index);
 
     lv_display_rotation_t TargetRot;
 
@@ -159,12 +159,9 @@ void DisplayModule::Init()
     lv_init();
     draw_buf = new uint8_t[DRAW_BUF_SIZE];
     disp = lv_tft_espi_create(TFT_VER_RES, TFT_HOR_RES, draw_buf, DRAW_BUF_SIZE);
-    ts.begin();
     SetTouchRotation(1);
     ViewInterface* SplashI = new SplashScreen("splash");
     Views.add(SplashI);
-
-    lv_display_set_resolution(disp, TFT_VER_RES, TFT_HOR_RES);
 
     // After Registering Views Register Callbacks
 
