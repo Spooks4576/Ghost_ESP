@@ -1,5 +1,6 @@
 #include "mainmenu.h"
 #include <core/system_manager.h>
+#include <components/display_module/UI/Animations/ButtonClick.h>
 
 void MainMenu::HandleAnimations(unsigned long Millis, unsigned long LastTick)
 {
@@ -23,7 +24,7 @@ void MainMenu::CreateGridButtons()
         lv_obj_t *btn = nullptr;
 
         lv_obj_t *btn_container = lv_obj_create(grid_container); 
-        lv_obj_set_size(btn_container, 70, 70); 
+        lv_obj_set_size(btn_container, 68, 68); 
 
         switch (i) {
             case 0:  btn = RenderImageToButton(btn_container, &bt_img, 45, 55, -5, 50, 50); break;
@@ -130,6 +131,8 @@ void MainMenu::HandleTouch(TS_Point P)
     {
         if (is_point_inside_button(P, OtherObjects[i]))
         {
+            lv_anim_t *anim = animate_button_click(OtherObjects[i]);
+            
             if (Debugging)
             {
                 lv_obj_t *circle = lv_obj_create(lv_scr_act());

@@ -21,7 +21,7 @@ void SplashScreen::HandleTouch(TS_Point P)
 
 void SplashScreen::Render()
 {
-   RenderJpg(&logo, 240, 40, 0, 45);
+   RenderJpg(&GhostESP, 240, 40, 0, 45);
    HasRendered = true;
 }
 

@@ -6,6 +6,7 @@
 #include <lvgl.h>
 
 LV_IMAGE_DECLARE(logo);
+LV_IMAGE_DECLARE(GhostESP);
 LV_FONT_DECLARE(strike);
 LV_FONT_DECLARE(Juma);
 
