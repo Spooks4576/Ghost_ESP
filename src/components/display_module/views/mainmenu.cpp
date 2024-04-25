@@ -1,10 +1,9 @@
 #include "mainmenu.h"
 #include <core/system_manager.h>
-#include <components/display_module/UI/Animations/ButtonClick.h>
 
 void MainMenu::HandleAnimations(unsigned long Millis, unsigned long LastTick)
 {
-    
+    LastMillis = LastTick;
 }
 
 void MainMenu::Render()
@@ -12,9 +11,12 @@ void MainMenu::Render()
     lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
     status_bar = create_status_bar(lv_scr_act());
     grid_container = create_grid_container(lv_scr_act(), 0, 0);
+    lv_obj_set_style_opa(grid_container, LV_OPA_0, 0);
     lv_obj_clear_flag(grid_container, LV_OBJ_FLAG_SCROLLABLE);
     CreateGridButtons();
-    Debugging = true;
+    Debugging = false;
+    lv_obj_fade_in(grid_container, 200, 0);
+    lv_obj_fade_in(status_bar, 200, 0);
 }
 
 void MainMenu::CreateGridButtons()
@@ -132,29 +134,14 @@ void MainMenu::HandleTouch(TS_Point P)
     {
         if (is_point_inside_button(P, OtherObjects[i]))
         {
-            lv_anim_t *anim = animate_button_click(OtherObjects[i]);
-            
-            if (Debugging)
-            {
-                lv_obj_t *circle = lv_obj_create(lv_scr_act());
-                lv_obj_set_size(circle, 20, 20);
-                lv_obj_set_pos(circle, P.x, P.y);
 
-                // Apply a style to make it look like a circle
-                static lv_style_t style_circle;
-                lv_style_init(&style_circle);
-                lv_style_set_radius(&style_circle, LV_RADIUS_CIRCLE);
-                lv_style_set_bg_opa(&style_circle, LV_OPA_COVER);
-                lv_style_set_bg_color(&style_circle, lv_palette_main(LV_PALETTE_GREEN));
-                lv_style_set_border_color(&style_circle, lv_palette_main(LV_PALETTE_GREEN));
-                lv_style_set_border_width(&style_circle, 2);
+            lv_obj_fade_out(grid_container, 250, 0);
+            lv_obj_fade_out(status_bar, 250, 0);
 
-                lv_obj_add_style(circle, &style_circle, 0);
-                
-                lv_timer_t *timer = lv_timer_create([](lv_timer_t *timer){
-                    lv_obj_del(static_cast<lv_obj_t*>(timer->user_data));
-                    lv_timer_del(timer);
-                }, 2000, circle);
+            switch (i) {
+                case 0:  Destroy(MenuType::MT_BluetoothMenu); break;
+                case 1:  Destroy(MenuType::MT_WifiUtilsMenu); break;
+                case 2:  Destroy(MenuType::MT_LEDUtils); break;
             }
         }
     }

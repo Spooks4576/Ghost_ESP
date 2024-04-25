@@ -5,9 +5,8 @@
 #include <XPT2046_Touchscreen.h>
 #include <lvgl.h>
 
-LV_IMAGE_DECLARE(logo);
+
 LV_IMAGE_DECLARE(GhostESP);
-LV_FONT_DECLARE(strike);
 LV_FONT_DECLARE(Juma);
 
 enum MenuType
@@ -50,8 +49,8 @@ public:
     void RenderJpg(const lv_img_dsc_t *img_src, lv_coord_t x, lv_coord_t y, int ImageObjectIndex, int angle, bool ScaleUp = false);
     void printTouchToSerial(TS_Point P);
     virtual void HandleTouch(TS_Point P) = 0;
-    lv_obj_t * ViewInterface::create_status_bar(lv_obj_t * parent);
-    lv_obj_t* ViewInterface::add_version_module(lv_obj_t * status_bar);
+    lv_obj_t * create_status_bar(lv_obj_t * parent);
+    lv_obj_t* add_version_module(lv_obj_t * status_bar);
     void (*UpdateRotationCallback)(int);
     void (*DestroyCallback)(ViewInterface* Interface, MenuType Nextmenu);
     virtual void Render() = 0;

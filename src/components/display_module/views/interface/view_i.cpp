@@ -11,7 +11,7 @@ void ViewInterface::RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, 
     }
 
     // Use a bolder font
-    lv_obj_set_style_text_font(TextObjects[TextObjectIndex], &strike, LV_PART_MAIN);
+    lv_obj_set_style_text_font(TextObjects[TextObjectIndex], &Juma, LV_PART_MAIN);
 
     static lv_style_t style_bright_text;
     lv_style_init(&style_bright_text);
@@ -67,7 +67,7 @@ lv_obj_t * ViewInterface::create_status_bar(lv_obj_t * parent) {
     lv_obj_set_style_border_width(status_bar, 0, LV_PART_MAIN);
     lv_obj_set_style_outline_width(status_bar, 0, LV_PART_MAIN);
     lv_obj_set_style_bg_color(status_bar, lv_color_hex(0x2A2A2A), 0);
-    lv_obj_set_style_bg_opa(status_bar, LV_OPA_COVER, 0);
+    lv_obj_set_style_bg_opa(status_bar, LV_OPA_0, 0);
     lv_obj_set_layout(status_bar, LV_LAYOUT_NONE);
     lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
 
@@ -76,7 +76,7 @@ lv_obj_t * ViewInterface::create_status_bar(lv_obj_t * parent) {
     versionlabel = add_version_module(status_bar);
     batteryversion = add_battery_module(status_bar);
 
-     int xOffset = 185;
+    int xOffset = 185;
 
 #ifdef HAS_BT
     lv_obj_t* bt_icon = lv_label_create(status_bar);
