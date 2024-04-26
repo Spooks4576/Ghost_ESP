@@ -261,6 +261,7 @@ void InitDeauthDetector(String Channel, String SSID, String Password, String Web
                 #ifdef NEOPIXEL_PIN
                 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 1000, false);
                 #endif
+                Serial.println("Deauth Detected...");
             } else {
                 #ifdef OLD_LED
                 if (!SystemManager::getInstance().RainbowLEDActive)
@@ -272,6 +273,7 @@ void InitDeauthDetector(String Channel, String SSID, String Password, String Web
                 #ifdef NEOPIXEL_PIN
                 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 1000, false);
                 #endif
+                Serial.println("Normal Network Behavior...");
             }
             DeauthConfig.deauthCount = 0;
             DeauthConfig.lastCheckTime = millis();
