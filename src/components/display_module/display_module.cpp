@@ -41,14 +41,38 @@ void DisplayModule::RenderMenuType(MenuType Type)
         }
         case MenuType::MT_WifiUtilsMenu:
         {
+            ViewInterface* SM = new ScrollableMenu("WifiMenu");
+            SystemManager::getInstance().displayModule->Views.add(SM);
+            for (int i = 0; i < SystemManager::getInstance().displayModule->Views.size(); i++) 
+            {
+                SystemManager::getInstance().displayModule->Views[i]->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+                SystemManager::getInstance().displayModule->Views[i]->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
+            }
+            SM->Render();
             break;
         }
         case MenuType::MT_BluetoothMenu:
         {
+            ViewInterface* SM = new ScrollableMenu("WifiMenu");
+            SystemManager::getInstance().displayModule->Views.add(SM);
+            for (int i = 0; i < SystemManager::getInstance().displayModule->Views.size(); i++) 
+            {
+                SystemManager::getInstance().displayModule->Views[i]->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+                SystemManager::getInstance().displayModule->Views[i]->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
+            }
+            SM->Render();
             break;
         }
         case MenuType::MT_LEDUtils:
         {
+            ViewInterface* SM = new ScrollableMenu("WifiMenu");
+            SystemManager::getInstance().displayModule->Views.add(SM);
+            for (int i = 0; i < SystemManager::getInstance().displayModule->Views.size(); i++) 
+            {
+                SystemManager::getInstance().displayModule->Views[i]->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+                SystemManager::getInstance().displayModule->Views[i]->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
+            }
+            SM->Render();
             break;
         }
     }

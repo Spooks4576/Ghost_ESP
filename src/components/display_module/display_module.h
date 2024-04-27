@@ -6,6 +6,7 @@
 #ifdef DISPLAY_SUPPORT
 #include "views/splashscreen.h"
 #include "views/mainmenu.h"
+#include "views/interface/view_scrollbar_i.h"
 LV_IMG_DECLARE(ui_img_spooky_logo_png);
 LV_FONT_DECLARE(ui_font_Font1);
 LV_IMG_DECLARE(bt_img);

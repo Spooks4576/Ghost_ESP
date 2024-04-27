@@ -30,6 +30,7 @@ void ViewInterface::RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, 
 lv_obj_t* ViewInterface::add_version_module(lv_obj_t * status_bar)
 {
     lv_obj_t * version = lv_label_create(status_bar);
+    lv_obj_set_scrollbar_mode(version, LV_SCROLLBAR_MODE_OFF);
     lv_label_set_text(version, "V-1.5A");
     lv_obj_set_style_transform_angle(version, 900, 0);
     lv_obj_set_style_transform_pivot_x(version, lv_obj_get_width(version) / 2, 0);

@@ -11,6 +11,15 @@ struct SubMenuItem
 
 class ScrollableMenu : public ViewInterface {
 public:
+    ScrollableMenu(const char* InID)
+    {
+        ViewID = InID;
+    }
+    
+    ScrollableMenu() 
+    {
+        
+    }
 
     virtual void Render() override;
     virtual void HandleTouch(TS_Point P) override;
