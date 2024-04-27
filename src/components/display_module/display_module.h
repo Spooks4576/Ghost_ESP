@@ -13,9 +13,7 @@ LV_IMG_DECLARE(bt_img);
 LV_IMG_DECLARE(WiFi_img);
 LV_IMG_DECLARE(led_img);
 
-inline lv_display_t * disp;
-
-inline XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
+static lv_display_t * disp;
 
 class DisplayModule {
 public:

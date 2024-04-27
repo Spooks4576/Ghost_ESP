@@ -132,9 +132,8 @@ void MainMenu::HandleTouch(TS_Point P)
 
     for (int i = 0; i < OtherObjects.size(); i++)
     {
-        if (is_point_inside_button(P, OtherObjects[i]))
+        if (is_point_inside_button(P, OtherObjects.get(i)))
         {
-
             lv_obj_fade_out(grid_container, 250, 0);
             lv_obj_fade_out(status_bar, 250, 0);
 
