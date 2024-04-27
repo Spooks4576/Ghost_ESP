@@ -2,24 +2,34 @@
 
 void ScrollableMenu::Render() {
     status_bar = create_status_bar(lv_scr_act());
-    List = lv_list_create(lv_scr_act());
+    List = lv_roller_create(lv_scr_act());
     lv_obj_set_style_opa(List, LV_OPA_0, 0);
-    lv_obj_set_style_bg_color(List, lv_color_hex(0x000), 0);
-    //lv_obj_set_style_border_color(List, lv_color_hex(0x000), 0);
-    lv_obj_set_size(List, 270, 240);
+    lv_obj_set_style_bg_color(List, lv_color_hex(0x525252), 0);
+    lv_obj_set_style_border_color(List, lv_color_hex(0x158FCA), 0);
+    lv_obj_set_size(List, 200, 240);
+    lv_obj_set_x(List, 260);
+    lv_obj_set_y(List, 23);
     lv_obj_set_scrollbar_mode(List, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_flex_flow(List, LV_FLEX_FLOW_COLUMN_REVERSE, 0);
-    lv_obj_clear_flag(List, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_clear_flag(status_bar, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_transform_pivot_x(List, lv_obj_get_width(List) / 2, 0);
+    lv_obj_set_style_transform_pivot_y(List, lv_obj_get_height(List) / 2, 0);  
+    lv_obj_set_style_transform_angle(List, 900, 0);
     lv_obj_fade_in(status_bar, 300, 0);
     lv_obj_fade_in(List, 300, 0);
-    lv_obj_set_style_transform_pivot_x(List, lv_obj_get_width(List) / 2, 0);
-    lv_obj_set_style_transform_pivot_y(List, lv_obj_get_height(List) / 2, 0);
-    addItem("test 1");
-    addItem("test 2");
-    addItem("test 3");
-    addItem("test 4");
+
+    if (ViewID == "WifiMenu")
+    {
+        addItem("Scan Access Points\n Scan Stations\nList Access Points\nSelect Access Point\nSelect Station\nAdd Random SSID\nAdd Specific SSID\nBeacon Attack List\nBeacon Attack Random\nBeacon Attack RickRoll\nBeacon Attack Karma\nBeacon Attack Rickroll\nAttack Deauth\nCast V2 Connect\nDial Connect\nDeauth Detector\nCalibrate\nSniff Raw\n Sniff Beacon\n Sniff Probe\nSniff Pwn\nSniff PMKID\nBack");
+    }
+    else if (ViewID == "BluetoothMenu")
+    {
+        addItem("Ble Spam\nFind The Flippers\nDetect BLE Spam\nAir Tag Scan\nBack");
+    }
+    else if (ViewID == "LEDUtils\nBack")
+    {
+        addItem("Rainbow LED");
+    }
 }
 
 
@@ -32,16 +42,7 @@ void ScrollableMenu::HandleAnimations(unsigned long Millis, unsigned long LastTi
     
 }
 
-// Add item to menu
-void ScrollableMenu::addItem(const char *text) {
-    SubMenuItem newitem;
-    newitem.cont = lv_obj_create(List);
-    lv_obj_set_size(newitem.cont, 30, 150);
-    newitem.label = lv_label_create(newitem.cont);
-    lv_label_set_text(newitem.label, text);
-    SubMenuItems.add(newitem);
-}
 
-// Item selection callback
-void ScrollableMenu::selectItemCallback(lv_obj_t *obj, lv_event_t event) {
+void ScrollableMenu::addItem(const char *text) {
+    lv_roller_set_options(List, text, LV_ROLLER_MODE_INFINITE);
 }
