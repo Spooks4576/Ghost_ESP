@@ -584,7 +584,6 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
               for (int y = 0; y < 12; y++) {
                 uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};      
                 sendDeauthFrame(ap.bssid, y, broadcast_mac);
-                Serial.println("Sent Deauth Frame...");
               }
             }
 #ifdef OLD_LED
