@@ -22,7 +22,6 @@ lv_obj_t* grid_container;
 
 
 lv_obj_t * create_grid_container(lv_obj_t * parent, int x, int y);
-bool is_point_inside_button(TS_Point p, lv_obj_t* btn);
 virtual void HandleTouch(TS_Point P) override;
 virtual void Render() override;
 void CreateGridButtons();

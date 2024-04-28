@@ -27,6 +27,22 @@ void ViewInterface::RenderTextBox(const char *text, lv_coord_t x, lv_coord_t y, 
     lv_obj_set_scrollbar_mode(ImageObjects[TextObjectIndex], LV_SCROLLBAR_MODE_OFF);
 }
 
+bool ViewInterface::is_point_inside_button(TS_Point p, lv_obj_t* btn) {
+    int btn_x = lv_obj_get_x(btn);
+    int btn_y = lv_obj_get_y(btn);
+    int btn_width = lv_obj_get_width(btn);
+    int btn_height = lv_obj_get_height(btn);
+
+    // Calculate bounding box limits
+    int min_x = btn_x;
+    int max_x = btn_x + btn_width;
+    int min_y = btn_y;
+    int max_y = btn_y + btn_height;
+
+    // Check if point lies within bounding box limits
+    return (p.x >= min_x && p.x <= max_x && p.y >= min_y && p.y <= max_y);
+}
+
 lv_obj_t* ViewInterface::add_version_module(lv_obj_t * status_bar)
 {
     lv_obj_t * version = lv_label_create(status_bar);

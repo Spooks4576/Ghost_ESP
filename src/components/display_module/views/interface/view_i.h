@@ -39,6 +39,7 @@ public:
     lv_obj_t * versionlabel;
     lv_obj_t * batteryversion;
     lv_obj_t * add_battery_module(lv_obj_t * status_bar);
+    bool is_point_inside_button(TS_Point p, lv_obj_t* btn);
     LinkedList<lv_obj_t*> ImageObjects;
     LinkedList<lv_obj_t*> TextObjects;
     LinkedList<lv_obj_t*> OtherObjects;

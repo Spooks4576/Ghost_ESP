@@ -6,8 +6,8 @@ void ScrollableMenu::Render() {
     lv_obj_set_style_opa(List, LV_OPA_0, 0);
     lv_obj_set_style_bg_color(List, lv_color_hex(0x525252), 0);
     lv_obj_set_style_border_color(List, lv_color_hex(0x158FCA), 0);
-    lv_obj_set_size(List, 200, 240);
-    lv_obj_set_x(List, 260);
+    lv_obj_set_size(List, 200, 200);
+    lv_obj_set_x(List, 280);
     lv_obj_set_y(List, 23);
     lv_obj_set_scrollbar_mode(List, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
@@ -20,16 +20,19 @@ void ScrollableMenu::Render() {
 
     if (ViewID == "WifiMenu")
     {
-        addItem("Scan Access Points\n Scan Stations\nList Access Points\nSelect Access Point\nSelect Station\nAdd Random SSID\nAdd Specific SSID\nBeacon Attack List\nBeacon Attack Random\nBeacon Attack RickRoll\nBeacon Attack Karma\nBeacon Attack Rickroll\nAttack Deauth\nCast V2 Connect\nDial Connect\nDeauth Detector\nCalibrate\nSniff Raw\n Sniff Beacon\n Sniff Probe\nSniff Pwn\nSniff PMKID\nBack");
+        addItem("Scan Access Points\n Scan Stations\nList Access Points\nSelect Access Point\nSelect Station\nAdd Random SSID\nAdd Specific SSID\nBeacon Attack List\nBeacon Attack Random\nBeacon Attack RickRoll\nBeacon Attack Karma\nBeacon Attack Rickroll\nAttack Deauth\nCast V2 Connect\nDial Connect\nDeauth Detector\nCalibrate\nSniff Raw\n Sniff Beacon\n Sniff Probe\nSniff Pwn\nSniff PMKID");
     }
     else if (ViewID == "BluetoothMenu")
     {
-        addItem("Ble Spam\nFind The Flippers\nDetect BLE Spam\nAir Tag Scan\nBack");
+        addItem("Ble Spam\nFind The Flippers\nDetect BLE Spam\nAir Tag Scan");
     }
-    else if (ViewID == "LEDUtils\nBack")
+    else if (ViewID == "LEDUtils")
     {
         addItem("Rainbow LED");
     }
+
+    // BackBtn = RenderImageToButton(lv_scr_act(), &Backbutton, 90, 156, 265, 70, 33);
+    // ConfirmButton = RenderImageToButton(lv_scr_act(), &ConfirmBtn, 90, 12, 265, 70, 33);
 }
 
 
