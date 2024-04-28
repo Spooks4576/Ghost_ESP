@@ -11,7 +11,6 @@ class CommandLine {
         return instance;
     }
     String getSerialInput();
-    void executeJsonScript(const char* json);
     LinkedList<String> parseCommand(String input, char* delim);
     String toLowerCase(String str);
     void filterAccessPoints(String filter);

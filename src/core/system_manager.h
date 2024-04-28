@@ -4,7 +4,6 @@
 #include <components/sdcard_module/sd_card_module.h>
 #include <components/rgb_led_module/rgb_led_module.h>
 #include <components/neopixel_module/neopixel_module.h>
-#include <components/controller_module/controller_module.h>
 #include <components/ble_module/ble_module.h>
 #include <components/display_module/display_module.h>
 #include "../lib/TFT_eSPI/User_Setup.h"
@@ -25,7 +24,6 @@ public:
     static void SerialCheckTask(void *pvParameters)
     {
         while (1) {
-            SystemManager::getInstance().ControllerModule.loop();
             #ifndef DISPLAY_SUPPORT
             if (HasRanCommand)
             {   
@@ -67,7 +65,6 @@ public:
     BLEModule* bleModule;
     RGBLedModule* rgbModule;
     NeopixelModule* neopixelModule;
-    controller_interface ControllerModule;
 
     SystemManager() {}
 

@@ -199,7 +199,7 @@ function wifiUtilsMenu() {
 
     if (result === 14)
     {
-        sendSerialCommand("deauth", 1);
+        sendSerialCommand("attack -t deauth", 1);
     }
 
     if (result === 15)
