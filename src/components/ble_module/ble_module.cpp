@@ -240,7 +240,6 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
 void BLEModule::BleSpamDetector()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setScanCallbacks(new BleSpamDetectorCallbacks());
   NimBLEDevice::getScan()->start(0, false);
@@ -264,7 +263,6 @@ void BLEModule::BleSpamDetector()
 void BLEModule::InitWarDriveCallback()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setScanCallbacks(new WarDriveBTCallbacks());
   NimBLEDevice::getScan()->start(0, false);
@@ -274,7 +272,6 @@ void BLEModule::InitWarDriveCallback()
 void BLEModule::BleSniff()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setScanCallbacks(new BleSnifferCallbacks());
   NimBLEDevice::getScan()->start(0, false);
@@ -305,7 +302,6 @@ SystemManager::getInstance().sdCardModule.stopPcapLogging();
 void BLEModule::AirTagScanner()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setScanCallbacks(new BleAirTagCallbacks());
   NimBLEDevice::getScan()->start(0, false);
@@ -318,7 +314,7 @@ void BLEModule::AirTagScanner()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::getScan()->stop();
+        shutdownBLE();
         break;
       }
     }
@@ -329,7 +325,6 @@ void BLEModule::AirTagScanner()
 void BLEModule::findtheflippers()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
   NimBLEDevice::getScan()->setScanCallbacks(new FlipperFinderCallbacks());
   NimBLEDevice::getScan()->start(0, false);
@@ -342,7 +337,7 @@ void BLEModule::findtheflippers()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::getScan()->stop();
+        shutdownBLE();
         break;
       }
     }
