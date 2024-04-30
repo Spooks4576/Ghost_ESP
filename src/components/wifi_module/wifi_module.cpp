@@ -190,6 +190,11 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
 #endif
       break;
     }
+    case SniffType::ST_Deauth:
+    {
+      esp_wifi_set_promiscuous_rx_cb(&deauthapSnifferCallback);
+      break;
+    }
   }
   
   static unsigned long lastChangeTime = 0;
@@ -208,8 +213,10 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       if (!SetChannel)
       {
-        uint8_t set_channel = random(1, 13);
+        set_channel += 1;
+        set_channel = set_channel % 13; 
         esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+        Serial.printf("Set Scanning Channel to %i\n", set_channel);
       }
       lastChangeTime = currentTime;
 #ifdef OLD_LED
@@ -324,6 +331,10 @@ void WiFiModule::LaunchEvilPortal()
 
 void WiFiModule::getMACatoffset(char *addr, uint8_t* data, uint16_t offset) {
   sprintf(addr, "%02x:%02x:%02x:%02x:%02x:%02x", data[offset+0], data[offset+1], data[offset+2], data[offset+3], data[offset+4], data[offset+5]);
+}
+
+void WiFiModule::getMACatoffset(uint8_t *addr, uint8_t* data, uint16_t offset) {
+  {data[offset+0], data[offset+1], data[offset+2], data[offset+3], data[offset+4], data[offset+5];};
 }
 
 int WiFiModule::ClearList(ClearType type)

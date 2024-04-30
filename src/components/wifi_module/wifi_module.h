@@ -177,7 +177,8 @@ enum SniffType
     ST_pmkid,
     ST_probe,
     ST_pwn,
-    ST_raw
+    ST_raw,
+    ST_Deauth
 };
 
 class WiFiModule
@@ -201,6 +202,7 @@ public:
     void LaunchEvilPortal();
     void Calibrate();
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
+    void getMACatoffset(uint8_t *addr, uint8_t* data, uint16_t offset);
     void broadcastSetSSID(const char* ESSID, uint8_t channel);
     void sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) ;
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();

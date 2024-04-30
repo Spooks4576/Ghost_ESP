@@ -132,7 +132,8 @@ function wifiUtilsMenu() {
     submenu.addItem("Sniff EPOL", 16);
     submenu.addItem("Sniff Probe", 17);
     submenu.addItem("Sniff PWN", 18);
-    submenu.addItem("Calibrate", 19);
+    submenu.addItem("Sniff Deauth", 19);
+    submenu.addItem("Calibrate", 20);
     
     let result = submenu.show();
 
@@ -223,6 +224,11 @@ function wifiUtilsMenu() {
     }
 
     if (result === 19)
+    {
+        sendSerialCommand("sniffdeauth", 1);
+    }
+
+    if (result === 20)
     {
         sendSerialCommand("calibrate", 1);
     }

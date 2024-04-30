@@ -632,13 +632,29 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'sniffbeacon': Sniff WiFi beacons."));
       Serial.println(F("- 'sniffprobe': Sniff WiFi probe requests."));
       Serial.println(F("- 'sniffpwn': Sniff for pwnagotchis in the air."));
-      Serial.println(F("- 'sniffdeauth': Sniff for deauthentication packets in the air."));
+      Serial.println(F("- 'sniffdeauth': deauthenticate access points when scanning for them"));
       Serial.println(F("- 'sniffpmkid [-c <channel>]': Sniff for PMKID packets with optional flags for channel"));
       Serial.println(F("- 'findtheflippers': Detect for Flipper Zeros In Your Area"));
       Serial.println(F("- 'detectblespam': Detect BLE Spams That Might Be Happening Around You"));
       Serial.println(F("- 'airtagscan': Detect Apple AirTags and there Payloads around You"));
       Serial.println(F("- 'streetdetector': Detect What Street Your on Using GPS (Requires SD Card With Map Data)"));
       Serial.println(F("- 'wardrive [-b EnableBLEScanning (May Crash After a while if enabled)]': Detect What Street Access Points Are on and gather other WiFi Information"));
+    }
+
+    if (cmd_args.get(0) == F("sniffdeauth"))
+    {
+      int nn_sw = this->argSearch(&cmd_args, "-c");
+
+      if (nn_sw != -1)
+      {
+        int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
+        Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
+        SystemManager::getInstance().wifiModule.Sniff(ST_Deauth, TargetChannel);
+        return;
+      }
+
+      Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
+      SystemManager::getInstance().wifiModule.Sniff(ST_Deauth, 0);
     }
 
     if (cmd_args.get(0) == F("sniffpmkid"))
@@ -651,11 +667,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_pmkid, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_pmkid, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffraw"))
@@ -668,11 +684,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting RAW sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_raw, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting RAW sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_raw, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffbeacon"))
@@ -685,11 +701,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting Beacon sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_beacon, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting Beacon sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_beacon, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffprobe"))
@@ -702,11 +718,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PROBE sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_probe, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PROBE sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_probe, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffpwn"))
@@ -719,11 +735,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PWN sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_pwn, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PWN sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_pwn, 0);
-      return;
     }
 
 
