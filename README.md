@@ -22,7 +22,7 @@ Ghost ESP firmware extends its embrace to the following ESP32 boards:
 - ESP32 S2
 - ESP32 C3
 - ESP32 S3
-- ESP32 C6 (Partial Support: WiFi Only)
+- ESP32 C6 (Partial Support: BLE Advertising Broken)
 
 If you have an ESP32 C6, you can use Ghost ESP for WiFi tasks, but Bluetooth isn't supported yet. Don't worry, though - WiFi still works just fine!
 
