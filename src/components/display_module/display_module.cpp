@@ -31,24 +31,36 @@ void DisplayModule::RenderMenuType(MenuType Type)
         {
             ViewInterface* MM = new MainMenu("mainmenu");
             SystemManager::getInstance().displayModule->Views.add(MM);
-            for (int i = 0; i < SystemManager::getInstance().displayModule->Views.size(); i++) 
-            {
-                SystemManager::getInstance().displayModule->Views[i]->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
-                SystemManager::getInstance().displayModule->Views[i]->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
-            }
+            MM->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+            MM->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
             MM->Render();
             break;
         }
         case MenuType::MT_WifiUtilsMenu:
         {
+            ViewInterface* SM = new ScrollableMenu("WifiMenu");
+            SystemManager::getInstance().displayModule->Views.add(SM);
+            SM->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+            SM->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
+            SM->Render();
             break;
         }
         case MenuType::MT_BluetoothMenu:
         {
+            ViewInterface* SM = new ScrollableMenu("BluetoothMenu");
+            SystemManager::getInstance().displayModule->Views.add(SM);
+            SM->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+            SM->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
+            SM->Render();
             break;
         }
         case MenuType::MT_LEDUtils:
         {
+            ViewInterface* SM = new ScrollableMenu("LEDUtils");
+            SystemManager::getInstance().displayModule->Views.add(SM);
+            SM->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+            SM->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
+            SM->Render();
             break;
         }
     }
@@ -56,12 +68,11 @@ void DisplayModule::RenderMenuType(MenuType Type)
 
 void DisplayModule::Destroy(ViewInterface* Interface, MenuType Nextmenu)
 {
-
     for (int i = 0; i < SystemManager::getInstance().displayModule->Views.size(); i++)
     {
         if (SystemManager::getInstance().displayModule->Views[i]->ViewID == Interface->ViewID)
         {
-            SystemManager::getInstance().displayModule->Views.remove(i);
+            SystemManager::getInstance().displayModule->Views.remove(i); // Make Sure this is the last
             break;
         }
     }
@@ -73,8 +84,6 @@ void DisplayModule::Destroy(ViewInterface* Interface, MenuType Nextmenu)
 
 void DisplayModule::SetTouchRotation(int Index)
 {
-    ts.setRotation(Index);
-
     lv_display_rotation_t TargetRot;
 
     switch (Index)
@@ -159,12 +168,9 @@ void DisplayModule::Init()
     lv_init();
     draw_buf = new uint8_t[DRAW_BUF_SIZE];
     disp = lv_tft_espi_create(TFT_VER_RES, TFT_HOR_RES, draw_buf, DRAW_BUF_SIZE);
-    ts.begin();
     SetTouchRotation(1);
     ViewInterface* SplashI = new SplashScreen("splash");
     Views.add(SplashI);
-
-    lv_display_set_resolution(disp, TFT_VER_RES, TFT_HOR_RES);
 
     // After Registering Views Register Callbacks
 

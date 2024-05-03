@@ -1,4 +1,5 @@
 #include "gps_module.h"
+#include <HardwareSerial.h>
 
 String gps_module::findClosestStreet(double lat, double lng) {
     String filename = "/mapdata/streets.csv";
@@ -88,9 +89,9 @@ String gps_module::GetDateAndTime()
 void gps_module::WarDrivingLoop()
 {
 #ifdef HAS_GPS
-  while (Serial2.available() > 0 && !Stop) 
+  while (Serial1.available() > 0 && !Stop) 
   {
-    char c = Serial2.read();
+    char c = Serial1.read();
 
     gps.encode(c);
 #endif
@@ -140,9 +141,9 @@ void gps_module::WarDrivingLoop()
 void gps_module::streetloop() 
 {
 #ifdef HAS_GPS
-  while (Serial2.available() > 0 && !Stop) 
+  while (Serial1.available() > 0 && !Stop) 
   {
-    char c = Serial2.read();
+    char c = Serial1.read();
 
     gps.encode(c);
 #endif
@@ -182,7 +183,7 @@ void gps_module::setup(bool EnableBLEScans)
     if (SystemManager::getInstance().sdCardModule.Initlized)
     {
 #ifdef HAS_GPS
-    Serial2.begin(9600, SERIAL_8N1, GPS_TX, GPS_RX);
+    Serial1.begin(9600, SERIAL_8N1, GPS_TX, GPS_RX);
 #endif
     Initilized = true;
     Stop = false;

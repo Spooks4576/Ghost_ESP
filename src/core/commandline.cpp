@@ -197,17 +197,8 @@ void CommandLine::runCommand(String input)
     }
 
     LinkedList<String> cmd_args = this->parseCommand(input, " ");
+    
 
-    if (cmd_args.get(0) == F("gpsdata"))
-    {
-        #ifdef HAS_GPS
-            // if (gpsmodule->getGpsModuleStatus()) {
-            //     Serial.println("Getting GPS Data. Stop with stopscan");
-
-            //   HasRanCommand = true;
-            // }
-        #endif
-    }
     if (cmd_args.get(0) == F("blespam"))
     {
       #ifdef HAS_BT
@@ -442,71 +433,6 @@ void CommandLine::runCommand(String input)
       #endif
     }
 
-    if (cmd_args.get(0) == F("controller"))
-    {
-      int type = this->argSearch(&cmd_args, "-t");
-      int button = this->argSearch(&cmd_args, "-b");
-      int ScriptMode = this->argSearch(&cmd_args, "-s");
-      int ConnectionType = this->argSearch(&cmd_args, "-c");
-
-      if (ScriptMode != -1)
-      {
-        static String jsonScript;
-        while (Serial.available()) {
-          char c = Serial.read();
-          if (c == '\f') {
-            executeJsonScript(jsonScript.c_str());
-            jsonScript = "";
-            return;
-          } else {
-            jsonScript += c;
-          }
-        }
-      }
-
-      if (type != -1 && button != -1)
-      {
-        String typeString = cmd_args.get(type + 1);
-        String Button = cmd_args.get(button + 1);
-
-        if (typeString == "nsw")
-        {
-#ifdef HAS_BT
-          SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Nintendo_Switch;
-          if (!SystemManager::getInstance().ControllerModule.NSW.Initilized)
-          {
-            SystemManager::getInstance().ControllerModule.NSW.connect();
-            delay(100);
-          }
-          Serial.println(StringToNSWInputState(Button.c_str()).name);
-          SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(Button.c_str()).state);
-          delay(500);
-          SystemManager::getInstance().ControllerModule.NSW.SetInputState(NONE);
-#endif
-        }
-        else if (typeString == "xinput")
-        {
-
-
-        }
-        else if (typeString == "playstation")
-        {
-#ifdef HAS_BT
-        SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Playstation;
-        if (!SystemManager::getInstance().ControllerModule.Playstation.Initilized)
-        {
-          SystemManager::getInstance().ControllerModule.Playstation.connect();
-          delay(100);
-        }
-        Serial.println(StringToPSInputState(Button.c_str()).name);
-        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(Button.c_str()).state);
-        delay(500);
-        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(PS_NONE);
-#endif
-        }
-      }
-    }
-
     if (cmd_args.get(0) == F("sendwebrequest"))
     {
       int SSID = this->argSearch(&cmd_args, "-s");
@@ -698,7 +624,6 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'attack -t deauth': Start Deauth Attack on the Captured Networks"));
       Serial.println(F("- 'castv2connect -s <SSID> -p <PASSWORD> -v <Device>': Connect to a device using CastV2 protocol."));
       Serial.println(F("- 'dialconnect -s <SSID> -p <PASSWORD> -t <App> -v <Device>': Connect to a device using DIAL protocol."));
-      Serial.println(F("- 'deauth': Deauth Scanned Stations of Scanned Access Points."));
       Serial.println(F("- 'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>': Detect deauthentication frames."));
       Serial.println(F("- 'calibrate': Calibrate the most active network. Used for sniffing functions"));
       Serial.println(F("- 'blespam -t <type>': Start BLE spamming of a specific type ('samsung', 'apple', 'google', 'windows', or 'all')."));
@@ -707,13 +632,29 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'sniffbeacon': Sniff WiFi beacons."));
       Serial.println(F("- 'sniffprobe': Sniff WiFi probe requests."));
       Serial.println(F("- 'sniffpwn': Sniff for pwnagotchis in the air."));
-      Serial.println(F("- 'sniffdeauth': Sniff for deauthentication packets in the air."));
+      Serial.println(F("- 'sniffdeauth': deauthenticate access points when scanning for them"));
       Serial.println(F("- 'sniffpmkid [-c <channel>]': Sniff for PMKID packets with optional flags for channel"));
       Serial.println(F("- 'findtheflippers': Detect for Flipper Zeros In Your Area"));
       Serial.println(F("- 'detectblespam': Detect BLE Spams That Might Be Happening Around You"));
       Serial.println(F("- 'airtagscan': Detect Apple AirTags and there Payloads around You"));
       Serial.println(F("- 'streetdetector': Detect What Street Your on Using GPS (Requires SD Card With Map Data)"));
       Serial.println(F("- 'wardrive [-b EnableBLEScanning (May Crash After a while if enabled)]': Detect What Street Access Points Are on and gather other WiFi Information"));
+    }
+
+    if (cmd_args.get(0) == F("sniffdeauth"))
+    {
+      int nn_sw = this->argSearch(&cmd_args, "-c");
+
+      if (nn_sw != -1)
+      {
+        int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
+        Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
+        SystemManager::getInstance().wifiModule.Sniff(ST_Deauth, TargetChannel);
+        return;
+      }
+
+      Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
+      SystemManager::getInstance().wifiModule.Sniff(ST_Deauth, 0);
     }
 
     if (cmd_args.get(0) == F("sniffpmkid"))
@@ -726,11 +667,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_pmkid, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_pmkid, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffraw"))
@@ -743,11 +684,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting RAW sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_raw, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting RAW sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_raw, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffbeacon"))
@@ -760,11 +701,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting Beacon sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_beacon, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting Beacon sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_beacon, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffprobe"))
@@ -777,11 +718,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PROBE sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_probe, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PROBE sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_probe, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffpwn"))
@@ -794,11 +735,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PWN sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_pwn, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PWN sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_pwn, 0);
-      return;
     }
 
 
@@ -917,78 +858,19 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       LOG_MESSAGE_TO_SD(F("You did not specify which list to show"));
       return;
     }
-
-    if (cmd_args.get(0) == F("stop"))
-    {
-      #ifdef OLD_LED
-      SystemManager::getInstance().rgbModule->setColor(1, 1, 1);
-      #endif
-      #ifdef NEOPIXEL_PIN
-      SystemManager::getInstance().neopixelModule->strip.setBrightness(0);
-      #endif
-      SystemManager::getInstance().wifiModule.shutdownWiFi();
-      #ifdef HAS_BT
-      SystemManager::getInstance().bleModule->shutdownBLE();
-      #endif
-    }
-  }
-}
-
-void CommandLine::executeJsonScript(const char* Json) {
-  StaticJsonDocument<512> doc;
-  DeserializationError error = deserializeJson(doc, Json);
-
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
   }
 
-  JsonArray sequence = doc["sequence"];
-  for (JsonObject cmd : sequence) {
-    const char* type = cmd["type"];
-    auto buttons = cmd["buttons"];
-    int delayTime = cmd["delay"];
-
-    if (strcmp(type, "nsw") == 0) {
-      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Nintendo_Switch;
-      if (buttons.is<JsonArray>()) { 
-        for (const char* button : buttons.as<JsonArray>()) {
-          Serial.println(button);
-#ifdef HAS_BT
-          SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(button).state);
-#endif
-        }
-      } else {
-        const char* button = buttons;
-        Serial.println(button);
-#ifdef HAS_BT
-        SystemManager::getInstance().ControllerModule.NSW.SetInputState(StringToNSWInputState(button).state);
-#endif
-      }
-    }
-    if (strcmp(type, "xinput") == 0)
-    {
-      
-    }
-    if (strcmp(type, "playstation") == 0)
-    {
-      SystemManager::getInstance().ControllerModule.SelectedType = ControllerType::Playstation;
-      if (buttons.is<JsonArray>()) { 
-        for (const char* button : buttons.as<JsonArray>()) {
-          Serial.println(button);
-#ifdef HAS_BT
-          SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(button).state);
-#endif
-        }
-      } else {
-        const char* button = buttons;
-        Serial.println(button);
-#ifdef HAS_BT
-        SystemManager::getInstance().ControllerModule.Playstation.SetInputState(StringToPSInputState(button).state);
-#endif
-      }
-    }
-    delay(delayTime);
+  if (cmd_args.get(0) == F("stop"))
+  {
+    #ifdef OLD_LED
+    SystemManager::getInstance().rgbModule->setColor(1, 1, 1);
+    #endif
+    #ifdef NEOPIXEL_PIN
+    SystemManager::getInstance().neopixelModule->strip.setBrightness(0);
+    #endif
+    SystemManager::getInstance().wifiModule.shutdownWiFi();
+    #ifdef HAS_BT
+    SystemManager::getInstance().bleModule->shutdownBLE();
+    #endif
   }
 }

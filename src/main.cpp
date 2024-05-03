@@ -15,6 +15,8 @@ void setup()
 {
     SystemManager::getInstance().setup();
 #ifndef DISPLAY_SUPPORT
+#ifndef C3
     xTaskCreate(SystemManager::SerialCheckTask, "SerialCheckTask", 2048, NULL, 1, NULL);
+#endif
 #endif
 }
