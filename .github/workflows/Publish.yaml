@@ -9,7 +9,7 @@ jobs:
     runs-on: self-hosted
     strategy:
       matrix:
-        board: [flipper_dev_board, dev_board_pro, marauder_minion]
+        board: [flipper_dev_board, dev_board_pro, marauder_minion, C3-DevKit, ESP32_v5_awok]
       fail-fast: false
 
     steps:
