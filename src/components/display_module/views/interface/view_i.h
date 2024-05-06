@@ -15,6 +15,8 @@ enum MenuType
     MT_BluetoothMenu,
     MT_WifiUtilsMenu,
     MT_LEDUtils,
+    MT_GPSMenu,
+    MT_SettingsMenu
 };
 
 class ViewInterface
