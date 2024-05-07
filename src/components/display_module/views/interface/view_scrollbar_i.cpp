@@ -15,6 +15,7 @@ void ScrollableMenu::Render() {
     lv_obj_set_style_transform_pivot_x(List, lv_obj_get_width(List) / 2, 0);
     lv_obj_set_style_transform_pivot_y(List, lv_obj_get_height(List) / 2, 0);  
     lv_obj_set_style_transform_angle(List, 900, 0);
+    lv_obj_clear_flag(List, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_fade_in(status_bar, 300, 0);
     lv_obj_fade_in(List, 300, 0);
 
@@ -30,9 +31,15 @@ void ScrollableMenu::Render() {
     {
         addItem("Rainbow LED");
     }
+    else if (ViewID == "GPSMenu")
+    {
+        addItem("Street Detector\nWardrive (WiFi)\nWardrive (Bluetooth)");
+    }
 
-    // BackBtn = RenderImageToButton(lv_scr_act(), &Backbutton, 90, 156, 265, 70, 33);
-    // ConfirmButton = RenderImageToButton(lv_scr_act(), &ConfirmBtn, 90, 12, 265, 70, 33);
+    BackBtn = RenderImageToButton(lv_obj_get_parent(status_bar), &Arrow, 90, 40, 100, 35, 35);
+    // ConfirmButton = RenderImageToButton(lv_scr_act(), &Arrow, 0, 12, 285, 70, 33);
+    // MoveSelectUpBtn = RenderImageToButton(lv_scr_act(), &Arrow, 180, 12, 295, 70, 33);
+    // MoveSelectDownBtn = RenderImageToButton(lv_scr_act(), &Arrow, -180, 12, 245, 70, 33);
 }
 
 
