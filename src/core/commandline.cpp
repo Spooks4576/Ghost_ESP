@@ -382,7 +382,7 @@ void CommandLine::runCommand(String input)
     SystemManager::getInstance().neopixelModule->rainbow(255, 4);
 #endif
 #ifdef OLD_LED
-        SystemManager::getInstance().rgbModule->breatheLED(0, 1000, true);
+        SystemManager::getInstance().rgbModule->fadeOutAllPins(SystemManager::getInstance().rgbModule->redPin, SystemManager::getInstance().rgbModule->greenPin, SystemManager::getInstance().rgbModule->bluePin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
         SystemManager::getInstance().neopixelModule->breatheLED(0, 1000, true);

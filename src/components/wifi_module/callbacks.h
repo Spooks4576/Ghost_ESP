@@ -39,7 +39,7 @@ void deauthapSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
       uint8_t* addr = new uint8_t[6];
       SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
 #ifdef OLD_LED
-        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 300, false);
@@ -103,7 +103,7 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
 
       if (!in_list) {
 #ifdef OLD_LED
-        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 100);
+        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 300, false);
@@ -297,7 +297,7 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
   stations->add(sta);
 #ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 100);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 300, false);

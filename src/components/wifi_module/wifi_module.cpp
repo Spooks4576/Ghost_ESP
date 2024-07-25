@@ -220,7 +220,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
       }
       lastChangeTime = currentTime;
 #ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
       SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 255), 1000, false);
@@ -516,7 +516,7 @@ void WiFiModule::Attack(AttackType type)
               }
           }
 #ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 300, false);
@@ -541,7 +541,7 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
         }
         broadcastRandomSSID();
 #ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
         delay(1);
       }
@@ -569,7 +569,7 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
           }
         }
 #ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
         delay(1);
       }
@@ -598,7 +598,7 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
               }
             }
 #ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
         }
       }
@@ -626,7 +626,7 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
           }
         }
 #ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 100);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
         delay(1);
       }
