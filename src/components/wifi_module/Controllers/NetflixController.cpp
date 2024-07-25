@@ -1,7 +1,7 @@
 #include "NetflixController.h"
 #include <core/system_manager.h>
 
-void NetflixController::launchApp(const String& appUrl) {
+bool NetflixController::launchApp(const String& appUrl) {
     int startPos = appUrl.indexOf('/', 7);
     String basePath = (startPos != -1) ? appUrl.substring(startPos) : "/";
 

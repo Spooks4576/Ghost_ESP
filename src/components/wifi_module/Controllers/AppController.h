@@ -22,7 +22,7 @@ public:
   virtual ~AppController() = default;
 
 
-  virtual void launchApp(const String& appUrl) = 0;
+  virtual bool launchApp(const String& appUrl) = 0;
 
   virtual HandlerType getType() const { return HandlerType::Base; }
 

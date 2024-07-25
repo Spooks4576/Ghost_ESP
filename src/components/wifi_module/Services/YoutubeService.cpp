@@ -153,32 +153,45 @@ String YouTubeService::getToken(const String& screenId) {
   }
 }
 
-void YouTubeService::sendCommand(const String& command, const String& videoId, const Device& device) {
-    if (!connectToServer(ServerAddress, port)) return;
+void YouTubeService::sendCommand(const String& command, const String& videoId, const Device& device) 
+{
 
-    String urlParams = "device=REMOTE_CONTROL";
-    urlParams += "&loungeIdToken=" + device.YoutubeToken;
-    urlParams += "&id=" + device.UUID;
-    urlParams += "&VER=8";
-    urlParams += "&zx=" + zx();
-    urlParams += "&SID=" + device.SID;
-    urlParams += "&RID=" + String(rid.next());
-    urlParams += "&AID=" + String("5");
-    urlParams += "&gsessionid=" + device.gsession;
 
-    String formData;
-    formData += "count=1";
-    formData += "&ofs=0";
-    formData += "&req0__sc=" + command;
-    formData += "&req0_videoId=" + videoId;
-    formData += "&req0_listId=" + device.listID;
+  Serial.print("Free heap: ");
+  Serial.println(ESP.getFreeHeap());
+  Serial.print("Total PSRAM: ");
+  Serial.println(ESP.getPsramSize());
+  Serial.print("Free PSRAM: ");
+  Serial.println(ESP.getFreePsram());
+  Serial.print("Largest free block: ");
+  Serial.println(ESP.getMaxAllocHeap());
 
-    sendHeaders(ServerAddress, BindEndpoint, formData, urlParams, "application/x-www-form-urlencoded");
 
-    String response = readResponse();
+  if (!connectToServer(ServerAddress, port)) return;
 
-    Serial.println("Set playlist Response");
-    Serial.println(response);
+  String urlParams = "device=REMOTE_CONTROL";
+  urlParams += "&loungeIdToken=" + device.YoutubeToken;
+  urlParams += "&id=" + device.UUID;
+  urlParams += "&VER=8";
+  urlParams += "&zx=" + zx();
+  urlParams += "&SID=" + device.SID;
+  urlParams += "&RID=" + String(rid.next());
+  urlParams += "&AID=" + String("5");
+  urlParams += "&gsessionid=" + device.gsession;
+
+  String formData;
+  formData += "count=1";
+  formData += "&ofs=0";
+  formData += "&req0__sc=" + command;
+  formData += "&req0_videoId=" + videoId;
+  formData += "&req0_listId=" + device.listID;
+
+  sendHeaders(ServerAddress, BindEndpoint, formData, urlParams, "application/x-www-form-urlencoded");
+
+  String response = readResponse();
+
+  Serial.println("Set playlist Response");
+  Serial.println(response);
 }
 
 

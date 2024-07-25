@@ -5,7 +5,7 @@ RokuController::RokuController() {
 }
 
 
-void RokuController::launchApp(const String& appUrl) {
+bool RokuController::launchApp(const String& appUrl) {
 
   IPAddress extractedIp;
   uint16_t extractedPort;
