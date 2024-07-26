@@ -496,6 +496,7 @@ void WiFiModule::Attack(AttackType type)
   {
     case AttackType::AT_Rickroll:
     {
+SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, false);
       while (wifi_initialized)
       {
         if (Serial.available() > 0)
@@ -515,18 +516,14 @@ void WiFiModule::Attack(AttackType type)
                 broadcastSetSSID(rick_roll[x], i);
               }
           }
-#ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
-#endif
-#ifdef NEOPIXEL_PIN
-SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 300, false);
-#endif
           delay(1);
       }
+      SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
       break;
     }
     case AttackType::AT_RandomSSID:
     {
+SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, false);
       while (wifi_initialized)
       {
         if (Serial.available() > 0)
@@ -540,15 +537,13 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
           }
         }
         broadcastRandomSSID();
-#ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
-#endif
         delay(1);
       }
+SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
       break;
-    }
     case AttackType::AT_ListSSID:
     {
+SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, false);
       while (wifi_initialized)
       {
         if (Serial.available() > 0)
@@ -568,15 +563,14 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
             broadcastSetSSID(ssids->get(i).essid.c_str(), x);
           }
         }
-#ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
-#endif
         delay(1);
       }
+SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
       break;
     }
     case AttackType::AT_DeauthAP:
     {
+SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, false);
         while(wifi_initialized){
         if (Serial.available() > 0)
         {
@@ -599,6 +593,7 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
             }
         }
       }
+SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
       break;
     }
     case AT_Karma:
@@ -622,16 +617,16 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
             broadcastSetSSID(KarmaSSIDs[x], i);
           }
         }
-#ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
-#endif
         delay(1);
+SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
       }
     }
   }
 }
+}
 
-void WiFiModule::broadcastSetSSID(const char* ESSID, uint8_t channel) {
+void WiFiModule::broadcastSetSSID(const char* ESSID, uint8_t channel) 
+{
     esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
 
    

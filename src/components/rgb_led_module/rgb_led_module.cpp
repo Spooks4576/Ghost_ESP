@@ -6,7 +6,7 @@ void RGBLedModule::init() {
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
     Rainbow(1, 4);
-    fadeOutAllPins(redPin, greenPin, bluePin, 400);
+    fadeOutAllPins(400);
 }
 
 void RGBLedModule::breatheLED(int ledPin, int breatheTime, bool FadeOut)
@@ -39,7 +39,7 @@ void RGBLedModule::breatheLED(int ledPin, int breatheTime, bool FadeOut)
 }
 
 
-void RGBLedModule::fadeOutAllPins(int redPin, int greenPin, int bluePin, int fadeTime)
+void RGBLedModule::fadeOutAllPins(int fadeTime)
 {
     int fadeAmount = 5; // Amount of brightness change per step, adjust for different fading speeds
     int wait = fadeTime / (255 / fadeAmount); // Calculate wait time to fit the fade cycle into the given total time

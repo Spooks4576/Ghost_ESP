@@ -8,6 +8,13 @@
 #include <components/display_module/display_module.h>
 #include "../lib/TFT_eSPI/User_Setup.h"
 
+enum ENeoColor
+{
+    Red,
+    Green,
+    Blue
+};
+
 class gps_module;
 
 class SystemManager {
@@ -20,6 +27,16 @@ public:
     void setup();
 
     void loop();
+
+    void SetLEDState(int Pin, ENeoColor NeoColor = ENeoColor::Red, bool FadeOut = false)
+    {
+#ifdef OLD_LED
+analogWrite(Pin, FadeOut ? 255 : 0);
+#endif
+#ifdef NEOPIXEL_PIN
+neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(NeoColor == ENeoColor::Red && !FadeOut ? 255 : 0, NeoColor == ENeoColor::Green && !FadeOut ? 255 : 0, NeoColor == ENeoColor::Blue && !FadeOut ? 255 : 0), 300, false);
+#endif
+    }
 
     static void SerialCheckTask(void *pvParameters)
     {

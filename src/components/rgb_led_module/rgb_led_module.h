@@ -11,7 +11,7 @@ public:
     void setColor(int red, int green, int blue); // Set the RGB color
     void Rainbow(int strength, int stepDelay);
     void breatheLED(int ledPin, int breatheTime, bool FadeIn = false);
-    void fadeOutAllPins(int redPin, int greenPin, int bluePin, int fadeTime);
+    void fadeOutAllPins(int fadeTime);
     void Song();
 public:
     uint8_t redPin, greenPin, bluePin;
