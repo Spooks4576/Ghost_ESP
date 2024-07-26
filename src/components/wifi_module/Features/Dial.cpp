@@ -1,6 +1,8 @@
 #include "Dial.h"
 #include <core/system_manager.h>
-#include <ESPmDNS.h>
+
+const int MAX_RETRIES = 20;
+const int RETRY_DELAY = 500;
 
 String extractPathFromURL(const String& url) {
   int doubleSlashPos = url.indexOf("//");
@@ -23,38 +25,24 @@ String extractPathFromURL(const String& url) {
 }
 
 bool DIALClient::fetchScreenIdWithRetries(const String& applicationUrl, Device& device, YoutubeController* YTController) {
-    const int MAX_RETRIES = 5; // Maximum number of retries
-    const int INITIAL_DELAY = 500; // Initial delay in milliseconds
-    const float BACKOFF_FACTOR = 1.5; // Exponential backoff factor
+  for (int i = 0; i < MAX_RETRIES; i++) {
+    YTController->checkAppStatus(applicationUrl, device);
 
-    int delayTime = INITIAL_DELAY;
-
-    for (int i = 0; i < MAX_RETRIES; i++) {
-        int appStatus = YTController->checkAppStatus(applicationUrl, device);
-
-        if (appStatus == 200) {
-            if (!device.screenID.isEmpty()) {
-                String Token = YTController->YTService.getToken(device.screenID);
-                device.YoutubeToken = Token;
-                YTController->YTService.BindSessionID(device);
-                return true;
-            } else {
-                Serial.println("Screen ID is Empty. Retrying...");
-                LOG_MESSAGE_TO_SD("Screen ID is Empty. Retrying...");
-            }
-        } else {
-            Serial.println("YouTube app is not running. Aborting...");
-            LOG_MESSAGE_TO_SD("YouTube app is not running. Aborting...");
-            return false;
-        }
-
-        delay(delayTime);
-        delayTime *= BACKOFF_FACTOR; // Increase the delay exponentially
+    if (!device.screenID.isEmpty()) {
+      String Token = YTController->YTService.getToken(device.screenID);
+      device.YoutubeToken = Token;
+      YTController->YTService.BindSessionID(device);
+      return true;
+    } else {
+      Serial.println("Screen ID is Empty. Retrying...");
+      LOG_MESSAGE_TO_SD("Screen ID is Empty. Retrying...");
+      delay(RETRY_DELAY);
     }
+  }
 
-    Serial.println(F("Failed to fetch Screen ID after max retries."));
-    LOG_MESSAGE_TO_SD("Failed to fetch Screen ID after max retries.");
-    return false;
+  Serial.println(F("Failed to fetch Screen ID after max retries."));
+  LOG_MESSAGE_TO_SD("Failed to fetch Screen ID after max retries.");
+  return false;
 }
 
 
@@ -84,142 +72,152 @@ void DIALClient::Execute() {
 
 
 std::vector<Device> DIALClient::discoverDevices() {
-    const int MAX_RETRIES = 5;
-    const int RETRY_DELAY = 1000;
+  const int MAX_RETRIES = 10;
+  const int RETRY_DELAY = 2000;
 
-    std::vector<Device> devices;
-    std::set<String> discoveredUSNs;
+  std::vector<Device> devices;
+  std::set<String> discoveredUSNs;
 
-    const uint8_t mSearchRequest[] = {
-        0x4d, 0x2d, 0x53, 0x45, 0x41, 0x52, 0x43, 0x48, 0x20, 0x2a, 0x20, 0x48, 0x54, 0x54, 0x50, 0x2f,
-        0x31, 0x2e, 0x31, 0x0d, 0x0a, 0x48, 0x4f, 0x53, 0x54, 0x3a, 0x20, 0x32, 0x33, 0x39, 0x2e, 0x32,
-        0x35, 0x35, 0x2e, 0x32, 0x35, 0x35, 0x2e, 0x32, 0x35, 0x30, 0x3a, 0x31, 0x39, 0x30, 0x30, 0x0d,
-        0x0a, 0x4d, 0x41, 0x4e, 0x3a, 0x20, 0x22, 0x73, 0x73, 0x64, 0x70, 0x3a, 0x64, 0x69, 0x73, 0x63,
-        0x6f, 0x76, 0x65, 0x72, 0x22, 0x0d, 0x0a, 0x53, 0x54, 0x3a, 0x20, 0x75, 0x72, 0x6e, 0x3a, 0x64,
-        0x69, 0x61, 0x6c, 0x2d, 0x6d, 0x75, 0x6c, 0x74, 0x69, 0x73, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x2d,
-        0x6f, 0x72, 0x67, 0x3a, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x3a, 0x64, 0x69, 0x61, 0x6c,
-        0x3a, 0x31, 0x0d, 0x0a, 0x4d, 0x58, 0x3a, 0x20, 0x33, 0x0d, 0x0a, 0x0d, 0x0a
-    };
+  const uint8_t mSearchRequest[] = {
+    0x4d, 0x2d, 0x53, 0x45, 0x41, 0x52, 0x43, 0x48, 0x20, 0x2a, 0x20, 0x48, 0x54, 0x54, 0x50, 0x2f,
+    0x31, 0x2e, 0x31, 0x0d, 0x0a, 0x48, 0x4f, 0x53, 0x54, 0x3a, 0x20, 0x32, 0x33, 0x39, 0x2e, 0x32,
+    0x35, 0x35, 0x2e, 0x32, 0x35, 0x35, 0x2e, 0x32, 0x35, 0x30, 0x3a, 0x31, 0x39, 0x30, 0x30, 0x0d,
+    0x0a, 0x4d, 0x41, 0x4e, 0x3a, 0x20, 0x22, 0x73, 0x73, 0x64, 0x70, 0x3a, 0x64, 0x69, 0x73, 0x63,
+    0x6f, 0x76, 0x65, 0x72, 0x22, 0x0d, 0x0a, 0x53, 0x54, 0x3a, 0x20, 0x75, 0x72, 0x6e, 0x3a, 0x64,
+    0x69, 0x61, 0x6c, 0x2d, 0x6d, 0x75, 0x6c, 0x74, 0x69, 0x73, 0x63, 0x72, 0x65, 0x65, 0x6e, 0x2d,
+    0x6f, 0x72, 0x67, 0x3a, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x3a, 0x64, 0x69, 0x61, 0x6c,
+    0x3a, 0x31, 0x0d, 0x0a, 0x4d, 0x58, 0x3a, 0x20, 0x33, 0x0d, 0x0a, 0x0d, 0x0a
+  };
 
-    int retries = 0;
-    while (devices.empty() && retries < MAX_RETRIES) {
-        if (retries > 0) {
-            Serial.println("[discoverDevices] Retrying device discovery...");
-            LOG_MESSAGE_TO_SD("[discoverDevices] Retrying device discovery...");
-            delay(RETRY_DELAY);
-        }
-
-        multicastClient.beginMulticast(IPAddress(239, 255, 255, 250), 1900);
-
-        multicastClient.beginPacket(IPAddress(239, 255, 255, 250), 1900);
-        multicastClient.write(mSearchRequest, sizeof(mSearchRequest));
-        multicastClient.endPacket();
-
-        unsigned long startTime = millis();
-        while (millis() - startTime < 3000) {
-            int packetSize = multicastClient.parsePacket();
-            if (packetSize) {
-                std::vector<char> buffer(packetSize + 1);
-                multicastClient.read(buffer.data(), packetSize);
-                buffer[packetSize] = '\0';
-
-                String response = String(buffer.data());
-
-                Device device;
-                if (parseSSDPResponse(response, device)) {
-                    if (discoveredUSNs.find(device.uniqueServiceName) == discoveredUSNs.end()) {
-                        devices.push_back(device);
-                        discoveredUSNs.insert(device.uniqueServiceName);
-                    }
-                }
-            }
-            delay(10); // Short delay to yield to other tasks
-        }
-        retries++;
+  int retries = 0;
+  while (devices.empty() && retries < MAX_RETRIES) {
+    if (retries > 0) {
+      Serial.println("[discoverDevices] Retrying device discovery...");
+      LOG_MESSAGE_TO_SD("[discoverDevices] Retrying device discovery...");
+      delay(RETRY_DELAY);
     }
 
-    if (devices.empty()) {
-        Serial.println(F("[discoverDevices] No devices found after all retries."));
-        LOG_MESSAGE_TO_SD("[discoverDevices] No devices found after all retries.");
+    multicastClient.beginMulticast(IPAddress(239, 255, 255, 250), 1900);
+
+
+    for (int i = 0; i < 5; i++) {
+      multicastClient.beginPacket(IPAddress(239, 255, 255, 250), 1900);
+      multicastClient.write((const uint8_t*)mSearchRequest, sizeof(mSearchRequest));
+      multicastClient.endPacket();
+      delay(500);
     }
 
-    return devices;
+    multicastClient.write(mSearchRequest, sizeof(mSearchRequest));
+
+    unsigned long startTime = millis();
+    while (millis() - startTime < 5000) {
+      if (multicastClient.parsePacket()) {
+        int len = multicastClient.available();
+        char buffer[len + 1];
+        multicastClient.read(buffer, len);
+        buffer[len] = '\0';
+
+        String response = String(buffer);
+
+        Device device;
+        if (parseSSDPResponse(response, device)) {
+          if (discoveredUSNs.find(device.uniqueServiceName) == discoveredUSNs.end()) {
+
+            devices.push_back(device);
+            discoveredUSNs.insert(device.uniqueServiceName);
+          }
+        }
+      }
+    }
+    retries++;
+  }
+
+
+  if (devices.empty()) {
+    Serial.println(F("[discoverDevices] No devices found after all retries."));
+    LOG_MESSAGE_TO_SD("[discoverDevices] No devices found after all retries.");
+  }
+
+  return devices;
 }
 
 
 void DIALClient::exploreNetwork() {
-    String yturl = YTurl != "" ? YTurl : "dQw4w9WgXcQ";
-    const int maxRetries = 3;
+  String yturl = YTurl != "" ? YTurl : "dQw4w9WgXcQ";
 
-    for (int attempt = 0; attempt < maxRetries; ++attempt) {
-        std::vector<Device> devices = discoverDevices();
+  const int maxRetries = 3;
 
-        if (devices.empty()) {
-            Serial.println(F("No devices discovered. Retrying..."));
-            LOG_MESSAGE_TO_SD("No devices discovered. Retrying...");
-            continue;
-        }
+  for (int attempt = 0; attempt < maxRetries; ++attempt) {
+    std::vector<Device> devices = discoverDevices();
 
-        for (Device& device : devices) {
-            Serial.println("Discovered Device at URL: " + device.location);
-            LOG_MESSAGE_TO_SD("Discovered Device at URL: " + device.location);
-            Serial.println(device.friendlyName.c_str());
-            LOG_MESSAGE_TO_SD(device.friendlyName.c_str());
-            Serial.println(device.wakeup.c_str());
-            LOG_MESSAGE_TO_SD(device.wakeup.c_str());
-
-            device.applicationUrl = getDialApplicationUrl(device.location);
-
-            if (!device.applicationUrl.isEmpty()) {
-                if (appHandler->getType() == HandlerType::YoutubeController) {
-                    YoutubeController* YTHandler = static_cast<YoutubeController*>(appHandler);
-
-                    if (appHandler->checkAppStatus(device.applicationUrl, device) != 200) {
-                        Serial.println(F("Launching YouTube App"));
-                        LOG_MESSAGE_TO_SD("Launching YouTube App");
-
-                        if (!appHandler->launchApp(device.applicationUrl)) {
-                            Serial.println("App Not Launched. Moving onto next device.");
-                            LOG_MESSAGE_TO_SD("App Not Launched. Moving onto next device.");
-                            continue; // Move on to the next device as YouTube does not work
-                        }
-
-                        // Wait for the app to launch properly
-                        delay(5000);
-                    }
-
-                    // Check if the app is running
-                    if (appHandler->checkAppStatus(device.applicationUrl, device) == 200) {
-                        if (fetchScreenIdWithRetries(device.applicationUrl, device, YTHandler)) {
-                            YTHandler->YTService.sendCommand("setPlaylist", yturl.c_str(), device);
-                        }
-                    } else {
-                        Serial.println("YouTube app is not running. Moving onto next device.");
-                        LOG_MESSAGE_TO_SD("YouTube app is not running. Moving onto next device.");
-                    }
-                } else if (appHandler->getType() == HandlerType::RokuController) {
-                    RokuController* RKHandler = static_cast<RokuController*>(appHandler);
-
-                    if (RKHandler->isRokuDevice(device.applicationUrl.c_str())) {
-                        bool KeySpam = ShouldRokuKeySpam;
-
-                        if (KeySpam) {
-                            RKHandler->ExecuteKeyCommand(device.applicationUrl.c_str());
-                        } else {
-                            RKHandler->launchApp(device.applicationUrl.c_str());
-                        }
-                    }
-                } else if (appHandler->getType() == HandlerType::NetflixController) {
-                    Serial.println("Launching App");
-                    LOG_MESSAGE_TO_SD("Launching App");
-                    appHandler->launchApp(device.applicationUrl);
-                }
-
-                Serial.println(device.uniqueServiceName);
-                LOG_MESSAGE_TO_SD(device.uniqueServiceName);
-            }
-        }
+    if (devices.empty()) {
+      Serial.println(F("No devices discovered. Retrying..."));
+      LOG_MESSAGE_TO_SD("No devices discovered. Retrying...");
+      continue;
     }
+
+    for (Device& device : devices) {
+      Serial.println("Discovered Device at URL: " + device.location);
+      LOG_MESSAGE_TO_SD("Discovered Device at URL: " + device.location);
+      Serial.println(device.friendlyName.c_str());
+      LOG_MESSAGE_TO_SD(device.friendlyName.c_str());
+      Serial.println(device.wakeup.c_str());
+      LOG_MESSAGE_TO_SD(device.wakeup.c_str());
+
+
+      device.applicationUrl = getDialApplicationUrl(device.location);
+
+      if (!device.applicationUrl.isEmpty()) {
+        if (appHandler->getType() == HandlerType::YoutubeController) {
+          YoutubeController* YTHandler = static_cast<YoutubeController*>(appHandler);
+          if (appHandler->checkAppStatus(device.applicationUrl, device) != 200) {
+            Serial.println(F("Launching Youtube App"));
+            LOG_MESSAGE_TO_SD("Launching Youtube App");
+            appHandler->launchApp(device.applicationUrl);
+          }
+
+          unsigned long startTime = millis();
+          bool isYouTubeRunning = false;
+
+          while (millis() - startTime < 5000) {
+            if (YTHandler->checkAppStatus(device.applicationUrl, device) == 200) {
+              isYouTubeRunning = true;
+              break;
+            }
+            delay(100);
+          }
+
+          if (isYouTubeRunning) {
+            if (fetchScreenIdWithRetries(device.applicationUrl, device, YTHandler)) {
+              YTHandler->YTService.sendCommand("setPlaylist", yturl.c_str(), device);
+            }
+          } else {
+            Serial.println("Timeout reached. YouTube app is not running.");
+            LOG_MESSAGE_TO_SD("Timeout reached. YouTube app is not running.");
+          }
+        } else if (appHandler->getType() == HandlerType::RokuController) {
+          RokuController* RKHandler = static_cast<RokuController*>(appHandler);
+
+          if (RKHandler->isRokuDevice(device.applicationUrl.c_str())) {
+            bool KeySpam = ShouldRokuKeySpam;
+
+            if (KeySpam) {
+
+              RKHandler->ExecuteKeyCommand(device.applicationUrl.c_str());
+            } else {
+              RKHandler->launchApp(device.applicationUrl.c_str());
+            }
+          }
+        } else if (appHandler->getType() == HandlerType::NetflixController) {
+          Serial.println("Launching App");
+          LOG_MESSAGE_TO_SD("Launching App");
+          appHandler->launchApp(device.applicationUrl);
+        }
+        Serial.println(device.uniqueServiceName);
+        LOG_MESSAGE_TO_SD(device.uniqueServiceName);
+      }
+    }
+  }
 }
 
 

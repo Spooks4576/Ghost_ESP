@@ -155,18 +155,6 @@ String YouTubeService::getToken(const String& screenId) {
 
 void YouTubeService::sendCommand(const String& command, const String& videoId, const Device& device) 
 {
-
-
-  Serial.print("Free heap: ");
-  Serial.println(ESP.getFreeHeap());
-  Serial.print("Total PSRAM: ");
-  Serial.println(ESP.getPsramSize());
-  Serial.print("Free PSRAM: ");
-  Serial.println(ESP.getFreePsram());
-  Serial.print("Largest free block: ");
-  Serial.println(ESP.getMaxAllocHeap());
-
-
   if (!connectToServer(ServerAddress, port)) return;
 
   String urlParams = "device=REMOTE_CONTROL";

@@ -597,9 +597,6 @@ SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().
                 sendDeauthFrame(ap.bssid, y, broadcast_mac);
               }
             }
-#ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
-#endif
         }
       }
       break;
