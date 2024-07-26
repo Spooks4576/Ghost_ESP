@@ -28,12 +28,6 @@ Ghost ESP firmware extends its embrace to the following ESP32 boards:
 
 Beware, brave explorer! While our BLE spam feature is a potent tool, wield it with care. The ESP32 WROOM, with its limited resources, may succumb to its power, resulting in a crash.
 
-## Join the Adventure
-
-Ready to embark on your wireless odyssey? Join our Discord community by clicking the image below:
-
-[![Join our Discord](https://discordapp.com/api/guilds/1221648495174221834/widget.png?style=banner2)](https://discord.gg/w89sexdsyb)
-
 Connect with fellow enthusiasts, share insights, and embark on collaborative expeditions into the unknown.
 
 ## How to Begin
