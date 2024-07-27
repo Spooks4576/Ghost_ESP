@@ -209,7 +209,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
       break;
     }
     unsigned long currentTime = millis();
-    if (currentTime - lastChangeTime >= 3000 && MostActiveChannel == 0)
+    if (currentTime - lastChangeTime >= 1000 && MostActiveChannel == 0)
     {
       if (!SetChannel)
       {
@@ -261,7 +261,7 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 2000)
+        if (currentTime - lastChangeTime >= 1000)
         {
           lastchannel++ % 13;
           uint8_t set_channel = lastchannel;
@@ -301,7 +301,7 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 2000)
+        if (currentTime - lastChangeTime >= 1000)
         {
           lastchannel++ % 13;
           uint8_t set_channel = lastchannel;
@@ -620,6 +620,62 @@ SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule-
         delay(1);
 SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
       }
+    }
+    case AT_WPS:
+    {
+      uint8_t set_channel = random(1, 12);
+
+        esp_wifi_init(&cfg);
+        esp_wifi_set_storage(WIFI_STORAGE_RAM);
+        esp_wifi_set_mode(WIFI_MODE_NULL);
+        esp_wifi_start();
+        esp_wifi_set_promiscuous(true);
+        esp_wifi_set_promiscuous_filter(&filt);
+        esp_wifi_set_promiscuous_rx_cb(&WPSScanCallback);
+        esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+        this->wifi_initialized = true;
+        initTime = millis();
+        static unsigned long lastChangeTime = 0;
+        static int lastchannel = 0;
+
+      while (wifi_initialized && initTime - lastChangeTime >= 10000) // 10 seconds
+      {
+        if (Serial.available() > 0)
+        {
+          shutdownWiFi();
+          break;
+        }
+        unsigned long currentTime = millis();
+        if (currentTime - lastChangeTime >= 1000)
+        {
+          lastchannel++ % 13;
+          uint8_t set_channel = lastchannel;
+          esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+          lastChangeTime = currentTime;
+        }
+      }
+
+      shutdownWiFi();
+
+      // Print Out the results TODO Implement Attacks
+
+      for (int i = 0; i < WPSAccessPoints.size(); i++) {
+        AccessPoint* ap = WPSAccessPoints.get(i);
+        Serial.print("ESSID: ");
+        Serial.print(ap->essid);
+        Serial.print(", BSSID: ");
+        for (int j = 0; j < 6; j++) {
+          Serial.printf("%02X", ap->bssid[j]);
+          if (j < 5) Serial.print(":");
+        }
+        Serial.print(", Channel: ");
+        Serial.print(ap->channel);
+        Serial.print(", RSSI: ");
+        Serial.println(ap->rssi);
+      }
+
+
+      break;
     }
   }
 }

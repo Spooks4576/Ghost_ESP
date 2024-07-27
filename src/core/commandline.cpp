@@ -308,6 +308,14 @@ void CommandLine::runCommand(String input)
           return;
         }
 
+        if (attack_type == F("wps_pwn"))
+        {
+          Serial.println("Starting wps_pwn wifi attack. Stop with " + (String)"stopscan");
+          LOG_MESSAGE_TO_SD(F("Starting wps_pwn beacon attack."));
+          SystemManager::getInstance().wifiModule.RunSetup();
+          SystemManager::getInstance().wifiModule.Attack(AT_WPS);
+        }
+
         if (attack_type == F("karma"))
         {
           Serial.println("Starting Karma wifi beacon attack. Stop with " + (String)"stopscan");

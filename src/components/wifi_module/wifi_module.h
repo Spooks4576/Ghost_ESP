@@ -142,6 +142,7 @@ struct BeaconPacket{
 
 
 inline LinkedList<AccessPoint>* access_points;
+inline LinkedList<AccessPoint*> WPSAccessPoints;
 inline LinkedList<ssid>* ssids;
 inline LinkedList<Station>* stations;
 String PROGMEM version_number;
@@ -161,7 +162,8 @@ enum AttackType
     AT_Rickroll,
     AT_DeauthAP,
     AT_ListSSID,
-    AT_Karma
+    AT_Karma,
+    AT_WPS
 };
 
 enum ScanType

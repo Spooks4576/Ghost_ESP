@@ -10,6 +10,69 @@ namespace CallBackUtils
   }
 }
 
+void WPSScanCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
+  if (type != WIFI_PKT_MGMT) {
+    return;
+  }
+
+  wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
+  wifi_ieee80211_packet_t* ipkt = (wifi_ieee80211_packet_t*)pkt->payload;
+  WifiMgmtHdr* hdr = &ipkt->hdr;
+
+  // Check if the packet contains WPS information
+  uint8_t* payload = hdr->payload;
+  int len = pkt->rx_ctrl.sig_len - sizeof(WifiMgmtHdr);
+
+  String essid = "";
+  bool wps_found = false;
+
+  for (int i = 0; i < len;) {
+    uint8_t tag = payload[i];
+    uint8_t tag_len = payload[i + 1];
+
+    if (tag == 0x00) { // SSID parameter set
+      essid = String((char*)(payload + i + 2)).substring(0, tag_len);
+    } else if (tag == 0xDD && tag_len >= 4 && payload[i + 2] == 0x00 && payload[i + 3] == 0x50 && payload[i + 4] == 0xF2 && payload[i + 5] == 0x04) {
+      // WPS information element found
+      wps_found = true;
+    }
+
+    i += 2 + tag_len;
+  }
+
+  if (wps_found) {
+    AccessPoint* ap = new AccessPoint;
+    ap->essid = essid;
+    ap->channel = pkt->rx_ctrl.channel;
+    memcpy(ap->bssid, &hdr->bssid, 6);
+    ap->selected = false;
+    ap->beacon = new LinkedList<char>();
+    ap->rssi = pkt->rx_ctrl.rssi;
+    ap->stations = new LinkedList<int>();
+
+    // Add some dummy data to beacon and stations lists
+    ap->beacon->add('B');
+    ap->stations->add(1);
+
+    // Add the AccessPoint to the LinkedList
+    WPSAccessPoints.add(ap);
+
+    Serial.print("Detected WPS Access Point: ");
+    Serial.print("ESSID: ");
+    Serial.print(ap->essid);
+    Serial.print(", BSSID: ");
+    for (int j = 0; j < 6; j++) {
+      Serial.printf("%02X", ap->bssid[j]);
+      if (j < 5) Serial.print(":");
+    }
+    Serial.print(", Channel: ");
+    Serial.print(ap->channel);
+    Serial.print(", RSSI: ");
+    Serial.println(ap->rssi);
+  }
+}
+
+
 void deauthapSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
   wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
   WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
