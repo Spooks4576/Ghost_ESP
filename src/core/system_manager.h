@@ -28,10 +28,10 @@ public:
 
     void loop();
 
-    void SetLEDState(int Pin, ENeoColor NeoColor = ENeoColor::Red, bool FadeOut = false)
+    void SetLEDState(ENeoColor NeoColor = ENeoColor::Red, bool FadeOut = false)
     {
 #ifdef OLD_LED
-analogWrite(Pin, FadeOut ? 255 : 0);
+analogWrite(rgbModule->redPin, FadeOut ? 255 : 0);
 #endif
 #ifdef NEOPIXEL_PIN
 neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(NeoColor == ENeoColor::Red && !FadeOut ? 255 : 0, NeoColor == ENeoColor::Green && !FadeOut ? 255 : 0, NeoColor == ENeoColor::Blue && !FadeOut ? 255 : 0), 300, false);

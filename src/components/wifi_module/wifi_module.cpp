@@ -496,7 +496,7 @@ void WiFiModule::Attack(AttackType type)
   {
     case AttackType::AT_Rickroll:
     {
-SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, false);
+SystemManager::getInstance().SetLEDState(ENeoColor::Red, false);
       while (wifi_initialized)
       {
         if (Serial.available() > 0)
@@ -518,12 +518,12 @@ SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule-
           }
           delay(1);
       }
-      SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
+      SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
       break;
     }
     case AttackType::AT_RandomSSID:
     {
-SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, false);
+SystemManager::getInstance().SetLEDState(ENeoColor::Red, false);
       while (wifi_initialized)
       {
         if (Serial.available() > 0)
@@ -539,11 +539,11 @@ SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule-
         broadcastRandomSSID();
         delay(1);
       }
-SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
+SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
       break;
     case AttackType::AT_ListSSID:
     {
-SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, false);
+SystemManager::getInstance().SetLEDState(ENeoColor::Red, false);
       while (wifi_initialized)
       {
         if (Serial.available() > 0)
@@ -565,12 +565,12 @@ SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule-
         }
         delay(1);
       }
-SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
+SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
       break;
     }
     case AttackType::AT_DeauthAP:
     {
-SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, false);
+SystemManager::getInstance().SetLEDState(ENeoColor::Red, false);
         while(wifi_initialized){
         if (Serial.available() > 0)
         {
@@ -593,7 +593,7 @@ SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule-
             }
         }
       }
-SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
+SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
       break;
     }
     case AT_Karma:
@@ -618,7 +618,7 @@ SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule-
           }
         }
         delay(1);
-SystemManager::getInstance().SetLEDState(SystemManager::getInstance().rgbModule->redPin, ENeoColor::Red, true);
+SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
       }
     }
     case AT_WPS:

@@ -68,7 +68,7 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         AdvData_Raw[i++] = 0x0F;  // Type
         AdvData_Raw[i++] = 0x05;                        // Length
         AdvData_Raw[i++] = 0xC1;                        // Action Flags
-        const uint8_t types[] = { 0x27, 0x09, 0x02, 0x1e, 0x2b, 0x2d, 0x2f, 0x01, 0x06, 0x20, 0xc0 };
+        const uint8_t types[] = { 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24 };
         AdvData_Raw[i++] = types[rand() % sizeof(types)];  // Action Type
         esp_fill_random(&AdvData_Raw[i], 3); // Authentication Tag
         i += 3;   
