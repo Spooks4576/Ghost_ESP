@@ -5,6 +5,14 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <SD_MMC.h>
+#include "SerialFS.h"
+
+enum class ECardType
+{
+    MMC,
+    SDI,
+    Serial
+};
 
 
 struct pcap_global_header {
@@ -39,6 +47,7 @@ public:
     void flushLog();
     void stopPcapLogging();
     FS* SDI;
+    SerialFS* SFS;
 public:
     int csPin;
     int BootNum;
@@ -55,15 +64,20 @@ public:
         65535, // snaplen
         1 // Network - assuming Ethernet
     };
-    FS* createFileSystem(bool isMMCCard) {
-        if (isMMCCard) {
+    FS* createFileSystem(ECardType CardType) {
+        if (CardType == ECardType::MMC) {
             #ifdef SOC_SDMMC_HOST_SUPPORTED
             return &SD_MMC;
             #else
             return nullptr;
             #endif
-        } else {
+        } else if (CardType == ECardType::SDI) {
             return &SD;
+        }
+        else if (CardType == ECardType::Serial)
+        {
+            SFS = new SerialFS();
+            return SFS;
         }
     }
 };

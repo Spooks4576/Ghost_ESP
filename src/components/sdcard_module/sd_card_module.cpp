@@ -1,26 +1,47 @@
 #include "sd_card_module.h"
 
-#ifndef SD_CARD_CS_PIN
-#define SD_CARD_CS_PIN 0
-#endif
-
-SDCardModule::SDCardModule() : csPin(SD_CARD_CS_PIN) {}
+SDCardModule::SDCardModule(){}
 
 bool SDCardModule::init() {
+
+    ECardType CardType;
+
 #ifdef SD_CARD_CS_PIN
+    csPin = SD_CARD_CS_PIN;
     Initlized = SD.begin(csPin);
+    CardType = ECardType::SDI;
 #elif SUPPORTS_MMC
     Initlized = SD_MMC.begin();
     IsMMCCard = true;
+    CardType = ECardType::MMC;
 #endif
+
+    if (!Initlized)
+    {
+        Serial.println("HELLO");
+
+        unsigned long startTime = millis();
+        unsigned long timeout = 5000;
+
+        while (millis() - startTime < timeout)
+        {
+            String data = Serial.readString();
+            if (data.indexOf("RECIEVED") != -1) {
+                Serial.println("Message received successfully.");
+                Initlized = true;
+                CardType = ECardType::Serial;
+                break;
+            }
+        }
+    }
+
+
     if (!Initlized) {
-
         Serial.println("SD Card initialization failed!");
-
         return false;
     }
 
-    SDI = createFileSystem(IsMMCCard);
+    SDI = createFileSystem(CardType);
 
     Serial.println("SD Card initialized.");
 
