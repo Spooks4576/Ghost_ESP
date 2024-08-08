@@ -398,6 +398,38 @@ void CommandLine::runCommand(String input)
             }
           }
         }
+
+        if (ActualSettingsIndex == 1)
+        {
+          switch (ActualSettingsValue)
+          {
+            case 1:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(500);
+              break;
+            }
+            case 2:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(1000);
+              break;
+            }
+            case 3:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(2000);
+              break;
+            }
+            case 4:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(3000);
+              break;
+            }
+            case 5:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(4000);
+              break;
+            }
+          }
+        }
       }
       return;
     }

@@ -207,7 +207,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
       break;
     }
     unsigned long currentTime = millis();
-    if (currentTime - lastChangeTime >= 1000 && MostActiveChannel == 0)
+    if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay() && MostActiveChannel == 0)
     {
       if (!SetChannel)
       {
@@ -262,7 +262,7 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 1000)
+        if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
         {
           lastchannel++ % 13;
           uint8_t set_channel = lastchannel;
@@ -270,9 +270,7 @@ void WiFiModule::Scan(ScanType type)
           lastChangeTime = currentTime;
         }
       }
-
       break;
-
     }
     case ScanType::SCAN_STA:
     {
@@ -302,7 +300,7 @@ void WiFiModule::Scan(ScanType type)
           break;
         }
         unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 1000)
+        if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
         {
           lastchannel++ % 13;
           uint8_t set_channel = lastchannel;

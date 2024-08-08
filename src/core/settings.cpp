@@ -19,13 +19,9 @@ FSettings::~FSettings() {
 }
 
 void FSettings::setRGBMode(RGBMode mode) {
-
-    if (mode == RGBMode::Rainbow)
-    {
+    if (mode == RGBMode::Rainbow) {
         SystemManager::getInstance().RainbowLEDActive = true;
-    }
-    else
-    {
+    } else {
         SystemManager::getInstance().RainbowLEDActive = false;
         SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
     }
@@ -38,14 +34,24 @@ FSettings::RGBMode FSettings::getRGBMode() const {
     return static_cast<RGBMode>((settings & RGB_MODE_MASK) >> RGB_MODE_SHIFT);
 }
 
+void FSettings::setChannelSwitchDelay(uint16_t delay_ms) {
+    settings = (settings & ~(CHANNEL_SWITCH_DELAY_MASK << CHANNEL_SWITCH_DELAY_SHIFT)) |
+               ((delay_ms & CHANNEL_SWITCH_DELAY_MASK) << CHANNEL_SWITCH_DELAY_SHIFT);
+    saveSettings();
+}
+
+uint16_t FSettings::getChannelSwitchDelay() const {
+    return (settings >> CHANNEL_SWITCH_DELAY_SHIFT) & CHANNEL_SWITCH_DELAY_MASK;
+}
+
 void FSettings::loadSettings() {
-    esp_err_t err = nvs_get_u8(nvsHandle, "settings", &settings);
+    esp_err_t err = nvs_get_u16(nvsHandle, "settings", &settings);
     if (err != ESP_OK) {
-        settings = 0; // Default settings if not found
+        settings = 0;
     }
 }
 
 void FSettings::saveSettings() {
-    nvs_set_u8(nvsHandle, "settings", settings);
+    nvs_set_u16(nvsHandle, "settings", settings);
     nvs_commit(nvsHandle);
 }
