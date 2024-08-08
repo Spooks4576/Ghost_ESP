@@ -16,6 +16,7 @@ public:
 #endif
     File MapData;
     bool Initilized;
+    uint8_t CurrentChannel;
     bool Stop;
     unsigned long lastUpdate = 0;
     long updateInterval = 1000;

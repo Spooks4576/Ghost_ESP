@@ -134,7 +134,7 @@ public:
 #define LOG_RESULTS(filename, folder, message) SystemManager::getInstance().sdCardModule.logMessage(filename, folder, message)
 #else
 #define LOG_MESSAGE_TO_SD(message) // Not Supported do nothing
-#define LOG_RESULTS(filename, folder, message)
+#define LOG_RESULTS(filename, folder, message) SystemManager::getInstance().sdCardModule.logPacket((const uint8_t*)message, strlen(message))
 #endif
 
 namespace G_Utils

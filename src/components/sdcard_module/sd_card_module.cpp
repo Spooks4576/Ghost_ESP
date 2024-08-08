@@ -14,27 +14,9 @@ bool SDCardModule::init() {
     Initlized = SD_MMC.begin();
     IsMMCCard = true;
     CardType = ECardType::MMC;
+#else
+CardType = ECardType::Serial;
 #endif
-
-    // if (!Initlized)
-    // {
-    //     Serial.print("HELLO");
-
-    //     unsigned long startTime = millis();
-    //     unsigned long timeout = 5000;
-
-    //     while (millis() - startTime < timeout)
-    //     {
-    //         String data = Serial.readString();
-    //         if (data.indexOf("RECIEVED") != -1) {
-    //             Serial.println("Message received successfully.");
-    //             Initlized = true;
-    //             CardType = ECardType::Serial;
-    //             break;
-    //         }
-    //     }
-    // }
-
 
     if (!Initlized) {
         Serial.println("SD Card initialization failed!");
