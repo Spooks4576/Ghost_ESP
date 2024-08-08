@@ -234,7 +234,6 @@ void SDCardModule::flushBufferToSerial() {
         free(buf);
         bufferLength = 0;
         BufferFull = false;
-        free(buffer);
 
         Serial.println("Buffer flushed to Serial successfully.");
     } else {

@@ -1,4 +1,5 @@
 #include "neopixel_module.h"
+#include <core/system_manager.h>
 
 NeopixelModule::NeopixelModule(uint16_t numPixels, uint8_t pin)
 : strip(numPixels, pin, NEO_GRB + NEO_KHZ800), numPixels(numPixels), pin(pin) {}
@@ -42,17 +43,20 @@ void NeopixelModule::breatheLED(uint32_t color, int breatheTime, bool FadeOut) {
 
 void NeopixelModule::rainbow(int strength, int stepDelay) {
     
-    strength = max(0, min(strength, 150));
-   
-    strip.setBrightness(strength);
+    if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Rainbow)
+    {
+        strength = max(0, min(strength, 150));
+    
+        strip.setBrightness(strength);
 
-   
-    for (uint16_t i = 0; i < 256; i++) {
-       
-        uint32_t color = Wheel(i & 255);
-        strip.setPixelColor(0, color); 
-        strip.show(); 
-        delay(stepDelay); 
+    
+        for (uint16_t i = 0; i < 256; i++) {
+        
+            uint32_t color = Wheel(i & 255);
+            strip.setPixelColor(0, color); 
+            strip.show(); 
+            delay(stepDelay); 
+        }
     }
 }
 

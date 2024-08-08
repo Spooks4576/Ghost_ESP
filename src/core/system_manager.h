@@ -7,6 +7,7 @@
 #include <components/ble_module/ble_module.h>
 #include <components/display_module/display_module.h>
 #include "../lib/TFT_eSPI/User_Setup.h"
+#include "settings.h"
 
 enum ENeoColor
 {
@@ -30,17 +31,35 @@ public:
 
     void SetLEDState(ENeoColor NeoColor = ENeoColor::Red, bool FadeOut = false)
     {
+if (Settings.getRGBMode() != FSettings::RGBMode::Rainbow)
+{
 #ifdef OLD_LED
-analogWrite(rgbModule->redPin, FadeOut ? 255 : 0);
+if (FadeOut)
+{
+    rgbModule->fadeOutAllPins(500);
+}
+else 
+{
+    analogWrite(rgbModule->redPin, FadeOut ? 255 : 0);
+}
 #endif
 #ifdef NEOPIXEL_PIN
 neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(NeoColor == ENeoColor::Red && !FadeOut ? 255 : 0, NeoColor == ENeoColor::Green && !FadeOut ? 255 : 0, NeoColor == ENeoColor::Blue && !FadeOut ? 255 : 0), 300, false);
 #endif
+}
     }
 
     static void SerialCheckTask(void *pvParameters)
     {
         while (1) {
+            if (SystemManager::getInstance().RainbowLEDActive)
+            {
+#ifdef OLD_LED
+    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
+#elif NEOPIXEL_PIN
+    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
+#endif
+            }
             #ifndef DISPLAY_SUPPORT
             if (HasRanCommand)
             {   
@@ -80,6 +99,7 @@ public:
     SDCardModule sdCardModule;
     gps_module* gpsModule;
     BLEModule* bleModule;
+    FSettings Settings;
     RGBLedModule* rgbModule;
     NeopixelModule* neopixelModule;
 

@@ -364,6 +364,76 @@ void CommandLine::runCommand(String input)
       return;
     }
 
+    if (cmd_args.get(0) == F("setsetting"))
+    {
+      int settingindex = this->argSearch(&cmd_args, "-i");
+      int settingvalue = this->argSearch(&cmd_args, "-v");
+
+      if (settingindex != -1 && settingvalue != -1)
+      {
+        String settingindexString = cmd_args.get(settingindex + 1);
+        String settingvalueString = cmd_args.get(settingvalue + 1);
+
+        int ActualSettingsIndex = settingindexString.toInt();
+        int ActualSettingsValue = settingvalueString.toInt();
+
+        if (ActualSettingsIndex == 1) // RGB Mode
+        {
+          switch (ActualSettingsValue)
+          {
+            case 1:
+            {
+              SystemManager::getInstance().Settings.setRGBMode(FSettings::RGBMode::Stealth);
+              break;
+            }
+            case 2:
+            {
+              SystemManager::getInstance().Settings.setRGBMode(FSettings::RGBMode::Normal);
+              break;
+            }
+            case 3:
+            {
+              SystemManager::getInstance().Settings.setRGBMode(FSettings::RGBMode::Rainbow);
+              break;
+            }
+          }
+        }
+
+        if (ActualSettingsIndex == 2)
+        {
+          switch (ActualSettingsValue)
+          {
+            case 1:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(0.5);
+              break;
+            }
+            case 2:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(1);
+              break;
+            }
+            case 3:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(2);
+              break;
+            }
+            case 4:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(3);
+              break;
+            }
+            case 5:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(4);
+              break;
+            }
+          }
+        }
+      }
+      return;
+    }
+
     if (cmd_args.get(0) == F("led"))
     {
       if (!SystemManager::getInstance().RainbowLEDActive)
