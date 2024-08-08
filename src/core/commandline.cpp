@@ -399,33 +399,33 @@ void CommandLine::runCommand(String input)
           }
         }
 
-        if (ActualSettingsIndex == 1)
+        if (ActualSettingsIndex == 2)
         {
           switch (ActualSettingsValue)
           {
             case 1:
             {
-              SystemManager::getInstance().Settings.setChannelSwitchDelay(500);
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(0.5);
               break;
             }
             case 2:
             {
-              SystemManager::getInstance().Settings.setChannelSwitchDelay(1000);
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(1);
               break;
             }
             case 3:
             {
-              SystemManager::getInstance().Settings.setChannelSwitchDelay(2000);
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(2);
               break;
             }
             case 4:
             {
-              SystemManager::getInstance().Settings.setChannelSwitchDelay(3000);
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(3);
               break;
             }
             case 5:
             {
-              SystemManager::getInstance().Settings.setChannelSwitchDelay(4000);
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(4);
               break;
             }
           }

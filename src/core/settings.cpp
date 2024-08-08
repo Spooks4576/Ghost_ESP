@@ -1,7 +1,12 @@
 #include "Settings.h"
 #include "core/system_manager.h"
+#include <iostream>  // For debugging purposes
 
-FSettings::FSettings() : settings(0) {
+// Define NVS keys
+const char* FSettings::NVS_RGB_MODE_KEY = "rgb_mode";
+const char* FSettings::NVS_CHANNEL_SWITCH_DELAY_KEY = "channel_delay";
+
+FSettings::FSettings() : rgbMode(RGBMode::Stealth), channelSwitchDelay(0.0f) {
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         nvs_flash_erase();
@@ -26,32 +31,44 @@ void FSettings::setRGBMode(RGBMode mode) {
         SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
     }
 
-    settings = (settings & ~RGB_MODE_MASK) | (static_cast<uint8_t>(mode) << RGB_MODE_SHIFT);
+    rgbMode = mode;
     saveSettings();
 }
 
 FSettings::RGBMode FSettings::getRGBMode() const {
-    return static_cast<RGBMode>((settings & RGB_MODE_MASK) >> RGB_MODE_SHIFT);
+    return rgbMode;
 }
 
-void FSettings::setChannelSwitchDelay(uint16_t delay_ms) {
-    settings = (settings & ~(CHANNEL_SWITCH_DELAY_MASK << CHANNEL_SWITCH_DELAY_SHIFT)) |
-               ((delay_ms & CHANNEL_SWITCH_DELAY_MASK) << CHANNEL_SWITCH_DELAY_SHIFT);
+void FSettings::setChannelSwitchDelay(float delay_ms) {
+    channelSwitchDelay = delay_ms;
     saveSettings();
 }
 
-uint16_t FSettings::getChannelSwitchDelay() const {
-    return (settings >> CHANNEL_SWITCH_DELAY_SHIFT) & CHANNEL_SWITCH_DELAY_MASK;
+float FSettings::getChannelSwitchDelay() const {
+    return channelSwitchDelay * 1000;
 }
 
 void FSettings::loadSettings() {
-    esp_err_t err = nvs_get_u16(nvsHandle, "settings", &settings);
+    // Load RGB Mode
+    uint8_t storedRGBMode = 0;
+    esp_err_t err = nvs_get_u8(nvsHandle, NVS_RGB_MODE_KEY, &storedRGBMode);
+    if (err == ESP_OK) {
+        rgbMode = static_cast<RGBMode>(storedRGBMode);
+    } else {
+        rgbMode = RGBMode::Stealth; // Default value
+    }
+
+    size_t required_size = sizeof(float);
+    err = nvs_get_blob(nvsHandle, NVS_CHANNEL_SWITCH_DELAY_KEY, &channelSwitchDelay, &required_size);
     if (err != ESP_OK) {
-        settings = 0;
+        channelSwitchDelay = 0.0f; // Default value
     }
 }
 
 void FSettings::saveSettings() {
-    nvs_set_u16(nvsHandle, "settings", settings);
+    nvs_set_u8(nvsHandle, NVS_RGB_MODE_KEY, static_cast<uint8_t>(rgbMode));
+    
+    nvs_set_blob(nvsHandle, NVS_CHANNEL_SWITCH_DELAY_KEY, &channelSwitchDelay, sizeof(float));
+
     nvs_commit(nvsHandle);
 }
