@@ -214,9 +214,12 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       pAdvertising->setAdvertisementData(advertisementData.AdvData);
       pAdvertising->setScanResponseData(advertisementData.ScanData);
       pAdvertising->start();
+      if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+      {
 #ifdef NEOPIXEL_PIN
-SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 0, 255), 300, false);
+      SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 0, 255), 300, false);
 #endif
+      }
       delay(100);
       pAdvertising->stop();
 
@@ -369,9 +372,12 @@ void FlipperFinderCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
       Serial.printf("Found White Flipper Device %s", advertisedDevice->toString().c_str());
       LOG_MESSAGE_TO_SD(F("Found White Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
+}
       return;
     }
 
@@ -380,9 +386,12 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
       Serial.printf("Found Black Flipper Device %s", advertisedDevice->toString().c_str());
       LOG_MESSAGE_TO_SD(F("Found Black Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
+}
       return;
     }
 
@@ -391,9 +400,12 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
       Serial.printf("Found Transparent Flipper Device %s", advertisedDevice->toString().c_str());
       LOG_MESSAGE_TO_SD(F("Found Transparent Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
+}
       return;
     }
   }
@@ -444,9 +456,12 @@ void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice
       if (info.count > 20 && (currentTime - info.firstSeenTime) <= detectionWindow || info.Mac == MacAddr) {
           Serial.println(F("BLE Spam detected!"));
           LOG_MESSAGE_TO_SD(F("BLE Spam detected!"));
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 200, false);
 #endif
+}
       } else if ((currentTime - info.firstSeenTime) > detectionWindow) {
           info.count = 1;
           info.firstSeenTime = currentTime;

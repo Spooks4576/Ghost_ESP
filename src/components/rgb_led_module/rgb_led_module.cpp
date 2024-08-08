@@ -1,5 +1,6 @@
 #include "rgb_led_module.h"
 #include <Arduino.h>
+#include <core/system_manager.h>
 
 void RGBLedModule::init() {
     pinMode(redPin, OUTPUT);
@@ -60,7 +61,8 @@ void RGBLedModule::Song()
 
 void RGBLedModule::Rainbow(int strength, int stepDelay) 
 {
-
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Rainbow)
+{
     float brightnessFactor = constrain(brightnessFactor, 0.0, 1.0);
 
     // Ensure strength is between 0 and 255
@@ -108,6 +110,12 @@ void RGBLedModule::Rainbow(int strength, int stepDelay)
         analogWrite(bluePin, b);
         delay(stepDelay);
     }
+
+    if (SystemManager::getInstance().Settings.getRGBMode() != FSettings::RGBMode::Rainbow)
+    {
+        fadeOutAllPins(500);
+    }
+}
 }
 
 void RGBLedModule::setColor(int red, int green, int blue) {

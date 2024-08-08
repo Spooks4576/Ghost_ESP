@@ -101,12 +101,16 @@ void deauthapSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
     {
       uint8_t* addr = new uint8_t[6];
       SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
+
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef OLD_LED
         SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 300, false);
 #endif
+}
         uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
         for (int y = 0; y < 12; y++) {
           SystemManager::getInstance().wifiModule.sendDeauthFrame(addr, y, broadcast_mac);
@@ -165,12 +169,15 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
       }
 
       if (!in_list) {
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef OLD_LED
         SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 300, false);
 #endif
+}
       
         delay(random(0, 10));
         LOG_RESULTS("ScanResult.txt", "scan", "RSSI: ");
@@ -359,12 +366,15 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
                 false};
 
   stations->add(sta);
+  if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef OLD_LED
 SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 300, false);
 #endif
+}
 
 
   Serial.print((String)stations->size() + ": ");

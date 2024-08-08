@@ -19,6 +19,14 @@ void SystemManager::setup()
     initWiFi();
     initGPSModule();
     CommandLine::getInstance().RunSetup();
+
+    Settings.loadSettings();
+
+    if (Settings.getRGBMode() == FSettings::RGBMode::Rainbow)
+    {
+        SystemManager::getInstance().RainbowLEDActive = true;
+    }
+
     Serial.println("System initialized");
 }
 

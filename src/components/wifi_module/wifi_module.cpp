@@ -217,12 +217,15 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
         Serial.printf("Set Scanning Channel to %i\n", set_channel);
       }
       lastChangeTime = currentTime;
+      if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+      {
 #ifdef OLD_LED
 SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
       SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 255), 1000, false);
 #endif
+      }
     }
   }
 }
