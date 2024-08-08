@@ -7,13 +7,15 @@
 #include <SD_MMC.h>
 #include "SerialFS.h"
 
+#define BUF_SIZE 10 * 1024
+
+
 enum class ECardType
 {
     MMC,
     SDI,
     Serial
 };
-
 
 struct pcap_global_header {
     uint32_t magic_number;   // Magic number
@@ -45,18 +47,21 @@ public:
     bool startPcapLogging(const char *path,bool bluetooth = false);
     bool logPacket(const uint8_t *packet, uint32_t length);
     void flushLog();
+    void flushBufferToSerial();
     void stopPcapLogging();
     FS* SDI;
     SerialFS* SFS;
 public:
+    uint8_t* buffer;
     int csPin;
     int BootNum;
     bool Initlized;
+    bool BufferFull;
     bool IsMMCCard;
     int PcapFileIndex;
     File logFile;
     unsigned long bufferLength = 0;
-    const unsigned long maxBufferLength = 512;
+    const unsigned long maxBufferLength = BUF_SIZE;
     pcap_global_header pcapHeader = {
         0xa1b2c3d4, // Magic number for pcap
         2, 4, // Version major and minor

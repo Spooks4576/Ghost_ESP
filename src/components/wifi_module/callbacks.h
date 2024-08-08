@@ -517,9 +517,7 @@ void pwnSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 
         Serial.println();
 
-#ifdef SD_CARD_CS_PIN
-SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+      SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
       }
     }
   }
@@ -582,9 +580,7 @@ void beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
           Serial.println((String)access_points->get(targ_index).essid + " RSSI: " + (String)access_points->get(targ_index).rssi);
           return;
         }
-#ifdef SD_CARD_CS_PIN
-SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+      SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
     }
   }
 }
@@ -631,9 +627,7 @@ void probeSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
         
         Serial.println();    
 
-#ifdef SD_CARD_CS_PIN
-SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+      SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
     }
   }
 }
@@ -670,9 +664,7 @@ void rawSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 
     Serial.println();
 
-#ifdef SD_CARD_CS_PIN
-  SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+    SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
 }
 
 void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
@@ -731,8 +723,7 @@ void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     int temp_len = display_string.length();
 
     Serial.println(addr);    
-#ifdef SD_CARD_CS_PIN
-  SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+
+    SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
   }
 }

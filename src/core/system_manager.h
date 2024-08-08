@@ -106,8 +106,8 @@ public:
 #ifdef SD_CARD_CS_PIN
         pinMode(SD_CARD_CS_PIN, OUTPUT);
         digitalWrite(SD_CARD_CS_PIN, HIGH);
-        sdCardModule.init();
 #endif
+        sdCardModule.init();
     }
 
     void initGPSModule();

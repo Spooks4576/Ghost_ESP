@@ -203,9 +203,7 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
     if (Serial.available() > 0)
     {
       shutdownWiFi();
-#ifdef SD_CARD_CS_PIN
       SystemManager::getInstance().sdCardModule.stopPcapLogging();
-#endif
       break;
     }
     unsigned long currentTime = millis();
