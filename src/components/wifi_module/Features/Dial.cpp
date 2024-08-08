@@ -1,7 +1,7 @@
 #include "Dial.h"
 #include <core/system_manager.h>
 
-const int MAX_RETRIES = 50;
+const int MAX_RETRIES = 20;
 const int RETRY_DELAY = 500;
 
 String extractPathFromURL(const String& url) {

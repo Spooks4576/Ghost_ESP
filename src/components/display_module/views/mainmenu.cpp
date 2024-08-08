@@ -21,7 +21,7 @@ void MainMenu::Render()
 
 void MainMenu::CreateGridButtons()
 {
-    for (int i = 0; i < 3; i++) 
+    for (int i = 0; i < 5; i++) 
     {
         lv_obj_t *btn = nullptr;
 
@@ -29,9 +29,11 @@ void MainMenu::CreateGridButtons()
         lv_obj_set_size(btn_container, 70, 70);
 
         switch (i) {
-            case 0:  btn = RenderImageToButton(btn_container, &bt_img, 45, 55, -5, 50, 50); break;
+            case 0:  btn = RenderImageToButton(btn_container, &Bluetooth_img, 45, 55, -5, 50, 50); break;
             case 1:  btn = RenderImageToButton(btn_container, &WiFi_img, 45, 55, -5, 50, 50); break;
-            case 2:  btn = RenderImageToButton(btn_container, &led_img, 45, 55, -5, 50, 50); break;
+            case 2:  btn = RenderImageToButton(btn_container, &LED_img, 45, 55, -5, 50, 50); break;
+            case 3:  btn = RenderImageToButton(btn_container, &Map_img, 45, 55, -5, 50, 50); break;
+            case 4:  btn = RenderImageToButton(btn_container, &Settings_img, 45, 55, -5, 50, 50); break;
         } 
 
         if (btn)
@@ -63,6 +65,8 @@ void MainMenu::CreateGridButtons()
             case 0:  lv_label_set_text(label, "BLE"); break;
             case 1:  lv_label_set_text(label, "WiFi"); break;
             case 2:  lv_label_set_text(label, "LED"); break;
+            case 3:  lv_label_set_text(label, "GPS"); break;
+            case 4:  lv_label_set_text(label, "SET"); break;
         } 
 
         static lv_style_t label_text_style;
@@ -141,6 +145,8 @@ void MainMenu::HandleTouch(TS_Point P)
                 case 0:  Destroy(MenuType::MT_BluetoothMenu); break;
                 case 1:  Destroy(MenuType::MT_WifiUtilsMenu); break;
                 case 2:  Destroy(MenuType::MT_LEDUtils); break;
+                case 3:  Destroy(MenuType::MT_GPSMenu); break;
+                case 4:  Destroy(MenuType::MT_SettingsMenu); break;
             }
         }
     }

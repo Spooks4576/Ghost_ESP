@@ -1,26 +1,29 @@
 #include "sd_card_module.h"
 
-#ifndef SD_CARD_CS_PIN
-#define SD_CARD_CS_PIN 0
-#endif
-
-SDCardModule::SDCardModule() : csPin(SD_CARD_CS_PIN) {}
+SDCardModule::SDCardModule(){}
 
 bool SDCardModule::init() {
+
+    ECardType CardType;
+
 #ifdef SD_CARD_CS_PIN
+    csPin = SD_CARD_CS_PIN;
     Initlized = SD.begin(csPin);
+    CardType = ECardType::SDI;
 #elif SUPPORTS_MMC
     Initlized = SD_MMC.begin();
     IsMMCCard = true;
+    CardType = ECardType::MMC;
+#else
+CardType = ECardType::Serial;
 #endif
+
     if (!Initlized) {
-
         Serial.println("SD Card initialization failed!");
-
         return false;
     }
 
-    SDI = createFileSystem(IsMMCCard);
+    SDI = createFileSystem(CardType);
 
     Serial.println("SD Card initialized.");
 
@@ -202,9 +205,89 @@ bool SDCardModule::startPcapLogging(const char *path, bool bluetooth) {
     return true;
 }
 
-bool SDCardModule::logPacket(const uint8_t *packet, uint32_t length) {
-    if (!Initlized || !logFile) return false;
+void SDCardModule::flushBufferToSerial() {
+    if (bufferLength > 0) {
+        const char* mark_begin = "[BUF/BEGIN]";
+        const size_t mark_begin_len = strlen(mark_begin);
+        const char* mark_close = "[BUF/CLOSE]";
+        const size_t mark_close_len = strlen(mark_close);
 
+        uint8_t* buf = (uint8_t*)malloc(mark_begin_len + bufferLength + mark_close_len);
+        if (!buf) {
+            Serial.println("Failed to allocate memory for buffer flush.");
+            return;
+        }
+
+        uint8_t* it = buf;
+
+        memcpy(it, mark_begin, mark_begin_len);
+        it += mark_begin_len;
+
+        memcpy(it, buffer, bufferLength);
+        it += bufferLength;
+
+        memcpy(it, mark_close, mark_close_len);
+        it += mark_close_len;
+
+        Serial.write(buf, it - buf);
+
+        free(buf);
+        bufferLength = 0;
+        BufferFull = false;
+        free(buffer);
+
+        Serial.println("Buffer flushed to Serial successfully.");
+    } else {
+        Serial.println("Buffer is empty. Nothing to flush.");
+    }
+}
+
+bool SDCardModule::logPacket(const uint8_t *packet, uint32_t length) {
+
+    if (BufferFull)
+    {
+        return false;
+    }
+
+    if (!Initlized || !logFile) {
+        if (buffer == nullptr) {
+            // Allocate initial memory for buffer
+            buffer = (uint8_t*)malloc(maxBufferLength);
+            if (!buffer) {
+                Serial.println("Failed to allocate memory for buffer.");
+                return false;
+            }
+            pcapHeader.network = 105;
+            memcpy(buffer, &pcapHeader, sizeof(pcapHeader));
+            bufferLength = sizeof(pcapHeader);
+        }
+
+        if (bufferLength + sizeof(pcap_packet_header) + length > maxBufferLength) {
+           BufferFull = true;
+           flushBufferToSerial();
+           return false;
+        }
+
+        uint32_t ts_sec = millis();
+        uint32_t ts_usec = micros();
+
+        pcap_packet_header packetHeader = {
+            ts_sec, ts_usec, length, length
+        };
+
+        // Copy packet header and packet to buffer
+        memcpy(buffer + bufferLength, &packetHeader, sizeof(packetHeader));
+        bufferLength += sizeof(packetHeader);
+
+        memcpy(buffer + bufferLength, packet, length);
+        bufferLength += length;
+        return true;
+    }
+
+    // Debugging: Log that SD card is initialized and file is available
+    Serial.println("SD card initialized and log file available. Logging to SD card.");
+
+    // Normal logging to SD card
     uint32_t ts_sec = millis();
     uint32_t ts_usec = micros();
 
@@ -213,12 +296,15 @@ bool SDCardModule::logPacket(const uint8_t *packet, uint32_t length) {
     };
 
     if (bufferLength + sizeof(packetHeader) + length > maxBufferLength) {
+        Serial.println("Buffer limit reached. Flushing log to SD card.");
         flushLog();
     }
 
     logFile.write((const uint8_t *)&packetHeader, sizeof(packetHeader));
     logFile.write(packet, length);
     bufferLength += sizeof(packetHeader) + length;
+
+    Serial.println("Packet logged to SD card successfully.");
     return true;
 }
 
@@ -227,6 +313,7 @@ void SDCardModule::stopPcapLogging() {
         flushLog();
         logFile.close();
     }
+    flushBufferToSerial();
 }
 
 void SDCardModule::flushLog() {

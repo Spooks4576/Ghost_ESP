@@ -2,8 +2,8 @@
 #include <LinkedList.h>
 #include "view_i.h"
 
-LV_IMAGE_DECLARE(Backbutton);
-LV_IMAGE_DECLARE(ConfirmBtn);
+
+LV_IMG_DECLARE(Arrow);
 
 class ScrollableMenu : public ViewInterface {
 public:
@@ -25,4 +25,6 @@ private:
     lv_obj_t * List;
     lv_obj_t * BackBtn;
     lv_obj_t * ConfirmButton;
+    lv_obj_t * MoveSelectUpBtn;
+    lv_obj_t* MoveSelectDownBtn;
 };

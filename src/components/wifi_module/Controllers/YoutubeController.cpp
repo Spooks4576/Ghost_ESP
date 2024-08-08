@@ -2,7 +2,7 @@
 #include <core/system_manager.h>
 
 
-void YoutubeController::launchApp(const String& appUrl) {
+bool YoutubeController::launchApp(const String& appUrl) {
   int startPos = appUrl.indexOf('/', 7);
   String basePath = (startPos != -1) ? appUrl.substring(startPos) : "/";
 
@@ -29,9 +29,11 @@ void YoutubeController::launchApp(const String& appUrl) {
   if (httpCode == 201) {
     Serial.println(F("Successfully launched the YouTube app."));
     LOG_MESSAGE_TO_SD("Successfully launched the YouTube app.");
+    return true;
   } else {
     Serial.println("Failed to launch the YouTube app. HTTP Response Code: " + String(httpCode));
     LOG_MESSAGE_TO_SD("Failed to launch the YouTube app. HTTP Response Code: " + String(httpCode));
+    return false;
   }
 }
 
@@ -63,10 +65,10 @@ int YoutubeController::checkAppStatus(const String& appUrl, Device& device_I) {
         int responseCode = httpc.responseStatusCode();
         Serial.println("[checkYouTubeAppStatus] HTTP Response Code: " + String(responseCode));
         LOG_MESSAGE_TO_SD("[checkYouTubeAppStatus] HTTP Response Code: " + String(responseCode));
-        
+
         if (responseCode == 200) {
-            Serial.println("Got Sucessful Response");
-            LOG_MESSAGE_TO_SD("Got Sucessful Response");
+            Serial.println("Got Successful Response");
+            LOG_MESSAGE_TO_SD("Got Successful Response");
 
             String responseBody = httpc.responseBody();
             if (responseBody.indexOf("<state>running</state>") != -1) {
@@ -77,18 +79,12 @@ int YoutubeController::checkAppStatus(const String& appUrl, Device& device_I) {
             } else if (responseBody.indexOf("<state>stopped</state>") != -1) {
                 Serial.println(F("YouTube app is not running."));
                 LOG_MESSAGE_TO_SD("YouTube app is not running.");
-                responseCode = 404;
-                return responseCode;
+                return 404;
             } else {
                 Serial.println(F("Unable to determine the status of the YouTube app."));
                 LOG_MESSAGE_TO_SD("Unable to determine the status of the YouTube app.");
-                responseCode = 500;
-                return responseCode;
+                return 500;
             }
-        } else if (responseCode == 404) {
-            Serial.println(F("YouTube app is not running."));
-            LOG_MESSAGE_TO_SD("YouTube app is not running.");
-            return responseCode;
         } else {
             Serial.println("Received unexpected HTTP Response Code: " + String(responseCode));
             LOG_MESSAGE_TO_SD("Received unexpected HTTP Response Code: " + String(responseCode));

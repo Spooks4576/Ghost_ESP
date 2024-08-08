@@ -308,6 +308,14 @@ void CommandLine::runCommand(String input)
           return;
         }
 
+        if (attack_type == F("wps_pwn"))
+        {
+          Serial.println("Starting wps_pwn wifi attack. Stop with " + (String)"stopscan");
+          LOG_MESSAGE_TO_SD(F("Starting wps_pwn beacon attack."));
+          SystemManager::getInstance().wifiModule.RunSetup();
+          SystemManager::getInstance().wifiModule.Attack(AT_WPS);
+        }
+
         if (attack_type == F("karma"))
         {
           Serial.println("Starting Karma wifi beacon attack. Stop with " + (String)"stopscan");
@@ -382,7 +390,7 @@ void CommandLine::runCommand(String input)
     SystemManager::getInstance().neopixelModule->rainbow(255, 4);
 #endif
 #ifdef OLD_LED
-        SystemManager::getInstance().rgbModule->breatheLED(0, 1000, true);
+        SystemManager::getInstance().rgbModule->fadeOutAllPins(1000);
 #endif
 #ifdef NEOPIXEL_PIN
         SystemManager::getInstance().neopixelModule->breatheLED(0, 1000, true);

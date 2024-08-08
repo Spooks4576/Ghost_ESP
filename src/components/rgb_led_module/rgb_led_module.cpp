@@ -6,46 +6,49 @@ void RGBLedModule::init() {
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
     Rainbow(1, 4);
-    breatheLED(redPin, 400, true);
+    fadeOutAllPins(400);
 }
 
 void RGBLedModule::breatheLED(int ledPin, int breatheTime, bool FadeOut)
 {
     int fadeAmount = 5; // Amount of brightness change per step, adjust for different breathing speeds
-    int wait = breatheTime / (255 / fadeAmount * 2); // Calculate wait time to fit the breathe cycle into the given total time
+    int wait = breatheTime / ((255 / fadeAmount) * 2); // Calculate wait time to fit the breathe cycle into the given total time
 
     if (FadeOut)
     {
-        // Fade out
-         for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
-            analogWrite(redPin, brightness);
-            analogWrite(greenPin, brightness);
-            analogWrite(bluePin, brightness);
+        // Fade out (brightness increases for inverted logic)
+        for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
+            analogWrite(ledPin, brightness);
             delay(wait);
         }
-        return;
     }
+    else
+    {
+        // Fade in (brightness decreases for inverted logic)
+        for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
+            analogWrite(ledPin, brightness);
+            delay(wait);
+        }
 
-    // Fade in
-    for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
-        analogWrite(ledPin, brightness);
-        delay(wait);
+        // Fade out (brightness increases for inverted logic)
+        for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
+            analogWrite(ledPin, brightness);
+            delay(wait);
+        }
     }
+}
 
-    // Fade out
+
+void RGBLedModule::fadeOutAllPins(int fadeTime)
+{
+    int fadeAmount = 5; // Amount of brightness change per step, adjust for different fading speeds
+    int wait = fadeTime / (255 / fadeAmount); // Calculate wait time to fit the fade cycle into the given total time
+
+    // Fade out all pins (brightness increases for inverted logic)
     for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
-        analogWrite(ledPin, brightness);
-        delay(wait);
-    }
-    // Fade in
-    for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
-        analogWrite(ledPin, brightness);
-        delay(wait);
-    }
-
-    // Fade out
-    for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
-        analogWrite(ledPin, brightness);
+        analogWrite(redPin, brightness);
+        analogWrite(greenPin, brightness);
+        analogWrite(bluePin, brightness);
         delay(wait);
     }
 }

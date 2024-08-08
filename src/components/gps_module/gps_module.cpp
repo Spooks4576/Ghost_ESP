@@ -108,8 +108,15 @@ void gps_module::WarDrivingLoop()
 
 #ifdef HAS_GPS
       if (gps.location.isValid() && gps.location.isUpdated()) {
-        String streetName = findClosestStreet(gps.location.lat(), gps.location.lng());
-        Serial.println(streetName);
+
+        String streetName = "";
+
+        if (SystemManager::getInstance().sdCardModule.Initlized)
+        {
+          streetName = findClosestStreet(gps.location.lat(), gps.location.lng());
+        }
+
+
         int Networks = WiFi.scanNetworks();
         
         for (int i = 0; i < Networks; i++)
@@ -122,11 +129,24 @@ void gps_module::WarDrivingLoop()
 
           String Message = G_Utils::formatString("%s, %s, %s, %s, %i, %i, %f, %f, %f, %f", BSSID.c_str(), SSID.c_str(), SecurityType.c_str(), GetDateAndTime().c_str(), Channel, RSSI, gps.location.lat(), gps.location.lng(), gps.altitude.meters(), 2.5 * gps.hdop.hdop() / 10);
           String MessageWithStreet = G_Utils::formatString("%s, %s, %s, %s, %i, %i, %f, %f, %f, %f, %s", BSSID.c_str(), SSID.c_str(), SecurityType.c_str(), GetDateAndTime().c_str(), Channel, RSSI, gps.location.lat(), gps.location.lng(), gps.altitude.meters(), 2.5 * gps.hdop.hdop() / 10, streetName.c_str());
-          LOG_RESULTS("wardiving.csv", "gps", Message);
-          LOG_RESULTS("wardiving_withstreets.csv", "gps", MessageWithStreet);
-          Serial.println("Logged Info At " + streetName);
+
+          LOG_RESULTS("wardiving.csv", "gps", Message.c_str());
+          if (SystemManager::getInstance().sdCardModule.Initlized)
+          {
+            LOG_RESULTS("wardiving_withstreets.csv", "gps", MessageWithStreet.c_str());
+          }
+
+          if (SystemManager::getInstance().sdCardModule.Initlized)
+          {
+            Serial.println("Logged Info At " + streetName);
+          }
+          else 
+          {
+            Serial.println("Logged WiFi " + SSID);
+          }
         }
-        uint8_t set_channel = random(1, 13);
+        CurrentChannel = CurrentChannel + 1 % 13;
+        uint8_t set_channel = CurrentChannel;
         esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
       } else {
         Serial.println("GPS signal not found");
@@ -167,7 +187,7 @@ void gps_module::streetloop()
         Serial.print("Altitude: "); Serial.println(gps.altitude.kilometers());
         Serial.print("Speed: "); Serial.println(gps.speed.kmph());
         Serial.println(streetName);
-        LOG_RESULTS("streets.txt", "gps", "Visited " + streetName);
+        LOG_RESULTS("streets.txt", "gps", String(streetName + " Visited").c_str());
       } else {
         Serial.println("GPS signal not found");
       }
@@ -180,8 +200,7 @@ void gps_module::streetloop()
 
 void gps_module::setup(bool EnableBLEScans)
 {
-    if (SystemManager::getInstance().sdCardModule.Initlized)
-    {
+    
 #ifdef HAS_GPS
     Serial1.begin(9600, SERIAL_8N1, GPS_TX, GPS_RX);
 #endif
@@ -192,11 +211,4 @@ void gps_module::setup(bool EnableBLEScans)
   SystemManager::getInstance().bleModule->InitWarDriveCallback();
 #endif
     Serial.println("Initilized GPS Serial");
-    }
-    else 
-    {
-      Initilized = false;
-      Stop = true;
-      Serial.println("Failed to Initilize GPS Serial Possible SD Card Init Failure");
-    }
 }

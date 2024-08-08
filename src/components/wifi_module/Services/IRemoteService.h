@@ -15,6 +15,8 @@ struct Device {
   String SID;
   String UUID;
   String listID;
+  IPAddress DeviceIP;
+  uint16_t Port;
 };
 
 class IRemoteService {

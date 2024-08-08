@@ -63,6 +63,20 @@ void DisplayModule::RenderMenuType(MenuType Type)
             SM->Render();
             break;
         }
+        case MenuType::MT_GPSMenu:
+        {
+            ViewInterface* SM = new ScrollableMenu("GPSMenu");
+            SystemManager::getInstance().displayModule->Views.add(SM);
+            SM->UpdateRotationCallback = SystemManager::getInstance().displayModule->SetTouchRotation;
+            SM->DestroyCallback = SystemManager::getInstance().displayModule->Destroy;
+            SM->Render();
+            break;
+        }
+        case MenuType::MT_SettingsMenu:
+        {
+            // TODO Make Seperate Menu For this
+            break;
+        }
     }
 }
 

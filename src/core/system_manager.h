@@ -8,6 +8,13 @@
 #include <components/display_module/display_module.h>
 #include "../lib/TFT_eSPI/User_Setup.h"
 
+enum ENeoColor
+{
+    Red,
+    Green,
+    Blue
+};
+
 class gps_module;
 
 class SystemManager {
@@ -20,6 +27,16 @@ public:
     void setup();
 
     void loop();
+
+    void SetLEDState(ENeoColor NeoColor = ENeoColor::Red, bool FadeOut = false)
+    {
+#ifdef OLD_LED
+analogWrite(rgbModule->redPin, FadeOut ? 255 : 0);
+#endif
+#ifdef NEOPIXEL_PIN
+neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(NeoColor == ENeoColor::Red && !FadeOut ? 255 : 0, NeoColor == ENeoColor::Green && !FadeOut ? 255 : 0, NeoColor == ENeoColor::Blue && !FadeOut ? 255 : 0), 300, false);
+#endif
+    }
 
     static void SerialCheckTask(void *pvParameters)
     {
@@ -89,8 +106,8 @@ public:
 #ifdef SD_CARD_CS_PIN
         pinMode(SD_CARD_CS_PIN, OUTPUT);
         digitalWrite(SD_CARD_CS_PIN, HIGH);
-        sdCardModule.init();
 #endif
+        sdCardModule.init();
     }
 
     void initGPSModule();
@@ -117,7 +134,7 @@ public:
 #define LOG_RESULTS(filename, folder, message) SystemManager::getInstance().sdCardModule.logMessage(filename, folder, message)
 #else
 #define LOG_MESSAGE_TO_SD(message) // Not Supported do nothing
-#define LOG_RESULTS(filename, folder, message)
+#define LOG_RESULTS(filename, folder, message) SystemManager::getInstance().sdCardModule.logPacket((const uint8_t*)message, strlen(message))
 #endif
 
 namespace G_Utils
