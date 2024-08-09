@@ -343,7 +343,6 @@ void WiFiModule::LaunchEvilPortal()
 // Function broken For now TODO Fix
 bool WiFiModule::isVulnerableBSSID(const uint8_t *bssid, AccessPoint* ap)
 {
-
   if (!bssid)
   {
     Serial.println("Invalid BSSID");

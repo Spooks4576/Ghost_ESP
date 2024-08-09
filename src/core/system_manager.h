@@ -31,7 +31,7 @@ public:
 
     void SetLEDState(ENeoColor NeoColor = ENeoColor::Red, bool FadeOut = false)
     {
-if (Settings.getRGBMode() != FSettings::RGBMode::Rainbow)
+if (Settings.getRGBMode() == FSettings::RGBMode::Normal)
 {
 #ifdef OLD_LED
 if (FadeOut)
