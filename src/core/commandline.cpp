@@ -451,42 +451,6 @@ void CommandLine::runCommand(String input)
       return;
     }
 
-    if (cmd_args.get(0) == F("led"))
-    {
-      if (!SystemManager::getInstance().RainbowLEDActive)
-      {
-        SystemManager::getInstance().RainbowLEDActive = true;
-#ifdef OLD_LED
-    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
-#elif NEOPIXEL_PIN
-    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
-#endif
-#ifdef OLD_LED
-    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
-#elif NEOPIXEL_PIN
-    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
-#endif
-#ifdef OLD_LED
-    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
-#elif NEOPIXEL_PIN
-    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
-#endif
-#ifdef OLD_LED
-    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
-#elif NEOPIXEL_PIN
-    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
-#endif
-#ifdef OLD_LED
-        SystemManager::getInstance().rgbModule->fadeOutAllPins(1000);
-#endif
-#ifdef NEOPIXEL_PIN
-        SystemManager::getInstance().neopixelModule->breatheLED(0, 1000, true);
-#endif
-         SystemManager::getInstance().RainbowLEDActive = false;
-      }
-      return;
-    }
-
     if (cmd_args.get(0) == F("castv2connect"))
     {
       HasRanCommand = true;
@@ -722,7 +686,6 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>': Detect deauthentication frames."));
       Serial.println(F("- 'calibrate': Calibrate the most active network. Used for sniffing functions"));
       Serial.println(F("- 'blespam -t <type>': Start BLE spamming of a specific type ('samsung', 'apple', 'google', 'windows', or 'all')."));
-      Serial.println(F("- 'led -p': Activate Rainbow LED pattern."));
       Serial.println(F("- 'sniffraw': Sniff raw WiFi packets."));
       Serial.println(F("- 'sniffbeacon': Sniff WiFi beacons."));
       Serial.println(F("- 'sniffprobe': Sniff WiFi probe requests."));
