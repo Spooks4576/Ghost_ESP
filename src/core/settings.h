@@ -18,8 +18,10 @@ public:
 
     void setRGBMode(RGBMode mode);
     RGBMode getRGBMode() const;
+    bool ChannelHoppingEnabled() const;
 
     void setChannelSwitchDelay(float delay_ms);
+    void setChannelHoppingEnabled(bool Enabled);
     float getChannelSwitchDelay() const;
 
     void loadSettings();
@@ -28,10 +30,12 @@ public:
 private:
     RGBMode rgbMode;
     float channelSwitchDelay;
+    bool EnableChannelHopping;
     nvs_handle_t nvsHandle;
 
     static const char* NVS_RGB_MODE_KEY;
     static const char* NVS_CHANNEL_SWITCH_DELAY_KEY;
+    static const char* NVS_ENABLE_CHANNEL_HOP_KEY;
 };
 
 #endif // SETTINGS_H

@@ -207,24 +207,29 @@ void WiFiModule::Sniff(SniffType Type, int TargetChannel)
       break;
     }
     unsigned long currentTime = millis();
-    if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay() && MostActiveChannel == 0)
+
+
+    if (SystemManager::getInstance().Settings.ChannelHoppingEnabled())
     {
-      if (!SetChannel)
+      if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay() && MostActiveChannel == 0)
       {
-        set_channel += 1;
-        set_channel = set_channel % 13; 
-        esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-        Serial.printf("Set Scanning Channel to %i\n", set_channel);
-      }
-      lastChangeTime = currentTime;
-      if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
-      {
-#ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
-#endif
-#ifdef NEOPIXEL_PIN
-      SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 255), 1000, false);
-#endif
+        if (!SetChannel)
+        {
+          set_channel += 1;
+          set_channel = set_channel % 13; 
+          esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+          Serial.printf("Set Scanning Channel to %i\n", set_channel);
+        }
+        lastChangeTime = currentTime;
+        if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+        {
+  #ifdef OLD_LED
+  SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
+  #endif
+  #ifdef NEOPIXEL_PIN
+        SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 255), 1000, false);
+  #endif
+        }
       }
     }
   }
@@ -261,13 +266,17 @@ void WiFiModule::Scan(ScanType type)
           shutdownWiFi();
           break;
         }
-        unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
+
+        if (SystemManager::getInstance().Settings.ChannelHoppingEnabled())
         {
-          lastchannel++ % 13;
-          uint8_t set_channel = lastchannel;
-          esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-          lastChangeTime = currentTime;
+          unsigned long currentTime = millis();
+          if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
+          {
+            lastchannel++ % 13;
+            uint8_t set_channel = lastchannel;
+            esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+            lastChangeTime = currentTime;
+          }
         }
       }
       break;
@@ -299,13 +308,17 @@ void WiFiModule::Scan(ScanType type)
           shutdownWiFi();
           break;
         }
-        unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
+
+        if (SystemManager::getInstance().Settings.ChannelHoppingEnabled())
         {
-          lastchannel++ % 13;
-          uint8_t set_channel = lastchannel;
-          esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
-          lastChangeTime = currentTime;
+          unsigned long currentTime = millis();
+          if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
+          {
+            lastchannel++ % 13;
+            uint8_t set_channel = lastchannel;
+            esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+            lastChangeTime = currentTime;
+          }
         }
       }
 
@@ -327,7 +340,7 @@ void WiFiModule::LaunchEvilPortal()
 {
   
 }
-
+// Function broken For now TODO Fix
 bool WiFiModule::isVulnerableBSSID(const uint8_t *bssid, AccessPoint* ap)
 {
 

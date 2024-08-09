@@ -430,6 +430,23 @@ void CommandLine::runCommand(String input)
             }
           }
         }
+
+        if (ActualSettingsIndex == 3)
+        {
+          switch (ActualSettingsValue)
+          {
+            case 1:
+            {
+              SystemManager::getInstance().Settings.setChannelHoppingEnabled(false);
+              break;
+            }
+            case 2:
+            {
+              SystemManager::getInstance().Settings.setChannelHoppingEnabled(true);
+              break;
+            }
+          }
+        }
       }
       return;
     }
