@@ -19,20 +19,21 @@ void WPSScanCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
   wifi_ieee80211_packet_t* ipkt = (wifi_ieee80211_packet_t*)pkt->payload;
   WifiMgmtHdr* hdr = &ipkt->hdr;
 
-  // Check if the packet contains WPS information
+  // Log the first 64 bytes of the payload in hex to better understand the data structure
   uint8_t* payload = hdr->payload;
   int len = pkt->rx_ctrl.sig_len - sizeof(WifiMgmtHdr);
+
 
   String essid = "";
   bool wps_found = false;
 
+  essid = G_Utils::parseSSID(pkt->payload, len);
+
   for (int i = 0; i < len;) {
     uint8_t tag = payload[i];
     uint8_t tag_len = payload[i + 1];
-
-    if (tag == 0x00) { // SSID parameter set
-      essid = String((char*)(payload + i + 2)).substring(0, tag_len);
-    } else if (tag == 0xDD && tag_len >= 4 && payload[i + 2] == 0x00 && payload[i + 3] == 0x50 && payload[i + 4] == 0xF2 && payload[i + 5] == 0x04) {
+  
+    if (tag == 0xDD && tag_len >= 4 && payload[i + 2] == 0x00 && payload[i + 3] == 0x50 && payload[i + 4] == 0xF2 && payload[i + 5] == 0x04) {
       // WPS information element found
       wps_found = true;
     }
@@ -40,11 +41,11 @@ void WPSScanCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
     i += 2 + tag_len;
   }
 
-  if (wps_found) {
+  if (wps_found && essid.length() > 0 && !SystemManager::getInstance().wifiModule.isAccessPointAlreadyAdded(WPSAccessPoints, hdr->bssid)) {
     AccessPoint* ap = new AccessPoint;
     ap->essid = essid;
     ap->channel = pkt->rx_ctrl.channel;
-    memcpy(ap->bssid, &hdr->bssid, 6);
+    memcpy(ap->bssid, hdr->bssid, 6);
     ap->selected = false;
     ap->beacon = new LinkedList<char>();
     ap->rssi = pkt->rx_ctrl.rssi;

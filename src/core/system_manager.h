@@ -218,4 +218,17 @@ namespace G_Utils
                 return "UNKNOWN";
         }
     }
+
+    String parseSSID(const uint8_t* payload, int length) {
+        String ssid = "";
+        int ssidLength = payload[37]; // SSID length is usually at this offset
+
+        if (ssidLength > 0 && ssidLength < 32) { // Valid SSID lengths
+            for (int i = 38; i < (38 + ssidLength); i++) {
+                ssid += (char)payload[i];
+            }
+        }
+
+        return ssid;
+    }
 }

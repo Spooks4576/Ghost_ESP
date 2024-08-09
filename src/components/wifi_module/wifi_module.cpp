@@ -328,6 +328,56 @@ void WiFiModule::LaunchEvilPortal()
   
 }
 
+bool WiFiModule::isVulnerableBSSID(const uint8_t *bssid, AccessPoint* ap)
+{
+
+  if (!bssid)
+  {
+    Serial.println("Invalid BSSID");
+    return false;
+  }
+
+
+    char bssidPrefix[7];
+    snprintf(bssidPrefix, sizeof(bssidPrefix), "%02X%02X%02X", bssid[0], bssid[1], bssid[2]);
+
+    for (int i = 0; ouivuln[i] != NULL; i++) {
+        if (strncmp(bssidPrefix, ouivuln[i], 6) == 0) {
+            Serial.println("BSSID Prefix matched, extracting manufacturer...");
+
+            const char* manufacturer_start = strchr(ouivuln[i], ' ') + 1; // Skip the prefix
+            if (manufacturer_start != NULL) {
+                const char* manufacturer_end = strchr(manufacturer_start, ' ');
+                if (manufacturer_end != NULL) {
+                    ap->Manufacturer = String(manufacturer_start, manufacturer_end - manufacturer_start);
+                    Serial.print("Manufacturer set: ");
+                    Serial.println(ap->Manufacturer);
+                } else {
+                    ap->Manufacturer = String(manufacturer_start); // Take the rest if no end space found
+                    Serial.print("Manufacturer set (no end space): ");
+                    Serial.println(ap->Manufacturer);
+                }
+            } else {
+                ap->Manufacturer = "Unknown";
+                Serial.println("Manufacturer set to Unknown (start not found).");
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool WiFiModule::isAccessPointAlreadyAdded(LinkedList<AccessPoint *> &accessPoints, const uint8_t *bssid)
+{
+  for (int i = 0; i < accessPoints.size(); i++) {
+    AccessPoint* ap = accessPoints.get(i);
+    if (memcmp(ap->bssid, bssid, 6) == 0) {
+        return true;
+    }
+  }
+  return false;
+}
+
 void WiFiModule::getMACatoffset(char *addr, uint8_t* data, uint16_t offset) {
   sprintf(addr, "%02x:%02x:%02x:%02x:%02x:%02x", data[offset+0], data[offset+1], data[offset+2], data[offset+3], data[offset+4], data[offset+5]);
 }
@@ -637,17 +687,28 @@ SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
         static unsigned long lastChangeTime = 0;
         static int lastchannel = 0;
 
-      while (wifi_initialized && initTime - lastChangeTime >= 10000) // 10 seconds
+      while (wifi_initialized)
       {
+        unsigned long currentTime = millis();
+
+        // Break the loop after 30 seconds
+        if (currentTime - initTime >= 30000)
+        {
+          break;
+        }
+
+        // Check for Serial input to shut down WiFi
         if (Serial.available() > 0)
         {
           shutdownWiFi();
           break;
         }
-        unsigned long currentTime = millis();
-        if (currentTime - lastChangeTime >= 1000)
+
+        // Perform channel switching based on the delay
+        if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
         {
-          lastchannel++ % 13;
+          Serial.println("Switched Channel");
+          lastchannel = (lastchannel + 1) % 13;
           uint8_t set_channel = lastchannel;
           esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
           lastChangeTime = currentTime;
@@ -656,24 +717,28 @@ SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
 
       shutdownWiFi();
 
-      // Print Out the results TODO Implement Attacks
-
       for (int i = 0; i < WPSAccessPoints.size(); i++) {
         AccessPoint* ap = WPSAccessPoints.get(i);
-        Serial.print("ESSID: ");
-        Serial.print(ap->essid);
-        Serial.print(", BSSID: ");
-        for (int j = 0; j < 6; j++) {
-          Serial.printf("%02X", ap->bssid[j]);
-          if (j < 5) Serial.print(":");
+        if (isVulnerableBSSID(ap->bssid, ap))
+        {
+          Serial.print("ESSID: ");
+          Serial.print(ap->essid);
+          Serial.print(", BSSID: ");
+          for (int j = 0; j < 6; j++) {
+            Serial.printf("%02X", ap->bssid[j]);
+            if (j < 5) Serial.print(":");
+          }
+          Serial.print(", Channel: ");
+          Serial.print(ap->channel);
+          Serial.print(", Manufact");
+          Serial.println(ap->Manufacturer);
         }
-        Serial.print(", Channel: ");
-        Serial.print(ap->channel);
-        Serial.print(", RSSI: ");
-        Serial.println(ap->rssi);
+        else 
+        {
+          Serial.println(ap->essid);
+          Serial.println("Is Not Vulnerable");
+        }
       }
-
-
       break;
     }
   }
