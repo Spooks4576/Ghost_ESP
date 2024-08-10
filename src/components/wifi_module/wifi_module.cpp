@@ -340,44 +340,48 @@ void WiFiModule::LaunchEvilPortal()
 {
   
 }
-// Function broken For now TODO Fix
-bool WiFiModule::isVulnerableBSSID(const uint8_t *bssid, AccessPoint* ap)
+
+
+bool WiFiModule::isVulnerableBSSID(AccessPoint* ap)
 {
-  if (!bssid)
-  {
-    Serial.println("Invalid BSSID");
-    return false;
-  }
-
-
     char bssidPrefix[7];
-    snprintf(bssidPrefix, sizeof(bssidPrefix), "%02X%02X%02X", bssid[0], bssid[1], bssid[2]);
-
-    for (int i = 0; ouivuln[i] != NULL; i++) {
-        if (strncmp(bssidPrefix, ouivuln[i], 6) == 0) {
-            Serial.println("BSSID Prefix matched, extracting manufacturer...");
-
-            const char* manufacturer_start = strchr(ouivuln[i], ' ') + 1; // Skip the prefix
-            if (manufacturer_start != NULL) {
-                const char* manufacturer_end = strchr(manufacturer_start, ' ');
-                if (manufacturer_end != NULL) {
-                    ap->Manufacturer = String(manufacturer_start, manufacturer_end - manufacturer_start);
-                    Serial.print("Manufacturer set: ");
-                    Serial.println(ap->Manufacturer);
-                } else {
-                    ap->Manufacturer = String(manufacturer_start); // Take the rest if no end space found
-                    Serial.print("Manufacturer set (no end space): ");
-                    Serial.println(ap->Manufacturer);
+    snprintf(bssidPrefix, sizeof(bssidPrefix), "%02X%02X%02X", ap->bssid[0], ap->bssid[1], ap->bssid[2]);
+    
+    for (const auto& entry : CompanyOUIMap)
+    {
+        for (const auto& prefix : entry.second)
+        {
+            if (strncmp(bssidPrefix, prefix.c_str(), 6) == 0)
+            {
+                switch (entry.first)
+                {
+                    case ECompany::DLink:
+                        ap->Manufacturer = "DLink";
+                        break;
+                    case ECompany::Netgear:
+                        ap->Manufacturer = "Netgear";
+                        break;
+                    case ECompany::Belkin:
+                        ap->Manufacturer = "Belkin";
+                        break;
+                    case ECompany::TPLink:
+                        ap->Manufacturer = "TP-Link";
+                        break;
+                    default:
+                        ap->Manufacturer = "Unknown";
+                        break;
                 }
-            } else {
-                ap->Manufacturer = "Unknown";
-                Serial.println("Manufacturer set to Unknown (start not found).");
+
+                Serial.print("Manufacturer set: ");
+                Serial.println(ap->Manufacturer);
+
+                return true;
             }
-            return true;
         }
     }
     return false;
 }
+
 
 bool WiFiModule::isAccessPointAlreadyAdded(LinkedList<AccessPoint *> &accessPoints, const uint8_t *bssid)
 {
@@ -731,7 +735,7 @@ SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
 
       for (int i = 0; i < WPSAccessPoints.size(); i++) {
         AccessPoint* ap = WPSAccessPoints.get(i);
-        if (isVulnerableBSSID(ap->bssid, ap))
+        if (isVulnerableBSSID(ap))
         {
           Serial.print("ESSID: ");
           Serial.print(ap->essid);
