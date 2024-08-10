@@ -182,6 +182,32 @@ namespace G_Utils
         return str;
     }
 
+    size_t calculateAccessPointSize(const AccessPoint& ap) {
+        size_t size = sizeof(AccessPoint);
+
+        size += ap.essid.length() + 1;
+        size += ap.Manufacturer.length() + 1;
+
+
+        if (ap.beacon != nullptr) {
+            size += sizeof(LinkedList<char>);
+            size += ap.beacon->size();
+        }
+
+        if (ap.stations != nullptr) {
+            size += sizeof(LinkedList<int>);
+            size += ap.stations->size() * sizeof(int); 
+        }
+
+        return size;
+    }
+
+    bool isMemoryLow(size_t requiredMemory) {
+        size_t freeHeap = ESP.getFreeHeap();
+        size_t safetyMargin = 1024;
+        return (freeHeap < requiredMemory + safetyMargin);
+    }
+
     String formatString(const char* format, ...) 
     {
         char buffer[500];

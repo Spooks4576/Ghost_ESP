@@ -341,6 +341,107 @@ void WiFiModule::LaunchEvilPortal()
   
 }
 
+void WiFiModule::listAccessPoints()
+{
+    if (access_points != nullptr) {
+        for (int i = 0; i < access_points->size(); i++) {
+            String output = "[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " 
+                            + access_points->get(i).essid + " " 
+                            + (String)access_points->get(i).rssi + " "
+                            + access_points->get(i).Manufacturer;
+
+            if (access_points->get(i).selected) {
+                output += " (selected)";
+            }
+
+            Serial.println(output);
+        }
+    }
+}
+
+void WiFiModule::listSSIDs()
+{
+    if (ssids != nullptr) {
+        for (int i = 0; i < ssids->size(); i++) {
+            String output = "[" + (String)i + "] " + ssids->get(i).essid;
+
+            if (ssids->get(i).selected) {
+                output += " (selected)";
+            }
+
+            Serial.println(output);
+        }
+    }
+}
+
+void WiFiModule::listStations()
+{
+    if (access_points != nullptr) {
+        char sta_mac[] = "00:00:00:00:00:00";
+        for (int x = 0; x < access_points->size(); x++) {
+            if (access_points->get(x).stations != nullptr) {
+                Serial.println("[" + (String)x + "] " + access_points->get(x).essid + " " + (String)access_points->get(x).rssi + ":");
+                for (int i = 0; i < access_points->get(x).stations->size(); i++) {
+                    SystemManager::getInstance().wifiModule.getMACatoffset(sta_mac, stations->get(access_points->get(x).stations->get(i)).mac, 0);
+                    String output = "  [" + (String)access_points->get(x).stations->get(i) + "] " + sta_mac;
+
+                    if (stations->get(access_points->get(x).stations->get(i)).selected) {
+                        output += " (selected)";
+                    }
+
+                    Serial.println(output);
+                }
+            }
+        }
+    }
+}
+
+void WiFiModule::setManufacturer(AccessPoint* ap)
+{
+    char bssidPrefix[7];
+    snprintf(bssidPrefix, sizeof(bssidPrefix), "%02X%02X%02X", ap->bssid[0], ap->bssid[1], ap->bssid[2]);
+
+    for (const auto& entry : CompanyOUIMap)
+    {
+        for (const auto& prefix : entry.second)
+        {
+            if (strncmp(bssidPrefix, prefix, 6) == 0)
+            {
+                switch (entry.first)
+                {
+                    case ECompany::DLink:
+                        ap->Manufacturer = "DLink";
+                        break;
+                    case ECompany::Netgear:
+                        ap->Manufacturer = "Netgear";
+                        break;
+                    case ECompany::Belkin:
+                        ap->Manufacturer = "Belkin";
+                        break;
+                    case ECompany::TPLink:
+                        ap->Manufacturer = "TP-Link";
+                        break;
+                    case ECompany::Linksys:
+                        ap->Manufacturer = "Linksys";
+                        break;
+                    case ECompany::ASUS:
+                        ap->Manufacturer = "ASUS";
+                        break;
+                    default:
+                        ap->Manufacturer = "Unknown";
+                        break;
+                }
+
+                Serial.print("Manufacturer set: ");
+                Serial.println(ap->Manufacturer);
+                return;
+            }
+        }
+    }
+
+    ap->Manufacturer = "Unknown";
+}
+
 
 bool WiFiModule::isVulnerableBSSID(AccessPoint* ap)
 {
@@ -351,7 +452,7 @@ bool WiFiModule::isVulnerableBSSID(AccessPoint* ap)
     {
         for (const auto& prefix : entry.second)
         {
-            if (strncmp(bssidPrefix, prefix.c_str(), 6) == 0)
+            if (strncmp(bssidPrefix, prefix, 6) == 0)
             {
                 switch (entry.first)
                 {
@@ -369,6 +470,7 @@ bool WiFiModule::isVulnerableBSSID(AccessPoint* ap)
                         break;
                     default:
                         ap->Manufacturer = "Unknown";
+                        return false;
                         break;
                 }
 
@@ -707,20 +809,20 @@ SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
       {
         unsigned long currentTime = millis();
 
-        // Break the loop after 30 seconds
+        
         if (currentTime - initTime >= 30000)
         {
           break;
         }
 
-        // Check for Serial input to shut down WiFi
+       
         if (Serial.available() > 0)
         {
           shutdownWiFi();
           break;
         }
 
-        // Perform channel switching based on the delay
+        
         if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
         {
           Serial.println("Switched Channel");

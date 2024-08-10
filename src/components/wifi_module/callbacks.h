@@ -263,14 +263,18 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
 
         ap.rssi = snifferPacket->rx_ctrl.rssi;
 
-        access_points->add(ap);
+        if (!G_Utils::isMemoryLow(G_Utils::calculateAccessPointSize(ap)))
+        {
+          SystemManager::getInstance().wifiModule.setManufacturer(&ap);
 
-        Serial.print(access_points->size());
-        Serial.print(" ");
-        Serial.print(access_points->size());
-        Serial.print(" ");
-        Serial.print(esp_get_free_heap_size());
-    }
+          access_points->add(ap);
+        }
+        else 
+        {
+          Serial.println("Memory Is Low Cant Store Anymore Access Points...");
+          SystemManager::getInstance().wifiModule.shutdownWiFi();
+        }
+      }
     }
   }
 }

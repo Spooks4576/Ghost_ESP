@@ -867,56 +867,22 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
 
 
     if (cmd_args.get(0) == F("list")) {
-    int ap_sw = this->argSearch(&cmd_args, "-a");
-    int ss_sw = this->argSearch(&cmd_args, "-s");
-    int cl_sw = this->argSearch(&cmd_args, "-c");
+        int ap_sw = this->argSearch(&cmd_args, "-a");
+        int ss_sw = this->argSearch(&cmd_args, "-s");
+        int cl_sw = this->argSearch(&cmd_args, "-c");
 
-    // List APs
-    if (ap_sw != -1 && access_points != nullptr) {
-      for (int i = 0; i < access_points->size(); i++) {
-        if (access_points->get(i).selected) {
-          Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi + " (selected)");
-          count_selected += 1;
-        } else
-          Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi);
-      }
-    }
-    // List SSIDs
-    else if (ss_sw != -1 && ssids != nullptr) {
-      for (int i = 0; i < ssids->size(); i++) {
-        if (ssids->get(i).selected) {
-          Serial.println("[" + (String)i + "] " + ssids->get(i).essid + " (selected)");
-          count_selected += 1;
-        } else
-          Serial.println("[" + (String)i + "] " + ssids->get(i).essid);
-      }
-    }
-    // List Stations
-    else if (cl_sw != -1 && access_points != nullptr) { 
-      char sta_mac[] = "00:00:00:00:00:00";
-      for (int x = 0; x < access_points->size(); x++) {
-        if (access_points->get(x).stations != nullptr) {
-          Serial.println("[" + (String)x + "] " + access_points->get(x).essid + " " + (String)access_points->get(x).rssi + ":");
-          for (int i = 0; i < access_points->get(x).stations->size(); i++) {
-            SystemManager::getInstance().wifiModule.getMACatoffset(sta_mac, stations->get(access_points->get(x).stations->get(i)).mac, 0);
-            if (stations->get(access_points->get(x).stations->get(i)).selected) {
-              Serial.print("  [" + (String)access_points->get(x).stations->get(i) + "] ");
-              Serial.print(sta_mac);
-              Serial.println(" (selected)");
-              count_selected += 1;
-            } else {
-              Serial.print("  [" + (String)access_points->get(x).stations->get(i) + "] ");
-              Serial.println(sta_mac);
-            }
-          }
+        if (ap_sw != -1) {
+           SystemManager::getInstance().wifiModule.listAccessPoints();
+        } else if (ss_sw != -1) {
+            SystemManager::getInstance().wifiModule.listSSIDs();
+        } else if (cl_sw != -1) {
+            SystemManager::getInstance().wifiModule.listStations();
+        } else {
+            Serial.println(F("You did not specify which list to show"));
+            LOG_MESSAGE_TO_SD(F("You did not specify which list to show"));
+            return;
         }
-      }
-    } else {
-      Serial.println(F("You did not specify which list to show"));
-      LOG_MESSAGE_TO_SD(F("You did not specify which list to show"));
-      return;
     }
-  }
 
   if (cmd_args.get(0) == F("stop"))
   {

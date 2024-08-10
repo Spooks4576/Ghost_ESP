@@ -18,10 +18,12 @@ enum class ECompany {
     Netgear,
     Belkin,
     TPLink,
+    Linksys,
+    ASUS,
     Unknown
 };
 
-std::map<ECompany, std::vector<String>> CompanyOUIMap = {
+std::map<ECompany, std::vector<const char*>> CompanyOUIMap = {
     {ECompany::DLink, {
         "00055D", "000D88", "000F3D", "001195", "001346", "0015E9", "00179A", 
         "00195B", "001B11", "001CF0", "001E58", "002191", "0022B0", "002401", 
@@ -59,6 +61,31 @@ std::map<ECompany, std::vector<String>> CompanyOUIMap = {
         "5C628B", "5CA6E6", "5CE931", "60A4B7", "687FF0", "6C5AB0", "788CB5", 
         "7CC2C6", "9C5322", "9CA2F4", "A842A1", "AC15A2", "B0A7B9", "B4B024", 
         "C006C3", "CC68B6", "E848B8", "F0A731"
+    }},
+    {ECompany::Linksys, {
+        "00045A", "000625", "000C41", "000E08", "000F66", "001217", "001310", 
+        "0014BF", "0016B6", "001839", "0018F8", "001A70", "001C10", "001D7E", 
+        "001EE5", "002129", "00226B", "002369", "00259C", "002354", "0024B2", 
+        "003192", "005F67", "1027F5", "14EBB6", "1C61B4", "203626", "2887BA", 
+        "305A3A", "2CFDA1", "302303", "30469A", "40ED00", "482254", "5091E3", 
+        "54AF97", "5CA2F4", "5CA6E6", "5CE931", "60A4B7", "687FF0", "6C5AB0", 
+        "788CB5", "7CC2C6", "9C5322", "9CA2F4", "A842A1", "AC15A2", "B0A7B9", 
+        "B4B024", "C006C3", "CC68B6", "E848B8", "F0A731"
+    }},
+    {ECompany::ASUS, {
+        "000C6E", "000EA6", "00112F", "0011D8", "0013D4", "0015F2", "001731", 
+        "0018F3", "001A92", "001BFC", "001D60", "001E8C", "001FC6", "002215", 
+        "002354", "00248C", "002618", "00E018", "04421A", "049226", "04D4C4", 
+        "04D9F5", "08606E", "086266", "08BFB8", "0C9D92", "107B44", "107C61", 
+        "10BF48", "10C37B", "14DAE9", "14DDA9", "1831BF", "1C872C", "1CB72C", 
+        "20CF30", "244BFE", "2C4D54", "2C56DC", "2CFDA1", "305A3A", "3085A9", 
+        "3497F6", "382C4A", "38D547", "3C7C3F", "40167E", "40B076", "485B39", 
+        "4CEDFB", "50465D", "50EBF6", "5404A6", "54A050", "581122", "6045CB", 
+        "60A44C", "60CF84", "704D7B", "708BCD", "74D02B", "7824AF", "7C10C9", 
+        "88D7F6", "90E6BA", "9C5C8E", "A036BC", "A85E45", "AC220B", "AC9E17", 
+        "B06EBF", "BCAEC5", "BCEE7B", "C86000", "C87F54", "CC28AA", "D017C2", 
+        "D45D64", "D850E6", "E03F49", "E0CB4E", "E89C25", "F02F74", "F07959", 
+        "F46D04", "F832E4", "FC3497", "FCC233"
     }},
     {ECompany::Unknown, {}}
 };
@@ -256,6 +283,7 @@ public:
     void insertTimestamp(uint8_t *packet);
     void RunSetup();
     int findMostActiveWiFiChannel();
+    void setManufacturer(AccessPoint* ap);
     void LaunchEvilPortal();
     bool isVulnerableBSSID(AccessPoint* ap);
     bool isAccessPointAlreadyAdded(LinkedList<AccessPoint*>& accessPoints, const uint8_t* bssid);
@@ -264,6 +292,9 @@ public:
     void getMACatoffset(uint8_t *addr, uint8_t* data, uint16_t offset);
     void broadcastSetSSID(const char* ESSID, uint8_t channel);
     void sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) ;
+    void listStations();
+    void listSSIDs();
+    void listAccessPoints();
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     wifi_config_t ap_config;
     String dst_mac = "ff:ff:ff:ff:ff:ff";
