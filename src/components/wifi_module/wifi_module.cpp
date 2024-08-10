@@ -427,6 +427,9 @@ void WiFiModule::setManufacturer(AccessPoint* ap)
                     case ECompany::ASUS:
                         ap->Manufacturer = "ASUS";
                         break;
+                    case ECompany::Actiontec:
+                        ap->Manufacturer = "Actiontec";
+                        break;
                     default:
                         ap->Manufacturer = "Unknown";
                         break;

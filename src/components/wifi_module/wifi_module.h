@@ -20,6 +20,7 @@ enum class ECompany {
     TPLink,
     Linksys,
     ASUS,
+    Actiontec,
     Unknown
 };
 
@@ -86,6 +87,13 @@ std::map<ECompany, std::vector<const char*>> CompanyOUIMap = {
         "B06EBF", "BCAEC5", "BCEE7B", "C86000", "C87F54", "CC28AA", "D017C2", 
         "D45D64", "D850E6", "E03F49", "E0CB4E", "E89C25", "F02F74", "F07959", 
         "F46D04", "F832E4", "FC3497", "FCC233"
+    }},
+    {ECompany::Actiontec, {
+        "000FB3", "001505", "001801", "001EA7", "001F90", "0020E0", "00247B", 
+        "002662", "0026B8", "007F28", "0C6127", "105F06", "10785B", "109FA9", 
+        "181BEB", "207600", "408B07", "4C8B30", "5C35FC", "7058A4", "70F196", 
+        "70F220", "84E892", "941C56", "9C1E95", "A0A3E2", "A83944", "E86FF2", 
+        "F8E4FB", "FC2BB2"
     }},
     {ECompany::Unknown, {}}
 };
