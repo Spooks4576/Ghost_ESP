@@ -272,6 +272,7 @@ void WiFiModule::Scan(ScanType type)
           unsigned long currentTime = millis();
           if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
           {
+            Serial.println("Channel Switched");
             lastchannel++ % 13;
             uint8_t set_channel = lastchannel;
             esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
@@ -314,6 +315,7 @@ void WiFiModule::Scan(ScanType type)
           unsigned long currentTime = millis();
           if (currentTime - lastChangeTime >= SystemManager::getInstance().Settings.getChannelSwitchDelay())
           {
+            Serial.println("Channel Switched");
             lastchannel++ % 13;
             uint8_t set_channel = lastchannel;
             esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
