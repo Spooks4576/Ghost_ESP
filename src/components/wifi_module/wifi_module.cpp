@@ -287,7 +287,13 @@ void WiFiModule::Scan(ScanType type)
       delete stations;
       stations = new LinkedList<Station>();
 
-      uint8_t set_channel = random(1, 12);
+      if (G_Utils::getSelectedAccessPoint(access_points).channel == 0)
+      {
+        Serial.println("Cant Set Channel to 0. Maybe You Forgot to select a ap");
+        return;
+      }
+
+      uint8_t set_channel = G_Utils::getSelectedAccessPoint(access_points).channel;
 
       esp_wifi_init(&cfg);
       esp_wifi_set_storage(WIFI_STORAGE_RAM);
@@ -308,7 +314,7 @@ void WiFiModule::Scan(ScanType type)
         {
           shutdownWiFi();
           break;
-        }
+        } 
       }
 
       break;

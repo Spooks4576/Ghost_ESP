@@ -172,6 +172,16 @@ namespace G_Utils
         }
     }
 
+    AccessPoint getSelectedAccessPoint(LinkedList<AccessPoint>* accessPoints) {
+        for (int i = 0; i < accessPoints->size(); i++) {
+            AccessPoint ap = accessPoints->get(i);
+            if (ap.selected) {
+                return ap;
+            }
+        }
+        return AccessPoint();
+    }
+
     String bytesToHexString(const uint8_t* bytes, size_t length) {
         String str = "";
         for (size_t i = 0; i < length; ++i) {
