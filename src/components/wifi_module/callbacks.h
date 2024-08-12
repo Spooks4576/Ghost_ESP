@@ -576,7 +576,7 @@ void beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 
        
         for (int i = 0; i < access_points->size(); i++) {
-          if (access_points->get(i).selected) {
+          if (access_points->get(i).essid == SelectedAP.essid) {
             uint8_t addr[] = {snifferPacket->payload[10],
                               snifferPacket->payload[11],
                               snifferPacket->payload[12],

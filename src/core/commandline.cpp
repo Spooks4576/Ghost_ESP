@@ -105,14 +105,6 @@ bool CommandLine::inRange(int max, int index) {
   return false;
 }
 
-bool CommandLine::apSelected() {
-  for (int i = 0; i < access_points->size(); i++) {
-    if (access_points->get(i).selected)
-      return true;
-  }
-
-  return false;
-}
 
 bool CommandLine::hasSSIDs() {
   if (ssids->size() == 0)
@@ -133,61 +125,6 @@ String CommandLine::toLowerCase(String str) {
   return result;
 }
 
-void CommandLine::filterAccessPoints(String filter) {
-  int count_selected = 0;
-  int count_unselected = 0;
-
-  // Split the filter string into individual filters
-  LinkedList<String> filters;
-  int start = 0;
-  int end = filter.indexOf(" or ");
-  while (end != -1) {
-    filters.add(filter.substring(start, end));
-    start = end + 4;
-    end = filter.indexOf(" or ", start);
-  }
-  filters.add(filter.substring(start));
-
-  // Loop over each access point and check if it matches any of the filters
-  for (int i = 0; i < access_points->size(); i++) {
-    bool matchesFilter = false;
-    for (int j = 0; j < filters.size(); j++) {
-      String f = toLowerCase(filters.get(j));
-      if (f.substring(0, 7) == "equals ") {
-        String ssidEquals = f.substring(7);
-        if ((ssidEquals.charAt(0) == '\"' && ssidEquals.charAt(ssidEquals.length() - 1) == '\"' && ssidEquals.length() > 1) ||
-            (ssidEquals.charAt(0) == '\'' && ssidEquals.charAt(ssidEquals.length() - 1) == '\'' && ssidEquals.length() > 1)) {
-          ssidEquals = ssidEquals.substring(1, ssidEquals.length() - 1);
-        }
-        if (access_points->get(i).essid.equalsIgnoreCase(ssidEquals)) {
-          matchesFilter = true;
-          break;
-        }
-      } else if (f.substring(0, 9) == "contains ") {
-        String ssidContains = f.substring(9);
-        if ((ssidContains.charAt(0) == '\"' && ssidContains.charAt(ssidContains.length() - 1) == '\"' && ssidContains.length() > 1) ||
-            (ssidContains.charAt(0) == '\'' && ssidContains.charAt(ssidContains.length() - 1) == '\'' && ssidContains.length() > 1)) {
-          ssidContains = ssidContains.substring(1, ssidContains.length() - 1);
-        }
-        String essid = toLowerCase(access_points->get(i).essid);
-        if (essid.indexOf(ssidContains) != -1) {
-          matchesFilter = true;
-          break;
-        }
-      }
-    }
-    // Toggles the selected state of the AP
-    AccessPoint new_ap = access_points->get(i);
-    new_ap.selected = matchesFilter;
-    access_points->set(i, new_ap);
-
-    if (matchesFilter) {
-      count_selected++;
-    } else {
-      count_unselected++;
-    }
-  }
-}
 
 void CommandLine::runCommand(String input)
 {
@@ -283,7 +220,7 @@ void CommandLine::runCommand(String input)
         }
 
         if(attack_type == F("deauth")){
-          bool IsSelected = access_points->size() > 0;
+          bool IsSelected =  SelectedAP.channel != 0;
           if (IsSelected)
           {
             Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
@@ -814,14 +751,14 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
 
         if (SSIDIndex != -1 && i == SSIDIndex)
         {
-          AP.selected = true;
+          SelectedAP = AP;
           Selected = true;
           break;
         }
 
         if (ssid_sw != -1 && AP.essid == SSIDArg)
         {
-          AP.selected = true;
+          SelectedAP = AP;
           Selected = true;
           break;
         }

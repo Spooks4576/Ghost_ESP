@@ -235,6 +235,7 @@ inline LinkedList<AccessPoint>* access_points;
 inline LinkedList<AccessPoint*> WPSAccessPoints;
 inline LinkedList<ssid>* ssids;
 inline LinkedList<Station>* stations;
+inline AccessPoint SelectedAP;
 String PROGMEM version_number;
 String PROGMEM board_target;
 bool HasRanCommand;
