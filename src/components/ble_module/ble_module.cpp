@@ -472,14 +472,19 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
 
 void BleSnifferCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
 {
-  uint8_t* Payload = advertisedDevice->getPayload();
-  size_t PayloadLen = advertisedDevice->getPayloadLength();
+    uint8_t* Payload = advertisedDevice->getPayload();
+    size_t PayloadLen = advertisedDevice->getPayloadLength();
 
-  Serial.println(F("Packet Recieved"));
+    Serial.println(F("Packet Received"));
 
-#ifdef SD_CARD_CS_PIN
-  SystemManager::getInstance().sdCardModule.logPacket(Payload, PayloadLen);
-#endif
+
+    Serial.print(F("Payload: "));
+    for (size_t i = 0; i < PayloadLen; i++) {
+        Serial.printf("%02X ", Payload[i]);
+    }
+    Serial.println();
+
+    SystemManager::getInstance().sdCardModule.logPacket(Payload, PayloadLen);
 }
 
 // Credit to https://github.com/MatthewKuKanich for the AirTag Research

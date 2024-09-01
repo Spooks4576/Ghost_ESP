@@ -19,56 +19,69 @@ void WPSScanCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
   wifi_ieee80211_packet_t* ipkt = (wifi_ieee80211_packet_t*)pkt->payload;
   WifiMgmtHdr* hdr = &ipkt->hdr;
 
-  // Check if the packet contains WPS information
+  // Log the first 64 bytes of the payload in hex to better understand the data structure
   uint8_t* payload = hdr->payload;
   int len = pkt->rx_ctrl.sig_len - sizeof(WifiMgmtHdr);
 
   String essid = "";
   bool wps_found = false;
 
-  for (int i = 0; i < len;) {
-    uint8_t tag = payload[i];
-    uint8_t tag_len = payload[i + 1];
+  essid = G_Utils::parseSSID(pkt->payload, len);
 
-    if (tag == 0x00) { // SSID parameter set
-      essid = String((char*)(payload + i + 2)).substring(0, tag_len);
-    } else if (tag == 0xDD && tag_len >= 4 && payload[i + 2] == 0x00 && payload[i + 3] == 0x50 && payload[i + 4] == 0xF2 && payload[i + 5] == 0x04) {
-      // WPS information element found
-      wps_found = true;
+  // Check if ESSID contains only printable characters
+  bool isPrintable = true;
+  for (int i = 0; i < essid.length(); i++) {
+    if (essid[i] < 32 || essid[i] > 126) {
+      isPrintable = false;
+      break;
     }
-
-    i += 2 + tag_len;
   }
 
-  if (wps_found) {
-    AccessPoint* ap = new AccessPoint;
-    ap->essid = essid;
-    ap->channel = pkt->rx_ctrl.channel;
-    memcpy(ap->bssid, &hdr->bssid, 6);
-    ap->selected = false;
-    ap->beacon = new LinkedList<char>();
-    ap->rssi = pkt->rx_ctrl.rssi;
-    ap->stations = new LinkedList<int>();
+  if (isPrintable) {
+    for (int i = 0; i < len;) {
+      uint8_t tag = payload[i];
+      uint8_t tag_len = payload[i + 1];
+    
+      if (tag == 0xDD && tag_len >= 4 && payload[i + 2] == 0x00 && payload[i + 3] == 0x50 && payload[i + 4] == 0xF2 && payload[i + 5] == 0x04) {
+        // WPS information element found
+        wps_found = true;
+      }
 
-    // Add some dummy data to beacon and stations lists
-    ap->beacon->add('B');
-    ap->stations->add(1);
-
-    // Add the AccessPoint to the LinkedList
-    WPSAccessPoints.add(ap);
-
-    Serial.print("Detected WPS Access Point: ");
-    Serial.print("ESSID: ");
-    Serial.print(ap->essid);
-    Serial.print(", BSSID: ");
-    for (int j = 0; j < 6; j++) {
-      Serial.printf("%02X", ap->bssid[j]);
-      if (j < 5) Serial.print(":");
+      i += 2 + tag_len;
     }
-    Serial.print(", Channel: ");
-    Serial.print(ap->channel);
-    Serial.print(", RSSI: ");
-    Serial.println(ap->rssi);
+
+    if (wps_found && essid.length() > 0 && !SystemManager::getInstance().wifiModule.isAccessPointAlreadyAdded(WPSAccessPoints, hdr->bssid)) {
+      AccessPoint* ap = new AccessPoint;
+      ap->essid = essid;
+      ap->channel = pkt->rx_ctrl.channel;
+      memcpy(ap->bssid, hdr->bssid, 6);
+      ap->selected = false;
+      ap->beacon = new LinkedList<char>();
+      ap->rssi = pkt->rx_ctrl.rssi;
+      ap->stations = new LinkedList<int>();
+
+      // Add some dummy data to beacon and stations lists
+      ap->beacon->add('B');
+      ap->stations->add(1);
+
+      // Add the AccessPoint to the LinkedList
+      WPSAccessPoints.add(ap);
+
+      Serial.print("Detected WPS Access Point: ");
+      Serial.print("ESSID: ");
+      Serial.print(ap->essid);
+      Serial.print(", BSSID: ");
+      for (int j = 0; j < 6; j++) {
+        Serial.printf("%02X", ap->bssid[j]);
+        if (j < 5) Serial.print(":");
+      }
+      Serial.print(", Channel: ");
+      Serial.print(ap->channel);
+      Serial.print(", RSSI: ");
+      Serial.println(ap->rssi);
+    }
+  } else {
+    // We didint find a network with a SSID with printable characters
   }
 }
 
@@ -250,14 +263,18 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
 
         ap.rssi = snifferPacket->rx_ctrl.rssi;
 
-        access_points->add(ap);
+        if (!G_Utils::isMemoryLow(G_Utils::calculateAccessPointSize(ap)))
+        {
+          SystemManager::getInstance().wifiModule.setManufacturer(&ap);
 
-        Serial.print(access_points->size());
-        Serial.print(" ");
-        Serial.print(access_points->size());
-        Serial.print(" ");
-        Serial.print(esp_get_free_heap_size());
-    }
+          access_points->add(ap);
+        }
+        else 
+        {
+          Serial.println("Memory Is Low Cant Store Anymore Access Points...");
+          SystemManager::getInstance().wifiModule.shutdownWiFi();
+        }
+      }
     }
   }
 }
@@ -559,7 +576,7 @@ void beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 
        
         for (int i = 0; i < access_points->size(); i++) {
-          if (access_points->get(i).selected) {
+          if (access_points->get(i).essid == SelectedAP.essid) {
             uint8_t addr[] = {snifferPacket->payload[10],
                               snifferPacket->payload[11],
                               snifferPacket->payload[12],

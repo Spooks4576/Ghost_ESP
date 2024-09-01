@@ -151,7 +151,18 @@ bool SDCardModule::logMessage(const char *logFileName, const char* foldername, S
 }
 
 bool SDCardModule::startPcapLogging(const char *path, bool bluetooth) {
-    if (!Initlized) return false;
+    if (!Initlized)
+    {
+        if (bluetooth)
+        {
+            pcapHeader.network = 251;
+        }
+        else 
+        {
+            pcapHeader.network = 105;
+        }
+        return false;
+    }
 
     String CutPath = path;
     CutPath.replace(".pcap", "");

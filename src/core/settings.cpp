@@ -5,6 +5,7 @@
 // Define NVS keys
 const char* FSettings::NVS_RGB_MODE_KEY = "rgb_mode";
 const char* FSettings::NVS_CHANNEL_SWITCH_DELAY_KEY = "channel_delay";
+const char* FSettings::NVS_ENABLE_CHANNEL_HOP_KEY = "enable_channel_hop";
 
 FSettings::FSettings() : rgbMode(RGBMode::Stealth), channelSwitchDelay(0.0f) {
     esp_err_t err = nvs_flash_init();
@@ -39,8 +40,19 @@ FSettings::RGBMode FSettings::getRGBMode() const {
     return rgbMode;
 }
 
+bool FSettings::ChannelHoppingEnabled() const
+{
+    return EnableChannelHopping;
+}
+
 void FSettings::setChannelSwitchDelay(float delay_ms) {
     channelSwitchDelay = delay_ms;
+    saveSettings();
+}
+
+void FSettings::setChannelHoppingEnabled(bool Enabled)
+{
+    EnableChannelHopping = Enabled;
     saveSettings();
 }
 
@@ -61,7 +73,13 @@ void FSettings::loadSettings() {
     size_t required_size = sizeof(float);
     err = nvs_get_blob(nvsHandle, NVS_CHANNEL_SWITCH_DELAY_KEY, &channelSwitchDelay, &required_size);
     if (err != ESP_OK) {
-        channelSwitchDelay = 0.0f; // Default value
+        channelSwitchDelay = 1; // Default value
+    }
+
+
+    err = nvs_get_i8(nvsHandle, NVS_ENABLE_CHANNEL_HOP_KEY, (int8_t*)&EnableChannelHopping);
+    if (err != ESP_OK) {
+        EnableChannelHopping = true;
     }
 }
 
@@ -69,6 +87,8 @@ void FSettings::saveSettings() {
     nvs_set_u8(nvsHandle, NVS_RGB_MODE_KEY, static_cast<uint8_t>(rgbMode));
     
     nvs_set_blob(nvsHandle, NVS_CHANNEL_SWITCH_DELAY_KEY, &channelSwitchDelay, sizeof(float));
+
+    nvs_set_i8(nvsHandle, NVS_ENABLE_CHANNEL_HOP_KEY, static_cast<int8_t>(EnableChannelHopping));
 
     nvs_commit(nvsHandle);
 }

@@ -31,7 +31,7 @@ public:
 
     void SetLEDState(ENeoColor NeoColor = ENeoColor::Red, bool FadeOut = false)
     {
-if (Settings.getRGBMode() != FSettings::RGBMode::Rainbow)
+if (Settings.getRGBMode() == FSettings::RGBMode::Normal)
 {
 #ifdef OLD_LED
 if (FadeOut)
@@ -172,6 +172,16 @@ namespace G_Utils
         }
     }
 
+    AccessPoint getSelectedAccessPoint(LinkedList<AccessPoint>* accessPoints) {
+        for (int i = 0; i < accessPoints->size(); i++) {
+            AccessPoint ap = accessPoints->get(i);
+            if (ap.selected) {
+                return ap;
+            }
+        }
+        return AccessPoint();
+    }
+
     String bytesToHexString(const uint8_t* bytes, size_t length) {
         String str = "";
         for (size_t i = 0; i < length; ++i) {
@@ -180,6 +190,32 @@ namespace G_Utils
             str += String(bytes[i], HEX);
         }
         return str;
+    }
+
+    size_t calculateAccessPointSize(const AccessPoint& ap) {
+        size_t size = sizeof(AccessPoint);
+
+        size += ap.essid.length() + 1;
+        size += ap.Manufacturer.length() + 1;
+
+
+        if (ap.beacon != nullptr) {
+            size += sizeof(LinkedList<char>);
+            size += ap.beacon->size();
+        }
+
+        if (ap.stations != nullptr) {
+            size += sizeof(LinkedList<int>);
+            size += ap.stations->size() * sizeof(int); 
+        }
+
+        return size;
+    }
+
+    bool isMemoryLow(size_t requiredMemory) {
+        size_t freeHeap = ESP.getFreeHeap();
+        size_t safetyMargin = 1024;
+        return (freeHeap < requiredMemory + safetyMargin);
     }
 
     String formatString(const char* format, ...) 
@@ -217,5 +253,18 @@ namespace G_Utils
             default:
                 return "UNKNOWN";
         }
+    }
+
+    String parseSSID(const uint8_t* payload, int length) {
+        String ssid = "";
+        int ssidLength = payload[37]; // SSID length is usually at this offset
+
+        if (ssidLength > 0 && ssidLength < 32) { // Valid SSID lengths
+            for (int i = 38; i < (38 + ssidLength); i++) {
+                ssid += (char)payload[i];
+            }
+        }
+
+        return ssid;
     }
 }
