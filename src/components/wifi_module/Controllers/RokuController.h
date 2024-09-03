@@ -37,7 +37,7 @@ public:
     return HandlerType::RokuController;
   }
 
-  virtual void launchApp(const String& appUrl) override;
+  virtual bool launchApp(const String& appUrl) override;
 
   virtual int checkAppStatus(const String& appUrl, Device& device) override;
 

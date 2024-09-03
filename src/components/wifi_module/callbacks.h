@@ -10,6 +10,130 @@ namespace CallBackUtils
   }
 }
 
+void WPSScanCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
+  if (type != WIFI_PKT_MGMT) {
+    return;
+  }
+
+  wifi_promiscuous_pkt_t* pkt = (wifi_promiscuous_pkt_t*)buf;
+  wifi_ieee80211_packet_t* ipkt = (wifi_ieee80211_packet_t*)pkt->payload;
+  WifiMgmtHdr* hdr = &ipkt->hdr;
+
+  // Log the first 64 bytes of the payload in hex to better understand the data structure
+  uint8_t* payload = hdr->payload;
+  int len = pkt->rx_ctrl.sig_len - sizeof(WifiMgmtHdr);
+
+  String essid = "";
+  bool wps_found = false;
+
+  essid = G_Utils::parseSSID(pkt->payload, len);
+
+  // Check if ESSID contains only printable characters
+  bool isPrintable = true;
+  for (int i = 0; i < essid.length(); i++) {
+    if (essid[i] < 32 || essid[i] > 126) {
+      isPrintable = false;
+      break;
+    }
+  }
+
+  if (isPrintable) {
+    for (int i = 0; i < len;) {
+      uint8_t tag = payload[i];
+      uint8_t tag_len = payload[i + 1];
+    
+      if (tag == 0xDD && tag_len >= 4 && payload[i + 2] == 0x00 && payload[i + 3] == 0x50 && payload[i + 4] == 0xF2 && payload[i + 5] == 0x04) {
+        // WPS information element found
+        wps_found = true;
+      }
+
+      i += 2 + tag_len;
+    }
+
+    if (wps_found && essid.length() > 0 && !SystemManager::getInstance().wifiModule.isAccessPointAlreadyAdded(WPSAccessPoints, hdr->bssid)) {
+      AccessPoint* ap = new AccessPoint;
+      ap->essid = essid;
+      ap->channel = pkt->rx_ctrl.channel;
+      memcpy(ap->bssid, hdr->bssid, 6);
+      ap->selected = false;
+      ap->beacon = new LinkedList<char>();
+      ap->rssi = pkt->rx_ctrl.rssi;
+      ap->stations = new LinkedList<int>();
+
+      // Add some dummy data to beacon and stations lists
+      ap->beacon->add('B');
+      ap->stations->add(1);
+
+      // Add the AccessPoint to the LinkedList
+      WPSAccessPoints.add(ap);
+
+      Serial.print("Detected WPS Access Point: ");
+      Serial.print("ESSID: ");
+      Serial.print(ap->essid);
+      Serial.print(", BSSID: ");
+      for (int j = 0; j < 6; j++) {
+        Serial.printf("%02X", ap->bssid[j]);
+        if (j < 5) Serial.print(":");
+      }
+      Serial.print(", Channel: ");
+      Serial.print(ap->channel);
+      Serial.print(", RSSI: ");
+      Serial.println(ap->rssi);
+    }
+  } else {
+    // We didint find a network with a SSID with printable characters
+  }
+}
+
+
+void deauthapSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
+  wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
+  WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
+  wifi_pkt_rx_ctrl_t ctrl = (wifi_pkt_rx_ctrl_t)snifferPacket->rx_ctrl;
+  int len = snifferPacket->rx_ctrl.sig_len;
+
+  String display_string = "";
+  String essid = "";
+  String bssid = "";
+
+  if (Serial.available() > 0)
+  {
+    SystemManager::getInstance().wifiModule.shutdownWiFi();
+  }
+
+  if (type == WIFI_PKT_MGMT)
+  {
+    len -= 4;
+    int fctl = CallBackUtils::ntohs(frameControl->fctl);
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)snifferPacket->payload;
+    const WifiMgmtHdr *hdr = &ipkt->hdr;
+    int buf = 0;
+
+
+    if ((snifferPacket->payload[0] == 0x80) && (buf == 0))
+    {
+      uint8_t* addr = new uint8_t[6];
+      SystemManager::getInstance().wifiModule.getMACatoffset(addr, snifferPacket->payload, 10);
+
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
+#ifdef OLD_LED
+        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->redPin, 1000);
+#endif
+#ifdef NEOPIXEL_PIN
+SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 300, false);
+#endif
+}
+        uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        for (int y = 0; y < 12; y++) {
+          SystemManager::getInstance().wifiModule.sendDeauthFrame(addr, y, broadcast_mac);
+        }
+
+        delete addr;
+    }
+  }
+}
+
 void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
   wifi_promiscuous_pkt_t *snifferPacket = (wifi_promiscuous_pkt_t*)buf;
   WifiMgmtHdr *frameControl = (WifiMgmtHdr*)snifferPacket->payload;
@@ -58,12 +182,15 @@ void apSnifferCallbackFull(void* buf, wifi_promiscuous_pkt_type_t type) {
       }
 
       if (!in_list) {
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef OLD_LED
-        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 100);
+        SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 300, false);
 #endif
+}
       
         delay(random(0, 10));
         LOG_RESULTS("ScanResult.txt", "scan", "RSSI: ");
@@ -136,14 +263,18 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
 
         ap.rssi = snifferPacket->rx_ctrl.rssi;
 
-        access_points->add(ap);
+        if (!G_Utils::isMemoryLow(G_Utils::calculateAccessPointSize(ap)))
+        {
+          SystemManager::getInstance().wifiModule.setManufacturer(&ap);
 
-        Serial.print(access_points->size());
-        Serial.print(" ");
-        Serial.print(access_points->size());
-        Serial.print(" ");
-        Serial.print(esp_get_free_heap_size());
-    }
+          access_points->add(ap);
+        }
+        else 
+        {
+          Serial.println("Memory Is Low Cant Store Anymore Access Points...");
+          SystemManager::getInstance().wifiModule.shutdownWiFi();
+        }
+      }
     }
   }
 }
@@ -252,12 +383,15 @@ void stationSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
                 false};
 
   stations->add(sta);
+  if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef OLD_LED
-SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 100);
+SystemManager::getInstance().rgbModule->breatheLED(SystemManager::getInstance().rgbModule->greenPin, 1000);
 #endif
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 255, 0), 300, false);
 #endif
+}
 
 
   Serial.print((String)stations->size() + ": ");
@@ -410,9 +544,7 @@ void pwnSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 
         Serial.println();
 
-#ifdef SD_CARD_CS_PIN
-SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+      SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
       }
     }
   }
@@ -444,7 +576,7 @@ void beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 
        
         for (int i = 0; i < access_points->size(); i++) {
-          if (access_points->get(i).selected) {
+          if (access_points->get(i).essid == SelectedAP.essid) {
             uint8_t addr[] = {snifferPacket->payload[10],
                               snifferPacket->payload[11],
                               snifferPacket->payload[12],
@@ -475,9 +607,7 @@ void beaconSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
           Serial.println((String)access_points->get(targ_index).essid + " RSSI: " + (String)access_points->get(targ_index).rssi);
           return;
         }
-#ifdef SD_CARD_CS_PIN
-SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+      SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
     }
   }
 }
@@ -524,9 +654,7 @@ void probeSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
         
         Serial.println();    
 
-#ifdef SD_CARD_CS_PIN
-SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+      SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
     }
   }
 }
@@ -563,9 +691,7 @@ void rawSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
 
     Serial.println();
 
-#ifdef SD_CARD_CS_PIN
-  SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+    SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
 }
 
 void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
@@ -624,8 +750,7 @@ void eapolSnifferCallback(void* buf, wifi_promiscuous_pkt_type_t type)
     int temp_len = display_string.length();
 
     Serial.println(addr);    
-#ifdef SD_CARD_CS_PIN
-  SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
-#endif
+
+    SystemManager::getInstance().sdCardModule.logPacket(snifferPacket->payload, len);
   }
 }

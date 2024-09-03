@@ -6,15 +6,16 @@
 #ifdef DISPLAY_SUPPORT
 #include "views/splashscreen.h"
 #include "views/mainmenu.h"
+#include "views/interface/view_scrollbar_i.h"
 LV_IMG_DECLARE(ui_img_spooky_logo_png);
 LV_FONT_DECLARE(ui_font_Font1);
-LV_IMG_DECLARE(bt_img);
+LV_IMG_DECLARE(Bluetooth_img);
 LV_IMG_DECLARE(WiFi_img);
-LV_IMG_DECLARE(led_img);
+LV_IMG_DECLARE(LED_img);
+LV_IMG_DECLARE(Map_img);
+LV_IMG_DECLARE(Settings_img);
 
-inline lv_display_t * disp;
-
-inline XPT2046_Touchscreen ts(XPT2046_CS, XPT2046_IRQ);
+static lv_display_t * disp;
 
 class DisplayModule {
 public:

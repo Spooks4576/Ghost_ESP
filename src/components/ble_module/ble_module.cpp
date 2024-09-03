@@ -70,7 +70,7 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         AdvData_Raw[i++] = 0x0F;  // Type
         AdvData_Raw[i++] = 0x05;                        // Length
         AdvData_Raw[i++] = 0xC1;                        // Action Flags
-        const uint8_t types[] = { 0x27, 0x09, 0x02, 0x1e, 0x2b, 0x2d, 0x2f, 0x01, 0x06, 0x20, 0xc0 };
+        const uint8_t types[] = { 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24 };
         AdvData_Raw[i++] = types[rand() % sizeof(types)];  // Action Type
         esp_fill_random(&AdvData_Raw[i], 3); // Authentication Tag
         i += 3;   
@@ -216,9 +216,12 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       pAdvertising->setAdvertisementData(advertisementData.AdvData);
       pAdvertising->setScanResponseData(advertisementData.ScanData);
       pAdvertising->start();
+      if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+      {
 #ifdef NEOPIXEL_PIN
-SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 0, 255), 300, false);
+      SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(0, 0, 255), 300, false);
 #endif
+      }
       delay(100);
       pAdvertising->stop();
 
@@ -366,9 +369,12 @@ void FlipperFinderCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
       Serial.printf("Found White Flipper Device %s", advertisedDevice->toString().c_str());
       LOG_MESSAGE_TO_SD(F("Found White Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
+}
       return;
     }
 
@@ -377,9 +383,12 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
       Serial.printf("Found Black Flipper Device %s", advertisedDevice->toString().c_str());
       LOG_MESSAGE_TO_SD(F("Found Black Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
+}
       return;
     }
 
@@ -388,9 +397,12 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
       Serial.printf("Found Transparent Flipper Device %s", advertisedDevice->toString().c_str());
       LOG_MESSAGE_TO_SD(F("Found Transparent Flipper Device"));
       LOG_MESSAGE_TO_SD(advertisedDevice->toString().c_str());
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 140, 0), 500, false);
 #endif
+}
       return;
     }
   }
@@ -441,9 +453,12 @@ void BleSpamDetectorCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice
       if (info.count > 20 && (currentTime - info.firstSeenTime) <= detectionWindow || info.Mac == MacAddr) {
           Serial.println(F("BLE Spam detected!"));
           LOG_MESSAGE_TO_SD(F("BLE Spam detected!"));
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Normal)
+{
 #ifdef NEOPIXEL_PIN
 SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstance().neopixelModule->strip.Color(255, 0, 0), 200, false);
 #endif
+}
       } else if ((currentTime - info.firstSeenTime) > detectionWindow) {
           info.count = 1;
           info.firstSeenTime = currentTime;
@@ -454,14 +469,19 @@ SystemManager::getInstance().neopixelModule->breatheLED(SystemManager::getInstan
 
 void BleSnifferCallbacks::onResult(NimBLEAdvertisedDevice* advertisedDevice)
 {
-  uint8_t* Payload = advertisedDevice->getPayload();
-  size_t PayloadLen = advertisedDevice->getPayloadLength();
+    uint8_t* Payload = advertisedDevice->getPayload();
+    size_t PayloadLen = advertisedDevice->getPayloadLength();
 
-  Serial.println(F("Packet Recieved"));
+    Serial.println(F("Packet Received"));
 
-#ifdef SD_CARD_CS_PIN
-  SystemManager::getInstance().sdCardModule.logPacket(Payload, PayloadLen);
-#endif
+
+    Serial.print(F("Payload: "));
+    for (size_t i = 0; i < PayloadLen; i++) {
+        Serial.printf("%02X ", Payload[i]);
+    }
+    Serial.println();
+
+    SystemManager::getInstance().sdCardModule.logPacket(Payload, PayloadLen);
 }
 
 // Credit to https://github.com/MatthewKuKanich for the AirTag Research

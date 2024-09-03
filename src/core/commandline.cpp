@@ -105,14 +105,6 @@ bool CommandLine::inRange(int max, int index) {
   return false;
 }
 
-bool CommandLine::apSelected() {
-  for (int i = 0; i < access_points->size(); i++) {
-    if (access_points->get(i).selected)
-      return true;
-  }
-
-  return false;
-}
 
 bool CommandLine::hasSSIDs() {
   if (ssids->size() == 0)
@@ -133,61 +125,6 @@ String CommandLine::toLowerCase(String str) {
   return result;
 }
 
-void CommandLine::filterAccessPoints(String filter) {
-  int count_selected = 0;
-  int count_unselected = 0;
-
-  // Split the filter string into individual filters
-  LinkedList<String> filters;
-  int start = 0;
-  int end = filter.indexOf(" or ");
-  while (end != -1) {
-    filters.add(filter.substring(start, end));
-    start = end + 4;
-    end = filter.indexOf(" or ", start);
-  }
-  filters.add(filter.substring(start));
-
-  // Loop over each access point and check if it matches any of the filters
-  for (int i = 0; i < access_points->size(); i++) {
-    bool matchesFilter = false;
-    for (int j = 0; j < filters.size(); j++) {
-      String f = toLowerCase(filters.get(j));
-      if (f.substring(0, 7) == "equals ") {
-        String ssidEquals = f.substring(7);
-        if ((ssidEquals.charAt(0) == '\"' && ssidEquals.charAt(ssidEquals.length() - 1) == '\"' && ssidEquals.length() > 1) ||
-            (ssidEquals.charAt(0) == '\'' && ssidEquals.charAt(ssidEquals.length() - 1) == '\'' && ssidEquals.length() > 1)) {
-          ssidEquals = ssidEquals.substring(1, ssidEquals.length() - 1);
-        }
-        if (access_points->get(i).essid.equalsIgnoreCase(ssidEquals)) {
-          matchesFilter = true;
-          break;
-        }
-      } else if (f.substring(0, 9) == "contains ") {
-        String ssidContains = f.substring(9);
-        if ((ssidContains.charAt(0) == '\"' && ssidContains.charAt(ssidContains.length() - 1) == '\"' && ssidContains.length() > 1) ||
-            (ssidContains.charAt(0) == '\'' && ssidContains.charAt(ssidContains.length() - 1) == '\'' && ssidContains.length() > 1)) {
-          ssidContains = ssidContains.substring(1, ssidContains.length() - 1);
-        }
-        String essid = toLowerCase(access_points->get(i).essid);
-        if (essid.indexOf(ssidContains) != -1) {
-          matchesFilter = true;
-          break;
-        }
-      }
-    }
-    // Toggles the selected state of the AP
-    AccessPoint new_ap = access_points->get(i);
-    new_ap.selected = matchesFilter;
-    access_points->set(i, new_ap);
-
-    if (matchesFilter) {
-      count_selected++;
-    } else {
-      count_unselected++;
-    }
-  }
-}
 
 void CommandLine::runCommand(String input)
 {
@@ -283,7 +220,7 @@ void CommandLine::runCommand(String input)
         }
 
         if(attack_type == F("deauth")){
-          bool IsSelected = access_points->size() > 0;
+          bool IsSelected =  SelectedAP.channel != 0;
           if (IsSelected)
           {
             Serial.println("Starting Deauth attack. Stop with " + (String)"stopscan");
@@ -306,6 +243,14 @@ void CommandLine::runCommand(String input)
           SystemManager::getInstance().wifiModule.RunSetup();
           SystemManager::getInstance().wifiModule.Attack(AT_Rickroll);
           return;
+        }
+
+        if (attack_type == F("wps_pwn"))
+        {
+          Serial.println("Starting wps_pwn wifi attack. Stop with " + (String)"stopscan");
+          LOG_MESSAGE_TO_SD(F("Starting wps_pwn beacon attack."));
+          SystemManager::getInstance().wifiModule.RunSetup();
+          SystemManager::getInstance().wifiModule.Attack(AT_WPS);
         }
 
         if (attack_type == F("karma"))
@@ -356,38 +301,89 @@ void CommandLine::runCommand(String input)
       return;
     }
 
-    if (cmd_args.get(0) == F("led"))
+    if (cmd_args.get(0) == F("setsetting"))
     {
-      if (!SystemManager::getInstance().RainbowLEDActive)
+      int settingindex = this->argSearch(&cmd_args, "-i");
+      int settingvalue = this->argSearch(&cmd_args, "-v");
+
+      if (settingindex != -1 && settingvalue != -1)
       {
-        SystemManager::getInstance().RainbowLEDActive = true;
-#ifdef OLD_LED
-    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
-#elif NEOPIXEL_PIN
-    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
-#endif
-#ifdef OLD_LED
-    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
-#elif NEOPIXEL_PIN
-    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
-#endif
-#ifdef OLD_LED
-    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
-#elif NEOPIXEL_PIN
-    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
-#endif
-#ifdef OLD_LED
-    SystemManager::getInstance().rgbModule->Rainbow(0.1, 4);
-#elif NEOPIXEL_PIN
-    SystemManager::getInstance().neopixelModule->rainbow(255, 4);
-#endif
-#ifdef OLD_LED
-        SystemManager::getInstance().rgbModule->breatheLED(0, 1000, true);
-#endif
-#ifdef NEOPIXEL_PIN
-        SystemManager::getInstance().neopixelModule->breatheLED(0, 1000, true);
-#endif
-         SystemManager::getInstance().RainbowLEDActive = false;
+        String settingindexString = cmd_args.get(settingindex + 1);
+        String settingvalueString = cmd_args.get(settingvalue + 1);
+
+        int ActualSettingsIndex = settingindexString.toInt();
+        int ActualSettingsValue = settingvalueString.toInt();
+
+        if (ActualSettingsIndex == 1) // RGB Mode
+        {
+          switch (ActualSettingsValue)
+          {
+            case 1:
+            {
+              SystemManager::getInstance().Settings.setRGBMode(FSettings::RGBMode::Stealth);
+              break;
+            }
+            case 2:
+            {
+              SystemManager::getInstance().Settings.setRGBMode(FSettings::RGBMode::Normal);
+              break;
+            }
+            case 3:
+            {
+              SystemManager::getInstance().Settings.setRGBMode(FSettings::RGBMode::Rainbow);
+              break;
+            }
+          }
+        }
+
+        if (ActualSettingsIndex == 2)
+        {
+          switch (ActualSettingsValue)
+          {
+            case 1:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(0.5);
+              break;
+            }
+            case 2:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(1);
+              break;
+            }
+            case 3:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(2);
+              break;
+            }
+            case 4:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(3);
+              break;
+            }
+            case 5:
+            {
+              SystemManager::getInstance().Settings.setChannelSwitchDelay(4);
+              break;
+            }
+          }
+        }
+
+        if (ActualSettingsIndex == 3)
+        {
+          switch (ActualSettingsValue)
+          {
+            case 1:
+            {
+              SystemManager::getInstance().Settings.setChannelHoppingEnabled(false);
+              break;
+            }
+            case 2:
+            {
+              SystemManager::getInstance().Settings.setChannelHoppingEnabled(true);
+              break;
+            }
+          }
+        }
       }
       return;
     }
@@ -624,22 +620,36 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
       Serial.println(F("- 'attack -t deauth': Start Deauth Attack on the Captured Networks"));
       Serial.println(F("- 'castv2connect -s <SSID> -p <PASSWORD> -v <Device>': Connect to a device using CastV2 protocol."));
       Serial.println(F("- 'dialconnect -s <SSID> -p <PASSWORD> -t <App> -v <Device>': Connect to a device using DIAL protocol."));
-      Serial.println(F("- 'deauth': Deauth Scanned Stations of Scanned Access Points."));
       Serial.println(F("- 'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>': Detect deauthentication frames."));
       Serial.println(F("- 'calibrate': Calibrate the most active network. Used for sniffing functions"));
       Serial.println(F("- 'blespam -t <type>': Start BLE spamming of a specific type ('samsung', 'apple', 'google', 'windows', or 'all')."));
-      Serial.println(F("- 'led -p': Activate Rainbow LED pattern."));
       Serial.println(F("- 'sniffraw': Sniff raw WiFi packets."));
       Serial.println(F("- 'sniffbeacon': Sniff WiFi beacons."));
       Serial.println(F("- 'sniffprobe': Sniff WiFi probe requests."));
       Serial.println(F("- 'sniffpwn': Sniff for pwnagotchis in the air."));
-      Serial.println(F("- 'sniffdeauth': Sniff for deauthentication packets in the air."));
+      Serial.println(F("- 'sniffdeauth': deauthenticate access points when scanning for them"));
       Serial.println(F("- 'sniffpmkid [-c <channel>]': Sniff for PMKID packets with optional flags for channel"));
       Serial.println(F("- 'findtheflippers': Detect for Flipper Zeros In Your Area"));
       Serial.println(F("- 'detectblespam': Detect BLE Spams That Might Be Happening Around You"));
       Serial.println(F("- 'airtagscan': Detect Apple AirTags and there Payloads around You"));
       Serial.println(F("- 'streetdetector': Detect What Street Your on Using GPS (Requires SD Card With Map Data)"));
       Serial.println(F("- 'wardrive [-b EnableBLEScanning (May Crash After a while if enabled)]': Detect What Street Access Points Are on and gather other WiFi Information"));
+    }
+
+    if (cmd_args.get(0) == F("sniffdeauth"))
+    {
+      int nn_sw = this->argSearch(&cmd_args, "-c");
+
+      if (nn_sw != -1)
+      {
+        int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
+        Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
+        SystemManager::getInstance().wifiModule.Sniff(ST_Deauth, TargetChannel);
+        return;
+      }
+
+      Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
+      SystemManager::getInstance().wifiModule.Sniff(ST_Deauth, 0);
     }
 
     if (cmd_args.get(0) == F("sniffpmkid"))
@@ -652,11 +662,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_pmkid, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PMKID sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_pmkid, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffraw"))
@@ -669,11 +679,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting RAW sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_raw, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting RAW sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_raw, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffbeacon"))
@@ -686,11 +696,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting Beacon sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_beacon, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting Beacon sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_beacon, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffprobe"))
@@ -703,11 +713,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PROBE sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_probe, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PROBE sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_probe, 0);
-      return;
     }
 
     if (cmd_args.get(0) == F("sniffpwn"))
@@ -720,11 +730,11 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
         int TargetChannel = cmd_args.get(nn_sw + 1).toInt();
         Serial.println(F("Starting PWN sniff. Stop with stop scan"));
         SystemManager::getInstance().wifiModule.Sniff(ST_pwn, TargetChannel);
+        return;
       }
 
       Serial.println(F("Starting PWN sniff. Stop with stop scan"));
       SystemManager::getInstance().wifiModule.Sniff(ST_pwn, 0);
-      return;
     }
 
 
@@ -741,14 +751,14 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
 
         if (SSIDIndex != -1 && i == SSIDIndex)
         {
-          AP.selected = true;
+          SelectedAP = AP;
           Selected = true;
           break;
         }
 
         if (ssid_sw != -1 && AP.essid == SSIDArg)
         {
-          AP.selected = true;
+          SelectedAP = AP;
           Selected = true;
           break;
         }
@@ -794,86 +804,35 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
 
 
     if (cmd_args.get(0) == F("list")) {
-    int ap_sw = this->argSearch(&cmd_args, "-a");
-    int ss_sw = this->argSearch(&cmd_args, "-s");
-    int cl_sw = this->argSearch(&cmd_args, "-c");
+        int ap_sw = this->argSearch(&cmd_args, "-a");
+        int ss_sw = this->argSearch(&cmd_args, "-s");
+        int cl_sw = this->argSearch(&cmd_args, "-c");
 
-    // List APs
-    if (ap_sw != -1 && access_points != nullptr) {
-      for (int i = 0; i < access_points->size(); i++) {
-        if (access_points->get(i).selected) {
-          Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi + " (selected)");
-          count_selected += 1;
-        } else
-          Serial.println("[" + (String)i + "][CH:" + (String)access_points->get(i).channel + "] " + access_points->get(i).essid + " " + (String)access_points->get(i).rssi);
-      }
-    }
-    // List SSIDs
-    else if (ss_sw != -1 && ssids != nullptr) {
-      for (int i = 0; i < ssids->size(); i++) {
-        if (ssids->get(i).selected) {
-          Serial.println("[" + (String)i + "] " + ssids->get(i).essid + " (selected)");
-          count_selected += 1;
-        } else
-          Serial.println("[" + (String)i + "] " + ssids->get(i).essid);
-      }
-    }
-    // List Stations
-    else if (cl_sw != -1 && access_points != nullptr) { 
-      char sta_mac[] = "00:00:00:00:00:00";
-      for (int x = 0; x < access_points->size(); x++) {
-        if (access_points->get(x).stations != nullptr) {
-          Serial.println("[" + (String)x + "] " + access_points->get(x).essid + " " + (String)access_points->get(x).rssi + ":");
-          for (int i = 0; i < access_points->get(x).stations->size(); i++) {
-            SystemManager::getInstance().wifiModule.getMACatoffset(sta_mac, stations->get(access_points->get(x).stations->get(i)).mac, 0);
-            if (stations->get(access_points->get(x).stations->get(i)).selected) {
-              Serial.print("  [" + (String)access_points->get(x).stations->get(i) + "] ");
-              Serial.print(sta_mac);
-              Serial.println(" (selected)");
-              count_selected += 1;
-            } else {
-              Serial.print("  [" + (String)access_points->get(x).stations->get(i) + "] ");
-              Serial.println(sta_mac);
-            }
-          }
+        if (ap_sw != -1) {
+           SystemManager::getInstance().wifiModule.listAccessPoints();
+        } else if (ss_sw != -1) {
+            SystemManager::getInstance().wifiModule.listSSIDs();
+        } else if (cl_sw != -1) {
+            SystemManager::getInstance().wifiModule.listStations();
+        } else {
+            Serial.println(F("You did not specify which list to show"));
+            LOG_MESSAGE_TO_SD(F("You did not specify which list to show"));
+            return;
         }
-      }
-    } else {
-      Serial.println(F("You did not specify which list to show"));
-      LOG_MESSAGE_TO_SD(F("You did not specify which list to show"));
-      return;
     }
-
-    if (cmd_args.get(0) == F("stop"))
-    {
-      #ifdef OLD_LED
-      SystemManager::getInstance().rgbModule->setColor(1, 1, 1);
-      #endif
-      #ifdef NEOPIXEL_PIN
-      SystemManager::getInstance().neopixelModule->strip.setBrightness(0);
-      #endif
-      SystemManager::getInstance().wifiModule.shutdownWiFi();
-      #ifdef HAS_BT
-      SystemManager::getInstance().bleModule->shutdownBLE();
-      #endif
-    }
-  }
-}
-
-void CommandLine::executeJsonScript(const char* Json) {
-  StaticJsonDocument<512> doc;
-  DeserializationError error = deserializeJson(doc, Json);
-
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
-  }
-
-  JsonArray sequence = doc["sequence"];
-  for (JsonObject cmd : sequence) {
-    const char* type = cmd["type"];
-    auto buttons = cmd["buttons"];
-    int delayTime = cmd["delay"];
+  
+  
+  if (cmd_args.get(0) == F("stop"))
+  {
+    #ifdef OLD_LED
+    SystemManager::getInstance().rgbModule->setColor(1, 1, 1);
+    #endif
+    #ifdef NEOPIXEL_PIN
+    SystemManager::getInstance().neopixelModule->strip.setBrightness(0);
+    #endif
+    SystemManager::getInstance().wifiModule.shutdownWiFi();
+    #ifdef HAS_BT
+    SystemManager::getInstance().bleModule->shutdownBLE();
+    #endif
   }
 }

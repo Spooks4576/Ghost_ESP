@@ -7,7 +7,18 @@
 #ifdef SUPPORTS_MMC
 #include <SD_MMC.h>
 #endif
+=======
+#include "SerialFS.h"
 
+#define BUF_SIZE 10 * 1024
+
+
+enum class ECardType
+{
+    MMC,
+    SDI,
+    Serial
+};
 
 struct pcap_global_header {
     uint32_t magic_number;   // Magic number
@@ -39,17 +50,21 @@ public:
     bool startPcapLogging(const char *path,bool bluetooth = false);
     bool logPacket(const uint8_t *packet, uint32_t length);
     void flushLog();
+    void flushBufferToSerial();
     void stopPcapLogging();
     FS* SDI;
+    SerialFS* SFS;
 public:
+    uint8_t* buffer;
     int csPin;
     int BootNum;
     bool Initlized;
+    bool BufferFull;
     bool IsMMCCard;
     int PcapFileIndex;
     File logFile;
     unsigned long bufferLength = 0;
-    const unsigned long maxBufferLength = 512;
+    const unsigned long maxBufferLength = BUF_SIZE;
     pcap_global_header pcapHeader = {
         0xa1b2c3d4, // Magic number for pcap
         2, 4, // Version major and minor
@@ -57,15 +72,20 @@ public:
         65535, // snaplen
         1 // Network - assuming Ethernet
     };
-    FS* createFileSystem(bool isMMCCard) {
-        if (isMMCCard) {
-            #ifdef SUPPORTS_MMC
+    FS* createFileSystem(ECardType CardType) {
+        if (CardType == ECardType::MMC) {
+            #ifdef SOC_SDMMC_HOST_SUPPORTED
             return &SD_MMC;
             #else
             return nullptr;
             #endif
-        } else {
+        } else if (CardType == ECardType::SDI) {
             return &SD;
+        }
+        else if (CardType == ECardType::Serial)
+        {
+            SFS = new SerialFS();
+            return SFS;
         }
     }
 };

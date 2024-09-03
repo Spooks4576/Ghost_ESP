@@ -1,51 +1,55 @@
 #include "rgb_led_module.h"
 #include <Arduino.h>
+#include <core/system_manager.h>
 
 void RGBLedModule::init() {
     pinMode(redPin, OUTPUT);
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
     Rainbow(1, 4);
-    breatheLED(redPin, 400, true);
+    fadeOutAllPins(400);
 }
 
 void RGBLedModule::breatheLED(int ledPin, int breatheTime, bool FadeOut)
 {
     int fadeAmount = 5; // Amount of brightness change per step, adjust for different breathing speeds
-    int wait = breatheTime / (255 / fadeAmount * 2); // Calculate wait time to fit the breathe cycle into the given total time
+    int wait = breatheTime / ((255 / fadeAmount) * 2); // Calculate wait time to fit the breathe cycle into the given total time
 
     if (FadeOut)
     {
-        // Fade out
-         for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
-            analogWrite(redPin, brightness);
-            analogWrite(greenPin, brightness);
-            analogWrite(bluePin, brightness);
+        // Fade out (brightness increases for inverted logic)
+        for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
+            analogWrite(ledPin, brightness);
             delay(wait);
         }
-        return;
     }
+    else
+    {
+        // Fade in (brightness decreases for inverted logic)
+        for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
+            analogWrite(ledPin, brightness);
+            delay(wait);
+        }
 
-    // Fade in
-    for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
-        analogWrite(ledPin, brightness);
-        delay(wait);
+        // Fade out (brightness increases for inverted logic)
+        for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
+            analogWrite(ledPin, brightness);
+            delay(wait);
+        }
     }
+}
 
-    // Fade out
+
+void RGBLedModule::fadeOutAllPins(int fadeTime)
+{
+    int fadeAmount = 5; // Amount of brightness change per step, adjust for different fading speeds
+    int wait = fadeTime / (255 / fadeAmount); // Calculate wait time to fit the fade cycle into the given total time
+
+    // Fade out all pins (brightness increases for inverted logic)
     for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
-        analogWrite(ledPin, brightness);
-        delay(wait);
-    }
-    // Fade in
-    for (int brightness = 255; brightness >= 0; brightness -= fadeAmount) {
-        analogWrite(ledPin, brightness);
-        delay(wait);
-    }
-
-    // Fade out
-    for (int brightness = 0; brightness <= 255; brightness += fadeAmount) {
-        analogWrite(ledPin, brightness);
+        analogWrite(redPin, brightness);
+        analogWrite(greenPin, brightness);
+        analogWrite(bluePin, brightness);
         delay(wait);
     }
 }
@@ -57,7 +61,8 @@ void RGBLedModule::Song()
 
 void RGBLedModule::Rainbow(int strength, int stepDelay) 
 {
-
+if (SystemManager::getInstance().Settings.getRGBMode() == FSettings::RGBMode::Rainbow)
+{
     float brightnessFactor = constrain(brightnessFactor, 0.0, 1.0);
 
     // Ensure strength is between 0 and 255
@@ -105,6 +110,12 @@ void RGBLedModule::Rainbow(int strength, int stepDelay)
         analogWrite(bluePin, b);
         delay(stepDelay);
     }
+
+    if (SystemManager::getInstance().Settings.getRGBMode() != FSettings::RGBMode::Rainbow)
+    {
+        fadeOutAllPins(500);
+    }
+}
 }
 
 void RGBLedModule::setColor(int red, int green, int blue) {

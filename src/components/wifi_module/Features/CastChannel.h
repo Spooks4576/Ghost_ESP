@@ -1,6 +1,5 @@
 #pragma once
 
-#include <WiFiClientSecure.h>
 #include <ESP_SSLClient.h>
 #include <ArduinoJson.h>
 #include "CastSerializer.h"
