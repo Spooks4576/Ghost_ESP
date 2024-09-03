@@ -4,7 +4,10 @@
 
 #include <Arduino.h>
 #include <SD.h>
+#ifdef SUPPORTS_MMC
 #include <SD_MMC.h>
+#endif
+=======
 #include "SerialFS.h"
 
 #define BUF_SIZE 10 * 1024

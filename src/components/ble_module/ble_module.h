@@ -97,27 +97,27 @@ struct PayloadInfo {
 };
 
 #ifdef HAS_BT
-class FlipperFinderCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+class FlipperFinderCallbacks: public NimBLEScanCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
 
-class BleSpamDetectorCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+class BleSpamDetectorCallbacks: public NimBLEScanCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
     std::map<String, PayloadInfo> payloadInfoMap;
 };
 
-class BleSnifferCallbacks: public NimBLEAdvertisedDeviceCallbacks {
+class BleSnifferCallbacks: public NimBLEScanCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
 
-class BleAirTagCallbacks : public NimBLEAdvertisedDeviceCallbacks {
+class BleAirTagCallbacks : public NimBLEScanCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
     std::set<String> foundDevices;
     unsigned int airTagCount = 0;
     int scanTime = 1;
 };
 
-class WarDriveBTCallbacks : public NimBLEAdvertisedDeviceCallbacks {
+class WarDriveBTCallbacks : public NimBLEScanCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
 
@@ -167,11 +167,6 @@ public:
     }
     void init()
     {  // Defining here due to linker errors
-        NimBLEDevice::setScanFilterMode(CONFIG_BTDM_SCAN_DUPL_TYPE_DEVICE);
-        NimBLEDevice::setScanDuplicateCacheSize(200);
-        NimBLEDevice::init("");
-        pBLEScan = NimBLEDevice::getScan(); //create new scan
-        this->shutdownBLE();
     }
 
 
