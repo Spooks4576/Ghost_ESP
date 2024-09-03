@@ -300,7 +300,7 @@ public:
     void getMACatoffset(char *addr, uint8_t* data, uint16_t offset);
     void getMACatoffset(uint8_t *addr, uint8_t* data, uint16_t offset);
     void broadcastSetSSID(const char* ESSID, uint8_t channel);
-    void sendDeauthFrame(uint8_t bssid[6], int channel, uint8_t mac[6]) ;
+    void sendDeauthFrame(uint8_t* bssid, int channel, uint8_t* mac);
     void listStations();
     void listSSIDs();
     void listAccessPoints();

@@ -820,7 +820,8 @@ SystemManager::getInstance().neopixelModule->setColor(SystemManager::getInstance
             return;
         }
     }
-
+  
+  
   if (cmd_args.get(0) == F("stop"))
   {
     #ifdef OLD_LED

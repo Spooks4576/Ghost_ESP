@@ -2,6 +2,10 @@
 #include <Arduino.h>
 #include "core/system_manager.h"
 #include "components/gps_module/gps_module.h"
+#ifndef CANT_HAVE_BT
+#include <NimBLEAdvertising.h>
+#include <NimBLEScan.h>
+#endif
 
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -55,7 +59,7 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         memcpy(&AdvData_Raw[i], Name, name_len);
         i += name_len;
 
-        AdvData.addData(std::string((char *)AdvData_Raw, 7 + name_len));
+        AdvData.addData((char *)AdvData_Raw, 7 + name_len);
         break;
       }
       case Apple: {
@@ -77,7 +81,7 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         AdvData_Raw[i++] =  0x10;  // Type ???
         esp_fill_random(&AdvData_Raw[i], 3);
 
-        AdvData.addData(std::string((char *)AdvData_Raw, 17));
+        AdvData.addData((char *)AdvData_Raw, 17);
         break;
       }
       case Samsung: {
@@ -105,7 +109,7 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
           AdvData_Raw[i++] = 0x43;
           AdvData_Raw[i++] = (model >> 0x00) & 0xFF; // Watch Model / Color (?)
 
-          AdvData.addData(std::string((char *)AdvData_Raw, 15));
+          AdvData.addData((char *)AdvData_Raw, 15);
         }
         else 
         {
@@ -121,8 +125,8 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
 
           fill_samsungbud_byte(advertisementPacket);
 
-          AdvData.addData(std::string((char *)advertisementPacket, 31));
-          scannerData.addData(std::string((char *)scanResponsePacket, 17));
+          AdvData.addData((char *)advertisementPacket, 31);
+          scannerData.addData((char *)scanResponsePacket, 17);
         }
 
         
@@ -148,7 +152,7 @@ BLEData BLEModule::GetUniversalAdvertisementData(EBLEPayloadType Type) {
         AdvData_Raw[i++] = 0x0A;
         AdvData_Raw[i++] = (rand() % 120) - 100; // -100 to +20 dBm
 
-        AdvData.addData(std::string((char *)AdvData_Raw, 14));
+        AdvData.addData((char *)AdvData_Raw, 14);
         break;
       }
       default: {
@@ -241,10 +245,9 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
 void BLEModule::BleSpamDetector()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSpamDetectorCallbacks());
-  NimBLEDevice::getScan()->start(0, nullptr, false);
+  NimBLEDevice::getScan()->setScanCallbacks(new BleSpamDetectorCallbacks());
+  NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
   {
@@ -265,20 +268,18 @@ void BLEModule::BleSpamDetector()
 void BLEModule::InitWarDriveCallback()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new WarDriveBTCallbacks());
-  NimBLEDevice::getScan()->start(0, nullptr, false);
+  NimBLEDevice::getScan()->setScanCallbacks(new WarDriveBTCallbacks());
+  NimBLEDevice::getScan()->start(0, false);
 #endif
 }
 
 void BLEModule::BleSniff()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSnifferCallbacks());
-  NimBLEDevice::getScan()->start(0, nullptr, false);
+  NimBLEDevice::getScan()->setScanCallbacks(new BleSnifferCallbacks());
+  NimBLEDevice::getScan()->start(0, false);
 
   #ifdef SD_CARD_CS_PIN
   SystemManager::getInstance().sdCardModule.startPcapLogging("BT.pcap", true);
@@ -306,10 +307,9 @@ SystemManager::getInstance().sdCardModule.stopPcapLogging();
 void BLEModule::AirTagScanner()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleAirTagCallbacks());
-  NimBLEDevice::getScan()->start(0, nullptr, false);
+  NimBLEDevice::getScan()->setScanCallbacks(new BleAirTagCallbacks());
+  NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
   {
@@ -319,7 +319,7 @@ void BLEModule::AirTagScanner()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::getScan()->stop();
+        shutdownBLE();
         break;
       }
     }
@@ -330,10 +330,9 @@ void BLEModule::AirTagScanner()
 void BLEModule::findtheflippers()
 {
 #ifdef HAS_BT
-  shutdownBLE();
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new FlipperFinderCallbacks());
-  NimBLEDevice::getScan()->start(0, nullptr, false);
+  NimBLEDevice::getScan()->setScanCallbacks(new FlipperFinderCallbacks());
+  NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
   {
@@ -343,7 +342,7 @@ void BLEModule::findtheflippers()
 
       if (message.startsWith("stop"))
       {
-        NimBLEDevice::getScan()->stop();
+        shutdownBLE();
         break;
       }
     }

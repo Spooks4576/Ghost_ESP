@@ -266,7 +266,6 @@ void WiFiModule::Scan(ScanType type)
           shutdownWiFi();
           break;
         }
-
         if (SystemManager::getInstance().Settings.ChannelHoppingEnabled())
         {
           unsigned long currentTime = millis();
@@ -314,7 +313,15 @@ void WiFiModule::Scan(ScanType type)
         {
           shutdownWiFi();
           break;
-        } 
+        }
+        unsigned long currentTime = millis();
+        if (currentTime - lastChangeTime >= 2000)
+        {
+          lastchannel++ % 13;
+          uint8_t set_channel = lastchannel;
+          esp_wifi_set_channel(set_channel, WIFI_SECOND_CHAN_NONE);
+          lastChangeTime = currentTime;
+        }
       }
 
       break;
@@ -739,14 +746,16 @@ SystemManager::getInstance().SetLEDState(ENeoColor::Red, false);
         while(wifi_initialized){
         if (Serial.available() > 0)
         {
-          String message = Serial.readString();
-
-          if (message.startsWith("stop"))
+          if (Serial.available() > 0)
           {
-            shutdownWiFi();
-            break;
+            String message = Serial.readString();
+
+            if (message.startsWith("stop"))
+            {
+              shutdownWiFi();
+              break;
+            }
           }
-        }
         for(int i = 0; i < access_points->size(); i++){
         AccessPoint ap = access_points->get(i);
         if (ap.essid == SelectedAP.essid)
@@ -863,6 +872,7 @@ SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
   }
 }
 }
+}
 
 void WiFiModule::broadcastSetSSID(const char* ESSID, uint8_t channel) 
 {
@@ -950,8 +960,6 @@ void WiFiModule::RunSetup()
   esp_wifi_set_mode(WIFI_MODE_AP);
   esp_wifi_set_config(WIFI_IF_AP, &ap_config);
   esp_wifi_start();
-
-  esp_wifi_set_promiscuous(true);
 
   ssids = new LinkedList<ssid>;
   wifi_initialized = true;
