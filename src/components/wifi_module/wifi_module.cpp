@@ -872,6 +872,7 @@ SystemManager::getInstance().SetLEDState(ENeoColor::Red, true);
   }
 }
 }
+}
 
 void WiFiModule::broadcastSetSSID(const char* ESSID, uint8_t channel) 
 {

@@ -7,8 +7,6 @@
 #ifdef SUPPORTS_MMC
 #include <SD_MMC.h>
 #endif
-=======
-#include "SerialFS.h"
 
 #define BUF_SIZE 10 * 1024
 
@@ -53,7 +51,6 @@ public:
     void flushBufferToSerial();
     void stopPcapLogging();
     FS* SDI;
-    SerialFS* SFS;
 public:
     uint8_t* buffer;
     int csPin;
@@ -84,8 +81,7 @@ public:
         }
         else if (CardType == ECardType::Serial)
         {
-            SFS = new SerialFS();
-            return SFS;
+           return nullptr; // This is handled automatically maybe oneday we can implement a virtual class
         }
     }
 };

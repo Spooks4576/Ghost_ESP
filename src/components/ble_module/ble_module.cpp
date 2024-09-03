@@ -2,8 +2,10 @@
 #include <Arduino.h>
 #include "core/system_manager.h"
 #include "components/gps_module/gps_module.h"
+#ifndef CANT_HAVE_BT
 #include <NimBLEAdvertising.h>
 #include <NimBLEScan.h>
+#endif
 
 const char* BLEModule::generateRandomName() {
   const char* charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
