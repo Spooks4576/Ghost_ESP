@@ -6,6 +6,7 @@
 const char* FSettings::NVS_RGB_MODE_KEY = "rgb_mode";
 const char* FSettings::NVS_CHANNEL_SWITCH_DELAY_KEY = "channel_delay";
 const char* FSettings::NVS_ENABLE_CHANNEL_HOP_KEY = "enable_channel_hop";
+const char* FSettings::NVS_RANDOM_BLE_MAC = "random_ble_mac";
 
 FSettings::FSettings() : rgbMode(RGBMode::Stealth), channelSwitchDelay(0.0f) {
     esp_err_t err = nvs_flash_init();
@@ -56,6 +57,17 @@ void FSettings::setChannelHoppingEnabled(bool Enabled)
     saveSettings();
 }
 
+void FSettings::SetRandomBLEMacEnabled(bool NewValue)
+{
+    RandomBLEMacEnabled = NewValue;
+    saveSettings();
+}
+
+bool FSettings::getRandomBLEMacEnabled() const 
+{
+    return RandomBLEMacEnabled;
+}
+
 float FSettings::getChannelSwitchDelay() const {
     return channelSwitchDelay * 1000;
 }
@@ -81,6 +93,11 @@ void FSettings::loadSettings() {
     if (err != ESP_OK) {
         EnableChannelHopping = true;
     }
+
+    err = nvs_get_i8(nvsHandle, NVS_RANDOM_BLE_MAC, (int8_t*)&RandomBLEMacEnabled);
+    if (err != ESP_OK) {
+        RandomBLEMacEnabled = true;
+    }
 }
 
 void FSettings::saveSettings() {
@@ -89,6 +106,8 @@ void FSettings::saveSettings() {
     nvs_set_blob(nvsHandle, NVS_CHANNEL_SWITCH_DELAY_KEY, &channelSwitchDelay, sizeof(float));
 
     nvs_set_i8(nvsHandle, NVS_ENABLE_CHANNEL_HOP_KEY, static_cast<int8_t>(EnableChannelHopping));
+
+    nvs_set_i8(nvsHandle, NVS_RANDOM_BLE_MAC,static_cast<int8_t>(RandomBLEMacEnabled));
 
     nvs_commit(nvsHandle);
 }

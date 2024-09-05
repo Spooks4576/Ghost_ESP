@@ -384,6 +384,24 @@ void CommandLine::runCommand(String input)
             }
           }
         }
+
+        if (ActualSettingsIndex == 4)
+        {
+          switch (ActualSettingsValue)
+          {
+            case 1:
+            {
+              SystemManager::getInstance().Settings.SetRandomBLEMacEnabled(false);
+              break;
+            }
+            case 2:
+            {
+              SystemManager::getInstance().Settings.SetRandomBLEMacEnabled(true);
+              break;
+            }
+          }
+        }
+
       }
       return;
     }
