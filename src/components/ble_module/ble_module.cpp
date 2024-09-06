@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "core/system_manager.h"
 #include "components/gps_module/gps_module.h"
-#ifndef CANT_HAVE_BT
+#ifdef HAS_BT
 #include <NimBLEAdvertising.h>
 #include <NimBLEScan.h>
 #endif
@@ -236,9 +236,9 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
 
       esp_base_mac_addr_set(macAddr);
       delay(100);
-#endif
       }
     }
+#endif
 }
 
 void BLEModule::BleSpamDetector()
