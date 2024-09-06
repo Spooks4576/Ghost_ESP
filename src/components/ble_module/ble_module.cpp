@@ -227,26 +227,25 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       delay(100);
       pAdvertising->stop();
 
-      NimBLEDevice::deinit();
+      if (SystemManager::getInstance().Settings.getRandomBLEMacEnabled())
+      {
+        NimBLEDevice::deinit();
 
       uint8_t macAddr[6];
       generateRandomMac(macAddr);
 
       esp_base_mac_addr_set(macAddr);
-#ifdef WROOM
-      delay(1000); // Increase the delay due to weak CPU
-#else
       delay(100);
 #endif
+      }
     }
-#endif
 }
 
 void BLEModule::BleSpamDetector()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new BleSpamDetectorCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSpamDetectorCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
@@ -269,7 +268,7 @@ void BLEModule::InitWarDriveCallback()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new WarDriveBTCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new WarDriveBTCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 #endif
 }
@@ -278,7 +277,7 @@ void BLEModule::BleSniff()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new BleSnifferCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSnifferCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 
   #ifdef SD_CARD_CS_PIN
@@ -308,7 +307,7 @@ void BLEModule::AirTagScanner()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new BleAirTagCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleAirTagCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
@@ -331,7 +330,7 @@ void BLEModule::findtheflippers()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new FlipperFinderCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new FlipperFinderCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
