@@ -201,12 +201,7 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
     {
       if (Serial.available() > 0)
       {
-        String message = Serial.readString();
-
-        if (message.startsWith("stop"))
-        {
-          break;
-        }
+        break;
       }
       NimBLEDevice::init("");
 
@@ -252,13 +247,8 @@ void BLEModule::BleSpamDetector()
   {
     if (Serial.available() > 0)
     {
-      String message = Serial.readString();
-
-      if (message.startsWith("stop"))
-      {
-        NimBLEDevice::getScan()->stop();
-        break;
-      }
+      NimBLEDevice::getScan()->stop();
+      break;
     }
   }
 #endif
@@ -288,16 +278,11 @@ void BLEModule::BleSniff()
   {
     if (Serial.available() > 0)
     {
-      String message = Serial.readString();
-
-      if (message.startsWith("stop"))
-      {
-        NimBLEDevice::getScan()->stop();
+      NimBLEDevice::getScan()->stop();
 #ifdef SD_CARD_CS_PIN
 SystemManager::getInstance().sdCardModule.stopPcapLogging();
 #endif
-        break;
-      }
+      break;
     }
   }
 #endif
@@ -314,13 +299,8 @@ void BLEModule::AirTagScanner()
   {
     if (Serial.available() > 0)
     {
-      String message = Serial.readString();
-
-      if (message.startsWith("stop"))
-      {
-        shutdownBLE();
-        break;
-      }
+      shutdownBLE();
+      break;
     }
   }
 #endif
@@ -337,13 +317,8 @@ void BLEModule::findtheflippers()
   {
     if (Serial.available() > 0)
     {
-      String message = Serial.readString();
-
-      if (message.startsWith("stop"))
-      {
-        shutdownBLE();
-        break;
-      }
+      shutdownBLE();
+      break;
     }
   }
 #endif
