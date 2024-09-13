@@ -97,27 +97,27 @@ struct PayloadInfo {
 };
 
 #ifdef HAS_BT
-class FlipperFinderCallbacks: public NimBLEScanCallbacks {
+class FlipperFinderCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
 
-class BleSpamDetectorCallbacks: public NimBLEScanCallbacks {
+class BleSpamDetectorCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
     std::map<String, PayloadInfo> payloadInfoMap;
 };
 
-class BleSnifferCallbacks: public NimBLEScanCallbacks {
+class BleSnifferCallbacks: public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
 
-class BleAirTagCallbacks : public NimBLEScanCallbacks {
+class BleAirTagCallbacks : public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
     std::set<String> foundDevices;
     unsigned int airTagCount = 0;
     int scanTime = 1;
 };
 
-class WarDriveBTCallbacks : public NimBLEScanCallbacks {
+class WarDriveBTCallbacks : public NimBLEAdvertisedDeviceCallbacks {
     void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 };
 

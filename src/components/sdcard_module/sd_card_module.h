@@ -4,7 +4,7 @@
 
 #include <Arduino.h>
 #include <SD.h>
-#ifdef SUPPORTS_MMC
+#ifdef SOC_SDMMC_HOST_SUPPORTED
 #include <SD_MMC.h>
 #endif
 

@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include "core/system_manager.h"
 #include "components/gps_module/gps_module.h"
-#ifndef CANT_HAVE_BT
+#ifdef HAS_BT
 #include <NimBLEAdvertising.h>
 #include <NimBLEScan.h>
 #endif
@@ -201,12 +201,7 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
     {
       if (Serial.available() > 0)
       {
-        String message = Serial.readString();
-
-        if (message.startsWith("stop"))
-        {
-          break;
-        }
+        break;
       }
       NimBLEDevice::init("");
 
@@ -227,17 +222,16 @@ void BLEModule::executeSpam(EBLEPayloadType type, bool Loop) {
       delay(100);
       pAdvertising->stop();
 
-      NimBLEDevice::deinit();
+      if (SystemManager::getInstance().Settings.getRandomBLEMacEnabled())
+      {
+        NimBLEDevice::deinit();
 
       uint8_t macAddr[6];
       generateRandomMac(macAddr);
 
       esp_base_mac_addr_set(macAddr);
-#ifdef WROOM
-      delay(1000); // Increase the delay due to weak CPU
-#else
       delay(100);
-#endif
+      }
     }
 #endif
 }
@@ -246,20 +240,15 @@ void BLEModule::BleSpamDetector()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new BleSpamDetectorCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSpamDetectorCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
   {
     if (Serial.available() > 0)
     {
-      String message = Serial.readString();
-
-      if (message.startsWith("stop"))
-      {
-        NimBLEDevice::getScan()->stop();
-        break;
-      }
+      NimBLEDevice::getScan()->stop();
+      break;
     }
   }
 #endif
@@ -269,7 +258,7 @@ void BLEModule::InitWarDriveCallback()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new WarDriveBTCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new WarDriveBTCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 #endif
 }
@@ -278,7 +267,7 @@ void BLEModule::BleSniff()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new BleSnifferCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleSnifferCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 
   #ifdef SD_CARD_CS_PIN
@@ -289,16 +278,11 @@ void BLEModule::BleSniff()
   {
     if (Serial.available() > 0)
     {
-      String message = Serial.readString();
-
-      if (message.startsWith("stop"))
-      {
-        NimBLEDevice::getScan()->stop();
+      NimBLEDevice::getScan()->stop();
 #ifdef SD_CARD_CS_PIN
 SystemManager::getInstance().sdCardModule.stopPcapLogging();
 #endif
-        break;
-      }
+      break;
     }
   }
 #endif
@@ -308,20 +292,15 @@ void BLEModule::AirTagScanner()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new BleAirTagCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new BleAirTagCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
   {
     if (Serial.available() > 0)
     {
-      String message = Serial.readString();
-
-      if (message.startsWith("stop"))
-      {
-        shutdownBLE();
-        break;
-      }
+      shutdownBLE();
+      break;
     }
   }
 #endif
@@ -331,20 +310,15 @@ void BLEModule::findtheflippers()
 {
 #ifdef HAS_BT
   NimBLEDevice::init("");
-  NimBLEDevice::getScan()->setScanCallbacks(new FlipperFinderCallbacks());
+  NimBLEDevice::getScan()->setAdvertisedDeviceCallbacks(new FlipperFinderCallbacks());
   NimBLEDevice::getScan()->start(0, false);
 
   while (BLEInitilized)
   {
     if (Serial.available() > 0)
     {
-      String message = Serial.readString();
-
-      if (message.startsWith("stop"))
-      {
-        shutdownBLE();
-        break;
-      }
+      shutdownBLE();
+      break;
     }
   }
 #endif
