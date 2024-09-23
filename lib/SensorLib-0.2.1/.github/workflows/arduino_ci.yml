@@ -1,0 +1,96 @@
+name: Build Arduino
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    paths:
+      - "src/**"
+      - "examples/**"
+      - ".github/workflows/arduino_ci.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        board: ["esp32:esp32:esp32s3"]
+        examples:
+          - examples/BAM423_Accelerometer/BAM423_Accelerometer.ino
+          - examples/BAM423_Orientation/BAM423_Orientation.ino
+          - examples/BAM423_Temperature/BAM423_Temperature.ino
+          - examples/BMA423_Feature/BMA423_Feature.ino
+          - examples/CM32181_LightSensor/CM32181_LightSensor.ino
+          - examples/CM32181_LightSensorInterrupt/CM32181_LightSensorInterrupt.ino
+          - examples/DRV2605_Basic/DRV2605_Basic.ino
+          - examples/LTR553ALS_Sensor/LTR553ALS_Sensor.ino
+          - examples/PCF85063_SimpleTime/PCF85063_SimpleTime.ino
+          - examples/PCF8563_AlarmByUnits/PCF8563_AlarmByUnits.ino
+          - examples/PCF8563_SimpleTime/PCF8563_SimpleTime.ino
+          - examples/PCF8563_TimeLib/PCF8563_TimeLib.ino
+          - examples/PCF8563_TimeSynchronization/PCF8563_TimeSynchronization.ino
+          - examples/QMC6310_CalibrateExample/QMC6310_CalibrateExample.ino
+          - examples/QMC6310_CompassExample/QMC6310_CompassExample.ino
+          - examples/QMC6310_GetDataExample/QMC6310_GetDataExample.ino
+          - examples/QMC6310_GetPolarExample/QMC6310_GetPolarExample.ino
+          - examples/QMI8658_BlockExample/QMI8658_BlockExample.ino
+          - examples/QMI8658_GetDataExample/QMI8658_GetDataExample.ino
+          - examples/QMI8658_InterruptBlockExample/QMI8658_InterruptBlockExample.ino
+          - examples/QMI8658_InterruptExample/QMI8658_InterruptExample.ino
+          - examples/QMI8658_LockingMechanismExample/QMI8658_LockingMechanismExample.ino
+          - examples/QMI8658_MadgwickAHRS/QMI8658_MadgwickAHRS.ino
+          - examples/QMI8658_PedometerExample/QMI8658_PedometerExample.ino
+          - examples/QMI8658_ReadFromFifoExample/QMI8658_ReadFromFifoExample.ino
+          - examples/QMI8658_WakeOnMotion/QMI8658_WakeOnMotion.ino
+          - examples/QMI8658_WakeOnMotionCallBackExample/QMI8658_WakeOnMotionCallBackExample.ino
+          - examples/TouchDrv_CHSC5816_GetPoint/TouchDrv_CHSC5816_GetPoint.ino
+          - examples/TouchDrv_CSTxxx_GetPoint/TouchDrv_CSTxxx_GetPoint.ino
+          - examples/TouchDrv_FT3267_LilyGo_T_RGB/TouchDrv_FT3267_LilyGo_T_RGB.ino
+          - examples/TouchDrv_FT6232_GetPoint/TouchDrv_FT6232_GetPoint.ino
+          - examples/TouchDrv_GT911_GetPoint/TouchDrv_GT911_GetPoint.ino
+          - examples/TouchDrv_GT911_LilyGo_T_RGB/TouchDrv_GT911_LilyGo_T_RGB.ino
+          - examples/XL9555_ExtensionIOInterrupt/XL9555_ExtensionIOInterrupt.ino
+          - examples/XL9555_ExtensionIORead/XL9555_ExtensionIORead.ino
+          - examples/XL9555_ExtensionIOWirte/XL9555_ExtensionIOWirte.ino
+          - examples/BHI260AP_6DoF/BHI260AP_6DoF.ino
+          - examples/BHI260AP_Orientation/BHI260AP_Orientation.ino
+          - examples/BHI260AP_DebugInfo/BHI260AP_DebugInfo.ino
+          - examples/BHI260AP_StepCounter/BHI260AP_StepCounter.ino
+          - examples/BHI260AP_aux_BMM150/BHI260AP_aux_BMM150.ino
+          - examples/BHI260AP_aux_BMM150_euler/BHI260AP_aux_BMM150_euler.ino
+          - examples/BHI260AP_aux_BMM150_quaternion/BHI260AP_aux_BMM150_quaternion.ino
+          - examples/BHI260AP_aux_BMM150_BME280/BHI260AP_aux_BMM150_BME280.ino
+          - examples/BMM150_GetDataExample/BMM150_GetDataExample.ino
+          - examples/TouchDrv_Interface_T_RGB/TouchDrv_Interface_T_RGB.ino
+          - examples/TouchDrv_CST9217_GetPoint/TouchDrv_CST9217_GetPoint.ino
+
+    env:
+      BOARD: ${{ matrix.board }}
+      EXAMPLES: ${{matrix.examples}}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Arduino Ci
+        run: |
+          if [[ "$BOARD" =~ "esp32:esp32:" ]]; then
+            wget https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_Linux_64bit.tar.gz -O arduino-cli.tar.gz ;
+            sudo tar xf arduino-cli.tar.gz -C /usr/local/bin arduino-cli ;
+            arduino-cli config init ;
+            arduino-cli config add board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_dev_index.json ;
+            arduino-cli core update-index ;
+            arduino-cli core install esp32:esp32 ;
+            fi
+
+      - name: Build examples
+        run: |
+          mkdir -p $HOME/Arduino/libraries ;
+          cd $HOME/Arduino/libraries ;
+          git clone https://github.com/ThingPulse/esp8266-oled-ssd1306 ;
+          git clone https://github.com/arduino-libraries/MadgwickAHRS ;
+
+          cd $GITHUB_WORKSPACE ;
+          if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
+            arduino-cli compile -besp32:esp32:esp32s3 --library . $PWD/$EXAMPLES ;
+          fi ;

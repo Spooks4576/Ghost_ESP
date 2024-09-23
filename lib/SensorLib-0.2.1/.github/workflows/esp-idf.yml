@@ -1,0 +1,29 @@
+name: Build esp-idf
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    paths:
+      - "src/**"
+      - "examples/ESP_IDF_TouchDrv_Example/**"
+      - ".github/workflows/esp-idf.yml"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        idf_ver: ["latest"]
+    runs-on: ubuntu-latest
+
+    container: espressif/idf:${{ matrix.idf_ver }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+      - name: Build esp-idf examples
+        shell: bash
+        run: |
+          . ${IDF_PATH}/export.sh
+          cd examples/ESP_IDF_TouchDrv_Example
+          idf.py build

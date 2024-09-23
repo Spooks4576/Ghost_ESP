@@ -1,0 +1,24 @@
+{
+    "files.associations": {
+        "system_manager.h": "c",
+        "serial_manager.h": "c",
+        "freertos.h": "c",
+        "event_groups.h": "c",
+        "string.h": "c",
+        "command.h": "c",
+        "stdio.h": "c",
+        "stdlib.h": "c",
+        "task.h": "c",
+        "usb_serial_jtag.h": "c",
+        "esp_err.h": "c",
+        "esp_wifi_types.h": "c",
+        "nvs_flash.h": "c",
+        "spi_master.h": "c",
+        "display_driver.h": "c",
+        "esp_lcd_panel_ops.h": "c",
+        "esp_log.h": "c",
+        "esp_lcd_panel_vendor.h": "c",
+        "display_manager.h": "c",
+        "wifi_manager.h": "c"
+    }
+}

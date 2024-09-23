@@ -1,0 +1,93 @@
+name: Build PlatformIO
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    paths:
+      - "src/**"
+      - "examples/**"
+      - ".github/workflows/platformio.yml"
+      - "platformio.ini"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example:
+          - examples/BAM423_Accelerometer
+          - examples/BAM423_Orientation
+          - examples/BAM423_Temperature
+          - examples/BHI260AP_6DoF
+          - examples/BHI260AP_aux_BMM150
+          - examples/BHI260AP_aux_BMM150_euler
+          - examples/BHI260AP_aux_BMM150_quaternion
+          - examples/BHI260AP_aux_BMM150_BME280
+          - examples/BHI260AP_DebugInfo
+          - examples/BHI260AP_Orientation
+          - examples/BHI260AP_StepCounter
+          - examples/BMA423_Feature
+          - examples/BMM150_GetDataExample
+          - examples/CM32181_LightSensor
+          - examples/CM32181_LightSensorInterrupt
+          - examples/DRV2605_Basic
+          - examples/LTR553ALS_Sensor
+          - examples/PCF85063_AlarmByUnits
+          - examples/PCF85063_SimpleTime
+          - examples/PCF8563_AlarmByUnits
+          - examples/PCF8563_SimpleTime
+          - examples/PCF8563_TimeLib
+          - examples/PCF8563_TimeSynchronization
+          - examples/QMC6310_CalibrateExample
+          - examples/QMC6310_CompassExample
+          - examples/QMC6310_GetDataExample
+          - examples/QMC6310_GetPolarExample
+          - examples/QMI8658_BlockExample
+          - examples/QMI8658_GetDataExample
+          - examples/QMI8658_InterruptBlockExample
+          - examples/QMI8658_InterruptExample
+          - examples/QMI8658_LockingMechanismExample
+          - examples/QMI8658_MadgwickAHRS
+          - examples/QMI8658_PedometerExample
+          - examples/QMI8658_ReadFromFifoExample
+          - examples/QMI8658_WakeOnMotion
+          - examples/QMI8658_WakeOnMotionCallBackExample
+          - examples/TouchDrv_CHSC5816_GetPoint
+          - examples/TouchDrv_CST9217_GetPoint
+          - examples/TouchDrv_CSTxxx_GetPoint
+          - examples/TouchDrv_FT3267_LilyGo_T_RGB
+          - examples/TouchDrv_FT6232_GetPoint
+          - examples/TouchDrv_GT911_GetPoint
+          - examples/TouchDrv_GT911_LilyGo_T_RGB
+          - examples/TouchDrv_Interface_T_RGB
+          - examples/XL9555_ExtensionIOInterrupt
+          - examples/XL9555_ExtensionIORead
+          - examples/XL9555_ExtensionIOWirte
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Install MadgwickAHRS library
+        # https://github.com/arduino-libraries/MadgwickAHRS
+        run: pio pkg install --library "arduino-libraries/Madgwick@^1.2.0" -g
+
+      - name: Install esp8266-oled-ssd1306 library
+        # https://github.com/ThingPulse/esp8266-oled-ssd1306
+        run: pio pkg install --library "thingpulse/ESP8266 and ESP32 OLED driver for SSD1306 displays @ ^4.4.0" -g
+
+      - name: Run PlatformIO
+        run: pio ci --lib="." --board=esp32dev --board=esp32-c3-devkitm-1 --board=esp32-s3-devkitm-1 --board=nrf52840_dk_adafruit 
+        env:
+          PLATFORMIO_CI_SRC: ${{ matrix.example }}

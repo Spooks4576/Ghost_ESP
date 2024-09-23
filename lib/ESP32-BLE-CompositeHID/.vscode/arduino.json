@@ -1,7 +1,0 @@
-{
-    "sketch": "examples\\GamepadAndMouse\\GamepadAndMouse.ino",
-    "configuration": "PartitionScheme=default,FlashFreq=80,UploadSpeed=921600,DebugLevel=debug,EraseFlash=none",
-    "board": "esp32:esp32:d32",
-    "output": "../build",
-    "port": "COM6"
-}
