@@ -19,6 +19,7 @@
         "esp_log.h": "c",
         "esp_lcd_panel_vendor.h": "c",
         "display_manager.h": "c",
-        "wifi_manager.h": "c"
+        "wifi_manager.h": "c",
+        "gpio.h": "c"
     }
 }
