@@ -15,7 +15,6 @@ void system_manager_init() {
 
 // Create a new task
 bool system_manager_create_task(void (*task_function)(void *), const char *task_name, uint32_t stack_size, UBaseType_t priority, void (*on_task_complete)(const char *)) {
-    // Check if a task with the same name already exists
     ManagedTask *current = task_list_head;
     while (current != NULL) {
         if (strcmp(current->task_name, task_name) == 0) {
