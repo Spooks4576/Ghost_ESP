@@ -310,8 +310,6 @@ void wifi_manager_start_scan() {
 
     uint32_t random_duration = 5 + (esp_random() % 6);
 
-    ESP_LOGI(TAG, "Waiting for %lu seconds before stopping scan...", random_duration);
-
 
     vTaskDelay(random_duration * 1000 / portTICK_PERIOD_MS);
 

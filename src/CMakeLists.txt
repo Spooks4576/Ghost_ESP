@@ -1,3 +1,9 @@
-# Ensure only C source files are included
-FILE(GLOB_RECURSE app_sources ${CMAKE_SOURCE_DIR}/src/*.c)
-idf_component_register(SRCS ${app_sources} INCLUDE_DIRS ".")
+# This file was automatically generated for projects
+# without default 'CMakeLists.txt' file.
+
+FILE(GLOB_RECURSE app_sources ${CMAKE_SOURCE_DIR}/src/*.*)
+
+idf_component_register(SRCS ${app_sources})
+
+# Include custom components from the components directory
+set(EXTRA_COMPONENT_DIRS ${CMAKE_SOURCE_DIR}/components)

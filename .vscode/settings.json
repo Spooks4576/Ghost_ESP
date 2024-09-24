@@ -25,6 +25,10 @@
         "esp_lcd_panel_io.h": "c",
         "stdint.h": "c",
         "lvgl_conf.h": "c",
-        "lvgl.h": "c"
+        "lvgl.h": "c",
+        "tft.h": "c",
+        "tftspi.h": "c",
+        "spi_master_lobo.h": "c",
+        "sdkconfig.h": "c"
     }
 }
