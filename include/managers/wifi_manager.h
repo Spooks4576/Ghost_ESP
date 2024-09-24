@@ -100,6 +100,8 @@ void wifi_manager_list_stations();
 
 void wifi_manager_start_deauth();
 
+void wifi_manager_select_ap(int index);
+
 void wifi_manager_stop_deauth();
 
 esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t mac[6]);

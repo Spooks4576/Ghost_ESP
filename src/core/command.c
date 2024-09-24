@@ -155,6 +155,29 @@ void handle_stop_deauth(int argc, char **argv)
 }
 
 
+void handle_select_cmd(int argc, char **argv)
+{
+    if (argc != 3) {
+        printf("Invalid number of arguments. Usage: select -a <number>\n");
+        return;
+    }
+
+    if (strcmp(argv[1], "-a") == 0) {
+        char *endptr;
+        
+        int num = (int)strtol(argv[2], &endptr, 10);
+
+
+        if (*endptr == '\0') {
+            wifi_manager_select_ap(num);
+        } else {
+            printf("Error: '%s' is not a valid number.\n", argv[2]);
+        }
+    } else {
+        printf("Invalid option. Usage: select -a <number>\n");
+    }
+}
+
 void register_wifi_commands() {
     register_command("scanap", cmd_wifi_scan_start);
     register_command("scansta", handle_sta_scan);
@@ -164,4 +187,5 @@ void register_wifi_commands() {
     register_command("beaconspam", handle_beaconspam);
     register_command("stopspam", handle_stop_spam);
     register_command("stopdeauth", handle_stop_deauth);
+    register_command("select", handle_select_cmd);
 }
