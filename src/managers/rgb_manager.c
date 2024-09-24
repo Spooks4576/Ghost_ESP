@@ -69,7 +69,7 @@ void police_task(void *pvParameter)
     RGBManager_t* rgb_manager = (RGBManager_t*) pvParameter;
     while (1) {
         
-        rgb_manager_policesiren_effect(rgb_manager, 7);
+        rgb_manager_policesiren_effect(rgb_manager, 6);
         
         vTaskDelay(pdMS_TO_TICKS(20));
     }

