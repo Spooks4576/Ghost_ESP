@@ -16,5 +16,4 @@ typedef struct {
     esp_err_t (*swap_xy)(bool swap_axes);
     esp_err_t (*disp_on_off)(bool on_off);
 } display_driver_t;
-
 #endif // DISPLAY_DRIVER_H

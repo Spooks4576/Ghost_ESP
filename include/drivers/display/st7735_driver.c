@@ -1,4 +1,4 @@
-#include <core/drivers/display/display_driver.h>
+#include "display_driver.h"
 #include "esp_lcd_panel_vendor.h"
 #include "driver/spi_master.h"
 #include "esp_lcd_panel_io.h"
@@ -7,6 +7,9 @@
 #include <driver/gpio.h>
 
 static const char *DR_TAG = "ST7735_DRIVER";
+
+extern esp_lcd_panel_handle_t panel_handle;
+extern esp_lcd_panel_io_handle_t io_handle;
 
 static esp_err_t st7735_init(void) {
     ESP_LOGI(DR_TAG, "Initializing SPI bus for ST7735");

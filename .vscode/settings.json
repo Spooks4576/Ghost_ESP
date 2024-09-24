@@ -20,6 +20,11 @@
         "esp_lcd_panel_vendor.h": "c",
         "display_manager.h": "c",
         "wifi_manager.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "esp_lcd_panel_st7789.h": "c",
+        "esp_lcd_panel_io.h": "c",
+        "stdint.h": "c",
+        "lvgl_conf.h": "c",
+        "lvgl.h": "c"
     }
 }
