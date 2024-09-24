@@ -1,4 +1,4 @@
-#include "display_driver.h"
+#include <core/drivers/display/display_driver.h>
 #include "esp_lcd_panel_vendor.h"
 #include "driver/spi_master.h"
 #include "esp_lcd_panel_io.h"
