@@ -12,6 +12,7 @@
 #include <string.h>
 #include <esp_random.h>
 #include <stdio.h>
+#include "managers/settings_manager.h"
 
 
 static uint16_t ap_count = 0;

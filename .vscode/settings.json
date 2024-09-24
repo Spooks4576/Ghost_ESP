@@ -90,6 +90,7 @@
         "led_strip_types.h": "c",
         "rmt_tx.h": "c",
         "esp_check.h": "c",
-        "rmt_types_legacy.h": "c"
+        "rmt_types_legacy.h": "c",
+        "settings_manager.h": "c"
     }
 }

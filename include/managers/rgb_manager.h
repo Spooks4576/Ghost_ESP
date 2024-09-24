@@ -53,6 +53,7 @@ void rainbow_task(void* pvParameter);
 
 void police_task(void* pvParameter);
 
+TaskHandle_t rainbow_task_handle;
 
 RGBManager_t rgb_manager;
 

@@ -1,6 +1,7 @@
 #include "core/system_manager.h"
 #include "core/serial_manager.h"
 #include "managers/rgb_manager.h"
+#include "managers/settings_manager.h"
 #include "managers/wifi_manager.h"
 #include "core/command.h"
 
@@ -17,8 +18,14 @@ void app_main() {
 
     register_wifi_commands();
 
+    settings_init(&G_Settings);
+
 #ifdef NEOPIXEL_PIN
-    // Initialize the RGB manager for the LED strip on GPIO 8, 1 LED, GRB format, WS2812 model
     rgb_manager_init(&rgb_manager, GPIO_NUM_8, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
+
+    if (settings_get_rgb_mode(&G_Settings) == RGB_MODE_RAINBOW)
+    {
+      xTaskCreate(rainbow_task, "Rainbow Task", 2048, &rgb_manager, 1, &rainbow_task_handle);
+    }
 #endif
 }

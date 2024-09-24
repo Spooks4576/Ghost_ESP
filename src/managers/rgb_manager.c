@@ -1,6 +1,7 @@
 #include "managers/rgb_manager.h"
 #include "esp_log.h"
 #include <math.h>
+#include "managers/settings_manager.h"
 #include "freertos/task.h"
 
 static const char* TAG = "RGBManager";
@@ -122,19 +123,26 @@ esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_le
 
 esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue) {
 #ifdef NEOPIXEL_PIN
-    if (!rgb_manager || !rgb_manager->strip) return ESP_ERR_INVALID_ARG;
+    if (settings_get_rgb_mode(&G_Settings) != RGB_MODE_STEALTH)
+    {
+        if (!rgb_manager || !rgb_manager->strip) return ESP_ERR_INVALID_ARG;
 
-    // Set the color of the LED at index `led_idx`
-    esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, led_idx, red, green, blue);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set LED color");
-        return ret;
+        // Set the color of the LED at index `led_idx`
+        esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, led_idx, red, green, blue);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to set LED color");
+            return ret;
+        }
+
+        // Refresh the strip to apply the changes
+        return led_strip_refresh(rgb_manager->strip);
     }
-
-    // Refresh the strip to apply the changes
-    return led_strip_refresh(rgb_manager->strip);
+    else 
+    {
+        return ESP_OK;
+    }
 #endif
-    return ESP_ERR_INVALID_ARG;
+    return ESP_OK;
 }
 
 // Rainbow effect

@@ -2,6 +2,8 @@
 
 #include "core/command.h"
 #include "managers/wifi_manager.h"
+#include "managers/rgb_manager.h"
+#include "managers/settings_manager.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -184,6 +186,127 @@ void handle_select_cmd(int argc, char **argv)
     }
 }
 
+void handle_set_setting(int argc, char **argv)
+{
+    if (argc < 3) {
+        printf("Error: Insufficient arguments. Expected 2 integers after the command.\n");
+        return;
+    }
+    
+    char *endptr1;
+    int first_arg = strtol(argv[1], &endptr1, 10);
+    
+    
+    if (*endptr1 != '\0') {
+        printf("Error: First argument is not a valid integer.\n");
+        return;
+    }
+
+    
+    char *endptr2;
+    int second_arg = strtol(argv[2], &endptr2, 10);
+
+    
+    if (*endptr2 != '\0') {
+        printf("Error: Second argument is not a valid integer.\n");
+        return;
+    }
+
+    int ActualSettingsIndex = first_arg;
+    int ActualSettingsValue = second_arg;
+
+    if (ActualSettingsIndex == 1) // RGB Mode
+    {
+        switch (ActualSettingsValue)
+        {
+        case 1:
+        {
+            settings_set_rgb_mode(&G_Settings, RGB_MODE_STEALTH);
+            break;
+        }
+        case 2:
+        {
+            settings_set_rgb_mode(&G_Settings, RGB_MODE_NORMAL);
+            break;
+        }
+        case 3:
+        {
+            settings_set_rgb_mode(&G_Settings, RGB_MODE_RAINBOW);
+            break;
+        }
+        }
+    }
+
+    if (ActualSettingsIndex == 2)
+    {
+        switch (ActualSettingsValue)
+        {
+        case 1:
+        {
+            settings_set_channel_switch_delay(&G_Settings, 0.5);
+            break;
+        }
+        case 2:
+        {
+            settings_set_channel_switch_delay(&G_Settings, 1);
+            break;
+        }
+        case 3:
+        {
+            settings_set_channel_switch_delay(&G_Settings, 2);
+            break;
+        }
+        case 4:
+        {
+            settings_set_channel_switch_delay(&G_Settings, 3);
+            break;
+        }
+        case 5:
+        {
+            settings_set_channel_switch_delay(&G_Settings, 4);
+            break;
+        }
+        }
+    }
+
+    if (ActualSettingsIndex == 3)
+    {
+        switch (ActualSettingsValue)
+        {
+        case 1:
+        {
+            settings_set_channel_hopping_enabled(&G_Settings, false);
+            break;
+        }
+        case 2:
+        {
+            settings_set_channel_hopping_enabled(&G_Settings, true);
+            break;
+        }
+        }
+    }
+
+    if (ActualSettingsIndex == 4)
+    {
+        switch (ActualSettingsValue)
+        {
+        case 1:
+        {
+            settings_set_random_ble_mac_enabled(&G_Settings, false);
+            break;
+        }
+        case 2:
+        {
+            settings_set_random_ble_mac_enabled(&G_Settings, true);
+            break;
+        }
+        }
+    }
+
+    printf("Updated Setting Successfully...");
+}
+
+
 void register_wifi_commands() {
     register_command("scanap", cmd_wifi_scan_start);
     register_command("scansta", handle_sta_scan);
@@ -194,4 +317,5 @@ void register_wifi_commands() {
     register_command("stopspam", handle_stop_spam);
     register_command("stopdeauth", handle_stop_deauth);
     register_command("select", handle_select_cmd);
+    register_command("setsetting", handle_set_setting);
 }
