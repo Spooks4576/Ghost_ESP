@@ -21,6 +21,7 @@ static station_ap_pair_t station_ap_list[MAX_STATIONS];  // Array to store stati
 static int station_count = 0;
 
 static void* beacon_task_handle;
+static void* deauth_task_handle;
 static int beacon_task_running = 0;
 
 typedef struct {
@@ -96,6 +97,12 @@ void wifi_manager_stop_monitor_mode();
 void wifi_manager_start_monitor_mode(wifi_promiscuous_cb_t_t callback);
 
 void wifi_manager_list_stations();
+
+void wifi_manager_start_deauth();
+
+void wifi_manager_stop_deauth();
+
+esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t mac[6]);
 
 void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type);
 

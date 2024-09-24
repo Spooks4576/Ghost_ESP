@@ -134,12 +134,34 @@ void handle_sta_scan(int argc, char **argv)
 }
 
 
+void handle_attack_cmd(int argc, char **argv)
+{
+    if (argc > 1 && strcmp(argv[1], "-d") == 0) {
+        printf("Deauth Attack Starting...");
+        wifi_manager_start_deauth();
+        return;
+    }
+    else 
+    {
+        printf("Usage: attack -d (for deauthing access points)\n");
+    }
+}
+
+
+void handle_stop_deauth(int argc, char **argv)
+{
+    wifi_manager_stop_deauth();
+    printf("Deauthing Stopped....\n");
+}
+
 
 void register_wifi_commands() {
     register_command("scanap", cmd_wifi_scan_start);
     register_command("scansta", handle_sta_scan);
     register_command("stopscan", cmd_wifi_scan_stop);
+    register_command("attack", handle_attack_cmd);
     register_command("list", handle_list);
     register_command("beaconspam", handle_beaconspam);
     register_command("stopspam", handle_stop_spam);
+    register_command("stopdeauth", handle_stop_deauth);
 }

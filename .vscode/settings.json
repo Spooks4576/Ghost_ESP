@@ -29,6 +29,8 @@
         "tft.h": "c",
         "tftspi.h": "c",
         "spi_master_lobo.h": "c",
-        "sdkconfig.h": "c"
+        "sdkconfig.h": "c",
+        "esp_random.h": "c",
+        "time.h": "c"
     }
 }
