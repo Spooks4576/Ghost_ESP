@@ -110,6 +110,12 @@ void handle_beaconspam(int argc, char **argv) {
         return;
     }
 
+    if (argc > 1 && strcmp(argv[1], "-l") == 0) {
+        printf("Starting AP List beacon spam...\n");
+        wifi_manager_start_beacon("APLISTMODE");
+        return;
+    }
+
     if (argc > 1)
     {
         wifi_manager_start_beacon(argv[1]);
