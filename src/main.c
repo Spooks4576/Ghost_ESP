@@ -21,7 +21,7 @@ void app_main() {
     settings_init(&G_Settings);
 
 #ifdef NEOPIXEL_PIN
-    rgb_manager_init(&rgb_manager, GPIO_NUM_8, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
+    rgb_manager_init(&rgb_manager, NEOPIXEL_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
 
     if (settings_get_rgb_mode(&G_Settings) == RGB_MODE_RAINBOW)
     {
