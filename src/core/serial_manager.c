@@ -10,7 +10,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <ctype.h>
-#include <core/command.h>
+#include <core/commandline.h>
 #include "driver/usb_serial_jtag.h"
 
 

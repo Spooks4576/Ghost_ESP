@@ -1,6 +1,6 @@
 // command.c
 
-#include "core/command.h"
+#include "core/commandline.h"
 #include "managers/wifi_manager.h"
 #include "managers/rgb_manager.h"
 #include "managers/ble_manager.h"
@@ -334,6 +334,40 @@ void handle_set_setting(int argc, char **argv)
     printf("Updated Setting Successfully...");
 }
 
+void handle_ble_spam_cmd(int argc, char **argv)
+{
+
+    if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
+        ble_stop_scanning();
+        return;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "-samsung") == 0) {
+        ble_start_spam(COMPANY_SAMSUNG);
+        return;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "-apple") == 0) {
+        ble_start_spam(COMPANY_APPLE);
+        return;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "-google") == 0) {
+        ble_start_spam(COMPANY_GOOGLE);
+        return;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "-microsoft") == 0) {
+        ble_start_spam(COMPANY_MICROSOFT);
+        return;
+    }
+    else 
+    {
+        printf("Unknown Company Specified....");
+        return;
+    }
+}
+
 
 void register_commands() {
     register_command("scanap", cmd_wifi_scan_start);
@@ -347,4 +381,5 @@ void register_commands() {
     register_command("select", handle_select_cmd);
     register_command("setsetting", handle_set_setting);
     register_command("blescan", handle_ble_scan_cmd);
+    register_command("blespam", handle_ble_spam_cmd);
 }

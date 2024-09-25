@@ -95,6 +95,7 @@
         "ble_manager.h": "c",
         "ble.h": "c",
         "ble_gap.h": "c",
-        "nimble_port_freertos.h": "c"
+        "nimble_port_freertos.h": "c",
+        "commandline.h": "c"
     }
 }
