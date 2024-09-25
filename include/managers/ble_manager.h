@@ -30,17 +30,40 @@ static int ble_spam_task_running = 0;
 
 
 typedef enum {
-    COMPANY_APPLE,
-    COMPANY_GOOGLE,
-    COMPANY_SAMSUNG,
-    COMPANY_MICROSOFT
+    COMPANY_APPLE = 0,
+    COMPANY_GOOGLE = 1,
+    COMPANY_SAMSUNG = 2,
+    COMPANY_MICROSOFT = 3
 } company_type_t;
+
+const char* get_company_name(company_type_t company) {
+    switch (company) {
+        case COMPANY_APPLE:
+            return "Apple";
+        case COMPANY_GOOGLE:
+            return "Google";
+        case COMPANY_SAMSUNG:
+            return "Samsung";
+        case COMPANY_MICROSOFT:
+            return "Microsoft";
+        default:
+            return "Unknown Company";
+    }
+}
+
+void print_company_name(company_type_t company) {
+    printf("Enum value: %d\n", company);  // Debug print
+    const char* company_name = get_company_name(company);
+    printf("Company: %s\n", company_name);
+}
 
 esp_err_t ble_register_handler(ble_data_handler_t handler);
 esp_err_t ble_unregister_handler(ble_data_handler_t handler);
 void ble_init(void);
 void ble_start_find_flippers(void);
-void ble_stop_scanning(void);
+void ble_stop(void);
+void ble_spam_stop(void);
+void stop_ble_stack(void);
 void ble_start_airtag_scanner(void);
 void ble_start_blespam_detector(void);
 void ble_start_spam(company_type_t company);

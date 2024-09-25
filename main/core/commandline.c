@@ -209,7 +209,7 @@ void handle_ble_scan_cmd(int argc, char**argv)
 
     if (argc > 1 && strcmp(argv[1], "-s") == 0) {
         printf("Stopping BLE Scan...\n");
-        ble_stop_scanning();
+        ble_stop();
         return;
     }
 }
@@ -338,26 +338,26 @@ void handle_ble_spam_cmd(int argc, char **argv)
 {
 
     if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
-        ble_stop_scanning();
+        ble_spam_stop();
         return;
     }
 
-    if (argc > 1 && strcmp(argv[1], "-samsung") == 0) {
+    if (argc > 1 && strcasecmp(argv[1], "-samsung") == 0) {
         ble_start_spam(COMPANY_SAMSUNG);
         return;
     }
 
-    if (argc > 1 && strcmp(argv[1], "-apple") == 0) {
+    if (argc > 1 && strcasecmp(argv[1], "-apple") == 0) {
         ble_start_spam(COMPANY_APPLE);
         return;
     }
 
-    if (argc > 1 && strcmp(argv[1], "-google") == 0) {
+    if (argc > 1 && strcasecmp(argv[1], "-google") == 0) {
         ble_start_spam(COMPANY_GOOGLE);
         return;
     }
 
-    if (argc > 1 && strcmp(argv[1], "-microsoft") == 0) {
+    if (argc > 1 && strcasecmp(argv[1], "-microsoft") == 0) {
         ble_start_spam(COMPANY_MICROSOFT);
         return;
     }
