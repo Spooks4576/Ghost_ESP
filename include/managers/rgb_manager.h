@@ -31,7 +31,7 @@ esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_le
  * @param blue Blue component (0-255)
  * @return esp_err_t ESP_OK on success, ESP_FAIL on failure
  */
-esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue);
+esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue, bool pulse);
 
 /**
  * @brief Apply the rainbow effect to the LED strip

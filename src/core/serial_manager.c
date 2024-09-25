@@ -75,7 +75,7 @@ void serial_manager_init() {
     uart_driver_install(UART_NUM, BUF_SIZE * 2, 0, 0, NULL, 0);
     
 
-    xTaskCreate(serial_task, "SerialTask", 2048, NULL, 10, NULL);
+    xTaskCreate(serial_task, "SerialTask", 4096, NULL, 10, NULL);
 }
 
 

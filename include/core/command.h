@@ -17,6 +17,6 @@ void register_command(const char *name, CommandFunction function);
 void unregister_command(const char *name);
 CommandFunction find_command(const char *name);
 
-void register_wifi_commands();
+void register_commands();
 
 #endif // COMMAND_H

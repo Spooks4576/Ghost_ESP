@@ -3,6 +3,7 @@
 #include "managers/rgb_manager.h"
 #include "managers/settings_manager.h"
 #include "managers/wifi_manager.h"
+#include "managers/ble_manager.h"
 #include "core/command.h"
 
 int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3){
@@ -13,10 +14,11 @@ void app_main() {
     system_manager_init();
     serial_manager_init();
     wifi_manager_init();
+    ble_init();
 
     command_init();
 
-    register_wifi_commands();
+    register_commands();
 
     settings_init(&G_Settings);
 

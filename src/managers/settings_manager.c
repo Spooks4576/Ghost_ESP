@@ -39,7 +39,7 @@ void settings_set_rgb_mode(FSettings* settings, RGBMode mode) {
         {
             vTaskDelete(rainbow_task_handle);
         }
-        rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0);
+        rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
     }
 
     settings->rgbMode = mode;

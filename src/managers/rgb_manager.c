@@ -121,21 +121,68 @@ esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_le
 }
 
 
-esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue) {
+esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue, bool pulse) {
 #ifdef NEOPIXEL_PIN
     if (settings_get_rgb_mode(&G_Settings) != RGB_MODE_STEALTH)
     {
         if (!rgb_manager || !rgb_manager->strip) return ESP_ERR_INVALID_ARG;
 
-        // Set the color of the LED at index `led_idx`
-        esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, led_idx, red, green, blue);
-        if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to set LED color");
-            return ret;
+        esp_err_t ret = ESP_OK;
+
+        if (pulse) {
+            // Pulse the LED: gradually increase and decrease brightness
+            for (int i = 0; i <= 255; i += 10) {  // Gradually increase brightness
+                uint8_t brightness_red = (red * i) / 255;
+                uint8_t brightness_green = (green * i) / 255;
+                uint8_t brightness_blue = (blue * i) / 255;
+                
+                ret = led_strip_set_pixel(rgb_manager->strip, led_idx, brightness_red, brightness_green, brightness_blue);
+                if (ret != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to set LED color during pulse");
+                    return ret;
+                }
+                ret = led_strip_refresh(rgb_manager->strip);
+                if (ret != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to refresh LED strip during pulse");
+                    return ret;
+                }
+                vTaskDelay(pdMS_TO_TICKS(10));  // Delay for smooth pulsing
+            }
+
+            for (int i = 255; i >= 0; i -= 10) {  // Gradually decrease brightness
+                uint8_t brightness_red = (red * i) / 255;
+                uint8_t brightness_green = (green * i) / 255;
+                uint8_t brightness_blue = (blue * i) / 255;
+                
+                ret = led_strip_set_pixel(rgb_manager->strip, led_idx, brightness_red, brightness_green, brightness_blue);
+                if (ret != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to set LED color during pulse");
+                    return ret;
+                }
+                ret = led_strip_refresh(rgb_manager->strip);
+                if (ret != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to refresh LED strip during pulse");
+                    return ret;
+                }
+                vTaskDelay(pdMS_TO_TICKS(10));  // Delay for smooth pulsing
+            }
+        } else {
+            // Set the color of the LED at index `led_idx`
+            ret = led_strip_set_pixel(rgb_manager->strip, led_idx, red, green, blue);
+            if (ret != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to set LED color");
+                return ret;
+            }
+
+            // Refresh the strip to apply the changes
+            ret = led_strip_refresh(rgb_manager->strip);
+            if (ret != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to refresh LED strip");
+                return ret;
+            }
         }
 
-        // Refresh the strip to apply the changes
-        return led_strip_refresh(rgb_manager->strip);
+        return ESP_OK;
     }
     else 
     {
@@ -169,7 +216,7 @@ void rgb_manager_rainbow_effect(RGBManager_t* rgb_manager, int delay_ms) {
             clamp_rgb(&red, &green, &blue);
 
             // Set the color of the LED
-            rgb_manager_set_color(rgb_manager, i, red, green, blue);
+            rgb_manager_set_color(rgb_manager, i, red, green, blue, false);
         }
 
         
@@ -199,9 +246,9 @@ void rgb_manager_policesiren_effect(RGBManager_t *rgb_manager, int delay_ms) {
 
             // Set the LED to either red or blue based on `is_red` flag
             if (is_red) {
-                rgb_manager_set_color(rgb_manager, 0, brightness, 0, 0);  // Red color
+                rgb_manager_set_color(rgb_manager, 0, brightness, 0, 0, false);  // Red color
             } else {
-                rgb_manager_set_color(rgb_manager, 0, 0, 0, brightness);  // Blue color
+                rgb_manager_set_color(rgb_manager, 0, 0, 0, brightness, false);  // Blue color
             }
 
             // Refresh the LED strip to apply the new color

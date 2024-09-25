@@ -336,7 +336,7 @@ void wifi_manager_start_scan() {
 
     uint32_t random_duration = 5 + (esp_random() % 6);
 
-    rgb_manager_set_color(&rgb_manager, 0, 50, 255, 50);
+    rgb_manager_set_color(&rgb_manager, 0, 50, 255, 50, false);
 
 
     vTaskDelay(random_duration * 1000 / portTICK_PERIOD_MS);
@@ -350,7 +350,7 @@ void wifi_manager_stop_scan() {
     ESP_ERROR_CHECK(esp_wifi_scan_stop());
     wifi_manager_stop_monitor_mode();
 
-    rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0);
+    rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
 
     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
 
@@ -481,7 +481,7 @@ void wifi_manager_start_deauth()
         ESP_LOGI(TAG, "Starting deauth transmission...");
         xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
-        rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23);
+        rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23, false);
     } else {
         ESP_LOGW(TAG, "Deauth transmission already running.");
     }
@@ -529,7 +529,7 @@ void wifi_manager_stop_deauth()
             vTaskDelete(deauth_task_handle);
             deauth_task_handle = NULL;
             beacon_task_running = false;
-            rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0);
+            rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
         }
     } else {
         ESP_LOGW(TAG, "No deauth transmission is running.");
@@ -664,7 +664,7 @@ void wifi_manager_stop_beacon()
             beacon_task_handle = NULL;
             beacon_task_running = false;
         }
-        rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0);
+        rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
     } else {
         ESP_LOGW(TAG, "No beacon transmission is running.");
     }
@@ -723,7 +723,7 @@ void wifi_manager_start_beacon(const char *ssid) {
         ESP_LOGI(TAG, "Starting beacon transmission...");
         xTaskCreate(wifi_beacon_task, "beacon_task", 2048, (void *)ssid, 5, &beacon_task_handle);
         beacon_task_running = true;
-        rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0);
+        rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, false);
     } else {
         ESP_LOGW(TAG, "Beacon transmission already running.");
     }

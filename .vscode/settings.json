@@ -93,6 +93,8 @@
         "rmt_types_legacy.h": "c",
         "settings_manager.h": "c",
         "ble_manager.h": "c",
-        "ble.h": "c"
+        "ble.h": "c",
+        "ble_gap.h": "c",
+        "nimble_port_freertos.h": "c"
     }
 }

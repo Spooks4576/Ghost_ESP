@@ -3,6 +3,7 @@
 #include "core/command.h"
 #include "managers/wifi_manager.h"
 #include "managers/rgb_manager.h"
+#include "managers/ble_manager.h"
 #include "managers/settings_manager.h"
 #include <stdlib.h>
 #include <string.h>
@@ -186,6 +187,33 @@ void handle_select_cmd(int argc, char **argv)
     }
 }
 
+void handle_ble_scan_cmd(int argc, char**argv)
+{
+    if (argc > 1 && strcmp(argv[1], "-f") == 0) {
+        printf("Starting Find the Flippers...\n");
+        ble_start_find_flippers();
+        return;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "-ds") == 0) {
+        printf("Starting BLE Spam Detector...\n");
+        ble_start_blespam_detector();
+        return;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "-a") == 0) {
+        printf("Starting AirTag Scanner...\n");
+        ble_start_airtag_scanner();
+        return;
+    }
+
+    if (argc > 1 && strcmp(argv[1], "-s") == 0) {
+        printf("Stopping BLE Scan...\n");
+        ble_stop_scanning();
+        return;
+    }
+}
+
 void handle_set_setting(int argc, char **argv)
 {
     if (argc < 3) {
@@ -307,7 +335,7 @@ void handle_set_setting(int argc, char **argv)
 }
 
 
-void register_wifi_commands() {
+void register_commands() {
     register_command("scanap", cmd_wifi_scan_start);
     register_command("scansta", handle_sta_scan);
     register_command("stopscan", cmd_wifi_scan_stop);
@@ -318,4 +346,5 @@ void register_wifi_commands() {
     register_command("stopdeauth", handle_stop_deauth);
     register_command("select", handle_select_cmd);
     register_command("setsetting", handle_set_setting);
+    register_command("blescan", handle_ble_scan_cmd);
 }
