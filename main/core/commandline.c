@@ -207,11 +207,19 @@ void handle_ble_scan_cmd(int argc, char**argv)
         return;
     }
 
+    if (argc > 1 && strcmp(argv[1], "-r") == 0) {
+        printf("Scanning for Raw Packets\n");
+        ble_start_raw_ble_packetscan();
+        return;
+    }
+
     if (argc > 1 && strcmp(argv[1], "-s") == 0) {
         printf("Stopping BLE Scan...\n");
         ble_stop();
         return;
     }
+
+    printf("Invalid Command Syntax...");
 }
 
 void handle_set_setting(int argc, char **argv)

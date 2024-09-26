@@ -486,8 +486,28 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
     }
 }
 
+void ble_print_raw_packet_callback(struct ble_gap_event *event, size_t len) {
+    
+    int advertisementRssi = event->disc.rssi;
+
+    
+    char advertisementMac[18];
+    snprintf(advertisementMac, sizeof(advertisementMac), "%02x:%02x:%02x:%02x:%02x:%02x",
+             event->disc.addr.val[0], event->disc.addr.val[1], event->disc.addr.val[2],
+             event->disc.addr.val[3], event->disc.addr.val[4], event->disc.addr.val[5]);
+
+    
+    printf("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
+
+    
+    printf("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
+    for (size_t i = 0; i < event->disc.length_data; i++) {
+        printf("%02x ", event->disc.data[i]);
+    }
+    printf("\n");
+}
+
 void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
-    // Ensure we have valid payload data and minimum length
     if (length < 4) {
         return;
     }
@@ -683,6 +703,7 @@ void ble_stop(void) {
     rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
     ble_unregister_handler(ble_findtheflippers_callback);
     ble_unregister_handler(airtag_scanner_callback);
+    ble_unregister_handler(ble_print_raw_packet_callback);
     ble_unregister_handler(detect_ble_spam_callback);
     int rc = ble_gap_disc_cancel();
 
@@ -698,6 +719,12 @@ void ble_stop(void) {
 void ble_start_blespam_detector(void)
 {
     ble_register_handler(detect_ble_spam_callback);
+    ble_start_scanning();
+}
+
+void ble_start_raw_ble_packetscan(void)
+{
+    ble_register_handler(ble_print_raw_packet_callback);
     ble_start_scanning();
 }
 
