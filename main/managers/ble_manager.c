@@ -270,7 +270,7 @@ void send_ble_advertisement(company_type_t company) {
         return;
     }
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(settings_get_broadcast_speed(&G_Settings)));
 
     if (settings_get_random_ble_mac_enabled(&G_Settings))
     {

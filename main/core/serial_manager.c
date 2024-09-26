@@ -21,7 +21,7 @@
 char serial_buffer[SERIAL_BUFFER_SIZE];
 
 // Forward declaration of command handler
-void handle_serial_command(const char *command);
+int handle_serial_command(const char *command);
 
 
 void serial_task(void *pvParameter) {
@@ -79,7 +79,7 @@ void serial_manager_init() {
 }
 
 
-void handle_serial_command(const char *input) {
+int handle_serial_command(const char *input) {
     char *input_copy = strdup(input);  // Make a copy of the input string
     char *argv[10];  // Max 10 arguments
     int argc = 0;
@@ -119,15 +119,17 @@ void handle_serial_command(const char *input) {
 
     if (argc == 0) {
         free(input_copy);
-        return;
+        return ESP_ERR_INVALID_ARG;
     }
 
     // Find the command function
     CommandFunction cmd_func = find_command(argv[0]);
     if (cmd_func != NULL) {
         cmd_func(argc, argv);
+        return ESP_OK;
     } else {
         printf("Unknown command: %s\n", argv[0]);
+        return ESP_ERR_INVALID_ARG;
     }
 
     free(input_copy);

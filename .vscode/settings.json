@@ -99,6 +99,7 @@
         "commandline.h": "c",
         "ap_manager.h": "c",
         "esp_event.h": "c",
-        "ghost_esp_site.h": "c"
+        "ghost_esp_site.h": "c",
+        "ctype.h": "c"
     }
 }

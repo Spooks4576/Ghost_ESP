@@ -339,7 +339,7 @@ void handle_set_setting(int argc, char **argv)
         }
     }
 
-    printf("Updated Setting Successfully...");
+    settings_save(&G_Settings);
 }
 
 void handle_ble_spam_cmd(int argc, char **argv)

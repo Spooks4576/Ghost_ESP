@@ -10,6 +10,7 @@
 #include <esp_http_server.h>
 #include <esp_netif.h>
 #include <nvs_flash.h>
+#include <core/serial_manager.h>
 #include <mdns.h>
 #include <cJSON.h>
 
@@ -26,6 +27,7 @@ static esp_err_t http_get_handler(httpd_req_t* req);
 static esp_err_t api_logs_handler(httpd_req_t* req);
 static esp_err_t api_clear_logs_handler(httpd_req_t* req);
 static esp_err_t api_settings_handler(httpd_req_t* req);
+static esp_err_t api_command_handler(httpd_req_t *req);
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data);
@@ -63,30 +65,38 @@ esp_err_t ap_manager_init(void) {
         return ret;
     }
 
-    // Set Wi-Fi mode to AP
+    
     ret = esp_wifi_set_mode(WIFI_MODE_AP);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "esp_wifi_set_mode failed: %s", esp_err_to_name(ret));
         return ret;
     }
 
-    // Configure Wi-Fi AP with SSID and Password
+
+    const char* ssid = (strlen(G_Settings.apSSID) > 0) ? G_Settings.apSSID : "GhostNet";
+
+    const char* password = (strlen(G_Settings.apPassword) > 0) ? G_Settings.apPassword : "GhostNet";
+
+    
     wifi_config_t wifi_config = {
-        .ap = {
-            .ssid = "GhostNet",
-            .ssid_len = strlen("GhostNet"),
-            .password = "GhostNet",
-            .channel = 6,
-            .max_connection = 4,        // Set max number of connections to AP
-            .authmode = WIFI_AUTH_OPEN, // WPA/WPA2 security
-            .beacon_interval = 100,
-        },
+    .ap = {
+        .channel = 6,
+        .max_connection = 4,
+        .authmode = WIFI_AUTH_WPA2_PSK,
+        .beacon_interval = 100,
+    },
     };
 
-    // Check if no password is provided (open network)
-    if (strlen("GhostNet") == 0) { // lol
-        wifi_config.ap.authmode = WIFI_AUTH_OPEN;
-    }
+    
+    strncpy((char *)wifi_config.ap.ssid, ssid, sizeof(wifi_config.ap.ssid) - 1);
+    wifi_config.ap.ssid[sizeof(wifi_config.ap.ssid) - 1] = '\0';
+
+    
+    wifi_config.ap.ssid_len = strlen(ssid);
+
+    
+    strncpy((char *)wifi_config.ap.password, password, sizeof(wifi_config.ap.password) - 1);
+    wifi_config.ap.password[sizeof(wifi_config.ap.password) - 1] = '\0';
 
     ret = esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
     if (ret != ESP_OK) {
@@ -94,7 +104,7 @@ esp_err_t ap_manager_init(void) {
         return ret;
     }
 
-    esp_netif_t* ap_netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    esp_netif_t* ap_netif = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
     if (ap_netif == NULL) {
         ESP_LOGE(TAG, "Failed to get the AP network interface");
     } else {
@@ -124,6 +134,7 @@ esp_err_t ap_manager_init(void) {
     // Register event handlers for Wi-Fi events if not registered already
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
 
     // Initialize mDNS
     ret = mdns_init();
@@ -150,12 +161,20 @@ esp_err_t ap_manager_init(void) {
         return ret;
     }
 
+    
     ESP_LOGI(TAG, "mDNS hostname set to %s.local", settings->mdnsHostname);
+
+    ret = mdns_service_add(NULL, "_http", "_http", 80, NULL, 0);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mDNS service add failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
 
     // Start HTTP server
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
     config.ctrl_port = 32768; // Control port (use default)
+
 
     ret = httpd_start(&server, &config);
     if (ret != ESP_OK) {
@@ -163,18 +182,64 @@ esp_err_t ap_manager_init(void) {
         return ret;
     }
 
-    // Register URI handlers
+     // Register URI handlers
     httpd_uri_t uri_get = {
         .uri       = "/",
         .method    = HTTP_GET,
         .handler   = http_get_handler,
         .user_ctx  = NULL
     };
-    httpd_register_uri_handler(server, &uri_get);
+
+    httpd_uri_t uri_post_logs = {
+        .uri       = "/api/logs",
+        .method    = HTTP_GET,
+        .handler   = api_logs_handler,
+        .user_ctx  = NULL
+    };
+
+
+    httpd_uri_t uri_post_settings = {
+        .uri       = "/api/settings",
+        .method    = HTTP_POST,
+        .handler   = api_settings_handler,
+        .user_ctx  = NULL
+    };
+
+    httpd_uri_t uri_post_command = {
+        .uri       = "/api/command",
+        .method    = HTTP_POST,
+        .handler   = api_command_handler,
+        .user_ctx  = NULL
+    };
+
+    ret = httpd_register_uri_handler(server, &uri_post_logs);
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+
+
+    ret = httpd_register_uri_handler(server, &uri_post_settings);
+
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+    ret = httpd_register_uri_handler(server, &uri_get);
+
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
 
     ESP_LOGI(TAG, "HTTP server started");
 
     esp_wifi_set_ps(WIFI_PS_NONE);
+
+    
+    esp_netif_ip_info_t ip_info;
+    if (esp_netif_get_ip_info(ap_netif, &ip_info) == ESP_OK) {
+        ESP_LOGI(TAG, "ESP32 AP IP Address: " IPSTR, IP2STR(&ip_info.ip));
+    } else {
+        ESP_LOGE(TAG, "Failed to get IP address");
+    }
 
     return ESP_OK;
 }
@@ -195,21 +260,80 @@ void ap_manager_deinit(void) {
     ESP_LOGI(TAG, "AP Manager deinitialized");
 }
 
-// Function to add log messages (to be called from other parts of your code)
+
 void ap_manager_add_log(const char* log_message) {
     size_t message_length = strlen(log_message);
     if (log_buffer_index + message_length < MAX_LOG_BUFFER_SIZE) {
         strcpy(&log_buffer[log_buffer_index], log_message);
         log_buffer_index += message_length;
     } else {
-        ESP_LOGW(TAG, "Log buffer full, cannot add new log");
+        ESP_LOGW(TAG, "Log buffer full, clearing buffer and adding new log");
+
+        memset(log_buffer, 0, MAX_LOG_BUFFER_SIZE);
+        log_buffer_index = 0;
+
+
+        strcpy(&log_buffer[log_buffer_index], log_message);
+        log_buffer_index += message_length;
     }
 }
 
 // Handler for GET requests (serves the HTML page)
 static esp_err_t http_get_handler(httpd_req_t* req) {
+    ESP_LOGI(TAG, "Received HTTP GET request: %s", req->uri);
     httpd_resp_set_type(req, "text/html");
      return httpd_resp_send(req, (const char*)ghost_site_html, ghost_site_html_size);
+}
+
+static esp_err_t api_command_handler(httpd_req_t *req)
+{
+    char content[100];
+    int ret, command_len;
+
+    
+    command_len = MIN(req->content_len, sizeof(content) - 1); 
+
+    
+    ret = httpd_req_recv(req, content, command_len);
+    if (ret <= 0) {
+        if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
+            httpd_resp_send_408(req);  
+        }
+        return ESP_FAIL;
+    }
+
+    
+    content[command_len] = '\0';
+
+    cJSON *json = cJSON_Parse(content);
+    if (json == NULL) {
+        httpd_resp_set_status(req, "400 Bad Request");
+        httpd_resp_send(req, "Invalid JSON", strlen("Invalid JSON"));
+        return ESP_FAIL;
+    }
+
+
+    cJSON *command_json = cJSON_GetObjectItem(json, "command");
+    if (command_json == NULL || !cJSON_IsString(command_json)) {
+        httpd_resp_set_status(req, "400 Bad Request");
+        httpd_resp_send(req, "Missing or invalid 'command' field", strlen("Missing or invalid 'command' field"));
+        cJSON_Delete(json);  // Cleanup JSON object
+        return ESP_FAIL;
+    }
+
+    
+    const char *command = command_json->valuestring;
+
+
+    if (handle_serial_command(command) == ESP_OK) {
+        httpd_resp_send(req, "Command executed", strlen("Command executed"));
+    } else {
+        httpd_resp_set_status(req, "404 Not Found");
+        httpd_resp_send(req, "Command not found", strlen("Command not found"));
+    }
+
+    cJSON_Delete(json);  // Cleanup JSON object
+    return ESP_OK;
 }
 
 // Handler for /api/logs (returns the log buffer)
@@ -337,15 +461,39 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data) {
     if (event_base == WIFI_EVENT) {
-        if (event_id == WIFI_EVENT_STA_START) {
-            esp_wifi_connect();
-        } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-            ESP_LOGI(TAG, "Disconnected from Wi-Fi, retrying...");
-            esp_wifi_connect();
+        switch (event_id) {
+            case WIFI_EVENT_AP_START:
+                ESP_LOGI(TAG, "AP started");
+                break;
+            case WIFI_EVENT_AP_STOP:
+                ESP_LOGI(TAG, "AP stopped");
+                break;
+            case WIFI_EVENT_AP_STACONNECTED:
+                ESP_LOGI(TAG, "Station connected to AP");
+                break;
+            case WIFI_EVENT_AP_STADISCONNECTED:
+                ESP_LOGI(TAG, "Station disconnected from AP");
+                break;
+            case WIFI_EVENT_STA_START:
+                ESP_LOGI(TAG, "STA started");
+                esp_wifi_connect();
+                break;
+            case WIFI_EVENT_STA_DISCONNECTED:
+                ESP_LOGI(TAG, "Disconnected from Wi-Fi, retrying...");
+                esp_wifi_connect();
+                break;
+            default:
+                break;
         }
     } else if (event_base == IP_EVENT) {
-        if (event_id == IP_EVENT_STA_GOT_IP) {
-            ip_event_got_ip_t* event = (ip_event_got_ip_t*)event_data;
+        switch (event_id) {
+            case IP_EVENT_STA_GOT_IP:
+                break;
+            case IP_EVENT_AP_STAIPASSIGNED:
+                ESP_LOGI(TAG, "Assigned IP to STA");
+                break;
+            default:
+                break;
         }
     }
 }

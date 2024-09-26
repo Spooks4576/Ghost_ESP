@@ -1,4 +1,5 @@
 #include "managers/settings_manager.h"
+#include "managers/rgb_manager.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -38,10 +39,10 @@ void settings_init(FSettings* settings) {
 
     // New settings
     settings->randomMacEnabled = false;
-    settings->broadcastSpeed = 1000; // Default broadcast speed
+    settings->broadcastSpeed = 500; // Default broadcast speed
 
-    strcpy(settings->apSSID, "default_ssid");       // Default SSID
-    strcpy(settings->apPassword, "default_password"); // Default password
+    strcpy(settings->apSSID, "GhostNet");       // Default SSID
+    strcpy(settings->apPassword, "GhostNet"); // Default password
 
     settings->breathModeEnabled = false;
     settings->rainbowModeEnabled = false;
@@ -80,7 +81,6 @@ void settings_deinit(FSettings* settings) {
 // Existing functions
 void settings_set_rgb_mode(FSettings* settings, RGBMode mode) {
     settings->rgbMode = mode;
-    settings_save(settings);
 }
 
 RGBMode settings_get_rgb_mode(const FSettings* settings) {
@@ -89,7 +89,6 @@ RGBMode settings_get_rgb_mode(const FSettings* settings) {
 
 void settings_set_channel_switch_delay(FSettings* settings, float delay_ms) {
     settings->channelSwitchDelay = delay_ms;
-    settings_save(settings);
 }
 
 float settings_get_channel_switch_delay(const FSettings* settings) {
@@ -98,7 +97,6 @@ float settings_get_channel_switch_delay(const FSettings* settings) {
 
 void settings_set_channel_hopping_enabled(FSettings* settings, bool enabled) {
     settings->enableChannelHopping = enabled;
-    settings_save(settings);
 }
 
 bool settings_get_channel_hopping_enabled(const FSettings* settings) {
@@ -107,7 +105,6 @@ bool settings_get_channel_hopping_enabled(const FSettings* settings) {
 
 void settings_set_random_ble_mac_enabled(FSettings* settings, bool enabled) {
     settings->randomBLEMacEnabled = enabled;
-    settings_save(settings);
 }
 
 bool settings_get_random_ble_mac_enabled(const FSettings* settings) {
@@ -119,7 +116,6 @@ bool settings_get_random_ble_mac_enabled(const FSettings* settings) {
 // WiFi/BLE
 void settings_set_random_mac_enabled(FSettings* settings, bool enabled) {
     settings->randomMacEnabled = enabled;
-    settings_save(settings);
 }
 
 bool settings_get_random_mac_enabled(const FSettings* settings) {
@@ -128,7 +124,6 @@ bool settings_get_random_mac_enabled(const FSettings* settings) {
 
 void settings_set_broadcast_speed(FSettings* settings, uint16_t speed) {
     settings->broadcastSpeed = speed;
-    settings_save(settings);
 }
 
 uint16_t settings_get_broadcast_speed(const FSettings* settings) {
@@ -139,7 +134,6 @@ uint16_t settings_get_broadcast_speed(const FSettings* settings) {
 void settings_set_ap_ssid(FSettings* settings, const char* ssid) {
     strncpy(settings->apSSID, ssid, sizeof(settings->apSSID) - 1);
     settings->apSSID[sizeof(settings->apSSID) - 1] = '\0'; // Ensure null termination
-    settings_save(settings);
 }
 
 const char* settings_get_ap_ssid(const FSettings* settings) {
@@ -149,7 +143,6 @@ const char* settings_get_ap_ssid(const FSettings* settings) {
 void settings_set_ap_password(FSettings* settings, const char* password) {
     strncpy(settings->apPassword, password, sizeof(settings->apPassword) - 1);
     settings->apPassword[sizeof(settings->apPassword) - 1] = '\0'; // Ensure null termination
-    settings_save(settings);
 }
 
 const char* settings_get_ap_password(const FSettings* settings) {
@@ -159,7 +152,6 @@ const char* settings_get_ap_password(const FSettings* settings) {
 // RGB
 void settings_set_breath_mode_enabled(FSettings* settings, bool enabled) {
     settings->breathModeEnabled = enabled;
-    settings_save(settings);
 }
 
 bool settings_get_breath_mode_enabled(const FSettings* settings) {
@@ -168,7 +160,6 @@ bool settings_get_breath_mode_enabled(const FSettings* settings) {
 
 void settings_set_rainbow_mode_enabled(FSettings* settings, bool enabled) {
     settings->rainbowModeEnabled = enabled;
-    settings_save(settings);
 }
 
 bool settings_get_rainbow_mode_enabled(const FSettings* settings) {
@@ -177,7 +168,6 @@ bool settings_get_rainbow_mode_enabled(const FSettings* settings) {
 
 void settings_set_rgb_speed(FSettings* settings, uint8_t speed) {
     settings->rgbSpeed = speed;
-    settings_save(settings);
 }
 
 uint8_t settings_get_rgb_speed(const FSettings* settings) {
@@ -188,7 +178,6 @@ void settings_set_static_color(FSettings* settings, uint8_t red, uint8_t green, 
     settings->staticColor.red = red;
     settings->staticColor.green = green;
     settings->staticColor.blue = blue;
-    settings_save(settings);
 }
 
 void settings_get_static_color(const FSettings* settings, uint8_t* red, uint8_t* green, uint8_t* blue) {
@@ -201,7 +190,6 @@ void settings_get_static_color(const FSettings* settings, uint8_t* red, uint8_t*
 void settings_set_log_location(FSettings* settings, const char* location) {
     strncpy(settings->logLocation, location, sizeof(settings->logLocation) - 1);
     settings->logLocation[sizeof(settings->logLocation) - 1] = '\0'; // Ensure null termination
-    settings_save(settings);
 }
 
 const char* settings_get_log_location(const FSettings* settings) {
@@ -210,7 +198,6 @@ const char* settings_get_log_location(const FSettings* settings) {
 
 void settings_set_save_to_sd(FSettings* settings, bool enabled) {
     settings->saveToSD = enabled;
-    settings_save(settings);
 }
 
 bool settings_get_save_to_sd(const FSettings* settings) {
@@ -219,7 +206,6 @@ bool settings_get_save_to_sd(const FSettings* settings) {
 
 void settings_set_logging_enabled(FSettings* settings, bool enabled) {
     settings->loggingEnabled = enabled;
-    settings_save(settings);
 }
 
 bool settings_get_logging_enabled(const FSettings* settings) {
@@ -227,8 +213,6 @@ bool settings_get_logging_enabled(const FSettings* settings) {
 }
 
 void settings_clear_logs(FSettings* settings) {
-    // Implement the logic to clear logs
-    // For example, delete log files from the file system
 }
 
 // Load and Save functions
@@ -297,6 +281,10 @@ void settings_load(FSettings* settings) {
     if (err == ESP_OK) {
         settings->rgbSpeed = rgbSpeed;
     }
+    else 
+    {
+        settings->rgbSpeed = 15;
+    }
 
     size_t color_size = sizeof(StaticColor);
     err = nvs_get_blob(settings->nvsHandle, NVS_STATIC_COLOR_KEY, &settings->staticColor, &color_size);
@@ -352,5 +340,29 @@ void settings_save(FSettings* settings) {
     err = nvs_commit(settings->nvsHandle);
     if (err != ESP_OK) {
         printf("Failed to commit NVS changes!\n");
+    }
+
+    if (settings_get_rgb_mode(&G_Settings) == RGB_MODE_RAINBOW)
+    {
+      xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rainbow_task_handle);
+    }
+    else 
+    {
+        if (rainbow_task_handle != NULL) {
+            vTaskDelete(rainbow_task_handle);  // Delete the task
+            rainbow_task_handle = NULL;        // Reset the task handle
+            rgb_manager_set_color(&rgb_manager, 1, 0, 0, 0, false);
+        }
+
+        if ((settings->staticColor.red > 0 && settings->staticColor.red < 255) ||
+            (settings->staticColor.green > 0 && settings->staticColor.green < 255) ||
+            (settings->staticColor.blue > 0 && settings->staticColor.blue < 255))
+        {
+            rgb_manager_set_color(&rgb_manager, 1, 
+                                settings->staticColor.red, 
+                                settings->staticColor.green, 
+                                settings->staticColor.blue, 
+                                false);
+        }
     }
 }
