@@ -306,6 +306,13 @@ void send_ble_advertisement(company_type_t company) {
 
             nimble_port_freertos_init(nimble_host_task);
         }
+        else 
+        {
+            rc = ble_gap_adv_stop();
+            if (rc != 0) {
+                ESP_LOGE(TAG_BLE, "Error stopping advertisement; rc=%d", rc);
+            }
+        }
         free(adv_data);
     }
 }
@@ -681,6 +688,7 @@ void ble_start_find_flippers(void)
 
 void ble_spam_stop()
 {
+    rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
     if (ble_spam_task_running) {
         ESP_LOGI(TAG_BLE, "Stopping beacon transmission...");
         if (ble_spam_task_handle != NULL) {
