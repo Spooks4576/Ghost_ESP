@@ -117,7 +117,7 @@ esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rm
             .flags.msb_first = 1 // WS2812 transfer bit order: G7...G0R7...R0B7...B0
         };
     } else {
-        assert(false);
+        return ESP_ERR_INVALID_STATE;
     }
     ESP_GOTO_ON_ERROR(rmt_new_bytes_encoder(&bytes_encoder_config, &led_encoder->bytes_encoder), err, TAG, "create bytes encoder failed");
     rmt_copy_encoder_config_t copy_encoder_config = {};

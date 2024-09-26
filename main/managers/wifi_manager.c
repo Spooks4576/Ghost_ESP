@@ -237,18 +237,18 @@ ECompany match_bssid_to_company(const uint8_t *bssid) {
 
 void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     if (type != WIFI_PKT_DATA) {
-        return;  // We're only interested in data frames for station-AP pairing
+        return;
     }
 
     const wifi_promiscuous_pkt_t *packet = (wifi_promiscuous_pkt_t *)buf;
     const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)packet->payload;
     const wifi_ieee80211_hdr_t *hdr = &ipkt->hdr;
 
-    // Extract source (station) and destination (AP BSSID) MAC addresses
+    
     const uint8_t *src_mac = hdr->addr2;  // Station MAC
     const uint8_t *dest_mac = hdr->addr1; // AP BSSID
 
-    // Add the station-AP pair to the list if it's a new pair
+
     if (!station_exists(src_mac, dest_mac)) {
         add_station_ap_pair(src_mac, dest_mac);
     }

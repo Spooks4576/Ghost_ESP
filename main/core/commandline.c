@@ -345,27 +345,27 @@ void handle_set_setting(int argc, char **argv)
 void handle_ble_spam_cmd(int argc, char **argv)
 {
 
-    if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
+    if (argc > 1 && strcmp(argv[1], "-s") == 0) {
         ble_spam_stop();
         return;
     }
 
-    if (argc > 1 && strcasecmp(argv[1], "-samsung") == 0) {
+    if (argc > 1 && strcasecmp(argv[1], "-sam") == 0) {
         ble_start_spam(COMPANY_SAMSUNG);
         return;
     }
 
-    if (argc > 1 && strcasecmp(argv[1], "-apple") == 0) {
+    if (argc > 1 && strcasecmp(argv[1], "-a") == 0) {
         ble_start_spam(COMPANY_APPLE);
         return;
     }
 
-    if (argc > 1 && strcasecmp(argv[1], "-google") == 0) {
+    if (argc > 1 && strcasecmp(argv[1], "-g") == 0) {
         ble_start_spam(COMPANY_GOOGLE);
         return;
     }
 
-    if (argc > 1 && strcasecmp(argv[1], "-microsoft") == 0) {
+    if (argc > 1 && strcasecmp(argv[1], "-m") == 0) {
         ble_start_spam(COMPANY_MICROSOFT);
         return;
     }

@@ -96,6 +96,9 @@
         "ble.h": "c",
         "ble_gap.h": "c",
         "nimble_port_freertos.h": "c",
-        "commandline.h": "c"
+        "commandline.h": "c",
+        "ap_manager.h": "c",
+        "esp_event.h": "c",
+        "ghost_esp_site.h": "c"
     }
 }
