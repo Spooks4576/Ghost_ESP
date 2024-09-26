@@ -66,6 +66,7 @@ void ble_spam_stop(void);
 void stop_ble_stack(void);
 void ble_start_airtag_scanner(void);
 void ble_start_raw_ble_packetscan(void);
+void ble_spam_task_all(void *param);
 void ble_start_blespam_detector(void);
 void ble_start_spam(company_type_t company);
 

@@ -600,6 +600,18 @@ void ble_spam_task(void *param)
     }
 }
 
+void ble_spam_task_all(void *param)
+{
+    rgb_manager_set_color(&rgb_manager, 0, 0, 0, 255, false);
+
+    while (1)
+    {
+        send_ble_advertisement(COMPANY_SAMSUNG);
+        send_ble_advertisement(COMPANY_APPLE); // Spam 2 for now others need to be tested
+    }
+}
+
+
 void ble_start_spam(company_type_t company) {
     if (!ble_spam_task_running) {
         ESP_LOGI(TAG_BLE, "Starting BLE transmission...");

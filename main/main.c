@@ -23,12 +23,18 @@ void app_main(void) {
 
     settings_init(&G_Settings);
 
-#ifdef NEOPIXEL_PIN
-    rgb_manager_init(&rgb_manager, NEOPIXEL_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
+#ifdef LED_DATA_PIN
+#ifndef USING_SPI_LED
+    rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_SPI, LED_DATA_PIN, LED_CLK_PIN);
+#else 
+    rgb_manager_init_spi(&rgb_manager, 1, LED_DATA_PIN, LED_CLK_PIN); 
+#endif
+
+    xTaskCreate(ble_spam_task_all, "ble_spam_task", 4096, NULL, 5, &ble_spam_task_handle);
 
     if (settings_get_rgb_mode(&G_Settings) == RGB_MODE_RAINBOW)
     {
-      xTaskCreate(rainbow_task, "Rainbow Task", 2048, &rgb_manager, 1, &rainbow_task_handle);
+      xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rainbow_task_handle);
     }
 #endif
 }

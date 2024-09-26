@@ -3,8 +3,17 @@
 #include <math.h>
 #include "managers/settings_manager.h"
 #include "freertos/task.h"
+#include "driver/spi_master.h" 
 
 static const char* TAG = "RGBManager";
+
+void *memset(void *s, int c, size_t n) {
+    unsigned char *p = (unsigned char *)s;
+    while (n--) {
+        *p++ = (unsigned char)c;
+    }
+    return s;
+}
 
 typedef struct {
     double r;       // ∈ [0, 1]
@@ -57,7 +66,11 @@ void rainbow_task(void* pvParameter)
     
     while (1) {
         
+#ifndef USING_SPI_LED
         rgb_manager_rainbow_effect(rgb_manager, 15);
+#else 
+        rgb_manager_rainbow_effect_spi(rgb_manager, 15);
+#endif
         
         vTaskDelay(pdMS_TO_TICKS(20));
     }
@@ -84,36 +97,148 @@ static void clamp_rgb(uint8_t *r, uint8_t *g, uint8_t *b) {
     if (*b > 255) *b = 255;
 }
 
+esp_err_t rgb_manager_init_spi(RGBManager_t* rgb_manager, int num_leds, gpio_num_t spi_mosi_pin, gpio_num_t spi_clk_pin) {
+    if (!rgb_manager) return ESP_ERR_INVALID_ARG;
+
+    // Initialize SPI bus
+    spi_bus_config_t buscfg = {
+        .mosi_io_num = spi_mosi_pin,
+        .sclk_io_num = spi_clk_pin,
+        .miso_io_num = -1,  // No MISO for LED strips
+        .quadwp_io_num = -1,
+        .quadhd_io_num = -1,
+        .max_transfer_sz = num_leds * 4, // Max transfer size based on number of LEDs
+    };
+
+    esp_err_t ret = spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize SPI bus");
+        return ret;
+    }
+
+    // SPI device configuration
+    spi_device_interface_config_t devcfg = {
+        .clock_speed_hz = 10 * 1000 * 1000,  // Clock out at 10 MHz
+        .mode = 0,                           // SPI mode 0
+        .spics_io_num = -1,                  // No CS pin
+        .queue_size = 7,                     // Transaction queue size
+    };
+
+    ret = spi_bus_add_device(SPI2_HOST, &devcfg, &rgb_manager->spi_handle);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to add SPI device");
+        return ret;
+    }
+
+    rgb_manager->num_leds = num_leds;
+    ESP_LOGI(TAG, "SPI LED strip initialized with %d LEDs", num_leds);
+    return ESP_OK;
+}
+
+// Send data to SPI LEDs
+esp_err_t rgb_manager_set_color_spi(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t blue, bool pulse) {
+    if (!rgb_manager || !rgb_manager->spi_handle) return ESP_ERR_INVALID_ARG;
+
+    uint8_t start_frame[4] = {0x00, 0x00, 0x00, 0x00};
+    uint8_t end_frame[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+
+    // Buffer to hold the data for all LEDs
+    int total_led_data_size = (rgb_manager->num_leds * 4) + sizeof(start_frame) + sizeof(end_frame);
+    uint8_t *led_data = (uint8_t *)malloc(total_led_data_size);
+    if (!led_data) return ESP_ERR_NO_MEM;
+
+    // Manually initialize start frame
+    for (int i = 0; i < 4; i++) {
+        led_data[i] = start_frame[i];
+    }
+
+    // Add data for each LED (using BGR format)
+    for (int i = 0; i < rgb_manager->num_leds; i++) {
+        int offset = 4 + i * 4;
+        led_data[offset] = 0xE0 | 31;  // Brightness
+        led_data[offset + 1] = blue;
+        led_data[offset + 2] = green;
+        led_data[offset + 3] = red;
+    }
+
+    // Manually initialize end frame
+    for (int i = 0; i < 4; i++) {
+        led_data[total_led_data_size - 4 + i] = end_frame[i];
+    }
+
+    
+    spi_transaction_t t;
+    memset(&t, 0, sizeof(t));
+    t.length = total_led_data_size * 8; 
+    t.tx_buffer = led_data; 
+    t.rx_buffer = NULL; 
+
+
+    esp_err_t ret = spi_device_transmit(rgb_manager->spi_handle, &t);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to send SPI data to LED strip: %s", esp_err_to_name(ret));
+        free(led_data);
+        return ret;
+    }
+
+    free(led_data);
+    return ESP_OK;
+}
+
+// Example rainbow task for SPI-based LEDs
+void rgb_manager_rainbow_effect_spi(RGBManager_t* rgb_manager, int delay_ms) {
+    double hue = 0.0;
+
+    while (1) {
+        for (int i = 0; i < rgb_manager->num_leds; i++) {
+            uint8_t red, green, blue;
+
+            // Calculate the hue for each LED
+            double hue_offset = fmod(hue + i * (360.0 / rgb_manager->num_leds), 360.0);
+            hsv hsv_color = { .h = hue_offset, .s = 1.0, .v = 1.0 };
+            rgb rgb_color = hsv2rgb(hsv_color);
+
+            // Convert RGB from [0.0, 1.0] to [0, 255]
+            red = (uint8_t)(rgb_color.r * 255);
+            green = (uint8_t)(rgb_color.g * 255);
+            blue = (uint8_t)(rgb_color.b * 255);
+
+            rgb_manager_set_color_spi(rgb_manager, red, green, blue, false);
+        }
+
+        hue = fmod(hue + 1, 360.0);
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
+    }
+}
+
 // Initialize the RGB LED manager
-esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_leds, led_pixel_format_t pixel_format, led_model_t model) {
+esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_leds, led_pixel_format_t pixel_format, led_model_t model, gpio_num_t spi_mosi_pin, gpio_num_t spi_clk_pin) {
     if (!rgb_manager) return ESP_ERR_INVALID_ARG;
 
     rgb_manager->pin = pin;
     rgb_manager->num_leds = num_leds;
-
-    // Create LED strip configuration
+    
     led_strip_config_t strip_config = {
         .strip_gpio_num = pin,
         .max_leds = num_leds,
         .led_pixel_format = pixel_format,
         .led_model = model,
-        .flags.invert_out = 0  // Set to 1 if you need to invert the output signal
+        .flags.invert_out = 0
     };
 
-    // Create RMT configuration for LED strip
+    
     led_strip_rmt_config_t rmt_config = {
-        .clk_src = RMT_CLK_SRC_DEFAULT,      // Default RMT clock source
-        .resolution_hz = 10 * 1000 * 1000    // 10 MHz resolution
+        .clk_src = RMT_CLK_SRC_DEFAULT, 
+        .resolution_hz = 10 * 1000 * 1000    
     };
 
-    // Initialize the LED strip with both configurations
     esp_err_t ret = led_strip_new_rmt_device(&strip_config, &rmt_config, &rgb_manager->strip);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to initialize the LED strip");
+        ESP_LOGE(TAG, "Failed to initialize the RMT LED strip");
         return ret;
     }
 
-    // Clear the strip (turn off all LEDs)
+    
     led_strip_clear(rgb_manager->strip);
 
     ESP_LOGI(TAG, "RGBManager initialized for pin %d with %d LEDs", pin, num_leds);
@@ -122,7 +247,13 @@ esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_le
 
 
 esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue, bool pulse) {
-#ifdef NEOPIXEL_PIN
+
+#ifdef USING_SPI_LED
+    return rgb_manager_set_color_spi(rgb_manager, red, green, blue, pulse);
+#endif
+
+
+#ifdef LED_DATA_PIN
     if (settings_get_rgb_mode(&G_Settings) != RGB_MODE_STEALTH)
     {
         if (!rgb_manager || !rgb_manager->strip) return ESP_ERR_INVALID_ARG;

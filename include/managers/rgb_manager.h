@@ -8,6 +8,7 @@
 typedef struct {
     gpio_num_t pin;                     // GPIO pin used for the LED strip
     led_strip_handle_t strip;           // Handle to the LED strip object
+    spi_device_handle_t *spi_handle;
     int num_leds;                       // Number of LEDs in the strip
 } RGBManager_t;
 
@@ -20,7 +21,7 @@ typedef struct {
  * @param model LED model (WS2812, SK6812, etc.)
  * @return esp_err_t ESP_OK on success, ESP_FAIL on failure
  */
-esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_leds, led_pixel_format_t pixel_format, led_model_t model);
+esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_leds, led_pixel_format_t pixel_format, led_model_t model, gpio_num_t spi_mosi_pin, gpio_num_t spi_clk_pin);
 
 /**
  * @brief Set the color of a specific LED in the strip
@@ -41,6 +42,12 @@ esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t 
 void rgb_manager_rainbow_effect(RGBManager_t* rgb_manager, int delay_ms);
 
 void rgb_manager_policesiren_effect(RGBManager_t* rgb_manager, int delay_ms);
+
+esp_err_t rgb_manager_init_spi(RGBManager_t* rgb_manager, int num_leds, gpio_num_t spi_mosi_pin, gpio_num_t spi_clk_pin);
+esp_err_t rgb_manager_set_color_spi(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t blue, bool pulse);
+
+void rgb_manager_rainbow_effect_spi(RGBManager_t* rgb_manager, int delay_ms);
+
 
 /**
  * @brief Deinitialize the RGB LED manager
