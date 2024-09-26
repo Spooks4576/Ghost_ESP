@@ -1,22 +1,12 @@
 #include "core/system_manager.h"
-#include "managers/ap_manager.h"
 #include "core/serial_manager.h"
 #include "managers/rgb_manager.h"
 #include "managers/settings_manager.h"
 #include "managers/wifi_manager.h"
+#include "managers/ap_manager.h"
 #include "managers/ble_manager.h"
 #include <esp_log.h>
 #include "core/commandline.h"
-
-int custom_log_vprintf(const char *format, va_list args) {
-  char buffer[256];
-  
-  vsnprintf(buffer, sizeof(buffer), format, args);
-
-  ap_manager_add_log(buffer);
-
-  return 0;
-}
 
 
 int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3){
@@ -39,7 +29,7 @@ void app_main(void) {
 
 #ifdef LED_DATA_PIN
 #ifndef USING_SPI_LED
-    rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812, LED_DATA_PIN, LED_CLK_PIN);
+    rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_SK6812, LED_DATA_PIN, LED_CLK_PIN);
 #else 
     rgb_manager_init_spi(&rgb_manager, 1, LED_DATA_PIN, LED_CLK_PIN); 
 #endif
@@ -49,6 +39,4 @@ void app_main(void) {
       xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rainbow_task_handle);
     }
 #endif
-
-  esp_log_set_vprintf(custom_log_vprintf);
 }

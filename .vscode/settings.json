@@ -100,6 +100,10 @@
         "ap_manager.h": "c",
         "esp_event.h": "c",
         "ghost_esp_site.h": "c",
-        "ctype.h": "c"
-    }
+        "ctype.h": "c",
+        "esp_wifi.h": "c",
+        "math.h": "c"
+    },
+    "idf.adapterTargetName": "esp32c6",
+    "idf.flashType": "UART"
 }

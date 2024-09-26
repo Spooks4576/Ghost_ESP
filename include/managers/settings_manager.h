@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <nvs_flash.h>
+#include "core/utils.h"
 #include <nvs.h>
 
 // Enum for RGB Modes
@@ -37,21 +38,16 @@ typedef struct {
     char apSSID[33];       // Max SSID length is 32 bytes + null terminator
     char apPassword[65];   // Max password length is 64 bytes + null terminator
 
+    const char* mdnsHostname;
+
     // RGB
     bool breathModeEnabled;
     bool rainbowModeEnabled;
     uint8_t rgbSpeed;
     StaticColor staticColor;
-
-    // Debug/Logs
-    char logLocation[129]; // Adjust size as needed
-    bool saveToSD;
-    bool loggingEnabled;
-
-    const char* mdnsHostname;
-
-    nvs_handle_t nvsHandle;
 } FSettings;
+
+
 
 // Function declarations
 void settings_init(FSettings* settings);
@@ -99,22 +95,11 @@ uint8_t settings_get_rgb_speed(const FSettings* settings);
 void settings_set_static_color(FSettings* settings, uint8_t red, uint8_t green, uint8_t blue);
 void settings_get_static_color(const FSettings* settings, uint8_t* red, uint8_t* green, uint8_t* blue);
 
-// Debug/Logs
-void settings_set_log_location(FSettings* settings, const char* location);
-const char* settings_get_log_location(const FSettings* settings);
-
-void settings_set_save_to_sd(FSettings* settings, bool enabled);
-bool settings_get_save_to_sd(const FSettings* settings);
-
-void settings_set_logging_enabled(FSettings* settings, bool enabled);
-bool settings_get_logging_enabled(const FSettings* settings);
-
-void settings_clear_logs(FSettings* settings);
-
 // Load and Save
 void settings_load(FSettings* settings);
 void settings_save(FSettings* settings);
 
 static FSettings G_Settings;
+static nvs_handle_t nvsHandle;
 
 #endif // SETTINGS_MANAGER_H

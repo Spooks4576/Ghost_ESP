@@ -1,0 +1,20 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "idf: build",
+            "type": "shell",
+            "command": "idf.py build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "idf: flash",
+            "type": "shell",
+            "command": "idf.py -p /dev/ttyUSB0 flash",
+            "problemMatcher": []
+        }
+    ]
+}

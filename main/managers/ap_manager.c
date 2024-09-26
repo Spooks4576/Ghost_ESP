@@ -13,8 +13,10 @@
 #include <core/serial_manager.h>
 #include <mdns.h>
 #include <cJSON.h>
+#include <math.h>
 
 #define MAX_LOG_BUFFER_SIZE 4096 // Adjust as needed
+#define MIN_(a,b) ((a) < (b) ? (a) : (b))
 static char log_buffer[MAX_LOG_BUFFER_SIZE];
 static size_t log_buffer_index = 0;
 
@@ -229,6 +231,12 @@ esp_err_t ap_manager_init(void) {
         ESP_LOGE(TAG, "Error registering URI /");
     }
 
+    ret = httpd_register_uri_handler(server, &uri_post_command);
+
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+
     ESP_LOGI(TAG, "HTTP server started");
 
     esp_wifi_set_ps(WIFI_PS_NONE);
@@ -276,6 +284,8 @@ void ap_manager_add_log(const char* log_message) {
         strcpy(&log_buffer[log_buffer_index], log_message);
         log_buffer_index += message_length;
     }
+
+    printf(log_message);
 }
 
 // Handler for GET requests (serves the HTML page)
@@ -291,7 +301,7 @@ static esp_err_t api_command_handler(httpd_req_t *req)
     int ret, command_len;
 
     
-    command_len = MIN(req->content_len, sizeof(content) - 1); 
+    command_len = MIN_(req->content_len, sizeof(content) - 1); 
 
     
     ret = httpd_req_recv(req, content, command_len);
@@ -336,10 +346,35 @@ static esp_err_t api_command_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-// Handler for /api/logs (returns the log buffer)
+
 static esp_err_t api_logs_handler(httpd_req_t* req) {
-    httpd_resp_set_type(req, "text/plain");
-    return httpd_resp_send(req, log_buffer, log_buffer_index);
+    httpd_resp_set_type(req, "text/event-stream");
+    httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
+    httpd_resp_set_hdr(req, "Connection", "keep-alive");
+
+    if (log_buffer_index > 0) {
+        char sse_event[2046];
+        size_t log_offset = 0;
+
+        while (log_offset < log_buffer_index) {
+            size_t chunk_size = log_buffer_index - log_offset;
+            if (chunk_size > 2046) {
+                chunk_size = 2046;
+            }
+
+            snprintf(sse_event, sizeof(sse_event), "data: %.*s\n\n", (int)chunk_size, log_buffer + log_offset);
+            httpd_resp_sendstr_chunk(req, sse_event);
+
+            log_offset += chunk_size;
+        }
+
+        log_buffer_index = 0;
+    } else {
+        httpd_resp_sendstr_chunk(req, "data: [No new logs]\n\n");
+    }
+
+    httpd_resp_sendstr_chunk(req, NULL);
+    return ESP_OK;
 }
 
 // Handler for /api/clear_logs (clears the log buffer)
@@ -426,22 +461,6 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     cJSON* static_color_b = cJSON_GetObjectItem(root, "static_color_b");
     if (static_color_r && static_color_g && static_color_b) {
         settings_set_static_color(settings, static_color_r->valueint, static_color_g->valueint, static_color_b->valueint);
-    }
-
-    // Debug/Logs Settings
-    cJSON* logs_location = cJSON_GetObjectItem(root, "logs_location");
-    if (logs_location) {
-        settings_set_log_location(settings, logs_location->valuestring);
-    }
-
-    cJSON* save_to_sd = cJSON_GetObjectItem(root, "save_to_sd");
-    if (save_to_sd) {
-        settings_set_save_to_sd(settings, save_to_sd->valueint);
-    }
-
-    cJSON* enable_logging = cJSON_GetObjectItem(root, "enable_logging");
-    if (enable_logging) {
-        settings_set_logging_enabled(settings, enable_logging->valueint);
     }
 
     // Save updated settings
