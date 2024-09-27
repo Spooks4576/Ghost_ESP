@@ -9,9 +9,9 @@
 #include "esp_log.h"
 #include "esp_check.h"
 #include "driver/rmt_tx.h"
-#include "vendor/led_strip.h"
-#include "vendor/led_strip_interface.h"
-#include "vendor/led_strip_rmt_encoder.h"
+#include "vendor/led/led_strip.h"
+#include "vendor/led/led_strip_interface.h"
+#include "vendor/led/led_strip_rmt_encoder.h"
 
 #define LED_STRIP_RMT_DEFAULT_RESOLUTION 10000000 // 10MHz resolution
 #define LED_STRIP_RMT_DEFAULT_TRANS_QUEUE_SIZE 4

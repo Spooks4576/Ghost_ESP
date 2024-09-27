@@ -3,7 +3,8 @@
 #include "managers/rgb_manager.h"
 #include "managers/ap_manager.h"
 #include <string.h>
-#include <stdio.h>  // For debugging purposes
+#include <stdio.h>
+#include <esp_log.h>
 
 // Define NVS keys
 // Existing keys
@@ -27,8 +28,11 @@ static const char* NVS_RAINBOW_MODE_KEY = "rainbow_mode";
 static const char* NVS_RGB_SPEED_KEY = "rgb_speed";
 static const char* NVS_STATIC_COLOR_KEY = "static_color";
 
+#define S_TAG "SETTINGS_LOAD"
+
 
 void settings_init(FSettings* settings) {
+
     // Initialize default values
     settings->rgbMode = RGB_MODE_STEALTH;
     settings->channelSwitchDelay = 1.0f; // Default to 1 second
@@ -183,30 +187,45 @@ void settings_get_static_color(const FSettings* settings, uint8_t* red, uint8_t*
     if (blue) *blue = settings->staticColor.blue;
 }
 
-// Load and Save functions
 void settings_load(FSettings* settings) {
     esp_err_t err;
+
+    ESP_LOGI(S_TAG, "Loading settings from NVS...");
 
     // Load existing settings
     uint8_t storedRGBMode = 0;
     err = nvs_get_u8(nvsHandle, NVS_RGB_MODE_KEY, &storedRGBMode);
     if (err == ESP_OK) {
         settings->rgbMode = (RGBMode)storedRGBMode;
+        ESP_LOGI(S_TAG, "RGB mode loaded: %d", storedRGBMode);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load RGB mode (err: %d)", err);
     }
 
     size_t required_size = sizeof(float);
     err = nvs_get_blob(nvsHandle, NVS_CHANNEL_SWITCH_DELAY_KEY, &settings->channelSwitchDelay, &required_size);
+    if (err == ESP_OK) {
+        ESP_LOGI(S_TAG, "Channel switch delay loaded: %f", settings->channelSwitchDelay);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load channel switch delay (err: %d)", err);
+    }
 
     int8_t enableChannelHopping = 0;
     err = nvs_get_i8(nvsHandle, NVS_ENABLE_CHANNEL_HOP_KEY, &enableChannelHopping);
     if (err == ESP_OK) {
         settings->enableChannelHopping = (bool)enableChannelHopping;
+        ESP_LOGI(S_TAG, "Channel hopping enabled: %d", enableChannelHopping);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load channel hopping setting (err: %d)", err);
     }
 
     int8_t randomBLEMacEnabled = 0;
     err = nvs_get_i8(nvsHandle, NVS_RANDOM_BLE_MAC_KEY, &randomBLEMacEnabled);
     if (err == ESP_OK) {
         settings->randomBLEMacEnabled = (bool)randomBLEMacEnabled;
+        ESP_LOGI(S_TAG, "Random BLE MAC enabled: %d", randomBLEMacEnabled);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load random BLE MAC setting (err: %d)", err);
     }
 
     // WiFi/BLE
@@ -214,46 +233,75 @@ void settings_load(FSettings* settings) {
     err = nvs_get_i8(nvsHandle, NVS_RANDOM_MAC_KEY, &randomMacEnabled);
     if (err == ESP_OK) {
         settings->randomMacEnabled = (bool)randomMacEnabled;
+        ESP_LOGI(S_TAG, "Random WiFi MAC enabled: %d", randomMacEnabled);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load random WiFi MAC setting (err: %d)", err);
     }
 
     uint16_t broadcastSpeed = 0;
     err = nvs_get_u16(nvsHandle, NVS_BROADCAST_SPEED_KEY, &broadcastSpeed);
     if (err == ESP_OK) {
         settings->broadcastSpeed = broadcastSpeed;
+        ESP_LOGI(S_TAG, "Broadcast speed loaded: %d", broadcastSpeed);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load broadcast speed (err: %d)", err);
     }
 
     // AP SSID/PWD
     size_t ssid_size = sizeof(settings->apSSID);
     err = nvs_get_str(nvsHandle, NVS_AP_SSID_KEY, settings->apSSID, &ssid_size);
+    if (err == ESP_OK) {
+        ESP_LOGI(S_TAG, "AP SSID loaded: %s", settings->apSSID);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load AP SSID (err: %d)", err);
+    }
 
     size_t pwd_size = sizeof(settings->apPassword);
     err = nvs_get_str(nvsHandle, NVS_AP_PASSWORD_KEY, settings->apPassword, &pwd_size);
+    if (err == ESP_OK) {
+        ESP_LOGI(S_TAG, "AP password loaded.");
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load AP password (err: %d)", err);
+    }
 
     // RGB
     int8_t breathModeEnabled = 0;
     err = nvs_get_i8(nvsHandle, NVS_BREATH_MODE_KEY, &breathModeEnabled);
     if (err == ESP_OK) {
         settings->breathModeEnabled = (bool)breathModeEnabled;
+        ESP_LOGI(S_TAG, "Breath mode enabled: %d", breathModeEnabled);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load breath mode setting (err: %d)", err);
     }
 
     int8_t rainbowModeEnabled = 0;
     err = nvs_get_i8(nvsHandle, NVS_RAINBOW_MODE_KEY, &rainbowModeEnabled);
     if (err == ESP_OK) {
         settings->rainbowModeEnabled = (bool)rainbowModeEnabled;
+        ESP_LOGI(S_TAG, "Rainbow mode enabled: %d", rainbowModeEnabled);
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load rainbow mode setting (err: %d)", err);
     }
 
     uint8_t rgbSpeed = 0;
     err = nvs_get_u8(nvsHandle, NVS_RGB_SPEED_KEY, &rgbSpeed);
     if (err == ESP_OK) {
         settings->rgbSpeed = rgbSpeed;
-    }
-    else 
-    {
+        ESP_LOGI(S_TAG, "RGB speed loaded: %d", rgbSpeed);
+    } else {
         settings->rgbSpeed = 15;
+        ESP_LOGE(S_TAG, "Failed to load RGB speed, setting default to 15 (err: %d)", err);
     }
 
     size_t color_size = sizeof(StaticColor);
     err = nvs_get_blob(nvsHandle, NVS_STATIC_COLOR_KEY, &settings->staticColor, &color_size);
+    if (err == ESP_OK) {
+        ESP_LOGI(S_TAG, "Static color loaded.");
+    } else {
+        ESP_LOGE(S_TAG, "Failed to load static color (err: %d)", err);
+    }
+
+    ESP_LOGI(S_TAG, "Settings load complete.");
 }
 
 void settings_save(FSettings* settings) {
@@ -321,12 +369,12 @@ void settings_save(FSettings* settings) {
         return;
     }
     
-    if (settings_get_rgb_mode(&G_Settings) == RGB_MODE_RAINBOW) {
-        xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rainbow_task_handle);
+    if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW) {
+        xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
     } else {
-        if (rainbow_task_handle != NULL) {
-            vTaskDelete(rainbow_task_handle);  // Delete the task
-            rainbow_task_handle = NULL;        // Reset the task handle
+        if (rgb_effect_task_handle != NULL) {
+            vTaskDelete(rgb_effect_task_handle);  // Delete the task
+            rgb_effect_task_handle = NULL;        // Reset the task handle
             rgb_manager_set_color(&rgb_manager, 1, 0, 0, 0, false);
         }
 

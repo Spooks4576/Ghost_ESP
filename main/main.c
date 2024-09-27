@@ -13,6 +13,16 @@ int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3){
   return 0;
 }
 
+int custom_vprintf(const char *fmt, va_list args)
+{
+  char buffer[256];
+  int len = vsnprintf(buffer, sizeof(buffer), fmt, args);
+
+  ap_manager_add_log(buffer);
+
+  return len;
+}
+
 void app_main(void) {
     system_manager_init();
     serial_manager_init();
@@ -23,20 +33,19 @@ void app_main(void) {
 
     register_commands();
 
-    settings_init(&G_Settings);
+    G_Settings = malloc(sizeof(FSettings));
+
+    settings_init(G_Settings);
 
     ap_manager_init();
 
+    esp_log_set_vprintf(custom_vprintf);
 #ifdef LED_DATA_PIN
-#ifndef USING_SPI_LED
-    rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_SK6812, LED_DATA_PIN, LED_CLK_PIN);
-#else 
-    rgb_manager_init_spi(&rgb_manager, 1, LED_DATA_PIN, LED_CLK_PIN); 
-#endif
+    rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_SK6812);
 
-    if (settings_get_rgb_mode(&G_Settings) == RGB_MODE_RAINBOW)
+    if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW)
     {
-      xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rainbow_task_handle);
+      xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
     }
 #endif
 }

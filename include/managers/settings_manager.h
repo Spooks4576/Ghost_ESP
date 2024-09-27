@@ -99,7 +99,7 @@ void settings_get_static_color(const FSettings* settings, uint8_t* red, uint8_t*
 void settings_load(FSettings* settings);
 void settings_save(FSettings* settings);
 
-static FSettings G_Settings;
+FSettings* G_Settings;
 static nvs_handle_t nvsHandle;
 
 #endif // SETTINGS_MANAGER_H

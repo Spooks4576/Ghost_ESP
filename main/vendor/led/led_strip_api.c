@@ -5,8 +5,8 @@
  */
 #include "esp_log.h"
 #include "esp_check.h"
-#include "vendor/led_strip.h"
-#include "vendor/led_strip_interface.h"
+#include "vendor/led/led_strip.h"
+#include "vendor/led/led_strip_interface.h"
 
 static const char *TAG = "led_strip";
 

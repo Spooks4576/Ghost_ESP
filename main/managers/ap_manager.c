@@ -74,10 +74,9 @@ esp_err_t ap_manager_init(void) {
         return ret;
     }
 
-
-    const char* ssid = (strlen(G_Settings.apSSID) > 0) ? G_Settings.apSSID : "GhostNet";
-
-    const char* password = (strlen(G_Settings.apPassword) > 0) ? G_Settings.apPassword : "GhostNet";
+    const char* ssid = strlen(settings_get_ap_ssid(G_Settings)) > 0 ? settings_get_ap_ssid(G_Settings) : "GhostNet";
+    
+    const char* password = strlen(settings_get_ap_password(G_Settings)) > 8 ? settings_get_ap_password(G_Settings) : "GhostNet";
 
     
     wifi_config_t wifi_config = {
@@ -131,7 +130,7 @@ esp_err_t ap_manager_init(void) {
         return ret;
     }
 
-    ESP_LOGI(TAG, "Wi-Fi Access Point started with SSID: %s", "GhostNet");
+    ESP_LOGI(TAG, "Wi-Fi Access Point started with SSID: %s", ssid);
 
     // Register event handlers for Wi-Fi events if not registered already
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
@@ -146,25 +145,16 @@ esp_err_t ap_manager_init(void) {
     }
 
     
-    FSettings* settings = &G_Settings;
-    if (settings->mdnsHostname == NULL) {
-        settings->mdnsHostname = malloc(64 * sizeof(char));
-        if (settings->mdnsHostname == NULL) {
-            ESP_LOGE(TAG, "Failed to allocate memory for mDNS hostname");
-            return ESP_ERR_NO_MEM; 
-        }
-    }
+    FSettings* settings = G_Settings;
 
-    strcpy(settings->mdnsHostname, "ghostesp");
-
-    ret = mdns_hostname_set(settings->mdnsHostname);
+    ret = mdns_hostname_set("ghostesp");
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "mdns_hostname_set failed: %s", esp_err_to_name(ret));
         return ret;
     }
 
     
-    ESP_LOGI(TAG, "mDNS hostname set to %s.local", settings->mdnsHostname);
+    ESP_LOGI(TAG, "mDNS hostname set to %s.local", "ghostesp");
 
     ret = mdns_service_add(NULL, "_http", "_http", 80, NULL, 0);
     if (ret != ESP_OK) {
@@ -417,7 +407,7 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     }
 
     // Update settings
-    FSettings* settings = &G_Settings;
+    FSettings* settings = G_Settings;
 
     // WiFi/BLE Settings
     cJSON* random_mac = cJSON_GetObjectItem(root, "random_mac");
@@ -449,6 +439,14 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     cJSON* rainbow_mode = cJSON_GetObjectItem(root, "rainbow_mode");
     if (rainbow_mode) {
         settings_set_rainbow_mode_enabled(settings, rainbow_mode->valueint);
+        if (rainbow_mode->valueint)
+        {
+            settings_set_rgb_mode(G_Settings, RGB_MODE_RAINBOW);
+        }
+        else 
+        {
+            settings_set_rgb_mode(G_Settings, RGB_MODE_NORMAL);
+        }
     }
 
     cJSON* rgb_speed = cJSON_GetObjectItem(root, "rgb_speed");

@@ -10,8 +10,8 @@
 #include "esp_check.h"
 #include "esp_rom_gpio.h"
 #include "soc/spi_periph.h"
-#include "vendor/led_strip.h"
-#include "vendor/led_strip_interface.h"
+#include "vendor/led/led_strip.h"
+#include "vendor/led/led_strip_interface.h"
 #include "hal/spi_hal.h"
 
 #define LED_STRIP_SPI_DEFAULT_RESOLUTION (2.5 * 1000 * 1000) // 2.5MHz resolution

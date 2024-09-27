@@ -468,7 +468,7 @@ void wifi_deauth_task(void *param) {
             {
                 uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                 wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                vTaskDelay(settings_get_broadcast_speed(&G_Settings) / portTICK_PERIOD_MS);
+                vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
             }
         }
     }
@@ -707,7 +707,7 @@ void wifi_beacon_task(void *param) {
             wifi_manager_broadcast_ap(ssid);
         }
 
-        vTaskDelay(settings_get_broadcast_speed(&G_Settings) / portTICK_PERIOD_MS);
+        vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
 
 
         uint8_t random_channel = (esp_random() % 11) + 1;
