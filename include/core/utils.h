@@ -46,6 +46,9 @@ void scale_grb_by_brightness(uint8_t *g, uint8_t *r, uint8_t *b, float brightnes
     if (*b < 0) *b = 0;
 }
 
+bool is_in_task_context(void);
+
+
 #define WRAP_MESSAGE(msg) wrap_message(msg, __FILE__, __LINE__)
 
 #endif // SERIAL_MANAGER_H

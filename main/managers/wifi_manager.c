@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <esp_random.h>
+#include "managers/ap_manager.h"
 #include <ctype.h>
 #include <stdio.h>
 #include "managers/settings_manager.h"
@@ -322,8 +323,13 @@ void wifi_manager_init() {
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-// Start scanning for available networks
 void wifi_manager_start_scan() {
+    ap_manager_stop_services();
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    
     wifi_scan_config_t scan_config = {
         .ssid = NULL,
         .bssid = NULL,
@@ -331,19 +337,18 @@ void wifi_manager_start_scan() {
         .show_hidden = true
     };
 
-    ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, false));
-    ESP_LOGI(TAG, "WiFi scanning started...");
-
-    uint32_t random_duration = 5 + (esp_random() % 6);
-
+    
     rgb_manager_set_color(&rgb_manager, 0, 50, 255, 50, false);
 
+    ESP_LOGI(TAG, "WiFi scanning started...");
+    ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, true));
 
-    vTaskDelay(random_duration * 1000 / portTICK_PERIOD_MS);
-
-
+    
     wifi_manager_stop_scan();
+    ESP_ERROR_CHECK(esp_wifi_stop());
+    ESP_ERROR_CHECK(ap_manager_start_services());
 }
+
 
 // Stop scanning for networks
 void wifi_manager_stop_scan() {
@@ -482,6 +487,7 @@ void wifi_manager_start_deauth()
         xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23, false);
+        ap_manager_stop_services();
     } else {
         ESP_LOGW(TAG, "Deauth transmission already running.");
     }
@@ -530,6 +536,7 @@ void wifi_manager_stop_deauth()
             deauth_task_handle = NULL;
             beacon_task_running = false;
             rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
+            ESP_ERROR_CHECK(ap_manager_start_services());
         }
     } else {
         ESP_LOGW(TAG, "No deauth transmission is running.");
@@ -665,6 +672,7 @@ void wifi_manager_stop_beacon()
             beacon_task_running = false;
         }
         rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
+        ESP_ERROR_CHECK(ap_manager_start_services());
     } else {
         ESP_LOGW(TAG, "No beacon transmission is running.");
     }
@@ -720,6 +728,7 @@ void wifi_beacon_task(void *param) {
 
 void wifi_manager_start_beacon(const char *ssid) {
     if (!beacon_task_running) {
+        ap_manager_stop_services();
         ESP_LOGI(TAG, "Starting beacon transmission...");
         xTaskCreate(wifi_beacon_task, "beacon_task", 2048, (void *)ssid, 5, &beacon_task_handle);
         beacon_task_running = true;

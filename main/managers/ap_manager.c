@@ -231,7 +231,6 @@ esp_err_t ap_manager_init(void) {
 
     esp_wifi_set_ps(WIFI_PS_NONE);
 
-    
     esp_netif_ip_info_t ip_info;
     if (esp_netif_get_ip_info(ap_netif, &ip_info) == ESP_OK) {
         ESP_LOGI(TAG, "ESP32 AP IP Address: " IPSTR, IP2STR(&ip_info.ip));
@@ -278,6 +277,129 @@ void ap_manager_add_log(const char* log_message) {
     printf(log_message);
 }
 
+esp_err_t ap_manager_start_services() {
+    esp_err_t ret;
+
+    // Set Wi-Fi mode to AP
+    ret = esp_wifi_set_mode(WIFI_MODE_AP);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "esp_wifi_set_mode failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    // Start Wi-Fi
+    ret = esp_wifi_start();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "esp_wifi_start failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    // Start mDNS
+    ret = mdns_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_init failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = mdns_hostname_set("ghostesp");
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_hostname_set failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_service_add failed: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    // Start HTTPD server
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.server_port = 80;
+
+    ret = httpd_start(&server, &config);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error starting HTTP server!");
+        return ret;
+    }
+
+     httpd_uri_t uri_get = {
+        .uri       = "/",
+        .method    = HTTP_GET,
+        .handler   = http_get_handler,
+        .user_ctx  = NULL
+    };
+
+    httpd_uri_t uri_post_logs = {
+        .uri       = "/api/logs",
+        .method    = HTTP_GET,
+        .handler   = api_logs_handler,
+        .user_ctx  = NULL
+    };
+
+
+    httpd_uri_t uri_post_settings = {
+        .uri       = "/api/settings",
+        .method    = HTTP_POST,
+        .handler   = api_settings_handler,
+        .user_ctx  = NULL
+    };
+
+    httpd_uri_t uri_post_command = {
+        .uri       = "/api/command",
+        .method    = HTTP_POST,
+        .handler   = api_command_handler,
+        .user_ctx  = NULL
+    };
+
+    ret = httpd_register_uri_handler(server, &uri_post_logs);
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+
+
+    ret = httpd_register_uri_handler(server, &uri_post_settings);
+
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+    ret = httpd_register_uri_handler(server, &uri_get);
+
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+
+    ret = httpd_register_uri_handler(server, &uri_post_command);
+
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+
+    ESP_LOGI(TAG, "HTTP server started");
+
+    esp_netif_t* ap_netif = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
+    
+    esp_netif_ip_info_t ip_info;
+    if (esp_netif_get_ip_info(ap_netif, &ip_info) == ESP_OK) {
+        ESP_LOGI(TAG, "ESP32 AP IP Address: " IPSTR, IP2STR(&ip_info.ip));
+    } else {
+        ESP_LOGE(TAG, "Failed to get IP address");
+    }
+
+    return ESP_OK;
+}
+
+void ap_manager_stop_services()
+{
+    if (server) {
+        httpd_stop(server);
+        server = NULL;
+    }
+
+    mdns_free();
+
+    ESP_ERROR_CHECK(esp_wifi_stop());
+}
 // Handler for GET requests (serves the HTML page)
 static esp_err_t http_get_handler(httpd_req_t* req) {
     ESP_LOGI(TAG, "Received HTTP GET request: %s", req->uri);

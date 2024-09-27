@@ -125,7 +125,7 @@ esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t 
 #ifdef LED_DATA_PIN
     if (!rgb_manager || !rgb_manager->strip) return ESP_ERR_INVALID_ARG;
 
-    scale_grb_by_brightness(&green, &red, &blue, 0.1);
+    scale_grb_by_brightness(&green, &red, &blue, 0.6);
 
     
     esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, 0, red, green, blue);
@@ -137,7 +137,7 @@ esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t 
 
     return led_strip_refresh(rgb_manager->strip);
 #endif
-    return ESP_ERR_INVALID_ARG;
+    return ESP_OK;
 }
 
 // Rainbow effect
