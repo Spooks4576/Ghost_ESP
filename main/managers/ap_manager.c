@@ -434,6 +434,14 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     cJSON* breath_mode = cJSON_GetObjectItem(root, "breath_mode");
     if (breath_mode) {
         settings_set_breath_mode_enabled(settings, breath_mode->valueint);
+        if (breath_mode->valueint)
+        {
+            settings_set_rgb_mode(G_Settings, RGB_MODE_STEALTH);
+        }
+        else 
+        {
+            settings_set_rgb_mode(G_Settings, RGB_MODE_NORMAL);
+        }
     }
 
     cJSON* rainbow_mode = cJSON_GetObjectItem(root, "rainbow_mode");
@@ -443,7 +451,7 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         {
             settings_set_rgb_mode(G_Settings, RGB_MODE_RAINBOW);
         }
-        else 
+        else if (breath_mode->valueint == 0)
         {
             settings_set_rgb_mode(G_Settings, RGB_MODE_NORMAL);
         }

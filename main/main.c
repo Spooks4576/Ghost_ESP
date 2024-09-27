@@ -41,11 +41,11 @@ void app_main(void) {
 
     esp_log_set_vprintf(custom_vprintf);
 #ifdef LED_DATA_PIN
-    rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_SK6812);
+    rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
 
     if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW)
     {
-      xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
+    xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
     }
 #endif
 }
