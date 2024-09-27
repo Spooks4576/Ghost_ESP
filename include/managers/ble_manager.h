@@ -28,7 +28,6 @@ typedef struct {
 static void* ble_spam_task_handle;
 static int ble_spam_task_running = 0;
 
-
 typedef enum {
     COMPANY_APPLE = 0,
     COMPANY_GOOGLE = 1,
