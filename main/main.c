@@ -24,30 +24,29 @@ int custom_vprintf(const char *fmt, va_list args)
 }
 
 void app_main(void) {
-    system_manager_init();
-    serial_manager_init();
-    wifi_manager_init();
-    ble_init();
+  system_manager_init();
+  serial_manager_init();
+  wifi_manager_init();
+  ble_init();
 
+  command_init();
 
-    command_init();
+  register_commands();
 
-    register_commands();
+  G_Settings = malloc(sizeof(FSettings));
 
-    G_Settings = malloc(sizeof(FSettings));
+  settings_init(G_Settings);
 
-    settings_init(G_Settings);
+  ap_manager_init();
 
-    ap_manager_init();
-
-    esp_log_set_vprintf(custom_vprintf);
+  esp_log_set_vprintf(custom_vprintf);
 
 #ifdef LED_DATA_PIN
-    rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
+  rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
 
-    if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW)
-    {
-    xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
-    }
+  if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW)
+  {
+  xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
+  }
 #endif
 }
