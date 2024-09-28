@@ -29,6 +29,7 @@ void app_main(void) {
     wifi_manager_init();
     ble_init();
 
+
     command_init();
 
     register_commands();
@@ -40,6 +41,7 @@ void app_main(void) {
     ap_manager_init();
 
     esp_log_set_vprintf(custom_vprintf);
+
 #ifdef LED_DATA_PIN
     rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
 

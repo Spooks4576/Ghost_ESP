@@ -343,43 +343,6 @@ void handle_set_setting(int argc, char **argv)
     settings_save(&G_Settings);
 }
 
-void handle_ble_spam_cmd(int argc, char **argv)
-{
-
-    if (argc > 1 && strcmp(argv[1], "-s") == 0) {
-        ap_manager_add_log("Stopping BLE Spam\n");
-        ble_spam_stop();
-        return;
-    }
-
-    if (argc > 1 && strcasecmp(argv[1], "-sam") == 0) {
-        ap_manager_add_log("Start Samsung BLE Spam\n");
-        ble_start_spam(COMPANY_SAMSUNG);
-        return;
-    }
-
-    if (argc > 1 && strcasecmp(argv[1], "-a") == 0) {
-        ap_manager_add_log("Start Apple BLE Spam\n");
-        ble_start_spam(COMPANY_APPLE);
-        return;
-    }
-
-    if (argc > 1 && strcasecmp(argv[1], "-g") == 0) {
-        ap_manager_add_log("Start Google BLE Spam\n");
-        ble_start_spam(COMPANY_GOOGLE);
-        return;
-    }
-
-    if (argc > 1 && strcasecmp(argv[1], "-m") == 0) {
-        ap_manager_add_log("Start Microsoft BLE Spam\n");
-        ble_start_spam(COMPANY_MICROSOFT);
-        return;
-    }
-
-    ap_manager_add_log("Unknown Company Specified....");
-    return;
-}
-
 
 void register_commands() {
     register_command("scanap", cmd_wifi_scan_start);
@@ -393,5 +356,4 @@ void register_commands() {
     register_command("select", handle_select_cmd);
     register_command("setsetting", handle_set_setting);
     register_command("blescan", handle_ble_scan_cmd);
-    register_command("blespam", handle_ble_spam_cmd);
 }
