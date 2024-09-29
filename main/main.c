@@ -4,7 +4,9 @@
 #include "managers/settings_manager.h"
 #include "managers/wifi_manager.h"
 #include "managers/ap_manager.h"
+#ifdef CONFIG_BT_ENABLED
 #include "managers/ble_manager.h"
+#endif
 #include <esp_log.h>
 #include "core/commandline.h"
 
@@ -27,7 +29,14 @@ void app_main(void) {
   system_manager_init();
   serial_manager_init();
   wifi_manager_init();
+#ifdef CONFIG_BT_ENABLED
   ble_init();
+#endif
+
+#ifdef USB_MODULE
+  wifi_manager_auto_deauth();
+  return;
+#endif
 
   command_init();
 

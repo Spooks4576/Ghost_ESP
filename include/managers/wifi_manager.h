@@ -90,6 +90,8 @@ esp_err_t wifi_manager_broadcast_ap(const char *ssid);
 
 void wifi_manager_start_beacon(const char *ssid);
 
+void wifi_manager_auto_deauth();
+
 void wifi_manager_stop_beacon();
 
 void wifi_manager_stop_monitor_mode();

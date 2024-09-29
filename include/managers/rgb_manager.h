@@ -53,6 +53,8 @@ void rainbow_task(void* pvParameter);
 
 void police_task(void* pvParameter);
 
+void pulse_once(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t blue);
+
 
 RGBManager_t rgb_manager;
 

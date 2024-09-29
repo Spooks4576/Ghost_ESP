@@ -120,22 +120,55 @@ esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_le
     return ESP_OK;
 }
 
+void pulse_once(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t blue) {
+    uint8_t brightness = 0;
+    int direction = 1;
+
+    while (brightness <= 255 || brightness > 0) {
+        
+        float brightness_scale = brightness / 255.0;
+        uint8_t adj_red = red * brightness_scale;
+        uint8_t adj_green = green * brightness_scale;
+        uint8_t adj_blue = blue * brightness_scale;
+
+        
+        esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, 0, adj_red, adj_green, adj_blue);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to set LED color");
+            return; 
+        }
+
+        led_strip_refresh(rgb_manager->strip);
+
+        
+        brightness += direction * 5; 
+
+        if (brightness >= 255) {
+            direction = -1;
+        }
+
+        
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+}
+
 
 esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue, bool pulse) {
 #ifdef LED_DATA_PIN
     if (!rgb_manager || !rgb_manager->strip) return ESP_ERR_INVALID_ARG;
 
-    scale_grb_by_brightness(&green, &red, &blue, 0.3);
-
-    
-    esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, 0, red, green, blue);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set LED color");
-        return ret;
+    if (pulse) {
+        pulse_once(rgb_manager, red, green, blue);
+        return ESP_OK;
+    } else {
+        scale_grb_by_brightness(&green, &red, &blue, 0.3);
+        esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, led_idx, red, green, blue);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to set LED color");
+            return ret;
+        }
+        return led_strip_refresh(rgb_manager->strip);
     }
-
-
-    return led_strip_refresh(rgb_manager->strip);
 #endif
     return ESP_OK;
 }

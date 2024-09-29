@@ -188,6 +188,8 @@ void handle_select_cmd(int argc, char **argv)
     }
 }
 
+#ifdef CONFIG_BT_ENABLED
+
 void handle_ble_scan_cmd(int argc, char**argv)
 {
     if (argc > 1 && strcmp(argv[1], "-f") == 0) {
@@ -222,6 +224,8 @@ void handle_ble_scan_cmd(int argc, char**argv)
 
     ap_manager_add_log("Invalid Command Syntax...");
 }
+
+#endif
 
 void handle_set_setting(int argc, char **argv)
 {
@@ -355,5 +359,7 @@ void register_commands() {
     register_command("stopdeauth", handle_stop_deauth);
     register_command("select", handle_select_cmd);
     register_command("setsetting", handle_set_setting);
+#ifdef CONFIG_BT_ENABLED
     register_command("blescan", handle_ble_scan_cmd);
+#endif
 }

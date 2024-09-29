@@ -3,14 +3,15 @@
 #include <stdlib.h>
 #include "esp_log.h"
 #include "nvs_flash.h"
+#ifdef CONFIG_BT_ENABLED
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "nimble/nimble_port.h"
+#include "nimble/nimble_port_freertos.h"
 #include "host/ble_gap.h"
 #include "managers/ble_manager.h"
 #include "esp_random.h"
 #include <esp_mac.h>
-#include "nimble/nimble_port_freertos.h"
 #include <managers/rgb_manager.h>
 #include <managers/settings_manager.h>
 
@@ -419,33 +420,20 @@ esp_err_t ble_unregister_handler(ble_data_handler_t handler) {
 }
 
 void ble_init(void) {
+#ifdef CONFIG_BT_ENABLED
     nvs_flash_init();
     nimble_port_init();
 
     nimble_port_freertos_init(nimble_host_task);
 
     ESP_LOGI(TAG_BLE, "BLE initialized");
+#endif
 }
 
 void ble_start_find_flippers(void)
 {
     ble_register_handler(ble_findtheflippers_callback);
     ble_start_scanning();
-}
-
-void ble_spam_stop()
-{
-    rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
-    if (ble_spam_task_running) {
-        ESP_LOGI(TAG_BLE, "Stopping beacon transmission...");
-        if (ble_spam_task_handle != NULL) {
-            vTaskDelete(ble_spam_task_handle);
-            ble_spam_task_handle = NULL;
-            ble_spam_task_running = false;
-        }
-    } else {
-        ESP_LOGW(TAG_BLE, "No beacon transmission is running.");
-    }
 }
 
 void ble_stop(void) {
@@ -486,3 +474,5 @@ void ble_start_airtag_scanner(void)
     ble_register_handler(airtag_scanner_callback);
     ble_start_scanning();
 }
+
+#endif
