@@ -17,12 +17,12 @@
 #include "managers/settings_manager.h"
 
 
-static uint16_t ap_count = 0;
-static wifi_ap_record_t* scanned_aps = NULL;
-static const char *TAG = "WiFiManager";
-static EventGroupHandle_t wifi_event_group;
+uint16_t ap_count = 0;
+wifi_ap_record_t* scanned_aps = NULL;
+const char *TAG = "WiFiManager";
+EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
-static wifi_ap_record_t selected_ap = {};
+wifi_ap_record_t selected_ap;
 
 typedef enum {
     COMPANY_DLINK,
@@ -352,27 +352,63 @@ void wifi_manager_start_scan() {
 
 // Stop scanning for networks
 void wifi_manager_stop_scan() {
-    ESP_ERROR_CHECK(esp_wifi_scan_stop());
+    esp_err_t err;
+
+    err = esp_wifi_scan_stop();
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to stop WiFi scan: %s", esp_err_to_name(err));
+        return;
+    }
+
+
     wifi_manager_stop_monitor_mode();
+
 
     rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
 
-    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
 
-    if (ap_count > 0) {
-        scanned_aps = malloc(sizeof(wifi_ap_record_t) * ap_count);
+    uint16_t initial_ap_count = 0;
+    err = esp_wifi_scan_get_ap_num(&initial_ap_count);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to get AP count: %s", esp_err_to_name(err));
+        return;
+    }
+
+    ESP_LOGI(TAG, "Initial AP count: %u", initial_ap_count);
+
+    if (initial_ap_count > 0) {
+
+        if (scanned_aps != NULL) {
+            free(scanned_aps);
+            scanned_aps = NULL;
+        }
+
+
+        scanned_aps = calloc(initial_ap_count, sizeof(wifi_ap_record_t));
         if (scanned_aps == NULL) {
             ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+            ap_count = 0;
             return;
         }
 
-        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, scanned_aps));
 
-        ESP_LOGI(TAG, "Found %d access points", ap_count);
+        uint16_t actual_ap_count = initial_ap_count;
+        err = esp_wifi_scan_get_ap_records(&actual_ap_count, scanned_aps);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to get AP records: %s", esp_err_to_name(err));
+            free(scanned_aps);
+            scanned_aps = NULL;
+            ap_count = 0;
+            return;
+        }
+
+        ap_count = actual_ap_count;
+        ESP_LOGI(TAG, "Actual AP count retrieved: %u", ap_count);
     } else {
         ESP_LOGI(TAG, "No access points found");
+        ap_count = 0;
     }
-    
+
     ESP_LOGI(TAG, "WiFi scanning stopped.");
 }
 
@@ -504,9 +540,8 @@ void wifi_manager_select_ap(int index)
         return;
     }
 
-    
-    wifi_ap_record_t *ap_info = scanned_aps;
-    if (ap_info == NULL) {
+
+    if (scanned_aps == NULL) {
         ESP_LOGE(TAG, "No AP info available (scanned_aps is NULL)");
         return;
     }
@@ -516,9 +551,8 @@ void wifi_manager_select_ap(int index)
         ESP_LOGE(TAG, "Invalid index: %d. Index should be between 0 and %d", index, ap_count - 1);
         return;
     }
-
     
-    selected_ap = ap_info[index];
+    selected_ap = scanned_aps[index];
 
     
     ESP_LOGI(TAG, "Selected Access Point: SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
@@ -613,42 +647,44 @@ void wifi_manager_stop_deauth()
 
 // Print the scan results and match BSSID to known companies
 void wifi_manager_print_scan_results_with_oui() {
-    if (ap_count == 0) {
-        ESP_LOGI(TAG, "No access points found");
+
+    if (scanned_aps == NULL) {
+        ESP_LOGE(TAG, "AP information not available");
         return;
     }
 
-    wifi_ap_record_t *ap_info = scanned_aps;
-    if (ap_info == NULL) {
-        ESP_LOGE(TAG, "Failed to allocate memory for AP info");
-        return;
+    ESP_LOGI(TAG, "Found %u access points:", ap_count);
+
+    for (uint16_t i = 0; i < ap_count; i++) {
+        char ssid_temp[33];
+        memcpy(ssid_temp, scanned_aps[i].ssid, 32);
+        ssid_temp[32] = '\0';
+
+        
+        const char *ssid_str = (strlen(ssid_temp) > 0) ? ssid_temp : "Hidden Network";
+
+
+        ECompany company = match_bssid_to_company(scanned_aps[i].bssid);
+        const char* company_str = "Unknown";
+        switch (company) {
+            case COMPANY_DLINK: company_str = "DLink"; break;
+            case COMPANY_NETGEAR: company_str = "Netgear"; break;
+            case COMPANY_BELKIN: company_str = "Belkin"; break;
+            case COMPANY_TPLINK: company_str = "TPLink"; break;
+            case COMPANY_LINKSYS: company_str = "Linksys"; break;
+            case COMPANY_ASUS: company_str = "ASUS"; break;
+            case COMPANY_ACTIONTEC: company_str = "Actiontec"; break;
+            default: company_str = "Unknown"; break;
+        }
+
+        
+        ESP_LOGI(TAG, "[%u] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X, RSSI: %d, Company: %s",
+                i,
+                ssid_str,
+                scanned_aps[i].bssid[0], scanned_aps[i].bssid[1], scanned_aps[i].bssid[2],
+                scanned_aps[i].bssid[3], scanned_aps[i].bssid[4], scanned_aps[i].bssid[5],
+                scanned_aps[i].rssi, company_str);
     }
-
-
-    ESP_LOGI(TAG, "Found %d access points:", ap_count);
-
-    for (int i = 0; i < ap_count; i++) {
-        const char *ssid_str = (strlen((char *)ap_info[i].ssid) > 0) ? (char *)ap_info[i].ssid : "Hidden Network";
-
-        ECompany company = match_bssid_to_company(ap_info[i].bssid);
-        const char* company_str = (company == 0) ? "DLink" :
-                                  (company == 1) ? "Netgear" :
-                                  (company == 2) ? "Belkin" :
-                                  (company == 3) ? "TPLink" :
-                                  (company == 4) ? "Linksys" :
-                                  (company == 5) ? "ASUS" :
-                                  (company == 6) ? "Actiontec" :
-                                  "Unknown";
-
-        ESP_LOGI(TAG, "[%d] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X, RSSI: %d, Company: %s",
-                 i,
-                 ssid_str,
-                 ap_info[i].bssid[0], ap_info[i].bssid[1], ap_info[i].bssid[2],
-                 ap_info[i].bssid[3], ap_info[i].bssid[4], ap_info[i].bssid[5],
-                 ap_info[i].rssi, company_str);
-    }
-
-    free(ap_info);
 }
 
 

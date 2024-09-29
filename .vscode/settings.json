@@ -1,9 +1,10 @@
 {
     "idf.flashType": "UART",
-    "idf.adapterTargetName": "esp32c6",
+    "idf.adapterTargetName": "esp32s2",
     "files.associations": {
         "ble_hs.h": "c",
         "ble_manager.h": "c",
-        "esp_random.h": "c"
+        "esp_random.h": "c",
+        "settings_manager.h": "c"
     }
 }

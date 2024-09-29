@@ -398,7 +398,20 @@ void ap_manager_stop_services()
 
     mdns_free();
 
-    ESP_ERROR_CHECK(esp_wifi_stop());
+    wifi_mode_t wifi_mode;
+
+    esp_err_t err = esp_wifi_get_mode(&wifi_mode);
+
+    if (err == ESP_OK) {
+        if (wifi_mode == WIFI_MODE_NULL) {
+            ESP_LOGI(TAG, "Wi-Fi interface is inactive");
+        } else {
+            ESP_LOGI(TAG, "Wi-Fi interface is active, mode: %d", wifi_mode);
+            ESP_ERROR_CHECK(esp_wifi_stop());
+        }
+    } else {
+        ESP_LOGE(TAG, "Failed to get Wi-Fi mode, error: %d", err);
+    }
 }
 // Handler for GET requests (serves the HTML page)
 static esp_err_t http_get_handler(httpd_req_t* req) {
