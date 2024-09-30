@@ -405,7 +405,7 @@ void ap_manager_stop_services()
     if (err == ESP_OK) {
         if (wifi_mode == WIFI_MODE_NULL) {
             ESP_LOGI(TAG, "Wi-Fi interface is inactive");
-        } else {
+        } else if (wifi_mode == WIFI_MODE_AP){
             ESP_LOGI(TAG, "Wi-Fi interface is active, mode: %d", wifi_mode);
             ESP_ERROR_CHECK(esp_wifi_stop());
         }

