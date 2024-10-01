@@ -139,7 +139,7 @@ void pulse_once(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t b
         }
 
         led_strip_refresh(rgb_manager->strip);
-
+        
         
         brightness += direction * 5; 
 

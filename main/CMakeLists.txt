@@ -15,4 +15,4 @@ endforeach()
 # Register the component with the dynamically collected source files and include directories
 idf_component_register(SRCS ${app_sources}
                        INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/include"
-                       REQUIRES bt nvs_flash driver esp_http_server mdns json)
+                       REQUIRES bt nvs_flash driver esp_http_server mdns json esp_http_client mbedtls)

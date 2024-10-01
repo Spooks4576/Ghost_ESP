@@ -348,6 +348,48 @@ void handle_set_setting(int argc, char **argv)
 }
 
 
+void handle_start_portal(int argc, char **argv)
+{
+    if (argc != 5) {
+        printf("Error: Incorrect number of arguments.\n");
+        printf("Usage: %s <URL> <SSID> <Password> <AP_ssid>\n", argv[0]);
+        return;
+    }
+
+    char *url = argv[1];
+    char *ssid = argv[2];
+    char *password = argv[3];
+    char *ap_ssid = argv[4];
+
+
+    if (ssid == NULL || ssid[0] == '\0') {
+        printf("Error: SSID cannot be empty.\n");
+        return;
+    }
+
+    if (password == NULL || password[0] == '\0') {
+        printf("Error: Password cannot be empty.\n");
+        return;
+    }
+
+    if (ap_ssid == NULL || ap_ssid[0] == '\0') {
+        printf("Error: AP_ssid cannot be empty.\n");
+        return;
+    }
+
+     if (url == NULL || url[0] == '\0') {
+        printf("Error: url cannot be empty.\n");
+        return;
+    }
+
+    
+    printf("Starting portal with SSID: %s, Password: %s, AP_ssid: %s\n", ssid, password, ap_ssid);
+
+    
+    wifi_manager_start_evil_portal(url, ssid, password, ap_ssid);
+}
+
+
 void register_commands() {
     register_command("scanap", cmd_wifi_scan_start);
     register_command("scansta", handle_sta_scan);
@@ -359,6 +401,7 @@ void register_commands() {
     register_command("stopdeauth", handle_stop_deauth);
     register_command("select", handle_select_cmd);
     register_command("setsetting", handle_set_setting);
+    register_command("startportal", handle_start_portal);
 #ifdef CONFIG_BT_ENABLED
     register_command("blescan", handle_ble_scan_cmd);
 #endif

