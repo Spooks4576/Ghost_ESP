@@ -327,7 +327,8 @@ esp_err_t stream_remote_html(httpd_req_t *req) {
     int content_length = esp_http_client_fetch_headers(client);
     ESP_LOGI(TAG, "Content length: %d", content_length);
 
-    // Set the HTTP response content type for the client (for HTML)
+    
+    httpd_resp_set_status(req, "200 OK");
     httpd_resp_set_type(req, "text/html");
 
     // Buffer to hold the data being streamed
@@ -371,6 +372,110 @@ esp_err_t stream_remote_html(httpd_req_t *req) {
     return ESP_OK;
 }
 
+const char* get_content_type(const char *uri) {
+    if (strstr(uri, ".css")) {
+        return "text/css";
+    } else if (strstr(uri, ".js")) {
+        return "application/javascript";
+    } else if (strstr(uri, ".png")) {
+        return "image/png";
+    } else if (strstr(uri, ".jpg") || strstr(uri, ".jpeg")) {
+        return "image/jpeg";
+    } else if (strstr(uri, ".gif")) {
+        return "image/gif";
+    }
+    return "application/octet-stream";  // Default to binary stream if unknown
+}
+
+const char* get_host_from_req(httpd_req_t *req) {
+    size_t buf_len = httpd_req_get_hdr_value_len(req, "Host") + 1;
+    if (buf_len > 1) {
+        char *host = malloc(buf_len);
+        if (httpd_req_get_hdr_value_str(req, "Host", host, buf_len) == ESP_OK) {
+            ESP_LOGI(TAG, "Host header found: %s", host);
+            return host;  // Caller must free() this memory
+        }
+        free(host);
+    }
+    ESP_LOGW(TAG, "Host header not found");
+    return NULL;
+}
+
+void build_file_url(const char *host, const char *uri, char *file_url, size_t max_len) {
+    snprintf(file_url, max_len, "https://%s%s", host, uri);
+    ESP_LOGI(TAG, "File URL built: %s", file_url);
+}
+
+
+esp_err_t stream_file_to_client(httpd_req_t *req, const char *file_url) {
+    ESP_LOGI(TAG, "Requesting file from URL: %s", file_url);
+
+    
+    esp_http_client_config_t config = {
+        .url = file_url,
+        .timeout_ms = 5000,  // Set 5 seconds timeout
+        .crt_bundle_attach = esp_crt_bundle_attach,  // Certificate validation
+        .transport_type = HTTP_TRANSPORT_OVER_SSL,
+    };
+
+    
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (client == NULL) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        return ESP_FAIL;
+    }
+
+    
+    esp_err_t err = esp_http_client_open(client, 0);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+    
+    const char *content_type = get_content_type(file_url);
+    ESP_LOGI(TAG, "Content-Type: %s", content_type);
+    httpd_resp_set_type(req, content_type);
+
+   
+    char *buffer = (char *)malloc(CHUNK_SIZE + 1);  // +1 for null-termination
+    if (buffer == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for buffer");
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    
+    int read_len;
+    while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
+        // Send the chunk to the client
+        if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to send chunk to client");
+            break;
+        }
+    }
+
+    
+    if (read_len == 0) {
+        ESP_LOGI(TAG, "Finished reading file content");
+    } else if (read_len < 0) {
+        ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
+    }
+
+    // Free the buffer memory
+    free(buffer);
+
+    // Close the HTTP connection and clean up
+    esp_http_client_close(client);
+    esp_http_client_cleanup(client);
+
+    
+    httpd_resp_send_chunk(req, NULL, 0);
+
+    return ESP_OK;
+}
+
+
 esp_err_t portal_handler(httpd_req_t *req) {
     ESP_LOGI(TAG, "Client requested URL: %s", req->uri);
     esp_err_t err = stream_remote_html(req);
@@ -383,13 +488,34 @@ esp_err_t portal_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
-esp_err_t connectivity_check_handler(httpd_req_t *req) {
-    ESP_LOGI(TAG, "Received connectivity check from Android device");
+esp_err_t captive_portal_redirect_handler(httpd_req_t *req) {
+    ESP_LOGI(TAG, "Received request for captive portal detection endpoint: %s", req->uri);
 
-    // Send a basic HTML response (do NOT return 204 No Content)
-    const char *response = "<html><body><h1>Captive Portal Detected</h1></body></html>";
-    httpd_resp_send(req, response, strlen(response));
+    
+    httpd_resp_set_status(req, "301 Moved Permanently");
+    httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/portal.html");
+    httpd_resp_send(req, NULL, 0);
     return ESP_OK;
+}
+
+esp_err_t file_handler(httpd_req_t *req) {
+    const char *uri = req->uri;
+
+    const char *host = get_host_from_req(req);
+    if (host == NULL) {
+        httpd_resp_set_status(req, "400 Bad Request");
+        httpd_resp_send(req, NULL, 0);
+        return ESP_FAIL;
+    }
+
+    char file_url[256];
+    build_file_url(host, uri, file_url, sizeof(file_url));
+
+    esp_err_t result = stream_file_to_client(req, file_url);
+
+    free((void *)host);
+
+    return result;
 }
 
 httpd_handle_t start_portal_webserver(void) {
@@ -397,19 +523,63 @@ httpd_handle_t start_portal_webserver(void) {
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) == ESP_OK) {
         httpd_uri_t portal_uri = {
-            .uri      = "/",
+            .uri      = "/portal.html",
             .method   = HTTP_GET,
-            .handler  = connectivity_check_handler,
+            .handler  = portal_handler,
             .user_ctx = NULL
         };
         httpd_uri_t portal_uri_android = {
             .uri      = "/generate_204",
             .method   = HTTP_GET,
-            .handler  = connectivity_check_handler,
+            .handler  = captive_portal_redirect_handler,
             .user_ctx = NULL
         };
+        httpd_uri_t portal_uri_apple = {
+            .uri      = "/hotspot-detect.html",
+            .method   = HTTP_GET,
+            .handler  = captive_portal_redirect_handler,
+            .user_ctx = NULL
+        };
+        httpd_uri_t microsoft_uri = {
+            .uri      = "/connecttest.txt",
+            .method   = HTTP_GET,
+            .handler  = captive_portal_redirect_handler,
+            .user_ctx = NULL
+        };
+        httpd_uri_t portal_png = {
+            .uri      = ".png",
+            .method   = HTTP_GET,
+            .handler  = file_handler,
+            .user_ctx = NULL
+        };
+        httpd_uri_t portal_jpg = {
+            .uri      = ".jpg",
+            .method   = HTTP_GET,
+            .handler  = file_handler,
+            .user_ctx = NULL
+        };
+        httpd_uri_t portal_css = {
+            .uri      = ".css",
+            .method   = HTTP_GET,
+            .handler  = file_handler,
+            .user_ctx = NULL
+        };
+        httpd_uri_t portal_js = {
+            .uri      = ".js",
+            .method   = HTTP_GET,
+            .handler  = file_handler,
+            .user_ctx = NULL
+        };
+        httpd_register_uri_handler(server, &portal_uri_apple);
         httpd_register_uri_handler(server, &portal_uri);
         httpd_register_uri_handler(server, &portal_uri_android);
+
+
+        httpd_register_uri_handler(server, &portal_png);
+        httpd_register_uri_handler(server, &portal_jpg);
+        httpd_register_uri_handler(server, &portal_css);
+        httpd_register_uri_handler(server, &portal_js);
+        httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, captive_portal_redirect_handler);
     }
     return server;
 }
