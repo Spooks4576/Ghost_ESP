@@ -389,8 +389,145 @@ void handle_start_portal(int argc, char **argv)
     wifi_manager_start_evil_portal(url, ssid, password, ap_ssid);
 }
 
+void print_art()
+{
+    printf("@@@@@@@@@@@@@@@@@@@@@@#SSS#@@@@@@@@@@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@@@@@#&?*+;:*?**?&S#@@@@@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@@@S*+::+;:,;??****??&#@@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@S+;:;:+:,,,????***+**+?@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@?;::+;::,,,,*&&??***+?*,+@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@*::,;:,,,,,,,,*S&??***+;,,+@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@S::,,::,,,,,,,,*#&&&&;,,,,,,&@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@+::,,,::,,,,,,:?;:,;+,,,,,:,;@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@+::,,,:;:,,,,:;,,,,,,,,,,,::;@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@+:,,;&*;::::;:,,,,,,:;*&:,,,+@@@@@@@@@@@\n");
+    printf("@@@@@@#@@@&::,*@@&S?*+::,:,:+&S@@@*,,,&@@@#@@@@@@@\n");
+    printf("@@@@@@&#@@@+:,+@&;*+&#S+,+S#??+S@@+,:+@@@S&@@@@@@@\n");
+    printf("@@@@@@&?&S##+;:*&S&+S@#;,;#@&??&@*:;+@#S&??@@@@@@@\n");
+    printf("@@@@@@S**+?S+;+;;*&&&?++*;+&&S&*;++;+S?++*S@@@@@@@\n");
+    printf("@@@@@@@S?+;?*;;*:,,,,:+&&&;:,,,,:*;;*?++?S@@@@@@@@\n");
+    printf("@@@@@@@@@#&&#&+;:,,,,:?&&&?:,,,::++&#&&#@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@@@;,:,,,,::;::,,,,::+@@@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@@@+;*+*;;;+;+;;;**?;*@@@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@@&++&&S*?&&*&&??SSS+**?@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@#?;:*+++++;;;;;?++??**?;:+#@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@#*;,,:*;;;:,:::::+..,++++:::S@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@S+::,,++;;;;++++++....,,+*;:#@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@&*:,,,::;;:;::;:,;;,,,:+:;@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@#?++&??*+++;+;+++***&+++?@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@@@@#?+;::,,,,,::;+?@@@@@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@@@@@@@#S&?*?*?&S#@@@@@@@@@@@@@@@@@@@@\n");
+    printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+}
+
+void handle_help(int argc, char **argv) {
+    printf("\n Ghost ESP Commands:\n\n");
+
+    //print_art();
+    
+    printf("help\n");
+    printf("    Description: Display this help message.\n");
+    printf("    Usage: help\n\n");
+
+    printf("scanap\n");
+    printf("    Description: Start a Wi-Fi access point (AP) scan.\n");
+    printf("    Usage: scanap\n\n");
+
+    printf("scansta\n");
+    printf("    Description: Start scanning for Wi-Fi stations.\n");
+    printf("    Usage: scansta\n\n");
+
+    printf("stopscan\n");
+    printf("    Description: Stop any ongoing Wi-Fi scan.\n");
+    printf("    Usage: stopscan\n\n");
+
+    printf("attack\n");
+    printf("    Description: Launch an attack (e.g., deauthentication attack).\n");
+    printf("    Usage: attack -d\n");
+    printf("    Arguments:\n");
+    printf("        -d  : Start deauth attack\n\n");
+
+    printf("list\n");
+    printf("    Description: List Wi-Fi scan results or connected stations.\n");
+    printf("    Usage: list -a | list -s\n");
+    printf("    Arguments:\n");
+    printf("        -a  : Show access points from Wi-Fi scan\n");
+    printf("        -s  : List connected stations\n\n");
+
+    printf("beaconspam\n");
+    printf("    Description: Start beacon spam with different modes.\n");
+    printf("    Usage: beaconspam [OPTION]\n");
+    printf("    Arguments:\n");
+    printf("        -r   : Start random beacon spam\n");
+    printf("        -rr  : Start Rickroll beacon spam\n");
+    printf("        -l   : Start AP List beacon spam\n");
+    printf("        [SSID]: Use specified SSID for beacon spam\n\n");
+
+    printf("stopspam\n");
+    printf("    Description: Stop ongoing beacon spam.\n");
+    printf("    Usage: stopspam\n\n");
+
+    printf("stopdeauth\n");
+    printf("    Description: Stop ongoing deauthentication attack.\n");
+    printf("    Usage: stopdeauth\n\n");
+
+    printf("select\n");
+    printf("    Description: Select an access point by index from the scan results.\n");
+    printf("    Usage: select -a <number>\n");
+    printf("    Arguments:\n");
+    printf("        -a  : AP selection index (must be a valid number)\n\n");
+
+    printf("setsetting\n");
+    printf("    Description: Set various device settings.\n");
+    printf("    Usage: setsetting <index> <value>\n");
+    printf("    Arguments:\n");
+    printf("        <index>: Setting index (1: RGB mode, 2: Channel switch delay, 3: Channel hopping, 4: Random BLE MAC)\n");
+    printf("        <value>: Value corresponding to the setting (varies by setting index)\n");
+    printf("        RGB Mode Values:\n");
+    printf("            1: Stealth Mode\n");
+    printf("            2: Normal Mode\n");
+    printf("            3: Rainbow Mode\n");
+    printf("        Channel Switch Delay Values:\n");
+    printf("            1: 0.5s\n");
+    printf("            2: 1s\n");
+    printf("            3: 2s\n");
+    printf("            4: 3s\n");
+    printf("            5: 4s\n");
+    printf("        Channel Hopping Values:\n");
+    printf("            1: Disabled\n");
+    printf("            2: Enabled\n");
+    printf("        Random BLE MAC Values:\n");
+    printf("            1: Disabled\n");
+    printf("            2: Enabled\n\n");
+
+    printf("startportal\n");
+    printf("    Description: Start a portal with specified SSID and password.\n");
+    printf("    Usage: startportal <URL> <SSID> <Password> <AP_ssid>\n");
+    printf("    Arguments:\n");
+    printf("        <URL>       : URL for the portal\n");
+    printf("        <SSID>      : Wi-Fi SSID for the portal\n");
+    printf("        <Password>  : Wi-Fi password for the portal\n");
+    printf("        <AP_ssid>   : SSID for the access point\n\n");
+
+#ifdef CONFIG_BT_ENABLED
+    printf("blescan\n");
+    printf("    Description: Handle BLE scanning with various modes.\n");
+    printf("    Usage: blescan [OPTION]\n");
+    printf("    Arguments:\n");
+    printf("        -f   : Start 'Find the Flippers' mode\n");
+    printf("        -ds  : Start BLE spam detector\n");
+    printf("        -a   : Start AirTag scanner\n");
+    printf("        -r   : Scan for raw BLE packets\n");
+    printf("        -s   : Stop BLE scanning\n\n");
+#endif
+
+    printf("stopscan\n");
+    printf("    Description: Stop the ongoing Wi-Fi scan.\n");
+    printf("    Usage: stopscan\n\n");
+}
 
 void register_commands() {
+    register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
     register_command("scansta", handle_sta_scan);
     register_command("stopscan", cmd_wifi_scan_stop);

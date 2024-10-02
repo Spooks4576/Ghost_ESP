@@ -23,7 +23,7 @@
 #include "esp_crt_bundle.h"
 
 
-#define CHUNK_SIZE 4096
+#define CHUNK_SIZE 8192
 
 uint16_t ap_count;
 wifi_ap_record_t* scanned_aps;
@@ -32,6 +32,7 @@ char* PORTALURL = "";
 EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 wifi_ap_record_t selected_ap;
+bool redirect_handled = false;
 dns_server_handle_t dns_handle;
 esp_netif_t* wifiAP;
 esp_netif_t* wifiSTA;
@@ -298,78 +299,104 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
     }
 }
 
-esp_err_t stream_remote_html(httpd_req_t *req) {
-    // HTTPS client configuration
+esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *content_type) {
+    ESP_LOGI(TAG, "Requesting URL: %s", url);
+
+    // HTTPS client configuration with automatic redirect handling enabled
     esp_http_client_config_t config = {
-        .url = PORTALURL,
+        .url = url,
         .timeout_ms = 5000,  // Set 5 seconds timeout
-        .crt_bundle_attach = esp_crt_bundle_attach,  // Use certificate bundle for root CA validation
+        .crt_bundle_attach = esp_crt_bundle_attach,  // Certificate validation
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
         .user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",  // Browser-like User-Agent string
+        .disable_auto_redirect = false,  // Automatic redirection is enabled
     };
 
-    // Initialize HTTP client
+    // Initialize the HTTP client
     esp_http_client_handle_t client = esp_http_client_init(&config);
     if (client == NULL) {
         ESP_LOGE(TAG, "Failed to initialize HTTP client");
         return ESP_FAIL;
     }
 
-    // Open the connection with the server
-    esp_err_t err = esp_http_client_open(client, 0);  // 0 means we are not writing any data (read-only)
+    // Perform the HTTP request (this will handle redirects automatically)
+    esp_err_t err = esp_http_client_perform(client);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
         esp_http_client_cleanup(client);
         return ESP_FAIL;
     }
 
-    // Fetch the HTTP headers
-    int content_length = esp_http_client_fetch_headers(client);
-    ESP_LOGI(TAG, "Content length: %d", content_length);
+    // Get the final status code after any redirects
+    int http_status = esp_http_client_get_status_code(client);
+    ESP_LOGI(TAG, "Final HTTP Status code: %d", http_status);
 
-    
-    httpd_resp_set_status(req, "200 OK");
-    httpd_resp_set_type(req, "text/html");
+    // Handle 200 OK: Now we need to re-open the connection and stream content manually
+    if (http_status == 200) {
+        ESP_LOGI(TAG, "Received 200 OK. Re-opening connection for manual streaming...");
 
-    // Buffer to hold the data being streamed
-    char *buffer = (char *)malloc(CHUNK_SIZE + 1);  // +1 for null terminator
-    if (buffer == NULL) {
-        ESP_LOGE(TAG, "Failed to allocate memory for buffer");
-        esp_http_client_cleanup(client);
-        return ESP_FAIL;
-    }
-
-    // Stream the response content in chunks
-    int read_len;
-    while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
-        buffer[read_len] = '\0';  // Null-terminate for safety in logging
-        ESP_LOGI(TAG, "Read %d bytes from server", read_len);
-
-        // Send the chunk to the HTTP client
-        if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to send chunk to client");
-            break;
+        // Re-open the connection (we will now manually stream the content)
+        err = esp_http_client_open(client, 0);  // 0 means we're just reading the data
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to re-open HTTP connection for streaming: %s", esp_err_to_name(err));
+            esp_http_client_cleanup(client);
+            return ESP_FAIL;
         }
+
+        // Fetch headers again to get the content length (optional, depending on your needs)
+        int content_length = esp_http_client_fetch_headers(client);
+        ESP_LOGI(TAG, "Content length: %d", content_length);
+
+        // Set the content type for the response
+        if (content_type) {
+            ESP_LOGI(TAG, "Content-Type: %s", content_type);
+            httpd_resp_set_type(req, content_type);
+        } else {
+            ESP_LOGI(TAG, "Content-Type not provided, using default 'application/octet-stream'");
+            httpd_resp_set_type(req, "application/octet-stream");
+        }
+        httpd_resp_set_status(req, "200 OK");
+
+        // Allocate buffer for streaming
+        char *buffer = (char *)malloc(CHUNK_SIZE + 1);  // +1 for null termination
+        if (buffer == NULL) {
+            ESP_LOGE(TAG, "Failed to allocate memory for buffer");
+            esp_http_client_cleanup(client);
+            return ESP_FAIL;
+        }
+
+        // Read and stream the content chunk by chunk
+        int read_len;
+        while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
+            // Send the chunk to the HTTP server
+            if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to send chunk to client");
+                break;
+            }
+        }
+
+        // Check if reading ended properly
+        if (read_len == 0) {
+            ESP_LOGI(TAG, "Finished reading all data from server (end of content)");
+        } else if (read_len < 0) {
+            ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
+        }
+
+        // Free the buffer and close the connection
+        free(buffer);
+        esp_http_client_close(client);
+        esp_http_client_cleanup(client);
+
+        // Send the last chunk indicating the end of the response
+        httpd_resp_send_chunk(req, NULL, 0);  // NULL, 0 marks the end of the chunked response
+
+        return ESP_OK;
+
+    } else {
+        ESP_LOGE(TAG, "Unhandled HTTP status code: %d", http_status);
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
     }
-
-    // Check if reading ended properly
-    if (read_len == 0) {
-        ESP_LOGI(TAG, "Finished reading all data from server (end of content)");
-    } else if (read_len < 0) {
-        ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
-    }
-
-    // Free the buffer
-    free(buffer);
-
-    // Close the connection and cleanup
-    esp_http_client_close(client);
-    esp_http_client_cleanup(client);
-
-    // Send the last chunk indicating end of response
-    httpd_resp_send_chunk(req, NULL, 0);  // NULL, 0 marks the end of the chunked response
-
-    return ESP_OK;
 }
 
 const char* get_content_type(const char *uri) {
@@ -406,81 +433,50 @@ void build_file_url(const char *host, const char *uri, char *file_url, size_t ma
     ESP_LOGI(TAG, "File URL built: %s", file_url);
 }
 
-
-esp_err_t stream_file_to_client(httpd_req_t *req, const char *file_url) {
-    ESP_LOGI(TAG, "Requesting file from URL: %s", file_url);
-
-    
-    esp_http_client_config_t config = {
-        .url = file_url,
-        .timeout_ms = 5000,  // Set 5 seconds timeout
-        .crt_bundle_attach = esp_crt_bundle_attach,  // Certificate validation
-        .transport_type = HTTP_TRANSPORT_OVER_SSL,
-    };
+esp_err_t file_handler(httpd_req_t *req) {
+    const char *uri = req->uri;
 
     
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    if (client == NULL) {
-        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+    const char *host = get_host_from_req(req);
+    if (host == NULL) {
+        httpd_resp_set_status(req, "400 Bad Request");
+        httpd_resp_send(req, NULL, 0);
         return ESP_FAIL;
     }
 
     
-    esp_err_t err = esp_http_client_open(client, 0);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to open HTTP connection: %s", esp_err_to_name(err));
-        esp_http_client_cleanup(client);
-        return ESP_FAIL;
-    }
-    
-    const char *content_type = get_content_type(file_url);
-    ESP_LOGI(TAG, "Content-Type: %s", content_type);
-    httpd_resp_set_type(req, content_type);
-
-   
-    char *buffer = (char *)malloc(CHUNK_SIZE + 1);  // +1 for null-termination
-    if (buffer == NULL) {
-        ESP_LOGE(TAG, "Failed to allocate memory for buffer");
-        esp_http_client_cleanup(client);
-        return ESP_FAIL;
-    }
+    char file_url[256];
+    build_file_url(host, uri, file_url, sizeof(file_url));
 
     
-    int read_len;
-    while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
-        // Send the chunk to the client
-        if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to send chunk to client");
-            break;
-        }
-    }
+    const char *content_type = get_content_type(uri);
+    ESP_LOGI(TAG, "Determined content type: %s for URI: %s", content_type, uri);
 
     
-    if (read_len == 0) {
-        ESP_LOGI(TAG, "Finished reading file content");
-    } else if (read_len < 0) {
-        ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
-    }
+    esp_err_t result = stream_data_to_client(req, file_url, content_type);
 
-    // Free the buffer memory
-    free(buffer);
+    free((void *)host);
 
-    // Close the HTTP connection and clean up
-    esp_http_client_close(client);
-    esp_http_client_cleanup(client);
-
-    
-    httpd_resp_send_chunk(req, NULL, 0);
-
-    return ESP_OK;
+    return result;
 }
 
 
 esp_err_t portal_handler(httpd_req_t *req) {
     ESP_LOGI(TAG, "Client requested URL: %s", req->uri);
-    esp_err_t err = stream_remote_html(req);
+
+    
+    const char *portal_url = PORTALURL;
+
+
+    esp_err_t err = stream_data_to_client(req, portal_url, "text/html");
+    
     if (err != ESP_OK) {
-        const char *error_message = "<html><body><h1>Failed to fetch portal content</h1></body></html>";
+        const char *err_msg = esp_err_to_name(err);
+
+        char error_message[512];
+        snprintf(error_message, sizeof(error_message),
+                 "<html><body><h1>Failed to fetch portal content</h1><p>Error: %s</p></body></html>", err_msg);
+
         httpd_resp_set_type(req, "text/html");
         httpd_resp_send(req, error_message, strlen(error_message));
     }
@@ -498,25 +494,6 @@ esp_err_t captive_portal_redirect_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
-esp_err_t file_handler(httpd_req_t *req) {
-    const char *uri = req->uri;
-
-    const char *host = get_host_from_req(req);
-    if (host == NULL) {
-        httpd_resp_set_status(req, "400 Bad Request");
-        httpd_resp_send(req, NULL, 0);
-        return ESP_FAIL;
-    }
-
-    char file_url[256];
-    build_file_url(host, uri, file_url, sizeof(file_url));
-
-    esp_err_t result = stream_file_to_client(req, file_url);
-
-    free((void *)host);
-
-    return result;
-}
 
 httpd_handle_t start_portal_webserver(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
