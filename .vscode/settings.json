@@ -10,7 +10,8 @@
         "dhcpserver.h": "c",
         "esp_http_server.h": "c",
         "stdio.h": "c",
-        "dns_server.h": "c"
+        "dns_server.h": "c",
+        "esp_http_client.h": "c"
     },
     "idf.openOcdConfigs": [
         "board/esp32c6-builtin.cfg"

@@ -394,6 +394,12 @@ void handle_start_portal(int argc, char **argv)
     wifi_manager_start_evil_portal(url, ssid, password, ap_ssid, domain);
 }
 
+
+void stop_portal(int argc, char **argv)
+{
+    wifi_manager_stop_evil_portal();
+}
+
 void print_art()
 {
     printf("@@@@@@@@@@@@@@@@@@@@@@#SSS#@@@@@@@@@@@@@@@@@@@@@@@\n");
@@ -530,6 +536,10 @@ void handle_help(int argc, char **argv) {
     printf("stopscan\n");
     printf("    Description: Stop the ongoing Wi-Fi scan.\n");
     printf("    Usage: stopscan\n\n");
+
+    printf("stopportal\n");
+    printf("    Description: Stop Evil Portal\n");
+    printf("    Usage: stopportal\n\n");
 }
 
 void register_commands() {
@@ -545,6 +555,7 @@ void register_commands() {
     register_command("select", handle_select_cmd);
     register_command("setsetting", handle_set_setting);
     register_command("startportal", handle_start_portal);
+    register_command("stopportal", stop_portal);
 #ifdef CONFIG_BT_ENABLED
     register_command("blescan", handle_ble_scan_cmd);
 #endif

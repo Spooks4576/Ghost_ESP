@@ -110,6 +110,8 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
 
 void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type);
 
+void wifi_manager_stop_evil_portal();
+
 void wifi_manager_start_evil_portal(const char* URL, const char* SSID, const char* Password, const char* ap_ssid, const char* domain);
 
 #endif // WIFI_MANAGER_H

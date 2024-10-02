@@ -34,6 +34,7 @@ EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 wifi_ap_record_t selected_ap;
 bool redirect_handled = false;
+httpd_handle_t evilportal_server = NULL;
 dns_server_handle_t dns_handle;
 esp_netif_t* wifiAP;
 esp_netif_t* wifiSTA;
@@ -550,8 +551,7 @@ esp_err_t captive_portal_redirect_handler(httpd_req_t *req) {
 
 httpd_handle_t start_portal_webserver(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    httpd_handle_t server = NULL;
-    if (httpd_start(&server, &config) == ESP_OK) {
+    if (httpd_start(&evilportal_server, &config) == ESP_OK) {
         httpd_uri_t portal_uri = {
             .uri      = "/login",
             .method   = HTTP_GET,
@@ -600,19 +600,19 @@ httpd_handle_t start_portal_webserver(void) {
             .handler  = file_handler,
             .user_ctx = NULL
         };
-        httpd_register_uri_handler(server, &portal_uri_apple);
-        httpd_register_uri_handler(server, &portal_uri);
-        httpd_register_uri_handler(server, &portal_uri_android);
-        httpd_register_uri_handler(server, &microsoft_uri);
+        httpd_register_uri_handler(evilportal_server, &portal_uri_apple);
+        httpd_register_uri_handler(evilportal_server, &portal_uri);
+        httpd_register_uri_handler(evilportal_server, &portal_uri_android);
+        httpd_register_uri_handler(evilportal_server, &microsoft_uri);
 
 
-        httpd_register_uri_handler(server, &portal_png);
-        httpd_register_uri_handler(server, &portal_jpg);
-        httpd_register_uri_handler(server, &portal_css);
-        httpd_register_uri_handler(server, &portal_js);
-        httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, captive_portal_redirect_handler);
+        httpd_register_uri_handler(evilportal_server, &portal_png);
+        httpd_register_uri_handler(evilportal_server, &portal_jpg);
+        httpd_register_uri_handler(evilportal_server, &portal_css);
+        httpd_register_uri_handler(evilportal_server, &portal_js);
+        httpd_register_err_handler(evilportal_server, HTTPD_404_NOT_FOUND, captive_portal_redirect_handler);
     }
-    return server;
+    return evilportal_server;
 }
 
 void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid, const char* domain)
@@ -691,12 +691,33 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
     };
 
     // Start the DNS server with the configured settings
-    dns_server_handle_t dns_handle = start_dns_server(&dns_config);
+    dns_handle = start_dns_server(&dns_config);
     if (dns_handle) {
         ESP_LOGI(TAG, "DNS server started, all requests will be redirected to 192.168.4.1");
     } else {
         ESP_LOGE(TAG, "Failed to start DNS server");
     }
+}
+
+
+void wifi_manager_stop_evil_portal()
+{
+
+    if (dns_handle != NULL)
+    {
+        stop_dns_server(dns_handle);
+        dns_handle = NULL;
+    }
+
+    if (evilportal_server != NULL)
+    {
+        httpd_stop(evilportal_server);
+        evilportal_server = NULL;
+    }
+
+    ESP_ERROR_CHECK(esp_wifi_stop());
+
+    ap_manager_init();
 }
 
 
