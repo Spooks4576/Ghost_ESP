@@ -49,6 +49,11 @@ void scale_grb_by_brightness(uint8_t *g, uint8_t *r, uint8_t *b, float brightnes
 bool is_in_task_context(void);
 
 
+void url_decode(char *decoded, const char *encoded);
+
+int get_query_param_value(const char *query, const char *key, char *value, size_t value_size);
+
+
 #define WRAP_MESSAGE(msg) wrap_message(msg, __FILE__, __LINE__)
 
 #endif // SERIAL_MANAGER_H

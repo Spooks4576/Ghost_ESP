@@ -16,7 +16,7 @@
 
 #define UART_NUM UART_NUM_0
 #define BUF_SIZE (1024)
-#define SERIAL_BUFFER_SIZE 128
+#define SERIAL_BUFFER_SIZE 528
 
 char serial_buffer[SERIAL_BUFFER_SIZE];
 

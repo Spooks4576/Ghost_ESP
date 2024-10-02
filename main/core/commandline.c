@@ -350,9 +350,9 @@ void handle_set_setting(int argc, char **argv)
 
 void handle_start_portal(int argc, char **argv)
 {
-    if (argc != 5) {
+    if (argc != 6) {
         printf("Error: Incorrect number of arguments.\n");
-        printf("Usage: %s <URL> <SSID> <Password> <AP_ssid>\n", argv[0]);
+        printf("Usage: %s <URL> <SSID> <Password> <AP_ssid> <DOMAIN>\n", argv[0]);
         return;
     }
 
@@ -360,6 +360,7 @@ void handle_start_portal(int argc, char **argv)
     char *ssid = argv[2];
     char *password = argv[3];
     char *ap_ssid = argv[4];
+    char *domain = argv[5];
 
 
     if (ssid == NULL || ssid[0] == '\0') {
@@ -377,16 +378,20 @@ void handle_start_portal(int argc, char **argv)
         return;
     }
 
-     if (url == NULL || url[0] == '\0') {
+    if (url == NULL || url[0] == '\0') {
         printf("Error: url cannot be empty.\n");
         return;
     }
 
+    if (domain == NULL || domain[0] == '\0') {
+        printf("Error: domain cannot be empty.\n");
+        return;
+    }
     
     printf("Starting portal with SSID: %s, Password: %s, AP_ssid: %s\n", ssid, password, ap_ssid);
 
     
-    wifi_manager_start_evil_portal(url, ssid, password, ap_ssid);
+    wifi_manager_start_evil_portal(url, ssid, password, ap_ssid, domain);
 }
 
 void print_art()
@@ -508,6 +513,7 @@ void handle_help(int argc, char **argv) {
     printf("        <SSID>      : Wi-Fi SSID for the portal\n");
     printf("        <Password>  : Wi-Fi password for the portal\n");
     printf("        <AP_ssid>   : SSID for the access point\n\n");
+    printf("        <Domain>    : Custom Domain to Spoof In Address Bar\n\n");
 
 #ifdef CONFIG_BT_ENABLED
     printf("blescan\n");
