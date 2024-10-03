@@ -1,6 +1,7 @@
 #include "core/system_manager.h"
 #include "core/serial_manager.h"
 #include "core/commandline.h"
+#include "core/crash_handler.h"
 #include "managers/rgb_manager.h"
 #include "managers/settings_manager.h"
 #include "managers/wifi_manager.h"
@@ -49,6 +50,14 @@ void app_main(void) {
 
   ap_manager_init();
 
+  esp_err_t err = sd_card_init();
+
+#ifdef DEBUG
+  if (err == ESP_OK)
+  {
+    setup_custom_panic_handler();
+  }
+#endif
 
 #ifdef LED_DATA_PIN
   rgb_manager_init(&rgb_manager, LED_DATA_PIN, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812);
@@ -57,10 +66,5 @@ void app_main(void) {
   {
   xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
   }
-#endif
-
-
-#ifdef SDCARD_CS_PIN
-  sd_card_init(SDCARD_CS_PIN); 
 #endif
 }

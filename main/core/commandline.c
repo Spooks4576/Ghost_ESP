@@ -396,17 +396,6 @@ void handle_start_portal(int argc, char **argv)
     wifi_manager_start_evil_portal(url, ssid, password, ap_ssid, domain);
 }
 
-void wps_test(int argc, char** argv)
-{
-    wifi_manager_start_monitor_mode(wifi_wps_detection_callback);
-
-    const esp_timer_create_args_t stop_timer_args = {
-        .callback = &wifi_manager_stop_monitor_mode,
-        .name = "stop_timer"
-    };
-    ESP_ERROR_CHECK(esp_timer_create(&stop_timer_args, &stop_timer));
-    ESP_ERROR_CHECK(esp_timer_start_once(stop_timer, 15 * 1000000));
-}
 
 void stop_portal(int argc, char **argv)
 {
@@ -442,6 +431,12 @@ void print_art()
     printf("@@@@@@@@@@@@@@@@#?+;::,,,,,::;+?@@@@@@@@@@@@@@@@@@\n");
     printf("@@@@@@@@@@@@@@@@@@@#S&?*?*?&S#@@@@@@@@@@@@@@@@@@@@\n");
     printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+}
+
+void handle_crash(int argc, char **argv)
+{
+    int *ptr = NULL;
+    *ptr = 42;
 }
 
 void handle_help(int argc, char **argv) {
@@ -569,7 +564,7 @@ void register_commands() {
     register_command("setsetting", handle_set_setting);
     register_command("startportal", handle_start_portal);
     register_command("stopportal", stop_portal);
-    register_command("wpstest", wps_test);
+    register_command("crash", handle_crash); // For Debugging
 #ifdef CONFIG_BT_ENABLED
     register_command("blescan", handle_ble_scan_cmd);
 #endif

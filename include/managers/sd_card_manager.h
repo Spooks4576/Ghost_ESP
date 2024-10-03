@@ -15,6 +15,9 @@ typedef struct {
     int d1pin;
     int d2pin;
     int d3pin;
+
+    // SPI
+    int cs_pin;
 } sd_card_manager_t;
 
 
@@ -23,9 +26,11 @@ extern sd_card_manager_t sd_card_manager;
 
 esp_err_t sd_card_init();
 void sd_card_unmount(void);
+esp_err_t sd_card_append_file(const char* path, const void* data, size_t size);
 esp_err_t sd_card_write_file(const char* path, const void* data, size_t size);
 esp_err_t sd_card_read_file(const char* path);
 esp_err_t sd_card_create_directory(const char* path);
 bool sd_card_exists(const char* path);
+void check_for_crash_on_boot(void);
 
 #endif // SD_CARD_MANAGER_H

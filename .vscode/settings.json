@@ -1,6 +1,6 @@
 {
     "idf.flashType": "UART",
-    "idf.adapterTargetName": "esp32c6",
+    "idf.adapterTargetName": "esp32s3",
     "files.associations": {
         "ble_hs.h": "c",
         "ble_manager.h": "c",
@@ -22,7 +22,13 @@
         "gpio.h": "c",
         "esp_log.h": "c",
         "soc_caps.h": "c",
-        "sdmmc_host.h": "c"
+        "sdmmc_host.h": "c",
+        "esp_heap_trace.h": "c",
+        "crash_handler.h": "c",
+        "sdmmc_cmd.h": "c",
+        "freertos.h": "c",
+        "esp_heap_caps.h": "c",
+        "soc.h": "c"
     },
     "idf.openOcdConfigs": [
         "board/esp32c6-builtin.cfg"

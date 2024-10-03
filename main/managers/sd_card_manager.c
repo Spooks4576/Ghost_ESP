@@ -10,11 +10,12 @@
 #include "driver/sdmmc_types.h"
 #include "managers/sd_card_manager.h"
 #include "driver/gpio.h"
+#include "esp_heap_trace.h"
 
 static const char *TAG = "SD_Card_Manager";
 
 
-sd_card_manager_t sd_card_manager = {
+sd_card_manager_t sd_card_manager = { // Change this based on board config
     .card = NULL,
     .is_initialized = false,
     .clkpin = 12,
@@ -23,6 +24,7 @@ sd_card_manager_t sd_card_manager = {
     .d1pin = 17,
     .d2pin = 21,
     .d3pin = 18,
+    .cs_pin = 4,
 };
 
 void list_files_recursive(const char *dirname, int level) {
@@ -62,6 +64,7 @@ void list_files_recursive(const char *dirname, int level) {
     closedir(dir);
 }
 
+
 static void sdmmc_card_print_info(const sdmmc_card_t* card) {
     if (card == NULL) {
         ESP_LOGE(TAG, "Card is NULL");
@@ -86,7 +89,7 @@ static void sdmmc_card_print_info(const sdmmc_card_t* card) {
 
 esp_err_t sd_card_init(void) {
     esp_err_t ret;
-#ifdef SOC_SDMMC_HOST_SUPPORTED
+#if SOC_SDMMC_HOST_SUPPORTED && SOC_SDMMC_USE_GPIO_MATRIX
 
     ESP_LOGI(TAG, "Initializing SD card in SDMMC mode (4-bit)...");
 
@@ -139,19 +142,77 @@ esp_err_t sd_card_init(void) {
     sd_card_manager.is_initialized = true;
     sdmmc_card_print_info(sd_card_manager.card);
     ESP_LOGI(TAG, "SD card initialized successfully");
+#else 
+
+    ESP_LOGI(TAG, "Initializing SD card in SPI mode...");
+
+
+    sdmmc_host_t host = SDSPI_HOST_DEFAULT();
+
+    sdspi_device_config_t bus_cfg = SDSPI_DEVICE_CONFIG_DEFAULT();
+
+    ret = spi_bus_initialize(host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to initialize SPI bus: %s", esp_err_to_name(ret));
+        return ret;
+    }
+
+    sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+    slot_config.gpio_cs = sd_card_manager.cs_pin;
+    slot_config.host_id = host.slot;
+
+    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+        .format_if_mount_failed = false,
+        .max_files = 5,
+        .allocation_unit_size = 16 * 1024
+    };
+
+    ret = esp_vfs_fat_sdspi_mount("/mnt", &host, &slot_config, &mount_config, &sd_card_manager.card);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to mount filesystem: %s", esp_err_to_name(ret));
+        spi_bus_free(host.slot);
+        return ret;
+    }
+
+    sd_card_manager.is_initialized = true;
+    sdmmc_card_print_info(sd_card_manager.card);
+    ESP_LOGI(TAG, "SD card initialized successfully in SPI mode.");
 #endif
     return ESP_OK;
 }
 
 
 void sd_card_unmount(void) {
-#ifdef SOC_SDMMC_HOST_SUPPORTED
+#if SOC_SDMMC_HOST_SUPPORTED && SOC_SDMMC_USE_GPIO_MATRIX
     if (sd_card_manager.is_initialized) {
         esp_vfs_fat_sdmmc_unmount();
         ESP_LOGI(TAG, "SD card unmounted");
         sd_card_manager.is_initialized = false;
     }
+#else
+    if (sd_card_manager.is_initialized) {
+        esp_vfs_fat_sdcard_unmount("/mnt", &sd_card_manager.card);
+        spi_bus_free(SPI2_HOST);
+        ESP_LOGI(TAG, "SD card unmounted");
+    }
 #endif
+}
+
+esp_err_t sd_card_append_file(const char* path, const void* data, size_t size) {
+    if (!sd_card_manager.is_initialized) {
+        ESP_LOGE(TAG, "SD card is not initialized. Cannot append to file.");
+        return ESP_FAIL;
+    }
+
+    FILE* f = fopen(path, "ab");
+    if (f == NULL) {
+        ESP_LOGE(TAG, "Failed to open file for appending");
+        return ESP_FAIL;
+    }
+    fwrite(data, 1, size, f);
+    fclose(f);
+    ESP_LOGI(TAG, "Data appended to file: %s", path);
+    return ESP_OK;
 }
 
 esp_err_t sd_card_write_file(const char* path, const void* data, size_t size) {
