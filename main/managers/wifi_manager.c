@@ -549,6 +549,7 @@ esp_err_t captive_portal_redirect_handler(httpd_req_t *req) {
 
 httpd_handle_t start_portal_webserver(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.stack_size = 8192;
     if (httpd_start(&evilportal_server, &config) == ESP_OK) {
         httpd_uri_t portal_uri = {
             .uri      = "/login",

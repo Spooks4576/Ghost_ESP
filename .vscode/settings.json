@@ -1,6 +1,6 @@
 {
     "idf.flashType": "UART",
-    "idf.adapterTargetName": "esp32c6",
+    "idf.adapterTargetName": "esp32",
     "files.associations": {
         "ble_hs.h": "c",
         "ble_manager.h": "c",
@@ -11,7 +11,12 @@
         "esp_http_server.h": "c",
         "stdio.h": "c",
         "dns_server.h": "c",
-        "esp_http_client.h": "c"
+        "esp_http_client.h": "c",
+        "callbacks.h": "c",
+        "wifi_manager.h": "c",
+        "esp_wifi_types.h": "c",
+        "esp_wifi.h": "c",
+        "wps_manager.h": "c"
     },
     "idf.openOcdConfigs": [
         "board/esp32c6-builtin.cfg"

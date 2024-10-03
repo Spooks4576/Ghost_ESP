@@ -63,6 +63,16 @@ typedef struct {
 } wifi_ieee80211_hdr_t;
 
 
+
+typedef struct {
+    uint16_t frame_ctrl;   // Frame control field
+    uint16_t duration_id;  // Duration field
+    uint8_t addr1[6];      // Receiver address (RA)
+    uint8_t addr2[6];      // Transmitter address (TA)
+    uint8_t addr3[6];      // BSSID or destination address
+    uint16_t seq_ctrl;     // Sequence control field
+} wifi_ieee80211_mac_hdr_t;
+
 typedef struct {
     wifi_ieee80211_hdr_t hdr;  // The 802.11 header
     uint8_t payload[];         // Variable-length payload (data)
