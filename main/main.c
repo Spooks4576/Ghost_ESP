@@ -1,14 +1,15 @@
 #include "core/system_manager.h"
 #include "core/serial_manager.h"
+#include "core/commandline.h"
 #include "managers/rgb_manager.h"
 #include "managers/settings_manager.h"
 #include "managers/wifi_manager.h"
 #include "managers/ap_manager.h"
+#include "managers/sd_card_manager.h"
 #ifdef CONFIG_BT_ENABLED
 #include "managers/ble_manager.h"
 #endif
 #include <esp_log.h>
-#include "core/commandline.h"
 
 
 int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3){
@@ -56,5 +57,10 @@ void app_main(void) {
   {
   xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
   }
+#endif
+
+
+#ifdef SDCARD_CS_PIN
+  sd_card_init(SDCARD_CS_PIN); 
 #endif
 }

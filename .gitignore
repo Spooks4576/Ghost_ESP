@@ -5,3 +5,4 @@
 .vscode/ipch
 build
 .devcontainer
+.vscode

@@ -6,5 +6,5 @@ dependencies:
 direct_dependencies:
 - idf
 manifest_hash: cf5bf340f94bafe82cc0c3d8c0361e6e4146f91b0fd3d66aa15770dfb93cf6d7
-target: esp32
+target: esp32s3
 version: 2.0.0
