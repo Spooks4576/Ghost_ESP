@@ -310,12 +310,6 @@ esp_err_t ap_manager_start_services() {
         return ret;
     }
 
-    ret = mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "mdns_service_add failed: %s", esp_err_to_name(ret));
-        return ret;
-    }
-
     // Start HTTPD server
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;

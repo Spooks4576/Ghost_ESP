@@ -173,8 +173,6 @@ const char *actiontec_ouis[] = {
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
         ESP_LOGI(TAG, "WiFi started, ready to scan.");
-        vTaskDelay(pdMS_TO_TICKS(100));
-        esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         ESP_LOGI(TAG, "Disconnected from WiFi");
         xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
@@ -672,6 +670,8 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
 
     ESP_ERROR_CHECK(esp_wifi_start());
+    vTaskDelay(pdMS_TO_TICKS(500));
+    esp_wifi_connect();
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT,
         pdFALSE, pdTRUE, 5000 / portTICK_PERIOD_MS);
 
@@ -768,6 +768,7 @@ void wifi_manager_init() {
     // Register the event handler for WiFi events
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, NULL));
+    
 
     // Set WiFi mode to STA (station)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
@@ -810,14 +811,21 @@ void wifi_manager_start_scan() {
         .ssid = NULL,
         .bssid = NULL,
         .channel = 0,
-        .show_hidden = false
+        .show_hidden = true
     };
 
     
     rgb_manager_set_color(&rgb_manager, 0, 50, 255, 50, false);
 
     ESP_LOGI(TAG, "WiFi scanning started...");
-    ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, true));
+    esp_err_t err = esp_wifi_scan_start(&scan_config, false);
+
+    vTaskDelay(pdMS_TO_TICKS(1500));
+
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "WiFi scan failed to start: %s", esp_err_to_name(err));
+        return;
+    }
 
     
     wifi_manager_stop_scan();
