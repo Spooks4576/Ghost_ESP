@@ -11,8 +11,14 @@
 #include "managers/sd_card_manager.h"
 #include "driver/gpio.h"
 #include "esp_heap_trace.h"
+#include "core/utils.h"
 
 static const char *TAG = "SD_Card_Manager";
+
+#define SPI_MISO_PIN 19
+#define SPI_MOSI_PIN 23
+#define SPI_CLK_PIN 18
+#define SPI_CS_PIN 4
 
 
 sd_card_manager_t sd_card_manager = { // Change this based on board config
@@ -149,17 +155,19 @@ esp_err_t sd_card_init(void) {
 
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
 
-    sdspi_device_config_t bus_cfg = SDSPI_DEVICE_CONFIG_DEFAULT();
+    spi_bus_config_t bus_config;
 
-    ret = spi_bus_initialize(host.slot, &bus_cfg, SDSPI_DEFAULT_DMA);
+    memset(&bus_config, 0, sizeof(spi_bus_config_t));
+
+    bus_config.miso_io_num = SPI_MISO_PIN;
+    bus_config.mosi_io_num = SPI_MOSI_PIN;
+    bus_config.sclk_io_num = SPI_CLK_PIN;
+
+    ret = spi_bus_initialize(VSPI_HOST, &bus_config, SDSPI_DEFAULT_DMA);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize SPI bus: %s", esp_err_to_name(ret));
         return ret;
     }
-
-    sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
-    slot_config.gpio_cs = sd_card_manager.cs_pin;
-    slot_config.host_id = host.slot;
 
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
         .format_if_mount_failed = false,
@@ -167,7 +175,11 @@ esp_err_t sd_card_init(void) {
         .allocation_unit_size = 16 * 1024
     };
 
-    ret = esp_vfs_fat_sdspi_mount("/mnt", &host, &slot_config, &mount_config, &sd_card_manager.card);
+    sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+    slot_config.gpio_cs = sd_card_manager.cs_pin;
+    slot_config.host_id = VSPI_HOST;
+
+    ret = esp_vfs_fat_sdspi_mount("/mnt", &host, &bus_config, &mount_config, &sd_card_manager.card);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount filesystem: %s", esp_err_to_name(ret));
         spi_bus_free(host.slot);

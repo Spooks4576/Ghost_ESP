@@ -28,7 +28,11 @@
         "sdmmc_cmd.h": "c",
         "freertos.h": "c",
         "esp_heap_caps.h": "c",
-        "soc.h": "c"
+        "soc.h": "c",
+        "esp_vfs_fat.h": "c",
+        "sdmmc_types.h": "c",
+        "utils.h": "c",
+        "esp_types.h": "c"
     },
     "idf.openOcdConfigs": [
         "board/esp32c6-builtin.cfg"

