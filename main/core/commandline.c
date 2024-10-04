@@ -79,6 +79,7 @@ void cmd_wifi_scan_start(int argc, char **argv) {
 }
 
 void cmd_wifi_scan_stop(int argc, char **argv) {
+    pcap_file_close();
     wifi_manager_stop_scan();
     ap_manager_add_log("WiFi scan stopped.\n");
 }

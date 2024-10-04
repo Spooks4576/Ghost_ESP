@@ -71,10 +71,10 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
     pcap_packet_header_t packet_header;
 
 
-    packet_header.ts_sec = htonl(tv.tv_sec);
-    packet_header.ts_usec = htonl(tv.tv_usec);
-    packet_header.incl_len = htonl(length);
-    packet_header.orig_len = htonl(length);
+    packet_header.ts_sec = tv.tv_sec;
+    packet_header.ts_usec = tv.tv_usec;
+    packet_header.incl_len = length;
+    packet_header.orig_len = length;
 
     
     size_t total_packet_size = sizeof(packet_header) + length;
