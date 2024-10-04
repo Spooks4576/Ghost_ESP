@@ -461,6 +461,18 @@ void handle_capture_scan(int argc, char** argv)
         wifi_manager_start_monitor_mode(wifi_raw_scan_callback);
     }
 
+    if (strcmp(capturetype, "-eapol") == 0)
+    {
+        int err = pcap_file_open("eapolscan");
+        
+        if (err != ESP_OK)
+        {
+            printf("Error: pcap failed to open\n");
+            return;
+        }
+        wifi_manager_start_monitor_mode(wifi_eapol_scan_callback);
+    }
+
     if (strcmp(capturetype, "-stop") == 0)
     {
         wifi_manager_stop_monitor_mode();

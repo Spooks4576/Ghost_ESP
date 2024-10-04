@@ -13,6 +13,7 @@
 #define WIFI_PKT_BEACON 0x08 // Beacon subtype
 #define WIFI_PKT_PROBE_REQ 0x04  // Probe Request subtype
 #define WIFI_PKT_PROBE_RESP 0x05 // Probe Response subtype
+#define WIFI_PKT_EAPOL 0x80
 
 wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 int detected_network_count = 0;
@@ -71,6 +72,18 @@ bool is_probe_response(const wifi_promiscuous_pkt_t *pkt) {
     return (frame_type == WIFI_PKT_MGMT && frame_subtype == WIFI_PKT_PROBE_RESP);
 }
 
+bool is_eapol_response(const wifi_promiscuous_pkt_t *pkt) {
+    const uint8_t *frame = pkt->payload;
+
+    
+    if ((frame[30] == 0x88 && frame[31] == 0x8E) || 
+        (frame[32] == 0x88 && frame[33] == 0x8E)) {
+        return true;
+    }
+
+    return false;
+}
+
 void wifi_raw_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
 {
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
@@ -78,6 +91,18 @@ void wifi_raw_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
     esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to write Raw packet to PCAP buffer.");
+    }
+}
+
+void wifi_eapol_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
+{
+    wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
+    if (is_eapol_response(pkt))
+    {
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to write EAPOL packet to PCAP buffer.");
+        }
     }
 }
 
