@@ -2,6 +2,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <string.h>
+#include <sys/dirent.h>
+#include <esp_log.h>
+
+#define TAG "Utils"
 
 bool is_in_task_context(void)
 {
@@ -47,4 +51,37 @@ int get_query_param_value(const char *query, const char *key, char *value, size_
         return ESP_OK;
     }
     return ESP_ERR_NOT_FOUND;
+}
+
+
+
+int get_next_pcap_file_index(const char* base_name) {
+    char path[128];
+    int max_index = -1;
+
+
+    DIR *dir = opendir("/mnt/ghostesp/pcaps");
+    if (!dir) {
+        ESP_LOGE(TAG, "Failed to open directory /mnt/ghostesp/pcaps");
+        return -1;
+    }
+
+    
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        
+        if (strncmp(entry->d_name, base_name, strlen(base_name)) == 0) {
+            
+            int index;
+            if (sscanf(entry->d_name + strlen(base_name), "_%d.pcap", &index) == 1) {
+                
+                if (index > max_index) {
+                    max_index = index;
+                }
+            }
+        }
+    }
+
+    closedir(dir);
+    return max_index + 1;
 }

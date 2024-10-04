@@ -54,6 +54,9 @@ void url_decode(char *decoded, const char *encoded);
 int get_query_param_value(const char *query, const char *key, char *value, size_t value_size);
 
 
+int get_next_pcap_file_index(const char* base_name);
+
+
 #define WRAP_MESSAGE(msg) wrap_message(msg, __FILE__, __LINE__)
 
 #endif // SERIAL_MANAGER_H

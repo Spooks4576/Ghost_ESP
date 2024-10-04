@@ -10,6 +10,7 @@
 #include <string.h>
 #include "core/callbacks.h"
 #include <esp_timer.h>
+#include "vendor/pcap.h"
 
 static Command *command_list_head = NULL;
 
@@ -397,6 +398,75 @@ void handle_start_portal(int argc, char **argv)
 }
 
 
+void handle_capture_scan(int argc, char** argv)
+{
+    if (argc != 2) {
+        printf("Error: Incorrect number of arguments.\n");
+        return;
+    }
+
+    char *capturetype = argv[1];
+
+    if (capturetype == NULL || capturetype[0] == '\0') {
+        printf("Error: Capture Type cannot be empty.\n");
+        return;
+    }
+
+    if (strcmp(capturetype, "-probe") == 0)
+    {
+        int err = pcap_file_open("probescan");
+        
+        if (err != ESP_OK)
+        {
+            printf("Error: pcap failed to open\n");
+            return;
+        }
+        wifi_manager_start_monitor_mode(wifi_probe_scan_callback);
+    }
+
+    if (strcmp(capturetype, "-deauth") == 0)
+    {
+        int err = pcap_file_open("deauthscan");
+        
+        if (err != ESP_OK)
+        {
+            printf("Error: pcap failed to open\n");
+            return;
+        }
+        wifi_manager_start_monitor_mode(wifi_deauth_scan_callback);
+    }
+
+    if (strcmp(capturetype, "-beacon") == 0)
+    {
+        int err = pcap_file_open("beaconscan");
+        
+        if (err != ESP_OK)
+        {
+            printf("Error: pcap failed to open\n");
+            return;
+        }
+        wifi_manager_start_monitor_mode(wifi_beacon_scan_callback);
+    }
+
+    if (strcmp(capturetype, "-raw") == 0)
+    {
+        int err = pcap_file_open("rawscan");
+        
+        if (err != ESP_OK)
+        {
+            printf("Error: pcap failed to open\n");
+            return;
+        }
+        wifi_manager_start_monitor_mode(wifi_raw_scan_callback);
+    }
+
+    if (strcmp(capturetype, "-stop") == 0)
+    {
+        wifi_manager_stop_monitor_mode();
+        pcap_file_close();
+    }
+}
+
 void stop_portal(int argc, char **argv)
 {
     wifi_manager_stop_evil_portal();
@@ -548,6 +618,16 @@ void handle_help(int argc, char **argv) {
     printf("stopportal\n");
     printf("    Description: Stop Evil Portal\n");
     printf("    Usage: stopportal\n\n");
+
+    printf("capture\n");
+    printf("    Description: Start a WiFi Capture (Requires SD Card or Flipper)\n");
+    printf("    Usage: capture [OPTION]\n");
+    printf("    Arguments:\n");
+    printf("        -probe   : Start Capturing Probe Packets\n");
+    printf("        -beacon  : SStart Capturing Beacon Packets\n");
+    printf("        -deauth   : Start Capturing Deauth Packets\n");
+    printf("        -raw   :   Start Capturing Raw Packets\n");
+    printf("        -stop   : Stops the active capture\n\n");
 }
 
 void register_commands() {
@@ -562,9 +642,12 @@ void register_commands() {
     register_command("stopdeauth", handle_stop_deauth);
     register_command("select", handle_select_cmd);
     register_command("setsetting", handle_set_setting);
+    register_command("capture", handle_capture_scan);
     register_command("startportal", handle_start_portal);
     register_command("stopportal", stop_portal);
+#ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
+#endif
 #ifdef CONFIG_BT_ENABLED
     register_command("blescan", handle_ble_scan_cmd);
 #endif

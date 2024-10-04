@@ -2,12 +2,17 @@
 #include "managers/wifi_manager.h"
 #include <esp_log.h>
 #include <string.h>
+#include "vendor/pcap.h"
 
 #define WPS_OUI 0x0050f204 
 #define TAG "WIFI_MONITOR"
 #define WPS_CONF_METHODS_PBC        0x0080
 #define WPS_CONF_METHODS_PIN_DISPLAY 0x0004
 #define WPS_CONF_METHODS_PIN_KEYPAD  0x0008
+#define WIFI_PKT_DEAUTH 0x0C // Deauth subtype
+#define WIFI_PKT_BEACON 0x08 // Beacon subtype
+#define WIFI_PKT_PROBE_REQ 0x04  // Probe Request subtype
+#define WIFI_PKT_PROBE_RESP 0x05 // Probe Response subtype
 
 wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 int detected_network_count = 0;
@@ -20,6 +25,105 @@ bool is_network_already_detected(const uint8_t *bssid) {
         }
     }
     return false;
+}
+
+
+void get_frame_type_and_subtype(const wifi_promiscuous_pkt_t *pkt, uint8_t *frame_type, uint8_t *frame_subtype) {
+    if (pkt->rx_ctrl.sig_len < 24) {
+        *frame_type = 0xFF;
+        *frame_subtype = 0xFF;
+        return;
+    }
+
+    
+    const uint8_t* frame_ctrl = pkt->payload;
+
+
+    *frame_type = (frame_ctrl[0] & 0x0C) >> 2;
+    *frame_subtype = (frame_ctrl[0] & 0xF0) >> 4; 
+}
+
+
+bool is_beacon_packet(const wifi_promiscuous_pkt_t *pkt) {
+    uint8_t frame_type, frame_subtype;
+    get_frame_type_and_subtype(pkt, &frame_type, &frame_subtype);
+    return (frame_type == WIFI_PKT_MGMT && frame_subtype == WIFI_PKT_BEACON);
+}
+
+
+bool is_deauth_packet(const wifi_promiscuous_pkt_t *pkt) {
+    uint8_t frame_type, frame_subtype;
+    get_frame_type_and_subtype(pkt, &frame_type, &frame_subtype);
+    return (frame_type == WIFI_PKT_MGMT && frame_subtype == WIFI_PKT_DEAUTH);
+}
+
+
+bool is_probe_request(const wifi_promiscuous_pkt_t *pkt) {
+    uint8_t frame_type, frame_subtype;
+    get_frame_type_and_subtype(pkt, &frame_type, &frame_subtype);
+    return (frame_type == WIFI_PKT_MGMT && frame_subtype == WIFI_PKT_PROBE_REQ);
+}
+
+
+bool is_probe_response(const wifi_promiscuous_pkt_t *pkt) {
+    uint8_t frame_type, frame_subtype;
+    get_frame_type_and_subtype(pkt, &frame_type, &frame_subtype);
+    return (frame_type == WIFI_PKT_MGMT && frame_subtype == WIFI_PKT_PROBE_RESP);
+}
+
+void wifi_raw_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
+{
+    wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
+
+    esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write Raw packet to PCAP buffer.");
+    }
+}
+
+void wifi_probe_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
+    wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
+
+    
+    if (is_probe_request(pkt) || is_probe_response(pkt)) {
+        ESP_LOGI(TAG, "Probe packet detected, length: %d", pkt->rx_ctrl.sig_len);
+        
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to write Probe packet to PCAP buffer.");
+        }
+    }
+}
+
+
+void wifi_beacon_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
+    wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
+
+    
+    if (is_beacon_packet(pkt)) {
+        ESP_LOGI(TAG, "Beacon packet detected, length: %d", pkt->rx_ctrl.sig_len);
+
+        
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to write beacon packet to PCAP buffer.");
+        }
+    }
+}
+
+
+void wifi_deauth_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
+    wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
+
+    
+    if (is_deauth_packet(pkt)) {
+        ESP_LOGI(TAG, "Deauth packet detected, length: %d", pkt->rx_ctrl.sig_len);
+        
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to write deauth packet to PCAP buffer.");
+        }
+    }
 }
 
 void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {

@@ -17,7 +17,10 @@ typedef struct {
     int d3pin;
 
     // SPI
-    int cs_pin;
+    int spi_cs_pin;
+    int spi_miso_pin;
+    int spi_mosi_pin;
+    int spi_clk_pin;
 } sd_card_manager_t;
 
 
@@ -31,6 +34,8 @@ esp_err_t sd_card_write_file(const char* path, const void* data, size_t size);
 esp_err_t sd_card_read_file(const char* path);
 esp_err_t sd_card_create_directory(const char* path);
 bool sd_card_exists(const char* path);
-void check_for_crash_on_boot(void);
+esp_err_t sd_card_setup_directory_structure();
+esp_err_t sd_card_write_pcap_global_header(FILE* f);
+esp_err_t sd_card_save_pcap_packet(const void* packet, size_t length);
 
 #endif // SD_CARD_MANAGER_H
