@@ -192,6 +192,19 @@ void handle_select_cmd(int argc, char **argv)
     }
 }
 
+void wps_test(int argc, char** argv)
+{
+    wifi_manager_start_monitor_mode(wifi_wps_detection_callback);
+
+    const esp_timer_create_args_t stop_timer_args = {
+        .callback = &wifi_manager_stop_monitor_mode,
+        .name = "stop_timer"
+    };
+    ESP_ERROR_CHECK(esp_timer_create(&stop_timer_args, &stop_timer));
+    ESP_ERROR_CHECK(esp_timer_start_once(stop_timer, 15 * 1000000));
+}
+
+
 #ifdef CONFIG_BT_ENABLED
 
 void handle_ble_scan_cmd(int argc, char**argv)
@@ -658,6 +671,7 @@ void register_commands() {
     register_command("capture", handle_capture_scan);
     register_command("startportal", handle_start_portal);
     register_command("stopportal", stop_portal);
+    register_command("wpstest", wps_test);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif

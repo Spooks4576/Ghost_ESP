@@ -19,15 +19,23 @@ wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 int detected_network_count = 0;
 esp_timer_handle_t stop_timer;
 
-bool is_network_already_detected(const uint8_t *bssid) {
+bool compare_bssid(const uint8_t *bssid1, const uint8_t *bssid2) {
+    for (int i = 0; i < 6; i++) {
+        if (bssid1[i] != bssid2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool is_network_duplicate(const char *ssid, const uint8_t *bssid) {
     for (int i = 0; i < detected_network_count; i++) {
-        if (memcmp(detected_wps_networks[i].bssid, bssid, 6) == 0) {
+        if (strcmp(detected_wps_networks[i].ssid, ssid) == 0 && compare_bssid(detected_wps_networks[i].bssid, bssid)) {
             return true;
         }
     }
     return false;
 }
-
 
 void get_frame_type_and_subtype(const wifi_promiscuous_pkt_t *pkt, uint8_t *frame_type, uint8_t *frame_subtype) {
     if (pkt->rx_ctrl.sig_len < 24) {
@@ -163,25 +171,26 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     const uint8_t *payload = pkt->payload;
     int len = pkt->rx_ctrl.sig_len;
 
+   
     uint8_t frame_type = hdr->frame_ctrl & 0xFC;
-
-    
     if (frame_type != 0x80 && frame_type != 0x50) {
         return;
     }
 
+    
     int index = 36;
     char ssid[33] = {0};
     bool wps_found = false;
+    uint8_t bssid[6];
+    memcpy(bssid, hdr->addr3, 6);
 
     
     while (index + 1 < len) {
         uint8_t id = payload[index];
         uint8_t ie_len = payload[index + 1];
 
-
+       
         if (index + 2 + ie_len > len) {
-            ESP_LOGW(TAG, "Malformed IE, exceeding packet length");
             break;
         }
 
@@ -191,34 +200,34 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
             ssid[ie_len] = '\0';
         }
 
-        
+
+        if (is_network_duplicate(ssid, bssid)) {
+            return;
+        }
+
+
         if (id == 221 && ie_len >= 4) {
             uint32_t oui = (payload[index + 2] << 16) | (payload[index + 3] << 8) | payload[index + 4];
             uint8_t oui_type = payload[index + 5];
 
+           
             if (oui == 0x0050f2 && oui_type == 0x04) {
-                ESP_LOGI(TAG, "WPS IE detected for network: %s", ssid);
                 wps_found = true;
 
                 
-                int attr_index = index + 6; 
+                int attr_index = index + 6;
                 int wps_ie_end = index + 2 + ie_len;
 
                 while (attr_index + 4 <= wps_ie_end) {
-                    
                     uint16_t attr_id = (payload[attr_index] << 8) | payload[attr_index + 1];
                     uint16_t attr_len = (payload[attr_index + 2] << 8) | payload[attr_index + 3];
 
                     
-                    ESP_LOGI(TAG, "Found WPS attribute - ID: 0x%04x, Length: %u", attr_id, attr_len);
-
-                    
                     if (attr_len > (wps_ie_end - (attr_index + 4))) {
-                        ESP_LOGW(TAG, "Invalid attribute length (attr_id: 0x%04x, attr_len: %u)", attr_id, attr_len);
                         break;
                     }
 
-
+                    
                     if (attr_id == 0x1008 && attr_len == 2) {
                         uint16_t config_methods = (payload[attr_index + 4] << 8) | payload[attr_index + 5];
 
@@ -233,6 +242,23 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         } else {
                             ESP_LOGI(TAG, "WPS mode not detected (unknown config method) for network: %s", ssid);
                         }
+
+
+                        wps_network_t new_network;
+                        strncpy(new_network.ssid, ssid, sizeof(new_network.ssid) - 1);
+                        new_network.ssid[sizeof(new_network.ssid) - 1] = '\0';  // Ensure null termination
+                        memcpy(new_network.bssid, bssid, sizeof(new_network.bssid));
+                        new_network.wps_enabled = true;
+                        new_network.wps_mode = config_methods & (WPS_CONF_METHODS_PIN_DISPLAY | WPS_CONF_METHODS_PIN_KEYPAD) ? WPS_MODE_PIN : WPS_MODE_PBC;
+
+
+                        detected_wps_networks[detected_network_count++] = new_network;
+                        
+                        if (detected_network_count >= MAX_WPS_NETWORKS) {
+                            ESP_LOGI(TAG, "Maximum number of WPS networks detected. Stopping monitor mode.");
+                            wifi_manager_stop_monitor_mode();
+                        }     
+
                     }
 
 
@@ -241,10 +267,7 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
             }
         }
 
-        index += (2 + ie_len);
-    }
 
-    if (!wps_found) {
-        ESP_LOGI(TAG, "No WPS IE found for network: %s", ssid);
+        index += (2 + ie_len);
     }
 }

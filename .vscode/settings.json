@@ -41,7 +41,11 @@
         "stdlib.h": "c",
         "esp_vfs_exfat.h": "c",
         "cstdio": "c",
-        "fstream": "c"
+        "fstream": "c",
+        "version.h": "c",
+        "cc.h": "c",
+        "wps.h": "c",
+        "cstdlib": "cpp"
     },
     "idf.openOcdConfigs": [
         "board/esp32c6-builtin.cfg"

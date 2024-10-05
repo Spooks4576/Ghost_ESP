@@ -154,7 +154,7 @@ esp_err_t sd_card_init(void) {
     ESP_LOGI(SD_TAG, "SD card initialized successfully");
 
     sd_card_setup_directory_structure();
-#else 
+#elif VSPI_HOST 
 
     ESP_LOGI(SD_TAG, "Initializing SD card in SPI mode...");
 

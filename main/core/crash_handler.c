@@ -34,23 +34,6 @@ void log_task_info(FILE *f) {
 }
 
 
-void capture_backtrace(uint32_t *backtrace, int *depth) {
-    uint32_t *sp;
-    asm volatile("mov %0, a1" : "=r"(sp));
-
-    for (int i = 0; i < 20 && sp != NULL; i++) {
-        uint32_t *next_sp = (uint32_t *)sp[0];
-        backtrace[i] = sp[1];
-        if (next_sp == NULL || next_sp <= sp) {
-            break;
-        }
-        sp = next_sp;
-    }
-
-    *depth = 20;
-}
-
-
 void log_crash_info(const char *filename, const char *reason) {
     FILE *f = fopen(filename, "w");
     if (f == NULL) {
@@ -67,15 +50,6 @@ void log_crash_info(const char *filename, const char *reason) {
     size_t min_free_heap = esp_get_minimum_free_heap_size();
     fprintf(f, "Free heap: %zu bytes\n", free_heap);
     fprintf(f, "Minimum free heap: %zu bytes\n", min_free_heap);
-
-    
-    uint32_t backtrace[20];
-    int depth = 0;
-    capture_backtrace(backtrace, &depth);
-    fprintf(f, "\nStack trace (depth = %d):\n", depth);
-    for (int i = 0; i < depth; i++) {
-        fprintf(f, "0x%08lx\n", backtrace[i]);
-    }
 
 
     log_task_info(f);

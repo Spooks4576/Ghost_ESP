@@ -5,6 +5,7 @@
 #include "esp_vfs_fat.h"
 #include "sys/time.h"
 #include "vendor/pcap.h"
+#include "driver/uart.h"
 #include <errno.h>
 #include "core/utils.h"
 #include <sys/stat.h>
@@ -23,8 +24,31 @@ esp_err_t pcap_write_global_header(FILE* f) {
     global_header.snaplen = 4096;  // Max packet length
     global_header.network = 105;   // DLT_IEEE802_11 for Wi-Fi
 
-    size_t written = fwrite(&global_header, 1, sizeof(global_header), f);
-    return (written == sizeof(global_header)) ? ESP_OK : ESP_FAIL;
+    if (f == NULL)
+    {
+        const char* mark_begin = "[BUF/BEGIN]";
+        const size_t mark_begin_len = strlen(mark_begin);
+        const char* mark_close = "[BUF/CLOSE]";
+        const size_t mark_close_len = strlen(mark_close);
+
+        uart_write_bytes(UART_NUM_0, mark_begin, mark_begin_len);
+
+        
+        uart_write_bytes(UART_NUM_0, (const char*)&global_header, sizeof(global_header));
+
+        
+        uart_write_bytes(UART_NUM_0, mark_close, mark_close_len);
+
+        
+        const char* newline = "\n";
+        uart_write_bytes(UART_NUM_0, newline, 1);
+        return ESP_OK;
+    }
+    else 
+    {
+        size_t written = fwrite(&global_header, 1, sizeof(global_header), f);
+        return (written == sizeof(global_header)) ? ESP_OK : ESP_FAIL;
+    }
 }
 
 void get_next_pcap_file_name(char *file_name_buffer, const char* base_name) {
@@ -40,10 +64,6 @@ esp_err_t pcap_file_open(const char* base_file_name) {
 
 
     pcap_file = fopen(file_name, "wb");
-    if (pcap_file == NULL) {
-        ESP_LOGE(PCAP_TAG, "fopen failed for file: %s, errno: %d (%s)", file_name, errno, strerror(errno));
-        return ESP_FAIL;
-    }
 
     
     esp_err_t ret = pcap_write_global_header(pcap_file);
@@ -60,12 +80,6 @@ esp_err_t pcap_file_open(const char* base_file_name) {
 
 
 esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
-    if (pcap_file == NULL) {
-        ESP_LOGE(PCAP_TAG, "PCAP file is not open.");
-        return ESP_FAIL;
-    }
-
-    
     struct timeval tv;
     gettimeofday(&tv, NULL);
     pcap_packet_header_t packet_header;
@@ -101,8 +115,29 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
 
 esp_err_t pcap_flush_buffer_to_file() {
     if (pcap_file == NULL) {
-        ESP_LOGE(PCAP_TAG, "PCAP file is not open.");
-        return ESP_FAIL;
+        ESP_LOGE(PCAP_TAG, "PCAP file is not open. Flushing to Serial...");
+
+        const char* mark_begin = "[BUF/BEGIN]";
+        const size_t mark_begin_len = strlen(mark_begin);
+        const char* mark_close = "[BUF/CLOSE]";
+        const size_t mark_close_len = strlen(mark_close);
+
+        uart_write_bytes(UART_NUM_0, mark_begin, mark_begin_len);
+
+        
+        uart_write_bytes(UART_NUM_0, (const char*)pcap_buffer, buffer_offset);
+
+        
+        uart_write_bytes(UART_NUM_0, mark_close, mark_close_len);
+
+        
+        const char* newline = "\n";
+        uart_write_bytes(UART_NUM_0, newline, 1);
+
+        
+        buffer_offset = 0;
+
+        return ESP_OK;
     }
 
     
