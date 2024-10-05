@@ -18,6 +18,7 @@
 wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 int detected_network_count = 0;
 esp_timer_handle_t stop_timer;
+int should_store_wps = 1;
 
 bool compare_bssid(const uint8_t *bssid1, const uint8_t *bssid2) {
     for (int i = 0; i < 6; i++) {
@@ -244,15 +245,17 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         }
 
 
-                        wps_network_t new_network;
-                        strncpy(new_network.ssid, ssid, sizeof(new_network.ssid) - 1);
-                        new_network.ssid[sizeof(new_network.ssid) - 1] = '\0';  // Ensure null termination
-                        memcpy(new_network.bssid, bssid, sizeof(new_network.bssid));
-                        new_network.wps_enabled = true;
-                        new_network.wps_mode = config_methods & (WPS_CONF_METHODS_PIN_DISPLAY | WPS_CONF_METHODS_PIN_KEYPAD) ? WPS_MODE_PIN : WPS_MODE_PBC;
+                        if (should_store_wps == 1)
+                        {
+                            wps_network_t new_network;
+                            strncpy(new_network.ssid, ssid, sizeof(new_network.ssid) - 1);
+                            new_network.ssid[sizeof(new_network.ssid) - 1] = '\0';  // Ensure null termination
+                            memcpy(new_network.bssid, bssid, sizeof(new_network.bssid));
+                            new_network.wps_enabled = true;
+                            new_network.wps_mode = config_methods & (WPS_CONF_METHODS_PIN_DISPLAY | WPS_CONF_METHODS_PIN_KEYPAD) ? WPS_MODE_PIN : WPS_MODE_PBC;
 
-
-                        detected_wps_networks[detected_network_count++] = new_network;
+                            detected_wps_networks[detected_network_count++] = new_network;
+                        }
                         
                         if (detected_network_count >= MAX_WPS_NETWORKS) {
                             ESP_LOGI(TAG, "Maximum number of WPS networks detected. Stopping monitor mode.");

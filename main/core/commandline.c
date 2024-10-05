@@ -486,6 +486,20 @@ void handle_capture_scan(int argc, char** argv)
         wifi_manager_start_monitor_mode(wifi_eapol_scan_callback);
     }
 
+    if (strcmp(capturetype, "-wps") == 0)
+    {
+        int err = pcap_file_open("wpsscan");
+
+        should_store_wps = 0;
+        
+        if (err != ESP_OK)
+        {
+            printf("Error: pcap failed to open\n");
+            return;
+        }
+        wifi_manager_start_monitor_mode(wifi_wps_detection_callback);
+    }
+
     if (strcmp(capturetype, "-stop") == 0)
     {
         wifi_manager_stop_monitor_mode();

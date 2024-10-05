@@ -27,5 +27,6 @@ typedef struct {
 extern wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 extern int detected_network_count;
 extern esp_timer_handle_t stop_timer;
+extern int should_store_wps;
 
 #endif
