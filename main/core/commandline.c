@@ -194,6 +194,9 @@ void handle_select_cmd(int argc, char **argv)
 
 void wps_test(int argc, char** argv)
 {
+
+    should_store_wps = 1;
+
     wifi_manager_start_monitor_mode(wifi_wps_detection_callback);
 
     const esp_timer_create_args_t stop_timer_args = {
@@ -202,6 +205,7 @@ void wps_test(int argc, char** argv)
     };
     ESP_ERROR_CHECK(esp_timer_create(&stop_timer_args, &stop_timer));
     ESP_ERROR_CHECK(esp_timer_start_once(stop_timer, 15 * 1000000));
+
 }
 
 
