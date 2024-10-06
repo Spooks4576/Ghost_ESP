@@ -645,8 +645,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
                 esp_wifi_connect();
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
-                ESP_LOGI(TAG, "Disconnected from Wi-Fi, retrying...");
-                esp_wifi_connect();
+                ESP_LOGI(TAG, "Disconnected from Wi-Fi");
                 break;
             default:
                 break;

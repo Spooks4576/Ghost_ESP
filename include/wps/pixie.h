@@ -3,9 +3,9 @@
 
 
 #include <stdint.h>
-#include "wps_defs.h"
 #include "wps_utils.h"
 #include "sys/_timeval.h"
+#include "wps_defs.h"
 
 
 const uint8_t wps_rtl_pke[] = {
@@ -21,6 +21,15 @@ const uint8_t wps_rtl_pke[] = {
 	0x45,0xFa,0x8D,0xD8, 0xD6,0x61,0xBE,0xB7, 0x3B,0x41,0x40,0x32, 0x79,0x8D,0xAD,0xEE,
 	0x32,0xB5,0xDD,0x61, 0xBF,0x10,0x5F,0x18, 0xD8,0x92,0x17,0x76, 0x0B,0x75,0xC5,0xD9,
 	0x66,0xA5,0xA4,0x90, 0x47,0x2C,0xEB,0xA9, 0xE3,0xB4,0x22,0x4F, 0x3D,0x89,0xFB,0x2B
+};
+
+
+static uint32_t glibc_seed_tbl[31 + 3] = {
+		0x0128e83b, 0x00dafa31, 0x009f4828, 0x00f66443, 0x00bee24d, 0x00817005, 0x00cb918f,
+		0x00a64845, 0x0069c3cf, 0x00a76dbd, 0x0090a848, 0x0057025f, 0x0089126c, 0x007d9a8f,
+		0x0048252a, 0x006fb2d4, 0x006ccc15, 0x003c5744, 0x005a998f, 0x005df917, 0x0032ed77,
+		0x00492688, 0x0050e901, 0x002b5f57, 0x003acd0b, 0x00456b7a, 0x0025413d, 0x002f11f4,
+		0x003b564d, 0x00203f14, 0x002589fc, 0x003283f8, 0x001c17e4, 0x001dd823
 };
 
 
@@ -64,8 +73,56 @@ struct wps_state {
 	char *warning;
 };
 
+typedef unsigned long pthread_t;
 
 
+struct crack_job {
+	pthread_t thr;
+	uint32_t start;
+};
+
+static struct job_control {
+	int jobs;
+	int mode;
+	uint32_t end;
+	uint32_t randr_enonce[4];
+	struct wps_state *wps;
+	struct crack_job *crack_jobs;
+	volatile uint32_t nonce_seed;
+} job_control;
+
+struct ralink_randstate {
+	uint32_t sreg;
+};
+
+
+void wps_start_connection(uint8_t *bssid);
+
+
+
+static int crack_first_half(struct wps_state *wps, char *pin, const uint8_t *es1_override);
+static int crack_second_half(struct wps_state *wps, char *pin);
+static int crack(struct wps_state *wps, char *pin);
+static void crack_thread_rtl(struct crack_job *j);
+static unsigned char ralink_randbyte(struct ralink_randstate *state);
+static void ralink_randstate_restore(struct ralink_randstate *state, uint8_t r);
+static unsigned char ralink_randbyte_backwards(struct ralink_randstate *state);
+static int crack_rt(uint32_t start, uint32_t end, uint32_t *result);
+static void crack_thread_rt(struct crack_job *j);
+static void crack_thread_rtl_es(struct crack_job *j);
+static void *crack_thread(void *arg);
+static void setup_thread(int i);
+static void init_crack_jobs(struct wps_state *wps, int mode);
+static uint32_t collect_crack_jobs();
+static void rtl_nonce_fill(uint8_t *nonce, uint32_t seed);
+static int find_rtl_es1(struct wps_state *wps, char *pin, uint8_t *nonce_buf, uint32_t seed);
+static int check_empty_pin_half(const uint8_t *es, struct wps_state *wps, const uint8_t *ehash);
+static int check_pin_half(const uint8_t *authkey, size_t authkey_len, const char pinhalf[4], uint8_t *psk, const uint8_t *es, struct wps_state *wps, const uint8_t *ehash);
+static int crack_first_half(struct wps_state *wps, char *pin, const uint8_t *es1_override);
+static int crack_second_half(struct wps_state *wps, char *pin);
+static uint32_t ecos_rand_knuth(uint32_t *seed);
+static uint32_t ecos_rand_simple(uint32_t *seed);
+static uint32_t ecos_rand_simplest(uint32_t *seed);
 
 
 #endif

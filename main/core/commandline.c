@@ -8,6 +8,7 @@
 #include "managers/settings_manager.h"
 #include <stdlib.h>
 #include <string.h>
+#include <wps/pixie.h>
 #include "core/callbacks.h"
 #include <esp_timer.h>
 #include "vendor/pcap.h"
@@ -192,6 +193,30 @@ void handle_select_cmd(int argc, char **argv)
     }
 }
 
+
+void wps_phase_2()
+{
+    wifi_manager_stop_monitor_mode();
+
+    for (int i = 0; i < MAX_WPS_NETWORKS; i++) {
+        wps_network_t *network = &detected_wps_networks[i];
+
+
+        bool is_valid_bssid = memcmp(network->bssid, "\x00\x00\x00\x00\x00\x00", 6) != 0;
+        bool is_valid_ssid = strlen(network->ssid) > 0;
+        
+        if (network->wps_enabled && is_valid_bssid && is_valid_ssid && network->wps_mode == WPS_MODE_PIN) {
+            ESP_LOGI("WPS_PHASE_2", "Valid network detected: SSID: %s, BSSID: %02x:%02x:%02x:%02x:%02x:%02x", 
+                network->ssid,
+                network->bssid[0], network->bssid[1], network->bssid[2], 
+                network->bssid[3], network->bssid[4], network->bssid[5]);
+
+            wps_start_connection(network->bssid);
+            break;
+        }
+    }
+}
+
 void wps_test(int argc, char** argv)
 {
 
@@ -200,7 +225,7 @@ void wps_test(int argc, char** argv)
     wifi_manager_start_monitor_mode(wifi_wps_detection_callback);
 
     const esp_timer_create_args_t stop_timer_args = {
-        .callback = &wifi_manager_stop_monitor_mode,
+        .callback = &wps_phase_2,
         .name = "stop_timer"
     };
     ESP_ERROR_CHECK(esp_timer_create(&stop_timer_args, &stop_timer));

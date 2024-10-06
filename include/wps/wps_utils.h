@@ -6,8 +6,6 @@
 
 #include <stdint.h>
 
-static inline void uint_to_char_array(unsigned int num, unsigned int len, char *dst);
-
 void byte_array_print(const uint8_t *buffer, const unsigned int length);
 
 int get_int(char *in, int *out);

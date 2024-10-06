@@ -112,6 +112,10 @@ uint8_t *decrypt_encr_settings(uint8_t *keywrapkey, const uint8_t *encr, size_t 
 /* Pin checksum computing */
 static inline uint_fast8_t wps_pin_checksum(uint_fast32_t pin);
 
+void hmac_sha256(const void *key, size_t key_len, const void *data, size_t data_len, uint8_t *hmac_output);
+
+int aes_128_cbc_decrypt(const uint8_t *key, const uint8_t *iv, const uint8_t *input, size_t length, uint8_t *output);
+
 /* Validity PIN control based on checksum */
 static inline uint_fast8_t wps_pin_valid(uint_fast32_t pin);
 

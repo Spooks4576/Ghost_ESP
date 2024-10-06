@@ -1,14 +1,7 @@
 #include "wps/wps_utils.h"
 #include <stddef.h>
-
-inline void uint_to_char_array(unsigned int num, unsigned int len, char *dst)
-{
-    unsigned int mul = 1;
-	while (len--) {
-		dst[len] = (num % (mul * 10) / mul) + '0';
-		mul *= 10;
-	}
-}
+#include <core/utils.h>
+#include <string.h>
 
 void byte_array_print(const uint8_t *buffer, const unsigned int length)
 {
