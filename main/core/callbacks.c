@@ -256,6 +256,10 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
 
                             detected_wps_networks[detected_network_count++] = new_network;
                         }
+                        else 
+                        {
+                            pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
+                        }
                         
                         if (detected_network_count >= MAX_WPS_NETWORKS) {
                             ESP_LOGI(TAG, "Maximum number of WPS networks detected. Stopping monitor mode.");
