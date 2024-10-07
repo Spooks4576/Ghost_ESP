@@ -1,4 +1,4 @@
-#include "Settings.h"
+#include "settings.h"
 #include "core/system_manager.h"
 #include <iostream>  // For debugging purposes
 
