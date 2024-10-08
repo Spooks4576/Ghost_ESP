@@ -31,7 +31,7 @@ void app_main(void) {
   system_manager_init();
   serial_manager_init();
   wifi_manager_init();
-#if CONFIG_BT_ENABLED
+#ifndef CONFIG_IDF_TARGET_ESP32S2
   ble_init();
 #endif
 
