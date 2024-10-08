@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16.0)
-set(IDF_TARGET "esp32s2")
+set(IDF_TARGET "esp32")
 set(PARTITION_TABLE_CUSTOM_FILENAME "partitions/min_spiffs.csv")
 set(PARTITION_TABLE_CUSTOM_PARTITION_FILENAME "partitions/min_spiffs.csv")
 add_link_options("-Wl,-z,muldefs")

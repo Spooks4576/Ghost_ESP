@@ -903,7 +903,7 @@ void wifi_manager_start_scan() {
     ESP_LOGI(TAG, "WiFi scanning started...");
     esp_err_t err = esp_wifi_scan_start(&scan_config, false);
 
-    vTaskDelay(pdMS_TO_TICKS(15000));
+    vTaskDelay(pdMS_TO_TICKS(1500));
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "WiFi scan failed to start: %s", esp_err_to_name(err));
@@ -1050,12 +1050,14 @@ void wifi_deauth_task(void *param) {
 
     if (ap_count == 0) {
         ESP_LOGI(TAG, "No access points found");
+        vTaskDelete(NULL);
         return;
     }
 
     wifi_ap_record_t *ap_info = scanned_aps;
     if (ap_info == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+        vTaskDelete(NULL);
         return;
     }
 
