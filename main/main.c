@@ -31,7 +31,7 @@ void app_main(void) {
   system_manager_init();
   serial_manager_init();
   wifi_manager_init();
-#ifdef CONFIG_BT_ENABLED
+#if CONFIG_BT_ENABLED
   ble_init();
 #endif
 
