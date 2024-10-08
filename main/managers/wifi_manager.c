@@ -303,51 +303,17 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
     ESP_LOGI(TAG, "Requesting URL: %s", url);
 
     
-    esp_http_client_config_t config = {
-        .url = url,
-        .timeout_ms = 5000,
-        .crt_bundle_attach = esp_crt_bundle_attach,
-        .transport_type = HTTP_TRANSPORT_OVER_SSL,
-        .user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",  // Browser-like User-Agent string
-        .disable_auto_redirect = false,
-    };
-
-    
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-    if (client == NULL) {
-        ESP_LOGE(TAG, "Failed to initialize HTTP client");
-        return ESP_FAIL;
-    }
-
-    
-    esp_err_t err = esp_http_client_perform(client);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
-        esp_http_client_cleanup(client);
-        return ESP_FAIL;
-    }
-
-    
-    int http_status = esp_http_client_get_status_code(client);
-    ESP_LOGI(TAG, "Final HTTP Status code: %d", http_status);
-
-   
-    if (http_status == 200) {
-        ESP_LOGI(TAG, "Received 200 OK. Re-opening connection for manual streaming...");
+    if (strstr(url, "/mnt") != NULL) {
+        ESP_LOGI(TAG, "URL points to a local file: %s", url);
 
         
-        err = esp_http_client_open(client, 0);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to re-open HTTP connection for streaming: %s", esp_err_to_name(err));
-            esp_http_client_cleanup(client);
+        FILE *file = fopen(url, "r");
+        if (file == NULL) {
+            ESP_LOGE(TAG, "Failed to open file: %s", url);
             return ESP_FAIL;
         }
 
-
-        int content_length = esp_http_client_fetch_headers(client);
-        ESP_LOGI(TAG, "Content length: %d", content_length);
-
-        
+       
         if (content_type) {
             ESP_LOGI(TAG, "Content-Type: %s", content_type);
             httpd_resp_set_type(req, content_type);
@@ -361,14 +327,13 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         char *buffer = (char *)malloc(CHUNK_SIZE + 1);
         if (buffer == NULL) {
             ESP_LOGE(TAG, "Failed to allocate memory for buffer");
-            esp_http_client_cleanup(client);
+            fclose(file);
             return ESP_FAIL;
         }
 
 
         int read_len;
-        while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
-            
+        while ((read_len = fread(buffer, 1, CHUNK_SIZE, file)) > 0) {
             if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
                 ESP_LOGE(TAG, "Failed to send chunk to client");
                 break;
@@ -376,26 +341,102 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         }
 
         
-        if (read_len == 0) {
-            ESP_LOGI(TAG, "Finished reading all data from server (end of content)");
-        } else if (read_len < 0) {
-            ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
+        if (feof(file)) {
+            ESP_LOGI(TAG, "Finished reading all data from file");
+        } else if (ferror(file)) {
+            ESP_LOGE(TAG, "Error reading file");
         }
 
-        
+        // Clean up
         free(buffer);
-        esp_http_client_close(client);
-        esp_http_client_cleanup(client);
+        fclose(file);
 
-        
+        // Send final chunk to end the response
         httpd_resp_send_chunk(req, NULL, 0);
 
         return ESP_OK;
-
     } else {
-        ESP_LOGE(TAG, "Unhandled HTTP status code: %d", http_status);
-        esp_http_client_cleanup(client);
-        return ESP_FAIL;
+        // Proceed with HTTP request if not an SD card file
+        esp_http_client_config_t config = {
+            .url = url,
+            .timeout_ms = 5000,
+            .crt_bundle_attach = esp_crt_bundle_attach,
+            .transport_type = HTTP_TRANSPORT_OVER_SSL,
+            .user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",  // Browser-like User-Agent string
+            .disable_auto_redirect = false,
+        };
+
+        esp_http_client_handle_t client = esp_http_client_init(&config);
+        if (client == NULL) {
+            ESP_LOGE(TAG, "Failed to initialize HTTP client");
+            return ESP_FAIL;
+        }
+
+        esp_err_t err = esp_http_client_perform(client);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
+            esp_http_client_cleanup(client);
+            return ESP_FAIL;
+        }
+
+        int http_status = esp_http_client_get_status_code(client);
+        ESP_LOGI(TAG, "Final HTTP Status code: %d", http_status);
+
+        if (http_status == 200) {
+            ESP_LOGI(TAG, "Received 200 OK. Re-opening connection for manual streaming...");
+
+            err = esp_http_client_open(client, 0);
+            if (err != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to re-open HTTP connection for streaming: %s", esp_err_to_name(err));
+                esp_http_client_cleanup(client);
+                return ESP_FAIL;
+            }
+
+            int content_length = esp_http_client_fetch_headers(client);
+            ESP_LOGI(TAG, "Content length: %d", content_length);
+
+            if (content_type) {
+                ESP_LOGI(TAG, "Content-Type: %s", content_type);
+                httpd_resp_set_type(req, content_type);
+            } else {
+                ESP_LOGI(TAG, "Content-Type not provided, using default 'application/octet-stream'");
+                httpd_resp_set_type(req, "application/octet-stream");
+            }
+            httpd_resp_set_status(req, "200 OK");
+
+            char *buffer = (char *)malloc(CHUNK_SIZE + 1);
+            if (buffer == NULL) {
+                ESP_LOGE(TAG, "Failed to allocate memory for buffer");
+                esp_http_client_cleanup(client);
+                return ESP_FAIL;
+            }
+
+            int read_len;
+            while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
+                if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
+                    ESP_LOGE(TAG, "Failed to send chunk to client");
+                    break;
+                }
+            }
+
+            if (read_len == 0) {
+                ESP_LOGI(TAG, "Finished reading all data from server (end of content)");
+            } else if (read_len < 0) {
+                ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
+            }
+
+            free(buffer);
+            esp_http_client_close(client);
+            esp_http_client_cleanup(client);
+
+            httpd_resp_send_chunk(req, NULL, 0);
+
+            return ESP_OK;
+        } else {
+            ESP_LOGE(TAG, "Unhandled HTTP status code: %d", http_status);
+            esp_http_client_cleanup(client);
+            return ESP_FAIL;
+        }
     }
 }
 
@@ -648,55 +689,96 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
         }
     };      
 
-    strlcpy((char*)wifi_config.sta.ssid, SSID, sizeof(wifi_config.sta.ssid));
-    strlcpy((char*)wifi_config.sta.password, Password, sizeof(wifi_config.sta.password));
+    if (SSID != NULL || Password != NULL)
+    {
+        strlcpy((char*)wifi_config.sta.ssid, SSID, sizeof(wifi_config.sta.ssid));
+        strlcpy((char*)wifi_config.sta.password, Password, sizeof(wifi_config.sta.password));
 
 
-    strlcpy((char*)ap_config.sta.ssid, ap_ssid, sizeof(ap_config.sta.ssid));
-    ap_config.ap.authmode = WIFI_AUTH_OPEN;   
+        strlcpy((char*)ap_config.sta.ssid, ap_ssid, sizeof(ap_config.sta.ssid));
+        ap_config.ap.authmode = WIFI_AUTH_OPEN;   
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA) );
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA) );
 
-    
+        
 
-    dhcps_offer_t dhcps_dns_value = OFFER_DNS;
-    esp_netif_dhcps_option(wifiAP,ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, &dhcps_dns_value, sizeof(dhcps_dns_value));                           
+        dhcps_offer_t dhcps_dns_value = OFFER_DNS;
+        esp_netif_dhcps_option(wifiAP,ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, &dhcps_dns_value, sizeof(dhcps_dns_value));                           
 
-    dnsserver.ip.u_addr.ip4.addr = esp_ip4addr_aton("192.168.4.1");
-    dnsserver.ip.type = ESP_IPADDR_TYPE_V4;
-    esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dnsserver);
+        dnsserver.ip.u_addr.ip4.addr = esp_ip4addr_aton("192.168.4.1");
+        dnsserver.ip.type = ESP_IPADDR_TYPE_V4;
+        esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dnsserver);
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(100));
 
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
 
-    ESP_ERROR_CHECK(esp_wifi_start());
-    vTaskDelay(pdMS_TO_TICKS(500));
-    esp_wifi_connect();
-    xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT,
-        pdFALSE, pdTRUE, 5000 / portTICK_PERIOD_MS);
+        ESP_ERROR_CHECK(esp_wifi_start());
+        vTaskDelay(pdMS_TO_TICKS(500));
+        esp_wifi_connect();
+        xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT,
+            pdFALSE, pdTRUE, 5000 / portTICK_PERIOD_MS);
 
-    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config) );
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config) );
 
-    start_portal_webserver();
+        start_portal_webserver();
 
-    dns_server_config_t dns_config = {
-        .num_of_entries = 1,
-        .item = {
-            {
-                .name = "*", 
-                .if_key = NULL, 
-                .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+        dns_server_config_t dns_config = {
+            .num_of_entries = 1,
+            .item = {
+                {
+                    .name = "*", 
+                    .if_key = NULL, 
+                    .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+                }
             }
-        }
-    };
+        };
 
-    // Start the DNS server with the configured settings
-    dns_handle = start_dns_server(&dns_config);
-    if (dns_handle) {
-        ESP_LOGI(TAG, "DNS server started, all requests will be redirected to 192.168.4.1");
-    } else {
-        ESP_LOGE(TAG, "Failed to start DNS server");
+        // Start the DNS server with the configured settings
+        dns_handle = start_dns_server(&dns_config);
+        if (dns_handle) {
+            ESP_LOGI(TAG, "DNS server started, all requests will be redirected to 192.168.4.1");
+        } else {
+            ESP_LOGE(TAG, "Failed to start DNS server");
+        }
+    }
+    else 
+    {
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP) );
+        strlcpy((char*)ap_config.sta.ssid, ap_ssid, sizeof(ap_config.sta.ssid));
+        ap_config.ap.authmode = WIFI_AUTH_OPEN;
+
+        dhcps_offer_t dhcps_dns_value = OFFER_DNS;
+        esp_netif_dhcps_option(wifiAP,ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, &dhcps_dns_value, sizeof(dhcps_dns_value));                           
+
+        dnsserver.ip.u_addr.ip4.addr = esp_ip4addr_aton("192.168.4.1");
+        dnsserver.ip.type = ESP_IPADDR_TYPE_V4;
+        esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dnsserver);
+
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config) );
+
+        ESP_ERROR_CHECK(esp_wifi_start());
+
+        start_portal_webserver();
+
+        dns_server_config_t dns_config = {
+            .num_of_entries = 1,
+            .item = {
+                {
+                    .name = "*", 
+                    .if_key = NULL, 
+                    .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+                }
+            }
+        };
+
+
+        dns_handle = start_dns_server(&dns_config);
+        if (dns_handle) {
+            ESP_LOGI(TAG, "DNS server started, all requests will be redirected to 192.168.4.1");
+        } else {
+            ESP_LOGE(TAG, "Failed to start DNS server");
+        }
     }
 }
 

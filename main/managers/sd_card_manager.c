@@ -99,7 +99,7 @@ static void sdmmc_card_print_info(const sdmmc_card_t* card) {
 
 esp_err_t sd_card_init(void) {
     esp_err_t ret;
-#if SOC_SDMMC_HOST_SUPPORTED && SOC_SDMMC_USE_GPIO_MATRIX
+#ifndef USING_SPI
 
     ESP_LOGI(SD_TAG, "Initializing SD card in SDMMC mode (4-bit)...");
 
@@ -154,7 +154,7 @@ esp_err_t sd_card_init(void) {
     ESP_LOGI(SD_TAG, "SD card initialized successfully");
 
     sd_card_setup_directory_structure();
-#elif VSPI_HOST 
+#elif USING_SPI
 
     ESP_LOGI(SD_TAG, "Initializing SD card in SPI mode...");
 

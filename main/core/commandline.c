@@ -77,6 +77,7 @@ CommandFunction find_command(const char *name) {
 void cmd_wifi_scan_start(int argc, char **argv) {
     ap_manager_add_log("WiFi scan started.\n");
     wifi_manager_start_scan();
+    wifi_manager_print_scan_results_with_oui();
 }
 
 void cmd_wifi_scan_stop(int argc, char **argv) {
@@ -396,48 +397,79 @@ void handle_set_setting(int argc, char **argv)
 
 void handle_start_portal(int argc, char **argv)
 {
-    if (argc != 6) {
+    if (argc != 6 && argc != 4) {
         printf("Error: Incorrect number of arguments.\n");
         printf("Usage: %s <URL> <SSID> <Password> <AP_ssid> <DOMAIN>\n", argv[0]);
+        printf("or\n");
+        printf("Usage: %s <filepath> <APSSID> <Domain>\n", argv[0]);
         return;
     }
 
-    char *url = argv[1];
-    char *ssid = argv[2];
-    char *password = argv[3];
-    char *ap_ssid = argv[4];
-    char *domain = argv[5];
+    if (argc == 6)
+    {
+        char *url = argv[1];
+        char *ssid = argv[2];
+        char *password = argv[3];
+        char *ap_ssid = argv[4];
+        char *domain = argv[5];
 
 
-    if (ssid == NULL || ssid[0] == '\0') {
-        printf("Error: SSID cannot be empty.\n");
-        return;
+        if (ssid == NULL || ssid[0] == '\0') {
+            printf("Error: SSID cannot be empty.\n");
+            return;
+        }
+
+        if (password == NULL || password[0] == '\0') {
+            printf("Error: Password cannot be empty.\n");
+            return;
+        }
+
+        if (ap_ssid == NULL || ap_ssid[0] == '\0') {
+            printf("Error: AP_ssid cannot be empty.\n");
+            return;
+        }
+
+        if (url == NULL || url[0] == '\0') {
+            printf("Error: url cannot be empty.\n");
+            return;
+        }
+
+        if (domain == NULL || domain[0] == '\0') {
+            printf("Error: domain cannot be empty.\n");
+            return;
+        }
+        
+        printf("Starting portal with SSID: %s, Password: %s, AP_ssid: %s\n", ssid, password, ap_ssid);
+
+        
+        wifi_manager_start_evil_portal(url, ssid, password, ap_ssid, domain);
     }
+    else if (argc == 4)
+    {
+        char *filepath = argv[1];
+        char *ap_ssid = argv[2];
+        char *domain = argv[3];
 
-    if (password == NULL || password[0] == '\0') {
-        printf("Error: Password cannot be empty.\n");
-        return;
+        if (filepath == NULL || filepath[0] == '\0') {
+            printf("Error: File Path cannot be empty.\n");
+            return;
+        }
+        
+        if (ap_ssid == NULL || ap_ssid[0] == '\0') {
+            printf("Error: SSID cannot be empty.\n");
+            return;
+        }
+
+        if (domain == NULL || domain[0] == '\0') {
+            printf("Error: domain cannot be empty.\n");
+            return;
+        }
+
+        printf("Starting portal with AP_ssid: %s\n", ap_ssid);
+
+
+        wifi_manager_start_evil_portal(filepath, NULL, NULL, ap_ssid, domain);
     }
-
-    if (ap_ssid == NULL || ap_ssid[0] == '\0') {
-        printf("Error: AP_ssid cannot be empty.\n");
-        return;
-    }
-
-    if (url == NULL || url[0] == '\0') {
-        printf("Error: url cannot be empty.\n");
-        return;
-    }
-
-    if (domain == NULL || domain[0] == '\0') {
-        printf("Error: domain cannot be empty.\n");
-        return;
-    }
-    
-    printf("Starting portal with SSID: %s, Password: %s, AP_ssid: %s\n", ssid, password, ap_ssid);
-
-    
-    wifi_manager_start_evil_portal(url, ssid, password, ap_ssid, domain);
 }
 
 
