@@ -99,7 +99,7 @@ static void sdmmc_card_print_info(const sdmmc_card_t* card) {
 
 esp_err_t sd_card_init(void) {
     esp_err_t ret;
-#ifndef USING_SPI
+#if USING_MMC
 
     ESP_LOGI(SD_TAG, "Initializing SD card in SDMMC mode (4-bit)...");
 

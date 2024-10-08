@@ -426,6 +426,20 @@ static esp_err_t http_get_handler(httpd_req_t* req) {
      return httpd_resp_send(req, (const char*)ghost_site_html, ghost_site_html_size);
 }
 
+static void handle_serial_command_task(void *pvParameters) {
+    const char *command = (char*)pvParameters;
+
+    // Execute the command
+    if (handle_serial_command(command) == ESP_OK) {
+        ESP_LOGI(TAG, "Command executed successfully: %s", command);
+    } else {
+        ESP_LOGE(TAG, "Command execution failed: %s", command);
+    }
+    
+
+    vTaskDelete(NULL);
+}
+
 static esp_err_t api_command_handler(httpd_req_t *req)
 {
     char content[100];
@@ -466,14 +480,16 @@ static esp_err_t api_command_handler(httpd_req_t *req)
     const char *command = command_json->valuestring;
 
 
-    if (handle_serial_command(command) == ESP_OK) {
-        httpd_resp_send(req, "Command executed", strlen("Command executed"));
-    } else {
-        httpd_resp_set_status(req, "404 Not Found");
-        httpd_resp_send(req, "Command not found", strlen("Command not found"));
+    if (xTaskCreate(handle_serial_command_task, "serial_command_task", 4096, command, 5, NULL) != pdPASS) {
+        httpd_resp_set_status(req, "500 Internal Server Error");
+        httpd_resp_send(req, "Failed to create task", strlen("Failed to create task"));
+        cJSON_Delete(json);
+        return ESP_FAIL;
     }
+   
+    httpd_resp_send(req, "Command executed", strlen("Command executed"));
 
-    cJSON_Delete(json);  // Cleanup JSON object
+    cJSON_Delete(json);
     return ESP_OK;
 }
 
