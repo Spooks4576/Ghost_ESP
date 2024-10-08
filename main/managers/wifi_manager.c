@@ -1414,6 +1414,7 @@ void wifi_manager_start_beacon(const char *ssid) {
     if (!beacon_task_running) {
         ap_manager_stop_services();
         ESP_LOGI(TAG, "Starting beacon transmission...");
+        esp_wifi_start();
         xTaskCreate(wifi_beacon_task, "beacon_task", 2048, (void *)ssid, 5, &beacon_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, false);
