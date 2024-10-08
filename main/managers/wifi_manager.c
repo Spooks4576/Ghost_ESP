@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <esp_random.h>
+#include "esp_timer.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <dhcpserver/dhcpserver.h>
@@ -55,6 +56,30 @@ static void tolower_str(const uint8_t *src, char *dst) {
         dst[i] = tolower((char)src[i]);
     }
     dst[32] = '\0'; // Ensure null-termination
+}
+
+void configure_hidden_ap() {
+    wifi_config_t wifi_config;
+
+    // Get the current AP configuration
+    esp_err_t err = esp_wifi_get_config(WIFI_IF_AP, &wifi_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to get Wi-Fi config: %s", esp_err_to_name(err));
+        return;
+    }
+
+    // Set the SSID to hidden while keeping the other settings unchanged
+    wifi_config.ap.ssid_hidden = 1;
+    wifi_config.ap.beacon_interval = 10000;
+    wifi_config.ap.ssid_len = 0;
+
+    // Apply the updated configuration
+    err = esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set Wi-Fi config: %s", esp_err_to_name(err));
+    } else {
+        ESP_LOGI(TAG, "Wi-Fi AP SSID is now hidden.");
+    }
 }
 
 static void event_handler(void* arg, esp_event_base_t event_base,
@@ -1276,76 +1301,72 @@ esp_err_t wifi_manager_broadcast_ap(const char *ssid) {
         0x11, 0x04,  // Capability info (ESS)
     };
 
-    
-    generate_random_mac(&packet[10]);
-    memcpy(&packet[16], &packet[10], 6);
+
+    for (int ch = 1; ch <= 11; ch++) {
+        esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
+        generate_random_mac(&packet[10]);
+        memcpy(&packet[16], &packet[10], 6);
+
+        
+        char ssid_buffer[RANDOM_SSID_LEN + 1];  
+        if (ssid == NULL) {
+            generate_random_ssid(ssid_buffer, RANDOM_SSID_LEN + 1);
+            ssid = ssid_buffer;
+        }
+
+        uint8_t ssid_len = strlen(ssid);
+        packet[37] = ssid_len;
+        memcpy(&packet[38], ssid, ssid_len);
 
     
-    char ssid_buffer[RANDOM_SSID_LEN + 1];  
-    if (ssid == NULL) {
-        generate_random_ssid(ssid_buffer, RANDOM_SSID_LEN + 1);
-        ssid = ssid_buffer;
+        uint8_t *supported_rates_ie = &packet[38 + ssid_len];
+        supported_rates_ie[0] = 0x01;  // Supported Rates IE tag
+        supported_rates_ie[1] = 0x08;  // Length (8 rates)
+        supported_rates_ie[2] = 0x82;  // 1 Mbps
+        supported_rates_ie[3] = 0x84;  // 2 Mbps
+        supported_rates_ie[4] = 0x8B;  // 5.5 Mbps
+        supported_rates_ie[5] = 0x96;  // 11 Mbps
+        supported_rates_ie[6] = 0x24;  // 18 Mbps
+        supported_rates_ie[7] = 0x30;  // 24 Mbps
+        supported_rates_ie[8] = 0x48;  // 36 Mbps
+        supported_rates_ie[9] = 0x6C;  // 54 Mbps
+
+        
+        uint8_t *ds_param_set_ie = &supported_rates_ie[10];
+        ds_param_set_ie[0] = 0x03;  // DS Parameter Set IE tag
+        ds_param_set_ie[1] = 0x01;  // Length (1 byte)
+
+        
+        uint8_t primary_channel;
+        wifi_second_chan_t second_channel;
+        esp_wifi_get_channel(&primary_channel, &second_channel);
+        ds_param_set_ie[2] = primary_channel;  // Set the current channel
+
+    
+        uint8_t *he_capabilities_ie = &ds_param_set_ie[3];
+        he_capabilities_ie[0] = 0xFF;  // Vendor-Specific IE tag (802.11ax capabilities)
+        he_capabilities_ie[1] = 0x23;  // Length
+        he_capabilities_ie[2] = 0x50;  // OUI - Wi-Fi Alliance OUI
+        he_capabilities_ie[3] = 0x6F;  // OUI
+        he_capabilities_ie[4] = 0x9A;  // OUI
+        he_capabilities_ie[5] = 0x1A;  // OUI type - HE Capabilities
+
+        
+        he_capabilities_ie[6] = 0x00;
+        he_capabilities_ie[7] = 0x00;
+        he_capabilities_ie[8] = 0x00;
+
+    
+        size_t packet_size = (38 + ssid_len + 12 + 3 + 9);
+        
+        esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to send beacon frame: %s", esp_err_to_name(err));
+            return err;
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
-
-    uint8_t ssid_len = strlen(ssid);
-    packet[37] = ssid_len;
-    memcpy(&packet[38], ssid, ssid_len);
-
-   
-    uint8_t *supported_rates_ie = &packet[38 + ssid_len];
-    supported_rates_ie[0] = 0x01;  // Supported Rates IE tag
-    supported_rates_ie[1] = 0x08;  // Length (8 rates)
-    supported_rates_ie[2] = 0x82;  // 1 Mbps
-    supported_rates_ie[3] = 0x84;  // 2 Mbps
-    supported_rates_ie[4] = 0x8B;  // 5.5 Mbps
-    supported_rates_ie[5] = 0x96;  // 11 Mbps
-    supported_rates_ie[6] = 0x24;  // 18 Mbps
-    supported_rates_ie[7] = 0x30;  // 24 Mbps
-    supported_rates_ie[8] = 0x48;  // 36 Mbps
-    supported_rates_ie[9] = 0x6C;  // 54 Mbps
-
-    
-    uint8_t *ds_param_set_ie = &supported_rates_ie[10];
-    ds_param_set_ie[0] = 0x03;  // DS Parameter Set IE tag
-    ds_param_set_ie[1] = 0x01;  // Length (1 byte)
-
-    
-    uint8_t primary_channel;
-    wifi_second_chan_t second_channel;
-    esp_wifi_get_channel(&primary_channel, &second_channel);
-    ds_param_set_ie[2] = primary_channel;  // Set the current channel
-
-   
-    uint8_t *he_capabilities_ie = &ds_param_set_ie[3];
-    he_capabilities_ie[0] = 0xFF;  // Vendor-Specific IE tag (802.11ax capabilities)
-    he_capabilities_ie[1] = 0x23;  // Length
-    he_capabilities_ie[2] = 0x50;  // OUI - Wi-Fi Alliance OUI
-    he_capabilities_ie[3] = 0x6F;  // OUI
-    he_capabilities_ie[4] = 0x9A;  // OUI
-    he_capabilities_ie[5] = 0x1A;  // OUI type - HE Capabilities
-
-    
-    he_capabilities_ie[6] = 0x00;
-    he_capabilities_ie[7] = 0x00;
-    he_capabilities_ie[8] = 0x00;
-
-   
-    size_t packet_size = (38 + ssid_len + 12 + 3 + 9);
-
-    
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
-    esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
-    esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to send beacon frame: %s", esp_err_to_name(err));
-        return err;
-    }
-
-    return ESP_OK;
+   return ESP_OK;
 }
 
 void wifi_manager_stop_beacon()
@@ -1402,13 +1423,6 @@ void wifi_beacon_task(void *param) {
         }
 
         vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
-
-
-        uint8_t random_channel = (esp_random() % 11) + 1;
-        esp_err_t err = esp_wifi_set_channel(random_channel, WIFI_SECOND_CHAN_NONE);
-        if (err != ESP_OK) {
-            ESP_LOGE("WiFiManager", "Failed to set channel: %s", esp_err_to_name(err));
-        }
     }
 }
 
@@ -1416,6 +1430,7 @@ void wifi_manager_start_beacon(const char *ssid) {
     if (!beacon_task_running) {
         ap_manager_stop_services();
         ESP_LOGI(TAG, "Starting beacon transmission...");
+        configure_hidden_ap();
         esp_wifi_start();
         xTaskCreate(wifi_beacon_task, "beacon_task", 2048, (void *)ssid, 5, &beacon_task_handle);
         beacon_task_running = true;
