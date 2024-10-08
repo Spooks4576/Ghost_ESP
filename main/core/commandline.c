@@ -234,7 +234,7 @@ void wps_test(int argc, char** argv)
 }
 
 
-#ifdef CONFIG_BT_ENABLED
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 
 void handle_ble_scan_cmd(int argc, char**argv)
 {
@@ -749,7 +749,7 @@ void register_commands() {
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif
-#ifdef CONFIG_BT_ENABLED
+#ifndef CONFIG_IDF_TARGET_ESP32S2
     register_command("blescan", handle_ble_scan_cmd);
 #endif
 }

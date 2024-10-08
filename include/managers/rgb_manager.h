@@ -6,9 +6,13 @@
 
 // Struct for the RGB manager (addressable LED strip)
 typedef struct {
-    gpio_num_t pin;                     // GPIO pin used for the LED strip
-    led_strip_handle_t strip;           // Handle to the LED strip object
-    int num_leds;                       // Number of LEDs in the strip
+    gpio_num_t pin;               // Single pin for LED strip
+    gpio_num_t red_pin;           // Separate pin for red
+    gpio_num_t green_pin;         // Separate pin for green
+    gpio_num_t blue_pin;          // Separate pin for blue
+    int num_leds;                 // Number of LEDs
+    led_strip_handle_t strip;     // LED strip handle
+    bool is_separate_pins;        // Flag to check if separate RGB pins are used
 } RGBManager_t;
 
 /**
@@ -19,8 +23,10 @@ typedef struct {
  * @param pixel_format Pixel format (GRB or GRBW)
  * @param model LED model (WS2812, SK6812, etc.)
  * @return esp_err_t ESP_OK on success, ESP_FAIL on failure
+ * 
+ * @note other parameters are optional depending on your setup
  */
-esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_leds, led_pixel_format_t pixel_format, led_model_t model);
+esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_leds, led_pixel_format_t pixel_format, led_model_t model, gpio_num_t red_pin, gpio_num_t green_pin, gpio_num_t blue_pin);
 
 /**
  * @brief Set the color of a specific LED in the strip
