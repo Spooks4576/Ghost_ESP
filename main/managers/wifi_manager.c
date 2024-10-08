@@ -1214,7 +1214,7 @@ void wifi_manager_stop_deauth()
             beacon_task_running = false;
             rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
             esp_wifi_stop();
-            ESP_ERROR_CHECK(ap_manager_start_services());
+            ap_manager_start_services();
         }
     } else {
         ESP_LOGW(TAG, "No deauth transmission is running.");
@@ -1358,7 +1358,7 @@ void wifi_manager_stop_beacon()
             beacon_task_running = false;
         }
         rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
-        ESP_ERROR_CHECK(ap_manager_start_services());
+        ap_manager_start_services();
     } else {
         ESP_LOGW(TAG, "No beacon transmission is running.");
     }
