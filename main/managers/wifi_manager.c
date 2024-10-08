@@ -1301,13 +1301,11 @@ esp_err_t wifi_manager_broadcast_ap(const char *ssid) {
         0x11, 0x04,  // Capability info (ESS)
     };
 
-
     for (int ch = 1; ch <= 11; ch++) {
         esp_wifi_set_channel(ch, WIFI_SECOND_CHAN_NONE);
         generate_random_mac(&packet[10]);
         memcpy(&packet[16], &packet[10], 6);
 
-        
         char ssid_buffer[RANDOM_SSID_LEN + 1];  
         if (ssid == NULL) {
             generate_random_ssid(ssid_buffer, RANDOM_SSID_LEN + 1);
@@ -1318,7 +1316,6 @@ esp_err_t wifi_manager_broadcast_ap(const char *ssid) {
         packet[37] = ssid_len;
         memcpy(&packet[38], ssid, ssid_len);
 
-    
         uint8_t *supported_rates_ie = &packet[38 + ssid_len];
         supported_rates_ie[0] = 0x01;  // Supported Rates IE tag
         supported_rates_ie[1] = 0x08;  // Length (8 rates)
@@ -1331,42 +1328,47 @@ esp_err_t wifi_manager_broadcast_ap(const char *ssid) {
         supported_rates_ie[8] = 0x48;  // 36 Mbps
         supported_rates_ie[9] = 0x6C;  // 54 Mbps
 
-        
         uint8_t *ds_param_set_ie = &supported_rates_ie[10];
         ds_param_set_ie[0] = 0x03;  // DS Parameter Set IE tag
         ds_param_set_ie[1] = 0x01;  // Length (1 byte)
 
-        
         uint8_t primary_channel;
         wifi_second_chan_t second_channel;
         esp_wifi_get_channel(&primary_channel, &second_channel);
         ds_param_set_ie[2] = primary_channel;  // Set the current channel
 
-    
+        // Add HE Capabilities (for Wi-Fi 6 detection)
         uint8_t *he_capabilities_ie = &ds_param_set_ie[3];
         he_capabilities_ie[0] = 0xFF;  // Vendor-Specific IE tag (802.11ax capabilities)
-        he_capabilities_ie[1] = 0x23;  // Length
-        he_capabilities_ie[2] = 0x50;  // OUI - Wi-Fi Alliance OUI
-        he_capabilities_ie[3] = 0x6F;  // OUI
-        he_capabilities_ie[4] = 0x9A;  // OUI
-        he_capabilities_ie[5] = 0x1A;  // OUI type - HE Capabilities
+        he_capabilities_ie[1] = 0x0D;  // Length of HE Capabilities (13 bytes)
 
-        
-        he_capabilities_ie[6] = 0x00;
-        he_capabilities_ie[7] = 0x00;
-        he_capabilities_ie[8] = 0x00;
+        // Wi-Fi Alliance OUI (00:50:6f) for 802.11ax (Wi-Fi 6)
+        he_capabilities_ie[2] = 0x50;  // OUI byte 1
+        he_capabilities_ie[3] = 0x6f;  // OUI byte 2
+        he_capabilities_ie[4] = 0x9A;  // OUI byte 3 (OUI type)
 
-    
-        size_t packet_size = (38 + ssid_len + 12 + 3 + 9);
+        // Wi-Fi 6 HE Capabilities: a simplified example of capabilities
+        he_capabilities_ie[5] = 0x00;  // HE MAC capabilities info (placeholder)
+        he_capabilities_ie[6] = 0x08;  // HE PHY capabilities info (supports 80 MHz)
+        he_capabilities_ie[7] = 0x00;  // Other HE PHY capabilities
+        he_capabilities_ie[8] = 0x00;  // More PHY capabilities (placeholder)
+        he_capabilities_ie[9] = 0x40;  // Spatial streams info (2x2 MIMO)
+        he_capabilities_ie[10] = 0x00;  // More PHY capabilities
+        he_capabilities_ie[11] = 0x00;  // Even more PHY capabilities
+        he_capabilities_ie[12] = 0x01;  // Final PHY capabilities (Wi-Fi 6 capabilities set)
         
+        size_t packet_size = (38 + ssid_len + 12 + 3 + 13);  // Adjust packet size
+
         esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "Failed to send beacon frame: %s", esp_err_to_name(err));
             return err;
         }
-        vTaskDelay(pdMS_TO_TICKS(10));
+
+        vTaskDelay(pdMS_TO_TICKS(10));  // Delay between channel hops
     }
-   return ESP_OK;
+
+    return ESP_OK;
 }
 
 void wifi_manager_stop_beacon()
