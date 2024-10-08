@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "esp_log.h"
 #include "nvs_flash.h"
-#ifdef CONFIG_BT_ENABLED
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "nimble/nimble_port.h"

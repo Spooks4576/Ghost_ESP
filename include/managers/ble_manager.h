@@ -13,7 +13,7 @@
 #define TIME_WINDOW_MS 3000
 
 
-#ifdef CONFIG_BT_ENABLED
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 
 typedef void (*ble_data_handler_t)(struct ble_gap_event *event, size_t len);
 
