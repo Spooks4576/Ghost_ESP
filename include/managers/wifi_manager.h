@@ -83,9 +83,6 @@ typedef void (* wifi_promiscuous_cb_t_t)(void *buf, wifi_promiscuous_pkt_type_t 
 // Initialize WiFiManager
 void wifi_manager_init();
 
-// Connect to a WiFi network
-esp_err_t wifi_manager_connect(const char *ssid, const char *password);
-
 // Start scanning for available networks
 void wifi_manager_start_scan();
 
@@ -103,6 +100,8 @@ void wifi_manager_start_beacon(const char *ssid);
 void wifi_manager_auto_deauth();
 
 void wifi_manager_stop_beacon();
+
+void wifi_manager_connect_wifi(const char* ssid, const char* password);
 
 void wifi_manager_stop_monitor_mode();
 

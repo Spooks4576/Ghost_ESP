@@ -1387,6 +1387,63 @@ void wifi_manager_stop_beacon()
     }
 }
 
+void wifi_manager_connect_wifi(const char* ssid, const char* password)
+{
+    wifi_config_t wifi_config = {
+        .sta = {
+            .ssid = "",
+            .password = "",
+            .threshold.authmode = WIFI_AUTH_WPA2_PSK,  // Set to WPA2-PSK authentication
+            .pmf_cfg = {
+                .capable = true,
+                .required = false
+            },
+        },
+    };
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+
+    // Copy SSID and password into Wi-Fi config
+    strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
+    strncpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password) - 1);
+
+    // Apply the Wi-Fi configuration and start Wi-Fi
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    // Attempt to connect to the Wi-Fi network
+    int retry_count = 0;
+    while (retry_count < 5) {
+        ESP_LOGI(TAG, "Attempting to connect to Wi-Fi (Attempt %d/%d)...", retry_count + 1, 5);
+        
+        int ret = esp_wifi_connect();
+        if (ret == ESP_OK) {
+            ESP_LOGI(TAG, "Connecting...");
+            vTaskDelay(5000 / portTICK_PERIOD_MS);  // Wait for 5 seconds
+            
+            // Check if connected to the AP
+            wifi_ap_record_t ap_info;
+            if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+                ESP_LOGI(TAG, "Successfully connected to Wi-Fi network: %s", ap_info.ssid);
+                break;
+            } else {
+                ESP_LOGW(TAG, "Connection failed or timed out, retrying...");
+            }
+        } else {
+            ESP_LOGE(TAG, "esp_wifi_connect() failed: %s", esp_err_to_name(ret));
+            if (ret == ESP_ERR_WIFI_CONN) {
+                ESP_LOGW(TAG, "Already connected or connection in progress.");
+            }
+        }
+        retry_count++;
+    }
+
+    // Final status after retries
+    if (retry_count == 5) {
+        ESP_LOGE(TAG, "Failed to connect to Wi-Fi after %d attempts", 5);
+    }
+}
+
 void wifi_beacon_task(void *param) {
     const char *ssid = (const char *)param;
 

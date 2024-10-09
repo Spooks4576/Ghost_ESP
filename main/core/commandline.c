@@ -8,6 +8,8 @@
 #include "managers/settings_manager.h"
 #include <stdlib.h>
 #include <string.h>
+#include <vendor/dial_client.h>
+#include "managers/dial_manager.h"
 #include <wps/pixie.h>
 #include "core/callbacks.h"
 #include <esp_timer.h>
@@ -216,6 +218,52 @@ void wps_phase_2()
         }
     }
 }
+
+
+void discover_task(void *pvParameter) {
+    DIALClient client;
+    DIALManager manager;
+
+    if (dial_client_init(&client) == ESP_OK) {
+       
+        dial_manager_init(&manager, &client);
+
+        
+        explore_network(&manager);
+
+        
+        dial_client_deinit(&client);
+    } else {
+        ESP_LOGE("AppMain", "Failed to initialize DIAL client.");
+    }
+
+    vTaskDelete(NULL);
+}
+
+void handle_dial_command(int argc, char** argv)
+{
+    xTaskCreate(&discover_task, "discover_task", 8192, NULL, 5, NULL);
+}
+
+void handle_wifi_connection(int argc, char** argv) {
+    if (argc < 3) {
+        ESP_LOGE("Command Line", "Usage: %s <SSID> <PASSWORD>", argv[0]);
+        return;
+    }
+
+    const char* ssid = argv[1];
+    const char* password = argv[2];
+
+    if (strlen(ssid) == 0 || strlen(password) == 0) {
+        ESP_LOGE("Command Line", "SSID and password cannot be empty");
+        return;
+    }
+
+    ESP_LOGI("Command Line", "Connecting to SSID: %s", ssid);
+    
+    wifi_manager_connect_wifi(ssid, password);
+}
+
 
 void wps_test(int argc, char** argv)
 {
@@ -745,7 +793,9 @@ void register_commands() {
     register_command("capture", handle_capture_scan);
     register_command("startportal", handle_start_portal);
     register_command("stopportal", stop_portal);
+    register_command("connect", handle_wifi_connection);
     register_command("wpstest", wps_test);
+    register_command("dialtest", handle_dial_command);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif
