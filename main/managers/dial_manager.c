@@ -4,6 +4,7 @@
 #include "esp_log.h"
 #include "cJSON.h"
 #include "esp_http_client.h"
+#include "esp_crt_bundle.h"
 
 static const char *TAG = "DIALManager";
 
@@ -84,6 +85,8 @@ esp_err_t send_command(const char *command, const char *video_id, const Device *
         .url = "https://" "www.youtube.com" "/api/lounge/bc/bind",
         .port = SERVER_PORT,
         .timeout_ms = 5000,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .transport_type = HTTP_TRANSPORT_OVER_SSL
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     if (!client) {
@@ -152,6 +155,8 @@ esp_err_t bind_session_id(Device *device) {
         .url = "https://" "www.youtube.com" "/api/lounge/bc/bind",
         .port = SERVER_PORT,
         .timeout_ms = 5000,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .transport_type = HTTP_TRANSPORT_OVER_SSL,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
@@ -283,6 +288,8 @@ char* get_youtube_token(const char *screen_id) {
         .url = "https://" "www.youtube.com" "/api/lounge/pairing/get_lounge_token_batch",
         .port = SERVER_PORT,
         .timeout_ms = 5000,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .transport_type = HTTP_TRANSPORT_OVER_SSL,
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&config);
@@ -450,6 +457,11 @@ char* get_dial_application_url(const char *location_url) {
         return NULL;
     }
 
+    if (strcmp(ip, "192.168.1.209") != 0)
+    {
+        return NULL;
+    }
+
     // Extract path from the location URL
     char *path = extract_path_from_url(location_url);
     if (!path) {
@@ -542,9 +554,9 @@ esp_err_t extract_ip_and_port(const char *url, char *ip_out, uint16_t *port_out)
 const char* get_app_path(DIALAppType app) {
     switch (app) {
         case APP_YOUTUBE:
-            return "YouTube";
+            return "/YouTube";
         case APP_NETFLIX:
-            return "Netflix";
+            return "/Netflix";
         default:
             return "/";
     }
@@ -592,7 +604,7 @@ esp_err_t check_app_status(DIALManager *manager, DIALAppType app, const char *ap
         .host = ip,
         .port = port,
         .path = path,
-        .timeout_ms = 5000,
+        .timeout_ms = 5000
     };
     esp_http_client_handle_t http_client = esp_http_client_init(&config);
     if (http_client == NULL) {
@@ -639,9 +651,11 @@ esp_err_t check_app_status(DIALManager *manager, DIALAppType app, const char *ap
                 if (screen_id) {
                     strncpy(device->screenID, screen_id, sizeof(device->screenID) - 1);  // Store in device
                     free(screen_id);  // Free allocated memory
+                    esp_http_client_cleanup(http_client);
+                    return ESP_OK;
                 }
                 esp_http_client_cleanup(http_client);
-                return ESP_OK;
+                return ESP_FAIL;
             } else {
                 ESP_LOGW("DIALManager", "%s app is not running", (app == APP_YOUTUBE) ? "YouTube" : "Netflix");
                 esp_http_client_cleanup(http_client);
@@ -751,7 +765,7 @@ void explore_network(DIALManager *manager) {
                 
                 unsigned long startTime = xTaskGetTickCount();
                 bool isYouTubeRunning = false;
-                while ((xTaskGetTickCount() - startTime) < (10000 / portTICK_PERIOD_MS)) {
+                while ((xTaskGetTickCount() - startTime) < (15000 / portTICK_PERIOD_MS)) {
                     if (check_app_status(manager, APP_YOUTUBE, appUrl, device) == ESP_OK) {
                         isYouTubeRunning = true;
                         break;
