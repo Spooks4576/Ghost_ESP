@@ -242,7 +242,7 @@ void discover_task(void *pvParameter) {
 
 void handle_dial_command(int argc, char** argv)
 {
-    xTaskCreate(&discover_task, "discover_task", 8192, NULL, 5, NULL);
+    xTaskCreate(&discover_task, "discover_task", 10240, NULL, 5, NULL);
 }
 
 void handle_wifi_connection(int argc, char** argv) {

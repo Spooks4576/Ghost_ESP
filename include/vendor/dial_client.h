@@ -21,6 +21,7 @@ typedef struct {
     char gsession[64];    // gsession ID
     char SID[64];         // Session ID (SID)
     char listID[64];      // Playlist list ID (LID)
+    char RID[64];
 } Device;
 
 // DIAL Client functions
