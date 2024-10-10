@@ -14,6 +14,7 @@
 #include "core/callbacks.h"
 #include <esp_timer.h>
 #include "vendor/pcap.h"
+#include "vendor/arp_spoof.h"
 
 static Command *command_list_head = NULL;
 
@@ -519,6 +520,82 @@ void handle_start_portal(int argc, char **argv)
     }
 }
 
+bool ip_str_to_bytes(const char* ip_str, uint8_t* ip_bytes) {
+    int ip[4];
+    if (sscanf(ip_str, "%d.%d.%d.%d", &ip[0], &ip[1], &ip[2], &ip[3]) == 4) {
+        for (int i = 0; i < 4; i++) {
+            if (ip[i] < 0 || ip[i] > 255) return false;
+            ip_bytes[i] = (uint8_t)ip[i];
+        }
+        return true;
+    }
+    return false;
+}
+
+bool mac_str_to_bytes(const char *mac_str, uint8_t *mac_bytes) {
+    int mac[6];
+    if (sscanf(mac_str, "%x:%x:%x:%x:%x:%x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]) == 6) {
+        for (int i = 0; i < 6; i++) {
+            if (mac[i] < 0 || mac[i] > 255) return false;
+            mac_bytes[i] = (uint8_t) mac[i];
+        }
+        return true;
+    }
+    return false;
+}
+
+void handle_arp_spoof(int argc, char** argv) {
+    
+    if (strcmp(argv[1], "-s") == 0) {
+        stop_arp_spoof();
+        printf("ARP spoofing stopped.\n");
+        return;
+    }
+
+
+    if (argc < 4) {
+        printf("Usage: <spoofed_router_ip> <target_local_ip> <target_mac>\n");
+        return;
+    }
+
+    
+    arp_spoof_config_t config = {0};
+
+    
+    if (!ip_str_to_bytes(argv[1], config.spoof_ip)) {
+        printf("Invalid router IP address: %s\n", argv[1]);
+        return;
+    }
+
+    
+    if (!ip_str_to_bytes(argv[2], config.target_ip)) {
+        printf("Invalid target IP address: %s\n", argv[2]);
+        return;
+    }
+
+    
+    if (!mac_str_to_bytes(argv[3], config.target_mac)) {
+        printf("Invalid target MAC address: %s\n", argv[3]);
+        return;
+    }
+
+    
+    printf("Router (spoof) IP: %d.%d.%d.%d\n", config.spoof_ip[0], config.spoof_ip[1], config.spoof_ip[2], config.spoof_ip[3]);
+    printf("Target IP: %d.%d.%d.%d\n", config.target_ip[0], config.target_ip[1], config.target_ip[2], config.target_ip[3]);
+    printf("Target MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+           config.target_mac[0], config.target_mac[1], config.target_mac[2],
+           config.target_mac[3], config.target_mac[4], config.target_mac[5]);
+
+    
+    init_arp_spoof(&config, 1);
+
+    esp_wifi_set_mode(WIFI_MODE_STA);
+
+    esp_wifi_start();
+
+    
+    xTaskCreate(&arp_spoof_task, "arp_spoof_task", 4096, NULL, 5, NULL);
+}
 
 void handle_capture_scan(int argc, char** argv)
 {
@@ -794,6 +871,7 @@ void register_commands() {
     register_command("startportal", handle_start_portal);
     register_command("stopportal", stop_portal);
     register_command("connect", handle_wifi_connection);
+    register_command("arpspoof", handle_arp_spoof);
     register_command("wpstest", wps_test);
     register_command("dialtest", handle_dial_command);
 #ifdef DEBUG

@@ -3,6 +3,7 @@
 #include <esp_log.h>
 #include <string.h>
 #include "vendor/pcap.h"
+#include "vendor/arp_spoof.h"
 
 #define WPS_OUI 0x0050f204 
 #define TAG "WIFI_MONITOR"
@@ -92,6 +93,7 @@ bool is_eapol_response(const wifi_promiscuous_pkt_t *pkt) {
 
     return false;
 }
+
 
 void wifi_raw_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
 {

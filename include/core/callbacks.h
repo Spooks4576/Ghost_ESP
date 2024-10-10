@@ -9,6 +9,7 @@ void wifi_deauth_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wifi_probe_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wifi_raw_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wifi_eapol_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
+void monitor_packet_callback(void *buf, wifi_promiscuous_pkt_type_t type);
 
 typedef enum {
     WPS_MODE_NONE = 0,   // No WPS support
@@ -28,5 +29,6 @@ extern wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 extern int detected_network_count;
 extern esp_timer_handle_t stop_timer;
 extern int should_store_wps;
+static uint8_t router_ip[4];
 
 #endif
