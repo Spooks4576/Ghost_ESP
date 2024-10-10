@@ -1,33 +1,129 @@
-# HELP MENU:
+# Ghost ESP Commands
 
-- **'scanap':** Scan for nearby WiFi Access Points.
-- **'scansta':** Scan for nearby WiFi Stations.
-- **'list -a':** List all Access Points found during scanning.
-- **'list -c':** List all WiFi Clients connected to the network.
-- **'select -a <index>':** Select an Access Point by its index for further actions.
-- **'select -s <index>':** Select a Station by its index for further actions.
-- **'ssid -a -g':** Generate and add a random SSID to the network.
-- **'ssid -a -n <SSID>':** Add a specific SSID to the network.
-- **'attack -t beacon -l':** Start Beacon Spam with a predefined list of SSIDs.
-- **'attack -t beacon -r':** Start Beacon Spam with randomly generated SSIDs.
-- **'attack -t karma':** Start Beacon Spam with known SSIDs to attract clients.
-- **'attack -t rickroll':** Start Beacon Spam with a humorous or misleading SSID like "Never Gonna Give You Up".
-- **'attack -t deauth':** Initiate a Deauth Attack on the captured networks to disconnect clients.
-- **'castv2connect -s <SSID> -p <PASSWORD> -v <Device>':** Connect to a device using the CastV2 protocol.
-- **'dialconnect -s <SSID> -p <PASSWORD> -t <App> -v <Device>':** Connect to a device using the DIAL protocol, specifying the app and device.
-- **'deauth':** Deauthenticate scanned Stations from scanned Access Points.
-- **'deauthdetector -s <SSID> -p <PASSWORD> -w <WebHookUrl>':** Detect deauthentication frames, providing the SSID, password, and webhook URL for notifications.
-- **'calibrate':** Calibrate the most active network for improved sniffing functionality.
-- **'blespam -t <type>':** Start BLE spamming of a specific type ('samsung', 'apple', 'google', 'windows', or 'all').
-- **'led -p':** Activate the Rainbow LED pattern for visual indication.
-- **'sniffraw':** Sniff raw WiFi packets for analysis.
-- **'sniffbeacon':** Sniff WiFi beacons to gather network information.
-- **'sniffprobe':** Sniff WiFi probe requests for client detection.
-- **'sniffpwn':** Sniff for pwnagotchis, potentially malicious WiFi devices.
-- **'sniffdeauth':** Sniff for deauthentication packets in the air to monitor network security.
-- **'sniffpmkid [-c <channel>]':** Sniff for PMKID packets with optional flags for specifying channels.
-- **'findtheflippers':** Detect Flipper Zeros (WiFi-enabled devices used for hacking) in your vicinity.
-- **'detectblespam':** Detect BLE Spams that might be interfering with nearby devices.
-- **'airtagscan':** Detect Apple AirTags and their payloads around you.
-- **'streetdetector':** Detect your current street using GPS (Requires SD Card with map data).
-- **'wardrive [-b EnableBLEScanning (May Crash After a while if enabled)]':** Detect nearby Access Points and gather WiFi information, with an option to enable BLE scanning (caution: may cause crashes).
+## General Commands
+
+- **`help`**  
+  **Description:** Display this help message.  
+  **Usage:** `help`
+
+- **`scanap`**  
+  **Description:** Start a Wi-Fi access point (AP) scan.  
+  **Usage:** `scanap`
+
+- **`scansta`**  
+  **Description:** Start scanning for Wi-Fi stations.  
+  **Usage:** `scansta`
+
+- **`stopscan`**  
+  **Description:** Stop any ongoing Wi-Fi scan.  
+  **Usage:** `stopscan`
+
+- **`list`**  
+  **Description:** List Wi-Fi scan results or connected stations.  
+  **Usage:** `list -a | list -s`  
+  **Arguments:**  
+    - `-a`: Show access points from Wi-Fi scan  
+    - `-s`: List connected stations
+
+## Attack Commands
+
+- **`attack`**  
+  **Description:** Launch an attack (e.g., deauthentication attack).  
+  **Usage:** `attack -d`  
+  **Arguments:**  
+    - `-d`: Start deauth attack
+
+- **`beaconspam`**  
+  **Description:** Start beacon spam with different modes.  
+  **Usage:** `beaconspam [OPTION]`  
+  **Arguments:**  
+    - `-r`: Start random beacon spam  
+    - `-rr`: Start Rickroll beacon spam  
+    - `-l`: Start AP List beacon spam  
+    - `[SSID]`: Use specified SSID for beacon spam
+
+- **`stopspam`**  
+  **Description:** Stop ongoing beacon spam.  
+  **Usage:** `stopspam`
+
+- **`stopdeauth`**  
+  **Description:** Stop ongoing deauthentication attack.  
+  **Usage:** `stopdeauth`
+
+## Selection Commands
+
+- **`select`**  
+  **Description:** Select an access point by index from the scan results.  
+  **Usage:** `select -a <number>`  
+  **Arguments:**  
+    - `-a`: AP selection index (must be a valid number)
+
+## Settings Commands
+
+- **`setsetting`**  
+  **Description:** Set various device settings.  
+  **Usage:** `setsetting <index> <value>`  
+  **Arguments:**  
+    - `<index>`: Setting index (1: RGB mode, 2: Channel switch delay, 3: Channel hopping, 4: Random BLE MAC)  
+    - `<value>`: Value corresponding to the setting (varies by setting index)
+
+### RGB Mode Values
+- `1`: Stealth Mode  
+- `2`: Normal Mode  
+- `3`: Rainbow Mode
+
+### Channel Switch Delay Values
+- `1`: 0.5s  
+- `2`: 1s  
+- `3`: 2s  
+- `4`: 3s  
+- `5`: 4s
+
+### Channel Hopping Values
+- `1`: Disabled  
+- `2`: Enabled
+
+### Random BLE MAC Values
+- `1`: Disabled  
+- `2`: Enabled
+
+## Evil Portal Commands
+
+- **`startportal`**  
+  **Description:** Start a portal with specified SSID and password.  
+  **Usage:** `startportal <URL> <SSID> <Password> <AP_ssid>`  
+  **Arguments:**  
+    - `<URL>`: URL for the portal  
+    - `<SSID>`: Wi-Fi SSID for the portal  
+    - `<Password>`: Wi-Fi password for the portal  
+    - `<AP_ssid>`: SSID for the access point  
+    - `<Domain>`: Custom Domain to spoof in the address bar
+
+- **`stopportal`**  
+  **Description:** Stop the Evil Portal.  
+  **Usage:** `stopportal`
+
+## Capture Commands
+
+- **`capture`**  
+  **Description:** Start a Wi-Fi capture (Requires SD Card or Flipper).  
+  **Usage:** `capture [OPTION]`  
+  **Arguments:**  
+    - `-probe`: Start capturing probe packets  
+    - `-beacon`: Start capturing beacon packets  
+    - `-deauth`: Start capturing deauth packets  
+    - `-raw`: Start capturing raw packets  
+    - `-wps`: Start capturing WPS packets and their auth type  
+    - `-stop`: Stop the active capture
+
+## Bluetooth (BLE) Commands (If BLE is enabled)
+
+- **`blescan`**  
+  **Description:** Handle BLE scanning with various modes.  
+  **Usage:** `blescan [OPTION]`  
+  **Arguments:**  
+    - `-f`: Start "Find the Flippers" mode  
+    - `-ds`: Start BLE spam detector  
+    - `-a`: Start AirTag scanner  
+    - `-r`: Scan for raw BLE packets  
+    - `-s`: Stop BLE scanning
