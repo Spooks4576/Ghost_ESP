@@ -852,6 +852,7 @@ void handle_help(int argc, char **argv) {
     printf("        -beacon  : SStart Capturing Beacon Packets\n");
     printf("        -deauth   : Start Capturing Deauth Packets\n");
     printf("        -raw   :   Start Capturing Raw Packets\n");
+    printf("        -wps   :   Start Capturing WPS Packets and there Auth Type");
     printf("        -stop   : Stops the active capture\n\n");
 }
 
