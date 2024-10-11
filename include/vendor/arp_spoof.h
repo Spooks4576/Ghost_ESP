@@ -32,6 +32,8 @@ void init_arp_spoof(arp_spoof_config_t *config, int num_targets);
 
 void arp_spoof_task(void *pvParameter);
 
+void packet_listener_task(void *pvParameters);
+
 
 void add_target(const uint8_t *target_ip, const uint8_t *target_mac, const uint8_t *spoof_ip);
 

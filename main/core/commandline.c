@@ -241,6 +241,14 @@ void discover_task(void *pvParameter) {
     vTaskDelete(NULL);
 }
 
+void handle_stop_flipper(int argc, char** argv)
+{
+    wifi_manager_stop_deauth();
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+    ble_stop();
+#endif
+}
+
 void handle_dial_command(int argc, char** argv)
 {
     xTaskCreate(&discover_task, "discover_task", 10240, NULL, 5, NULL);
@@ -546,55 +554,66 @@ bool mac_str_to_bytes(const char *mac_str, uint8_t *mac_bytes) {
 
 void handle_arp_spoof(int argc, char** argv) {
     
-    if (strcmp(argv[1], "-s") == 0) {
+    
+    if (argc > 1 && strcmp(argv[1], "-s") == 0) {
         stop_arp_spoof();
         printf("ARP spoofing stopped.\n");
         return;
     }
 
-
-    if (argc < 4) {
-        printf("Usage: <spoofed_router_ip> <target_local_ip> <target_mac>\n");
+    
+    if (argc < 3) {
+        printf("Usage: <target_local_ip> <target_mac>\n");
         return;
     }
 
-    
+   
     arp_spoof_config_t config = {0};
 
     
-    if (!ip_str_to_bytes(argv[1], config.spoof_ip)) {
+    if (!ip_str_to_bytes(argv[1], config.target_ip)) {
         printf("Invalid router IP address: %s\n", argv[1]);
         return;
     }
-
     
-    if (!ip_str_to_bytes(argv[2], config.target_ip)) {
-        printf("Invalid target IP address: %s\n", argv[2]);
+
+    if (!mac_str_to_bytes(argv[2], config.target_mac)) {
+        printf("Invalid target MAC address: %s\n", argv[2]);
         return;
     }
 
     
-    if (!mac_str_to_bytes(argv[3], config.target_mac)) {
-        printf("Invalid target MAC address: %s\n", argv[3]);
-        return;
+    esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (netif) {
+        
+        esp_netif_ip_info_t ip_info;
+        if (esp_netif_get_ip_info(netif, &ip_info) == ESP_OK) {
+            
+           
+            memcpy(config.spoof_ip, &ip_info.ip.addr, sizeof(config.spoof_ip));
+
+          
+            printf("Router (spoof) IP: %d.%d.%d.%d\n", 
+                config.spoof_ip[0], config.spoof_ip[1], config.spoof_ip[2], config.spoof_ip[3]);
+            printf("Target IP: %d.%d.%d.%d\n", 
+                config.target_ip[0], config.target_ip[1], config.target_ip[2], config.target_ip[3]);
+            printf("Target MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+                config.target_mac[0], config.target_mac[1], config.target_mac[2],
+                config.target_mac[3], config.target_mac[4], config.target_mac[5]);
+
+          
+            init_arp_spoof(&config, 1);
+
+
+            xTaskCreate(&arp_spoof_task, "arp_spoof_task", 4096, NULL, 5, NULL);
+
+            //xTaskCreate(&packet_listener_task, "packet_task", 4096, NULL, 5, NULL);
+        } else {
+            printf("Failed to get IP information.\n");
+        }
+    } else {
+        printf("Failed to get network interface handle.\n");
     }
-
-    
-    printf("Router (spoof) IP: %d.%d.%d.%d\n", config.spoof_ip[0], config.spoof_ip[1], config.spoof_ip[2], config.spoof_ip[3]);
-    printf("Target IP: %d.%d.%d.%d\n", config.target_ip[0], config.target_ip[1], config.target_ip[2], config.target_ip[3]);
-    printf("Target MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-           config.target_mac[0], config.target_mac[1], config.target_mac[2],
-           config.target_mac[3], config.target_mac[4], config.target_mac[5]);
-
-    
-    init_arp_spoof(&config, 1);
-
-    esp_wifi_set_mode(WIFI_MODE_STA);
-
-    esp_wifi_start();
-
-    
-    xTaskCreate(&arp_spoof_task, "arp_spoof_task", 4096, NULL, 5, NULL);
 }
 
 void handle_capture_scan(int argc, char** argv)
@@ -824,7 +843,7 @@ void handle_help(int argc, char **argv) {
     printf("        <AP_ssid>   : SSID for the access point\n\n");
     printf("        <Domain>    : Custom Domain to Spoof In Address Bar\n\n");
 
-#ifdef CONFIG_BT_ENABLED
+#ifndef CONFIG_IDF_TARGET_ESP32S2
     printf("blescan\n");
     printf("    Description: Handle BLE scanning with various modes.\n");
     printf("    Usage: blescan [OPTION]\n");
@@ -849,7 +868,7 @@ void handle_help(int argc, char **argv) {
     printf("    Usage: capture [OPTION]\n");
     printf("    Arguments:\n");
     printf("        -probe   : Start Capturing Probe Packets\n");
-    printf("        -beacon  : SStart Capturing Beacon Packets\n");
+    printf("        -beacon  : Start Capturing Beacon Packets\n");
     printf("        -deauth   : Start Capturing Deauth Packets\n");
     printf("        -raw   :   Start Capturing Raw Packets\n");
     printf("        -wps   :   Start Capturing WPS Packets and there Auth Type");
@@ -875,6 +894,7 @@ void register_commands() {
     register_command("arpspoof", handle_arp_spoof);
     register_command("wpstest", wps_test);
     register_command("dialtest", handle_dial_command);
+    register_command("stop", handle_stop_flipper);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif

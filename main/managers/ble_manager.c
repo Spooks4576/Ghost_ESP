@@ -420,7 +420,7 @@ esp_err_t ble_unregister_handler(ble_data_handler_t handler) {
 }
 
 void ble_init(void) {
-#ifdef CONFIG_BT_ENABLED
+#ifndef CONFIG_IDF_TARGET_ESP32S2
     nvs_flash_init();
     nimble_port_init();
 

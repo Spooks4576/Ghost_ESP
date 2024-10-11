@@ -1,9 +1,21 @@
 #include "vendor/arp_spoof.h"
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include <string.h>
+#include <string.h> 
+#include <stdio.h>
+#include <sys/socket.h> 
+#include <netinet/in.h> 
 #include <arpa/inet.h>
+#include <errno.h> 
+#include <unistd.h>  
+#include "esp_log.h" 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h" 
+#include "lwip/sockets.h" 
+#include "lwip/inet.h" 
+#include "lwip/err.h"    
+#include "lwip/ip.h"  
+#include "lwip/etharp.h" 
+#include "lwip/prot/ethernet.h"
+#include "lwip/prot/ip4.h"    
 
 static const char *TAG = "ARP_SPOOF";
 
@@ -82,11 +94,6 @@ void add_target(const uint8_t *target_ip, const uint8_t *target_mac, const uint8
 
 void arp_spoof_task(void *pvParameter) {
     arp_packet_t arp_packet;
-    int current_channel = 1;
-    const int max_channel = 13;
-    const int channel_switch_interval = 5000;
-
-    TickType_t last_channel_switch_time = xTaskGetTickCount();
 
     while (spoofing_active) {
         for (int i = 0; i < num_targets; i++) {
@@ -99,6 +106,76 @@ void arp_spoof_task(void *pvParameter) {
 
     vTaskDelete(NULL);
 }
+
+void packet_listener_task(void *pvParameters) {
+    esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (!netif) {
+        ESP_LOGE(TAG, "Network interface not found");
+        vTaskDelete(NULL);
+        return;
+    }
+
+
+    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_IP);
+    if (sock < 0) {
+        ESP_LOGE(TAG, "Failed to create raw socket: %d", errno);
+        vTaskDelete(NULL);
+        return;
+    }
+
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // Timeout in seconds
+    timeout.tv_usec = 0; // No microseconds
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    ESP_LOGI(TAG, "Packet listener task started");
+
+    uint8_t buffer[1500];
+
+
+    while (1) {
+        ssize_t len = recv(sock, buffer, sizeof(buffer), 0);
+        if (len < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                ESP_LOGW(TAG, "Packet reception timed out, retrying...");
+                continue;  // Retry on timeout
+            } else {
+                ESP_LOGE(TAG, "Packet reception failed: %d", errno);
+                break;  // Exit on a critical error
+            }
+        }
+
+        struct eth_hdr *eth = (struct eth_hdr *)buffer;
+
+        if (ntohs(eth->type) == ETHTYPE_ARP) {
+            ESP_LOGI(TAG, "ARP packet received");
+        }
+
+        else if (ntohs(eth->type) == ETHTYPE_IP) {
+            ESP_LOGI(TAG, "IP packet received");
+
+            struct ip_hdr *iph = (struct ip_hdr *)(buffer + sizeof(struct eth_hdr));
+
+            struct in_addr src_ip, dest_ip;
+            src_ip.s_addr = iph->src.addr;
+            dest_ip.s_addr = iph->dest.addr;
+
+            ESP_LOGI(TAG, "IP Source: %s", inet_ntoa(src_ip));
+            ESP_LOGI(TAG, "IP Destination: %s", inet_ntoa(dest_ip));
+
+            if (IPH_PROTO(iph) == IP_PROTO_ICMP) {
+                ESP_LOGI(TAG, "ICMP packet received");
+            }
+
+            else if (IPH_PROTO(iph) == IP_PROTO_TCP) {
+                ESP_LOGI(TAG, "TCP packet received");
+            }
+        }
+    }
+    close(sock);
+    vTaskDelete(NULL);
+}
+
 
 // Function to stop ARP spoofing
 void stop_arp_spoof() {
