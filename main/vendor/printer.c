@@ -12,8 +12,8 @@ static const char *TAG = "PRINTER_HANDLER";
 #define MAX_TEXT_LENGTH 1024
 
 
-#define A4_WIDTH 595
-#define A4_HEIGHT 842
+#define LETTER_WIDTH 6120
+#define LETTER_HEIGHT 7920
 
 const char *PCL_INIT = "\x1B%-12345X@PJL\n";
 const char *BOLD_ON = "\x1B(s3B";
@@ -35,24 +35,24 @@ int calculate_text_height(int font_points) {
 
 
 void calculate_position(const char *alignment, int font_points, const char *text, int *col, int *row) {
-    int text_width = calculate_text_width(font_points, strlen(text));
-    int text_height = calculate_text_height(font_points);
+    int text_width = calculate_text_width(font_points, strlen(text)) * 10;
+    int text_height = calculate_text_height(font_points) * 10;
 
     if (strcmp(alignment, "Center Middle") == 0) {
-        *col = (A4_WIDTH / 2) - (text_width / 2);
-        *row = (A4_HEIGHT / 2) - (text_height / 2);
+        *col = (LETTER_WIDTH / 2) - (text_width / 2);
+        *row = (LETTER_HEIGHT / 2) - (text_height / 2);
     } else if (strcmp(alignment, "Top Left") == 0) {
         *col = 0;
         *row = 0;
     } else if (strcmp(alignment, "Top Right") == 0) {
-        *col = A4_WIDTH - text_width;
+        *col = LETTER_WIDTH - text_width;
         *row = 0;
     } else if (strcmp(alignment, "Bottom Left") == 0) {
         *col = 0;
-        *row = A4_HEIGHT - text_height;
+        *row = LETTER_HEIGHT - text_height;
     } else if (strcmp(alignment, "Bottom Right") == 0) {
-        *col = A4_WIDTH - text_width;
-        *row = A4_HEIGHT - text_height;
+        *col = LETTER_WIDTH - text_width;
+        *row = LETTER_HEIGHT - text_height;
     } else {
         *col = 0;
         *row = 0;
@@ -121,19 +121,57 @@ void print_text_to_printer(const char *printer_ip, const char *text, int font_px
 }
 
 
-void handle_printer_command(int argc, char **argv) {
-    if (argc != 4) {
-        ESP_LOGE(TAG, "Usage: printer_command <printer_ip> <text> <font_px> <alignment>");
+
+void eject_blank_pages(const char *printer_ip, int num_pages) {
+    struct sockaddr_in printer_addr;
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
         return;
     }
 
-    const char *printer_ip = argv[0];  // Printer IP
-    const char *text = argv[1];        // Text to print
-    int font_px = atoi(argv[2]);       // Font size in pixels
-    const char *alignment = argv[3];   // Alignment option
+    printer_addr.sin_addr.s_addr = inet_addr(printer_ip);
+    printer_addr.sin_family = AF_INET;
+    printer_addr.sin_port = htons(PRINTER_PORT);
+
+    int err = connect(sock, (struct sockaddr *)&printer_addr, sizeof(printer_addr));
+    if (err != 0) {
+        ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
+        close(sock);
+        return;
+    }
+
+    ESP_LOGI(TAG, "Connected to printer at %s:%d", printer_ip, PRINTER_PORT);
+
+
+    for (int i = 0; i < num_pages; i++) {
+        const char *form_feed = "\f";
+        err = send(sock, form_feed, strlen(form_feed), 0);
+        if (err < 0) {
+            ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+            break;
+        }
+        ESP_LOGI(TAG, "Ejected page %d", i + 1);
+    }
+
+    close(sock);
+    ESP_LOGI(TAG, "Connection closed");
+}
+
+
+void handle_printer_command(int argc, char **argv) {
+    if (argc != 5) {
+        ESP_LOGE(TAG, "Usage: <printer_ip> <text> <font_px> <alignment>");
+        return;
+    }
+
+    const char *printer_ip = argv[1];  // Printer IP
+    const char *text = argv[2];        // Text to print
+    int font_px = atoi(argv[3]);       // Font size in pixels
+    const char *alignment = argv[4];   // Alignment option
 
     ESP_LOGI(TAG, "Printing to printer at IP: %s", printer_ip);
 
-    // Print the text with specified font size and alignment
+    
     print_text_to_printer(printer_ip, text, font_px, alignment);
 }
