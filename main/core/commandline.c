@@ -14,7 +14,9 @@
 #include "core/callbacks.h"
 #include <esp_timer.h>
 #include "vendor/pcap.h"
-#include "vendor/arp_spoof.h"
+#include <sys/socket.h>
+#include <netdb.h>
+#include "vendor/printer.h"
 
 static Command *command_list_head = NULL;
 
@@ -239,6 +241,14 @@ void discover_task(void *pvParameter) {
     }
 
     vTaskDelete(NULL);
+}
+
+void handle_stop_flipper(int argc, char** argv)
+{
+    wifi_manager_stop_deauth();
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+    ble_stop();
+#endif
 }
 
 void handle_dial_command(int argc, char** argv)
@@ -544,58 +554,100 @@ bool mac_str_to_bytes(const char *mac_str, uint8_t *mac_bytes) {
     return false;
 }
 
-void handle_arp_spoof(int argc, char** argv) {
-    
-    if (strcmp(argv[1], "-s") == 0) {
-        stop_arp_spoof();
-        printf("ARP spoofing stopped.\n");
-        return;
+void encrypt_tp_link_command(const char *input, uint8_t *output, size_t len)
+{
+    uint8_t key = 171;
+    for (size_t i = 0; i < len; i++) {
+        output[i] = input[i] ^ key;
+        key = output[i];
     }
-
-
-    if (argc < 4) {
-        printf("Usage: <spoofed_router_ip> <target_local_ip> <target_mac>\n");
-        return;
-    }
-
-    
-    arp_spoof_config_t config = {0};
-
-    
-    if (!ip_str_to_bytes(argv[1], config.spoof_ip)) {
-        printf("Invalid router IP address: %s\n", argv[1]);
-        return;
-    }
-
-    
-    if (!ip_str_to_bytes(argv[2], config.target_ip)) {
-        printf("Invalid target IP address: %s\n", argv[2]);
-        return;
-    }
-
-    
-    if (!mac_str_to_bytes(argv[3], config.target_mac)) {
-        printf("Invalid target MAC address: %s\n", argv[3]);
-        return;
-    }
-
-    
-    printf("Router (spoof) IP: %d.%d.%d.%d\n", config.spoof_ip[0], config.spoof_ip[1], config.spoof_ip[2], config.spoof_ip[3]);
-    printf("Target IP: %d.%d.%d.%d\n", config.target_ip[0], config.target_ip[1], config.target_ip[2], config.target_ip[3]);
-    printf("Target MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-           config.target_mac[0], config.target_mac[1], config.target_mac[2],
-           config.target_mac[3], config.target_mac[4], config.target_mac[5]);
-
-    
-    init_arp_spoof(&config, 1);
-
-    esp_wifi_set_mode(WIFI_MODE_STA);
-
-    esp_wifi_start();
-
-    
-    xTaskCreate(&arp_spoof_task, "arp_spoof_task", 4096, NULL, 5, NULL);
 }
+
+void decrypt_tp_link_response(const uint8_t *input, char *output, size_t len)
+{
+    uint8_t key = 171;
+    for (size_t i = 0; i < len; i++) {
+        output[i] = input[i] ^ key;
+        key = input[i];
+    }
+}
+
+void handle_tp_link_test(int argc, char **argv)
+{
+    if (argc != 2) {
+        ESP_LOGE("TPLINK", "Usage: tp_link_test <on|off>");
+        return;
+    }
+
+    // Set relay state based on argument
+    const char *command;
+    if (strcmp(argv[1], "on") == 0) {
+        command = "{\"system\":{\"set_relay_state\":{\"state\":1}}}";
+    } else if (strcmp(argv[1], "off") == 0) {
+        command = "{\"system\":{\"set_relay_state\":{\"state\":0}}}";
+    } else {
+        ESP_LOGE("TPLINK", "Invalid argument. Use 'on' or 'off'.");
+        return;
+    }
+
+    uint8_t encrypted_command[128];
+    memset(encrypted_command, 0, sizeof(encrypted_command));
+
+    size_t command_len = strlen(command);
+    if (command_len >= sizeof(encrypted_command)) {
+        ESP_LOGE("TPLINK", "Command too large to encrypt");
+        return;
+    }
+
+    encrypt_tp_link_command(command, encrypted_command, command_len);
+
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sock < 0) {
+        ESP_LOGE("TPLINK", "Failed to create socket: errno %d", errno);
+        return;
+    }
+
+    int broadcast = 1;
+    setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
+
+    struct sockaddr_in dest_addr;
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.sin_addr.s_addr = inet_addr("255.255.255.255");  // Broadcast address
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(9999);  // TP-Link device port
+
+    int err = sendto(sock, encrypted_command, command_len, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    if (err < 0) {
+        ESP_LOGE("TPLINK", "Error occurred during sending: errno %d", errno);
+        close(sock);
+        return;
+    }
+
+    ESP_LOGI("TPLINK", "Broadcast message sent");
+
+    struct timeval timeout = {2, 0};
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+    uint8_t recv_buf[128];
+    socklen_t addr_len = sizeof(dest_addr);
+    int len = recvfrom(sock, recv_buf, sizeof(recv_buf) - 1, 0, (struct sockaddr *)&dest_addr, &addr_len);
+    if (len < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            ESP_LOGW("TPLINK", "No response from any device");
+        } else {
+            ESP_LOGE("TPLINK", "Error receiving response: errno %d", errno);
+        }
+    } else {
+        recv_buf[len] = 0;
+        char decrypted_response[128];
+        decrypt_tp_link_response(recv_buf, decrypted_response, len);
+        decrypted_response[len] = 0;
+        ESP_LOGI("TPLINK", "Response: %s", decrypted_response);
+    }
+
+    close(sock);
+}
+
 
 void handle_capture_scan(int argc, char** argv)
 {
@@ -816,15 +868,21 @@ void handle_help(int argc, char **argv) {
 
     printf("startportal\n");
     printf("    Description: Start a portal with specified SSID and password.\n");
-    printf("    Usage: startportal <URL> <SSID> <Password> <AP_ssid>\n");
+    printf("    Usage: startportal <URL> <SSID> <Password> <AP_ssid> <Domain>\n");
     printf("    Arguments:\n");
     printf("        <URL>       : URL for the portal\n");
     printf("        <SSID>      : Wi-Fi SSID for the portal\n");
     printf("        <Password>  : Wi-Fi password for the portal\n");
     printf("        <AP_ssid>   : SSID for the access point\n\n");
     printf("        <Domain>    : Custom Domain to Spoof In Address Bar\n\n");
+    printf("  OR \n\n");
+    printf("Offline Usage: startportal <FilePath> <AP_ssid> <Domain>\n");
 
-#ifdef CONFIG_BT_ENABLED
+    printf("stopportal\n");
+    printf("    Description: Stop Evil Portal\n");
+    printf("    Usage: stopportal\n\n");
+
+#ifndef CONFIG_IDF_TARGET_ESP32S2
     printf("blescan\n");
     printf("    Description: Handle BLE scanning with various modes.\n");
     printf("    Usage: blescan [OPTION]\n");
@@ -836,24 +894,32 @@ void handle_help(int argc, char **argv) {
     printf("        -s   : Stop BLE scanning\n\n");
 #endif
 
-    printf("stopscan\n");
-    printf("    Description: Stop the ongoing Wi-Fi scan.\n");
-    printf("    Usage: stopscan\n\n");
-
-    printf("stopportal\n");
-    printf("    Description: Stop Evil Portal\n");
-    printf("    Usage: stopportal\n\n");
-
     printf("capture\n");
     printf("    Description: Start a WiFi Capture (Requires SD Card or Flipper)\n");
     printf("    Usage: capture [OPTION]\n");
     printf("    Arguments:\n");
     printf("        -probe   : Start Capturing Probe Packets\n");
-    printf("        -beacon  : SStart Capturing Beacon Packets\n");
+    printf("        -beacon  : Start Capturing Beacon Packets\n");
     printf("        -deauth   : Start Capturing Deauth Packets\n");
     printf("        -raw   :   Start Capturing Raw Packets\n");
     printf("        -wps   :   Start Capturing WPS Packets and there Auth Type");
     printf("        -stop   : Stops the active capture\n\n");
+
+
+    printf("connect\n");
+    printf("    Description: Connects to Specific WiFi Network\n");
+    printf("    Usage: connect <SSID> <Password>\n");
+
+    printf("dialconnect\n")
+    printf("    Description: Cast a Random Youtube Video on all Smart TV's on your LAN (Requires You to Run Connect First)\n");
+    printf("    Usage: dialconnect\n");
+
+
+    printf("powerprinter\n")
+    printf("    Description: Print Custom Text to a Printer on your LAN (Requires You to Run Connect First)\n");
+    printf("    Usage: connect <Printer IP> <Text> <FontSize> <alignment>\n");
+    printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
+
 }
 
 void register_commands() {
@@ -872,9 +938,11 @@ void register_commands() {
     register_command("startportal", handle_start_portal);
     register_command("stopportal", stop_portal);
     register_command("connect", handle_wifi_connection);
-    register_command("arpspoof", handle_arp_spoof);
+    register_command("dialconnect", handle_dial_command);
+    register_command("powerprinter", handle_printer_command);
     register_command("wpstest", wps_test);
-    register_command("dialtest", handle_dial_command);
+    register_command("tplinktest", handle_tp_link_test);
+    register_command("stop", handle_stop_flipper);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif

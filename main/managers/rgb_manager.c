@@ -25,7 +25,7 @@ typedef struct {
 #define LEDC_CHANNEL_GREEN  LEDC_CHANNEL_1
 #define LEDC_CHANNEL_BLUE   LEDC_CHANNEL_2
 #define LEDC_DUTY_RES       LEDC_TIMER_8_BIT  // 8-bit resolution (0-255)
-#define LEDC_FREQUENCY      5000  // 5 kHz PWM frequency
+#define LEDC_FREQUENCY      10000  // 10 kHz PWM frequency
 
 // Converts HSV to RGB with values between [0, 1]
 rgb hsv2rgb(hsv HSV)
@@ -147,9 +147,7 @@ esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_le
         };
         ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel_blue));
 
-        gpio_set_level(rgb_manager->red_pin, 0);
-        gpio_set_level(rgb_manager->green_pin, 0);
-        gpio_set_level(rgb_manager->blue_pin, 0);
+        rgb_manager_set_color(rgb_manager, 1, 0, 0, 0, false);
 
         ESP_LOGI(TAG, "RGBManager initialized for separate R/G/B pins: %d, %d, %d", red_pin, green_pin, blue_pin);
         return ESP_OK;
@@ -239,20 +237,30 @@ esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t 
     }
 #elif CONFIG_IDF_TARGET_ESP32S2
 
-    scale_grb_by_brightness(&green, &red, &blue, 0.3);
+    scale_grb_by_brightness(&green, &red, &blue, -0.3);
 
-    uint8_t ired = (uint8_t)(255 - (red * 255));
-    uint8_t igreen = (uint8_t)(255 - (green * 255));
-    uint8_t iblue = (uint8_t)(255 - (blue * 255));
+    uint8_t ired = (uint8_t)(255 - red);   // Inverted red
+    uint8_t igreen = (uint8_t)(255 - green); // Inverted green
+    uint8_t iblue = (uint8_t)(255 - blue);  // Inverted blue
 
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_RED, ired));
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_RED));
+    
+    if (ired == 255 && igreen == 255 && iblue == 255) {
+        ledc_stop(LEDC_MODE, LEDC_CHANNEL_RED, 1);   // Hold output low
+        ledc_stop(LEDC_MODE, LEDC_CHANNEL_GREEN, 1); // Hold output low
+        ledc_stop(LEDC_MODE, LEDC_CHANNEL_BLUE, 1);  // Hold output low
+    } else {
 
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_GREEN, igreen));
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_GREEN));
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_RED, ired));
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_RED));
 
-    ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_BLUE, iblue));
-    ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_BLUE));
+        
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_GREEN, igreen));
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_GREEN));
+
+        
+        ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_BLUE, iblue));
+        ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_BLUE));
+    }
 
 
     return ESP_OK;

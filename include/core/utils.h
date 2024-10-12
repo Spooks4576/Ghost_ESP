@@ -19,24 +19,23 @@ const char* wrap_message(const char *message, const char *file, int line) {
 }
 
 void scale_grb_by_brightness(uint8_t *g, uint8_t *r, uint8_t *b, float brightness) {
-    // Ensure brightness is within the valid range [0.0, 1.0]
-    if (brightness < 0.0f) {
-        brightness = 0.0f;
-    } else if (brightness > 1.0f) {
-        brightness = 1.0f;
+    float scale_factor = brightness < 0.0f ? -brightness : brightness;
+
+    
+    if (scale_factor > 1.0f) {
+        scale_factor = 1.0f;
     }
 
-    // Store original values for debugging
     int original_g = *g;
     int original_r = *r;
     int original_b = *b;
 
-    // Perform the scaling using floating-point arithmetic and cast back to int
-    *g = (int)((float)(original_g) * brightness);
-    *r = (int)((float)(original_r) * brightness);
-    *b = (int)((float)(original_b) * brightness);
 
-    // Ensure values remain within the valid range (0 to 255)
+    *g = (int)((float)(original_g) * scale_factor);
+    *r = (int)((float)(original_r) * scale_factor);
+    *b = (int)((float)(original_b) * scale_factor);
+
+    
     if (*g > 255) *g = 255;
     if (*r > 255) *r = 255;
     if (*b > 255) *b = 255;

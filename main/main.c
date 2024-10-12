@@ -7,7 +7,7 @@
 #include "managers/wifi_manager.h"
 #include "managers/ap_manager.h"
 #include "managers/sd_card_manager.h"
-#ifdef CONFIG_BT_ENABLED
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 #include "managers/ble_manager.h"
 #endif
 #include <esp_log.h>

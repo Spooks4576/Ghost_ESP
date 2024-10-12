@@ -224,45 +224,54 @@ char* extract_application_url(const char *headers) {
 }
 
 esp_err_t send_command(const char *command, const char *video_id, const Device *device) {
-    // Check for valid arguments
-    if (!device || !command || !video_id) {
-        ESP_LOGE(TAG, "Invalid arguments: device, command, or video_id is NULL.");
+    if (!device || !command) {
+        ESP_LOGE(TAG, "Invalid arguments: device or command is NULL.");
         return ESP_ERR_INVALID_ARG;
     }
 
-    // URL encode the required parameters
+    // URL-encode parameters
     char *encoded_loungeIdToken = url_encode(device->YoutubeToken);
-    char *encoded_UUID = url_encode(device->UUID);
-    char *encoded_zx = url_encode(generate_zx());
     char *encoded_SID = url_encode(device->SID);
     char *encoded_gsession = url_encode(device->gsession);
+    char *encoded_command = url_encode(command);
+    char *encoded_video_id = video_id ? url_encode(video_id) : NULL; // For commands that don't need video_id
 
-    
-    if (!encoded_loungeIdToken || !encoded_UUID || !encoded_zx || !encoded_SID || !encoded_gsession) {
+    if (!encoded_loungeIdToken || !encoded_SID || !encoded_gsession || !encoded_command || (!encoded_video_id && video_id)) {
         ESP_LOGE(TAG, "URL encoding failed for one or more parameters.");
         goto cleanup;
     }
 
-    
-    ESP_LOGI(TAG, "Encoded Parameters:\n  loungeIdToken: %s\n  UUID: %s\n  zx: %s\n  SID: %s\n  gsession: %s",
-             encoded_loungeIdToken, encoded_UUID, encoded_zx, encoded_SID, encoded_gsession);
 
-    
     char url_params[1024];
     snprintf(url_params, sizeof(url_params),
-             "device=REMOTE_CONTROL&loungeIdToken=%s&id=%s&VER=8&zx=%s&SID=%s&RID=%i&AID=5&gsessionid=%s",
-             encoded_loungeIdToken, encoded_UUID, encoded_zx, encoded_SID, 1, encoded_gsession);
+             "CVER=1&RID=1&SID=%s&VER=8&gsessionid=%s&loungeIdToken=%s",
+             encoded_SID, encoded_gsession, encoded_loungeIdToken);
+
+    ESP_LOGI(TAG, "Query Parameters: %s", url_params);
 
     
-    char form_data[512];
-    snprintf(form_data, sizeof(form_data),
-             "count=1&ofs=0&req0__sc=%s&req0_videoId=%s&req0_listId=%s",
-             command, video_id, device->listID);
+    char body_params[1024];
 
-    // Log the form data and URL
-    ESP_LOGI(TAG, "Form Data: %s", form_data);
+    if (strcmp(command, "setVideo") == 0) {
+        snprintf(body_params, sizeof(body_params),
+                 "count=1&req0__sc=%s&req0_videoId=%s&req0_currentTime=0&req0_currentIndex=0&req0_videoIds=%s",
+                 encoded_command, encoded_video_id, encoded_video_id);
+    } else if (strcmp(command, "addVideo") == 0) {
+        snprintf(body_params, sizeof(body_params),
+                 "count=1&req0__sc=%s&req0_videoId=%s",
+                 encoded_command, encoded_video_id);
+    } else if (strcmp(command, "play") == 0 || strcmp(command, "pause") == 0) {
+        snprintf(body_params, sizeof(body_params),
+                 "count=1&req0__sc=%s",
+                 encoded_command);
+    } else {
+        ESP_LOGE(TAG, "Unsupported command: %s", command);
+        goto cleanup;
+    }
 
-    // Initialize response buffer
+    ESP_LOGI(TAG, "Body Parameters: %s", body_params);
+
+    
     response_buffer_t resp_buf = {
         .buffer = malloc(1524),
         .buffer_len = 0,
@@ -289,14 +298,14 @@ esp_err_t send_command(const char *command, const char *video_id, const Device *
     snprintf(full_url, sizeof(full_url), "%s?%s", config.url, url_params);
     esp_http_client_set_url(client, full_url);
 
-    // Log the full URL
     ESP_LOGI(TAG, "Full URL: %s", full_url);
 
     // Set HTTP method, headers, and post data
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/x-www-form-urlencoded");
     esp_http_client_set_header(client, "Origin", "https://www.youtube.com");
-    esp_http_client_set_post_field(client, form_data, strlen(form_data));
+
+    esp_http_client_set_post_field(client, body_params, strlen(body_params));
 
     // Perform the HTTP request
     esp_err_t err = esp_http_client_perform(client);
@@ -305,46 +314,24 @@ esp_err_t send_command(const char *command, const char *video_id, const Device *
         goto cleanup;
     }
 
-    // Get and log the HTTP status code
-    int status_code = esp_http_client_get_status_code(client);
-    ESP_LOGI(TAG, "HTTP Status Code: %d", status_code);
-
-    if (status_code != 200) {
-        ESP_LOGE(TAG, "Unexpected HTTP response: %d", status_code);
-    } else {
-        ESP_LOGI(TAG, "Command sent successfully.");
-    }
-
-    // Ensure the response buffer is null-terminated
-    if (resp_buf.buffer_len < resp_buf.buffer_size) {
-        resp_buf.buffer[resp_buf.buffer_len] = '\0';
-    } else {
-        // Reallocate buffer if needed
-        char *new_buffer = realloc(resp_buf.buffer, resp_buf.buffer_size + 1);
-        if (!new_buffer) {
-            ESP_LOGE(TAG, "Failed to reallocate memory for response buffer.");
-            goto cleanup;
-        }
-        resp_buf.buffer = new_buffer;
-        resp_buf.buffer[resp_buf.buffer_len] = '\0';
-    }
-
-    // Log the response from the server
     ESP_LOGI(TAG, "Response: %s", resp_buf.buffer);
 
 cleanup:
     // Free allocated memory
     free(encoded_loungeIdToken);
-    free(encoded_UUID);
-    free(encoded_zx);
     free(encoded_SID);
     free(encoded_gsession);
-    free(resp_buf.buffer);
+    free(encoded_command);
+    if (encoded_video_id) {
+        free(encoded_video_id);
+    }
+    if (resp_buf.buffer) {
+        free(resp_buf.buffer);
+    }
     esp_http_client_cleanup(client);
 
     return ESP_OK;
 }
-
 
 
 esp_err_t bind_session_id(Device *device) {
@@ -363,10 +350,6 @@ esp_err_t bind_session_id(Device *device) {
         return ESP_FAIL;
     }
 
-    // Update and increment RID
-    static unsigned long rid = 0;
-    rid++;
-
     // URL-encode parameter values
     char *encoded_loungeIdToken = url_encode(device->YoutubeToken);
     char *encoded_UUID = url_encode(device->UUID);
@@ -383,17 +366,17 @@ esp_err_t bind_session_id(Device *device) {
         return ESP_FAIL;
     }
 
-    // Prepare URL parameters with encoded values
+    
     char url_params[1048];
     snprintf(url_params, sizeof(url_params),
              "device=REMOTE_CONTROL&mdx-version=3&ui=1&v=2&name=%s"
-             "&app=youtube-desktop&loungeIdToken=%s&id=%s&VER=8&CVER=1&zx=%s&RID=%lu",
-             encoded_name, encoded_loungeIdToken, encoded_UUID, encoded_zx, rid);
+             "&app=youtube-desktop&loungeIdToken=%s&id=%s&VER=8&CVER=1&zx=%s&RID=%i",
+             encoded_name, encoded_loungeIdToken, encoded_UUID, encoded_zx, 1);
 
-    // Log the full URL for debugging
+    
     ESP_LOGI(TAG, "Constructed URL: %s?%s", "https://www.youtube.com/api/lounge/bc/bind", url_params);
 
-    // Initialize response buffer
+    
     response_buffer_t resp_buf = {
         .buffer = malloc(1524),
         .buffer_len = 0,
@@ -404,7 +387,7 @@ esp_err_t bind_session_id(Device *device) {
         return ESP_FAIL;
     }
 
-    // Configure HTTP client
+    
     esp_http_client_config_t config = {
         .url = "https://www.youtube.com/api/lounge/bc/bind",
         .timeout_ms = 5000,
@@ -421,12 +404,12 @@ esp_err_t bind_session_id(Device *device) {
         return ESP_FAIL;
     }
 
-    // Set HTTP method and headers
+    
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_header(client, "Origin", "https://www.youtube.com");
 
-    // Set the full URL with parameters
+    
     char full_url[4096];
     snprintf(full_url, sizeof(full_url), "%s?%s", config.url, url_params);
     esp_http_client_set_url(client, full_url);
@@ -438,7 +421,7 @@ esp_err_t bind_session_id(Device *device) {
     
     ESP_LOGI(TAG, "Request Body: %s", json_data);
 
-    // Perform the HTTP request
+    
     esp_err_t err = esp_http_client_perform(client);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
@@ -447,11 +430,10 @@ esp_err_t bind_session_id(Device *device) {
         return err;
     }
 
-    // Null-terminate the response buffer
+    
     if (resp_buf.buffer_len < resp_buf.buffer_size) {
         resp_buf.buffer[resp_buf.buffer_len] = '\0';
     } else {
-        // Reallocate buffer to add null terminator
         char *new_buffer = realloc(resp_buf.buffer, resp_buf.buffer_size + 1);
         if (new_buffer == NULL) {
             ESP_LOGE(TAG, "Failed to allocate memory for null terminator");
@@ -463,7 +445,6 @@ esp_err_t bind_session_id(Device *device) {
         resp_buf.buffer[resp_buf.buffer_len] = '\0';
     }
 
-    // Log the response
     printf("Response: %s", resp_buf.buffer);
 
     BindSession_Params_t result = parse_response(resp_buf.buffer);
@@ -667,14 +648,17 @@ esp_err_t dial_manager_init(DIALManager *manager, DIALClient *client) {
 }
 
 bool fetch_screen_id_with_retries(const char *applicationUrl, Device *device, DIALManager *manager) {
-    for (int i = 0; i < 5; i++) {
+    const int max_retries = 5;              // Max retries (approx. 15 seconds total)
+    const int retry_delay_ms = 3000;        // 3 seconds delay between retries
+
+    for (int i = 0; i < max_retries; i++) {
+        
         if (check_app_status(manager, APP_YOUTUBE, applicationUrl, device) == ESP_OK && strlen(device->screenID) > 0) {
             ESP_LOGI(TAG, "Fetched Screen ID: %s", device->screenID);
 
             
             char *youtube_token = get_youtube_token(device->screenID);
             if (youtube_token) {
-                
                 strncpy(device->YoutubeToken, youtube_token, sizeof(device->YoutubeToken) - 1);
                 device->YoutubeToken[sizeof(device->YoutubeToken) - 1] = '\0';
                 free(youtube_token);
@@ -693,10 +677,11 @@ bool fetch_screen_id_with_retries(const char *applicationUrl, Device *device, DI
                 return false; 
             }
         } else {
-            ESP_LOGW(TAG, "Screen ID is empty. Retrying... (%d/%d)", i + 1, 5);
-            vTaskDelay(500 / portTICK_PERIOD_MS); 
+            ESP_LOGW(TAG, "Screen ID is empty. Retrying... (%d/%d)", i + 1, max_retries);
+            vTaskDelay(retry_delay_ms / portTICK_PERIOD_MS);
         }
     }
+
 
     ESP_LOGE(TAG, "Failed to fetch Screen ID after max retries.");
     return false;
@@ -724,13 +709,13 @@ char* get_dial_application_url(const char *location_url) {
     char ip[64];
     uint16_t port = 0;
 
-    // Extract IP and port from the location URL
+    
     if (extract_ip_and_port(location_url, ip, &port) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to extract IP and port from URL");
         return NULL;
     }
 
-    // Extract path from the location URL
+    
     char *path = extract_path_from_url(location_url);
     if (!path) {
         ESP_LOGE(TAG, "Failed to extract path from URL");
@@ -739,7 +724,7 @@ char* get_dial_application_url(const char *location_url) {
 
     ESP_LOGI(TAG, "Connecting to IP: %s, Port: %u, Path: %s", ip, port, path);
 
-    // Configure the HTTP client
+   
     esp_http_client_config_t config = {
         .host = ip,
         .port = port,
@@ -755,7 +740,7 @@ char* get_dial_application_url(const char *location_url) {
         return NULL;
     }
 
-    // Perform the HTTP request
+   
     esp_err_t err = esp_http_client_perform(client);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
@@ -764,7 +749,7 @@ char* get_dial_application_url(const char *location_url) {
         return NULL;
     }
 
-    // Check HTTP status code
+   
     int status_code = esp_http_client_get_status_code(client);
     ESP_LOGI(TAG, "HTTP Status Code: %d", status_code);
     if (status_code != 200) {
@@ -774,12 +759,12 @@ char* get_dial_application_url(const char *location_url) {
         return NULL;
     }
 
-    // After the request, check if the Application-Url header was found
+  
     if (g_app_url != NULL) {
         ESP_LOGI(TAG, "Application-Url: %s", g_app_url);
-        char *app_url_copy = strdup(g_app_url);  // Copy the URL to return
-        free(g_app_url);  // Free the global variable
-        g_app_url = NULL; // Reset the global variable
+        char *app_url_copy = strdup(g_app_url); 
+        free(g_app_url);  
+        g_app_url = NULL;
         esp_http_client_cleanup(client);
         free(path);
         return app_url_copy;
@@ -787,7 +772,7 @@ char* get_dial_application_url(const char *location_url) {
         ESP_LOGE(TAG, "Couldn't find 'Application-Url' in the headers.");
     }
 
-    // Clean up resources
+    
     esp_http_client_cleanup(client);
     free(path);
     return NULL;
@@ -795,7 +780,6 @@ char* get_dial_application_url(const char *location_url) {
 
 // Helper to extract IP and port from URL
 esp_err_t extract_ip_and_port(const char *url, char *ip_out, uint16_t *port_out) {
-    // Assuming the URL is in the format http://<ip>:<port>/<path>
     const char *ip_start = strstr(url, "http://");
     if (!ip_start) {
         return ESP_ERR_INVALID_ARG;
@@ -881,6 +865,8 @@ esp_err_t check_app_status(DIALManager *manager, DIALAppType app, const char *ap
     }
 
     esp_http_client_set_header(http_client, "Origin", "https://www.youtube.com");
+    esp_http_client_set_header(http_client, "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36");
+    esp_http_client_set_header(http_client, "Content-Type", "application/x-www-form-urlencoded");
 
     // Open the connection manually
     esp_err_t err = esp_http_client_open(http_client, 0);  // 0 means no request body
@@ -903,7 +889,7 @@ esp_err_t check_app_status(DIALManager *manager, DIALAppType app, const char *ap
     ESP_LOGI(TAG, "HTTP status code: %d", status_code);
 
     if (status_code == 200) {
-        char response_body[512];
+        char response_body[1024];
         int content_len = esp_http_client_read(http_client, response_body, sizeof(response_body) - 1);
         if (content_len >= 0) {
             response_body[content_len] = '\0';  // Null-terminate the response body
@@ -994,8 +980,27 @@ bool launch_app(DIALManager *manager, DIALAppType app, const char *appUrl) {
 }
 
 
+const char *pick_random_yt_video() {
+    
+    const char *yt_urls[] = {
+        "dQw4w9WgXcQ",  // Video 1
+        "qWNQUvIk954",  // Video 2
+        "ZZujisNZuw0",  // Video 3
+        "rfXJ6xM1JnE"   // Video 4
+    };
+
+    int num_videos = sizeof(yt_urls) / sizeof(yt_urls[0]);
+
+
+    uint32_t random_number = esp_random();
+
+    int random_index = random_number % num_videos;
+
+    return yt_urls[random_index];
+}
+
+
 void explore_network(DIALManager *manager) {
-    const char *yt_url = "dQw4w9WgXcQ";
     
     for (int attempt = 0; attempt < 5; ++attempt) {
         Device *devices = (Device *)malloc(sizeof(Device) * 10);
@@ -1029,22 +1034,6 @@ void explore_network(DIALManager *manager) {
                     ESP_LOGE(TAG, "Failed to launch YouTube app.");
                     continue;
                 }
-
-                
-                unsigned long startTime = xTaskGetTickCount();
-                bool isYouTubeRunning = false;
-                while ((xTaskGetTickCount() - startTime) < (7000 / portTICK_PERIOD_MS)) {
-                    if (check_app_status(manager, APP_YOUTUBE, appUrl, device) == ESP_OK) {
-                        isYouTubeRunning = true;
-                        break;
-                    }
-                    vTaskDelay(100 / portTICK_PERIOD_MS);
-                }
-
-                if (!isYouTubeRunning) {
-                    ESP_LOGE(TAG, "YouTube app did not start within the timeout.");
-                    continue;
-                }
             }
 
            
@@ -1053,8 +1042,10 @@ void explore_network(DIALManager *manager) {
                 continue;
             }
 
+            const char *yt_url = pick_random_yt_video();
+
             
-            if (send_command("setPlaylist", yt_url, device) == ESP_OK) {
+            if (send_command("setVideo", yt_url, device) == ESP_OK) {
                 ESP_LOGI(TAG, "YouTube video command sent successfully.");
             } else {
                 ESP_LOGE(TAG, "Failed to send YouTube command.");
