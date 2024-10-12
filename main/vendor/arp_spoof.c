@@ -101,7 +101,7 @@ void arp_spoof_task(void *pvParameter) {
             send_arp_packet(&arp_packet);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 
     vTaskDelete(NULL);
