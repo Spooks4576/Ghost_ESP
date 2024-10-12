@@ -128,7 +128,7 @@
     - `-r`: Scan for raw BLE packets  
     - `-s`: Stop BLE scanning
 
-## New Network Commands
+## Network Commands
 
 - **`connect`**  
   **Description:** Connects to a specific Wi-Fi network.  
