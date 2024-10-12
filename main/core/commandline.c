@@ -910,12 +910,12 @@ void handle_help(int argc, char **argv) {
     printf("    Description: Connects to Specific WiFi Network\n");
     printf("    Usage: connect <SSID> <Password>\n");
 
-    printf("dialconnect\n")
+    printf("dialconnect\n");
     printf("    Description: Cast a Random Youtube Video on all Smart TV's on your LAN (Requires You to Run Connect First)\n");
     printf("    Usage: dialconnect\n");
 
 
-    printf("powerprinter\n")
+    printf("powerprinter\n");
     printf("    Description: Print Custom Text to a Printer on your LAN (Requires You to Run Connect First)\n");
     printf("    Usage: connect <Printer IP> <Text> <FontSize> <alignment>\n");
     printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
