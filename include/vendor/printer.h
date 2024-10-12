@@ -9,7 +9,6 @@
 
 void handle_printer_command(int argc, char **argv);
 
-
-void print_text_to_printer(const char *printer_ip, const char *text);
+void print_text_to_printer(const char *printer_ip, const char *text, int font_px, const char *alignment);
 
 #endif

@@ -14,7 +14,6 @@
 #include "core/callbacks.h"
 #include <esp_timer.h>
 #include "vendor/pcap.h"
-#include "vendor/arp_spoof.h"
 #include <sys/socket.h>
 #include <netdb.h>
 #include "vendor/printer.h"
