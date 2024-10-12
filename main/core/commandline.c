@@ -868,13 +868,19 @@ void handle_help(int argc, char **argv) {
 
     printf("startportal\n");
     printf("    Description: Start a portal with specified SSID and password.\n");
-    printf("    Usage: startportal <URL> <SSID> <Password> <AP_ssid>\n");
+    printf("    Usage: startportal <URL> <SSID> <Password> <AP_ssid> <Domain>\n");
     printf("    Arguments:\n");
     printf("        <URL>       : URL for the portal\n");
     printf("        <SSID>      : Wi-Fi SSID for the portal\n");
     printf("        <Password>  : Wi-Fi password for the portal\n");
     printf("        <AP_ssid>   : SSID for the access point\n\n");
     printf("        <Domain>    : Custom Domain to Spoof In Address Bar\n\n");
+    printf("  OR \n\n");
+    printf("Offline Usage: startportal <FilePath> <AP_ssid> <Domain>\n");
+
+    printf("stopportal\n");
+    printf("    Description: Stop Evil Portal\n");
+    printf("    Usage: stopportal\n\n");
 
 #ifndef CONFIG_IDF_TARGET_ESP32S2
     printf("blescan\n");
@@ -888,14 +894,6 @@ void handle_help(int argc, char **argv) {
     printf("        -s   : Stop BLE scanning\n\n");
 #endif
 
-    printf("stopscan\n");
-    printf("    Description: Stop the ongoing Wi-Fi scan.\n");
-    printf("    Usage: stopscan\n\n");
-
-    printf("stopportal\n");
-    printf("    Description: Stop Evil Portal\n");
-    printf("    Usage: stopportal\n\n");
-
     printf("capture\n");
     printf("    Description: Start a WiFi Capture (Requires SD Card or Flipper)\n");
     printf("    Usage: capture [OPTION]\n");
@@ -906,6 +904,22 @@ void handle_help(int argc, char **argv) {
     printf("        -raw   :   Start Capturing Raw Packets\n");
     printf("        -wps   :   Start Capturing WPS Packets and there Auth Type");
     printf("        -stop   : Stops the active capture\n\n");
+
+
+    printf("connect\n");
+    printf("    Description: Connects to Specific WiFi Network\n");
+    printf("    Usage: connect <SSID> <Password>\n");
+
+    printf("dialconnect\n")
+    printf("    Description: Cast a Random Youtube Video on all Smart TV's on your LAN (Requires You to Run Connect First)\n");
+    printf("    Usage: dialconnect\n");
+
+
+    printf("powerprinter\n")
+    printf("    Description: Print Custom Text to a Printer on your LAN (Requires You to Run Connect First)\n");
+    printf("    Usage: connect <Printer IP> <Text> <FontSize> <alignment>\n");
+    printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
+
 }
 
 void register_commands() {
