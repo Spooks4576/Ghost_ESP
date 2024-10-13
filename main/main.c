@@ -1,16 +1,20 @@
 #include "core/system_manager.h"
 #include "core/serial_manager.h"
 #include "core/commandline.h"
-#include "core/crash_handler.h"
 #include "managers/rgb_manager.h"
 #include "managers/settings_manager.h"
 #include "managers/wifi_manager.h"
 #include "managers/ap_manager.h"
 #include "managers/sd_card_manager.h"
+#include "managers/display_manager.h"
 #ifndef CONFIG_IDF_TARGET_ESP32S2
 #include "managers/ble_manager.h"
 #endif
 #include <esp_log.h>
+
+#ifdef WITH_SCREEN
+#include "managers/views/splash_screen.h"
+#endif
 
 
 int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3){
@@ -52,11 +56,9 @@ void app_main(void) {
 
   esp_err_t err = sd_card_init();
 
-#ifdef DEBUG
-  if (err == ESP_OK)
-  {
-    setup_custom_panic_handler();
-  }
+#ifdef WITH_SCREEN
+  display_manager_init();
+  display_manager_switch_view(&splash_view);
 #endif
 
 #ifdef LED_DATA_PIN

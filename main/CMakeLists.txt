@@ -15,4 +15,4 @@ endforeach()
 # Register the component with the dynamically collected source files and include directories
 idf_component_register(SRCS ${app_sources}
                        INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/include" "C:/Espressif/frameworks/esp-idf-v5.3.1/components/wpa_supplicant/esp_supplicant/src" "C:/Espressif/frameworks/esp-idf-v5.3.1/components/wpa_supplicant/src"
-                       REQUIRES bt nvs_flash driver esp_http_server mdns json esp_http_client mbedtls fatfs sdmmc wpa_supplicant)
+                       REQUIRES bt nvs_flash driver esp_http_server mdns json esp_http_client mbedtls fatfs sdmmc wpa_supplicant lvgl lvgl_esp32_drivers)
