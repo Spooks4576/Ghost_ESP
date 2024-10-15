@@ -14,15 +14,9 @@ static void transition_to_next_screen(lv_anim_t *a);
 
 void splash_create(void) {
 
-    lv_obj_t *black_screen = lv_obj_create(lv_scr_act());
-    lv_obj_set_style_bg_color(black_screen, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(black_screen, 0, LV_PART_MAIN);
-    lv_obj_set_style_pad_all(black_screen, 0, LV_PART_MAIN);
-    lv_obj_set_style_radius(black_screen, 0, LV_PART_MAIN);
-    lv_obj_set_size(black_screen, LV_HOR_RES, LV_VER_RES);
-
-   
-    splash_screen = lv_obj_create(black_screen);
+    display_manager_fill_screen(lv_color_black());
+    
+    splash_screen = lv_obj_create(lv_scr_act());
     lv_obj_set_size(splash_screen, LV_HOR_RES, LV_VER_RES);
     lv_obj_clear_flag(splash_screen, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_style_bg_opa(splash_screen, LV_OPA_TRANSP, LV_PART_MAIN);
@@ -45,7 +39,6 @@ void splash_create(void) {
     lv_anim_set_exec_cb(&zoom_anim, zoom_anim_cb);
     lv_anim_set_ready_cb(&zoom_anim, fade_out_cb);
     lv_anim_start(&zoom_anim);
-    printf("Created Splash Screen\n");
 }
 
 

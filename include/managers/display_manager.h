@@ -47,4 +47,6 @@ View *display_manager_get_current_view(void);
 
 void lvgl_tick_task(void *arg);
 
+void display_manager_fill_screen(lv_color_t color);
+
 #endif /* DISPLAY_MANAGER_H */
