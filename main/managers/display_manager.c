@@ -3,7 +3,6 @@
 #include "lvgl_helpers.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "vendor/screen_configs/marauder_board.h"
 
 #define LVGL_TASK_PERIOD_MS 10
 

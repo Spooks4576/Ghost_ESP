@@ -2,7 +2,6 @@
 #define DISPLAY_MANAGER_H
 
 #include "lvgl.h"
-#include "vendor/screen_configs/marauder_board.h"
 #include <stdbool.h>
 
 

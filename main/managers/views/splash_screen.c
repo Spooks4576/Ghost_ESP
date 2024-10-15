@@ -3,7 +3,8 @@
 
 static lv_obj_t *splash_screen;
 static lv_obj_t *img;
-LV_IMG_DECLARE(Spooky_Splash);
+LV_IMG_DECLARE(Ghost_ESP);
+LV_FONT_DECLARE(Juma);
 
 
 static void zoom_anim_cb(void *var, int32_t zoom);
@@ -31,26 +32,19 @@ void splash_create(void) {
 
 
     img = lv_img_create(splash_screen);
-    lv_img_set_src(img, &Spooky_Splash);
+    lv_img_set_src(img, &Ghost_ESP);
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
     
     lv_anim_t zoom_anim;
     lv_anim_init(&zoom_anim);
     lv_anim_set_var(&zoom_anim, img);
-    lv_anim_set_values(&zoom_anim, 256, 512);
+    lv_anim_set_values(&zoom_anim, 256 / 2, 512 / 2);
     lv_anim_set_time(&zoom_anim, 500);
     lv_anim_set_playback_time(&zoom_anim, 500);
     lv_anim_set_repeat_count(&zoom_anim, 1);
     lv_anim_set_exec_cb(&zoom_anim, zoom_anim_cb);
     lv_anim_set_ready_cb(&zoom_anim, fade_out_cb);
     lv_anim_start(&zoom_anim);
-
-    
-     lv_obj_t *label = lv_label_create(splash_screen);
-    lv_label_set_text(label, "Ghost\nESP");
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(label, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, 80);
     printf("Created Splash Screen\n");
 }
 
