@@ -44,6 +44,7 @@ void display_manager_switch_view(View *view) {
     dm.previous_view = dm.current_view;
     dm.current_view = view;
     view->create();
+    printf("created Object");
 }
 
 void display_manager_destroy_current_view(void) {

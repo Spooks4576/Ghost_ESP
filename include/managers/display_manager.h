@@ -5,9 +5,7 @@
 #include "vendor/screen_configs/marauder_board.h"
 #include <stdbool.h>
 
-#define CONFIG_LV_TFT_DISPLAY_CONTROLLER_ILI9341 1
 
-/* View structure for encapsulating each screen. */
 typedef struct {
     lv_obj_t *root;        // Root object for the view
     void (*create)(void);  // Create function for the view
@@ -49,7 +47,5 @@ View *display_manager_get_current_view(void);
 
 
 void lvgl_tick_task(void *arg);
-
-LV_FONT_DECLARE(ft13);
 
 #endif /* DISPLAY_MANAGER_H */

@@ -575,79 +575,108 @@ void decrypt_tp_link_response(const uint8_t *input, char *output, size_t len)
 void handle_tp_link_test(int argc, char **argv)
 {
     if (argc != 2) {
-        ESP_LOGE("TPLINK", "Usage: tp_link_test <on|off>");
+        ESP_LOGE("TPLINK", "Usage: tp_link_test <on|off|loop>");
         return;
     }
 
-    // Set relay state based on argument
-    const char *command;
-    if (strcmp(argv[1], "on") == 0) {
-        command = "{\"system\":{\"set_relay_state\":{\"state\":1}}}";
-    } else if (strcmp(argv[1], "off") == 0) {
-        command = "{\"system\":{\"set_relay_state\":{\"state\":0}}}";
-    } else {
-        ESP_LOGE("TPLINK", "Invalid argument. Use 'on' or 'off'.");
+    bool isloop = false;
+
+    
+    if (strcmp(argv[1], "loop") == 0) {
+        isloop = true;
+    } else if (strcmp(argv[1], "on") != 0 && strcmp(argv[1], "off") != 0) {
+        ESP_LOGE("TPLINK", "Invalid argument. Use 'on', 'off', or 'loop'.");
         return;
     }
 
-    uint8_t encrypted_command[128];
-    memset(encrypted_command, 0, sizeof(encrypted_command));
-
-    size_t command_len = strlen(command);
-    if (command_len >= sizeof(encrypted_command)) {
-        ESP_LOGE("TPLINK", "Command too large to encrypt");
-        return;
-    }
-
-    encrypt_tp_link_command(command, encrypted_command, command_len);
-
-    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (sock < 0) {
-        ESP_LOGE("TPLINK", "Failed to create socket: errno %d", errno);
-        return;
-    }
-
-    int broadcast = 1;
-    setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
-
+    
     struct sockaddr_in dest_addr;
     memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.sin_addr.s_addr = inet_addr("255.255.255.255");  // Broadcast address
+    dest_addr.sin_addr.s_addr = inet_addr("255.255.255.255");
     dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(9999);  // TP-Link device port
+    dest_addr.sin_port = htons(9999);
 
-    int err = sendto(sock, encrypted_command, command_len, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-    if (err < 0) {
-        ESP_LOGE("TPLINK", "Error occurred during sending: errno %d", errno);
-        close(sock);
-        return;
-    }
 
-    ESP_LOGI("TPLINK", "Broadcast message sent");
+    int iterations = isloop ? 10 : 1;
 
-    struct timeval timeout = {2, 0};
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-
-    uint8_t recv_buf[128];
-    socklen_t addr_len = sizeof(dest_addr);
-    int len = recvfrom(sock, recv_buf, sizeof(recv_buf) - 1, 0, (struct sockaddr *)&dest_addr, &addr_len);
-    if (len < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
-            ESP_LOGW("TPLINK", "No response from any device");
+    for (int i = 0; i < iterations; i++) {
+        const char *command;
+        if (isloop) {
+            command = (i % 2 == 0) ?
+                "{\"system\":{\"set_relay_state\":{\"state\":1}}}" :  // "on"
+                "{\"system\":{\"set_relay_state\":{\"state\":0}}}";   // "off"
         } else {
-            ESP_LOGE("TPLINK", "Error receiving response: errno %d", errno);
+            
+            command = (strcmp(argv[1], "on") == 0) ?
+                "{\"system\":{\"set_relay_state\":{\"state\":1}}}" :
+                "{\"system\":{\"set_relay_state\":{\"state\":0}}}";
         }
-    } else {
-        recv_buf[len] = 0;
-        char decrypted_response[128];
-        decrypt_tp_link_response(recv_buf, decrypted_response, len);
-        decrypted_response[len] = 0;
-        ESP_LOGI("TPLINK", "Response: %s", decrypted_response);
+
+        
+        uint8_t encrypted_command[128];
+        memset(encrypted_command, 0, sizeof(encrypted_command));
+
+        size_t command_len = strlen(command);
+        if (command_len >= sizeof(encrypted_command)) {
+            ESP_LOGE("TPLINK", "Command too large to encrypt");
+            return;
+        }
+
+        encrypt_tp_link_command(command, encrypted_command, command_len);
+
+        
+        int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if (sock < 0) {
+            ESP_LOGE("TPLINK", "Failed to create socket: errno %d", errno);
+            return;
+        }
+
+        
+        int broadcast = 1;
+        setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
+
+        
+        int err = sendto(sock, encrypted_command, command_len, 0,
+                         (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+        if (err < 0) {
+            ESP_LOGE("TPLINK", "Error occurred during sending: errno %d", errno);
+            close(sock);
+            return;
+        }
+
+        ESP_LOGI("TPLINK", "Broadcast message sent: %s", command);
+
+        
+        struct timeval timeout = {2, 0};
+        setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+
+        uint8_t recv_buf[128];
+        socklen_t addr_len = sizeof(dest_addr);
+        int len = recvfrom(sock, recv_buf, sizeof(recv_buf) - 1, 0,
+                           (struct sockaddr *)&dest_addr, &addr_len);
+        if (len < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                ESP_LOGW("TPLINK", "No response from any device");
+            } else {
+                ESP_LOGE("TPLINK", "Error receiving response: errno %d", errno);
+            }
+        } else {
+            recv_buf[len] = 0;
+            char decrypted_response[128];
+            decrypt_tp_link_response(recv_buf, decrypted_response, len);
+            decrypted_response[len] = 0;
+            ESP_LOGI("TPLINK", "Response: %s", decrypted_response);
+        }
+
+
+        close(sock);
+
+        
+        if (isloop && i < 9) {
+            vTaskDelay(pdMS_TO_TICKS(700));
+        }
     }
-
-    close(sock);
 }
-
 
 void handle_capture_scan(int argc, char** argv)
 {
