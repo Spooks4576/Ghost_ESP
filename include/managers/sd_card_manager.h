@@ -3,6 +3,7 @@
 
 #include "esp_err.h"
 #include "driver/sdmmc_host.h"
+#include "driver/sdmmc_types.h"
 #include <stdbool.h>
 
 
@@ -35,7 +36,6 @@ esp_err_t sd_card_read_file(const char* path);
 esp_err_t sd_card_create_directory(const char* path);
 bool sd_card_exists(const char* path);
 esp_err_t sd_card_setup_directory_structure();
-esp_err_t sd_card_write_pcap_global_header(FILE* f);
-esp_err_t sd_card_save_pcap_packet(const void* packet, size_t length);
+
 
 #endif // SD_CARD_MANAGER_H
