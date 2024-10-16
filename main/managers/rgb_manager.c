@@ -27,46 +27,79 @@ typedef struct {
 #define LEDC_DUTY_RES       LEDC_TIMER_8_BIT  // 8-bit resolution (0-255)
 #define LEDC_FREQUENCY      10000  // 10 kHz PWM frequency
 
-// Converts HSV to RGB with values between [0, 1]
-rgb hsv2rgb(hsv HSV)
-{
+
+void calculate_matrix_dimensions(int total_leds, int *rows, int *cols) {
+    int side = (int)sqrt(total_leds);
+
+    if (side * side == total_leds) {
+        *rows = side;
+        *cols = side;
+    } else {
+        for (int i = side; i > 0; i--) {
+            if (total_leds % i == 0) {
+                *rows = i;
+                *cols = total_leds / i;
+                return;
+            }
+        }
+    }
+}
+
+
+rgb hsv2rgb(hsv HSV) {
     rgb RGB;
     double H = HSV.h, S = HSV.s, V = HSV.v;
     double P, Q, T, fract;
 
-    (H == 360.0) ? (H = 0.0) : (H /= 60.0);
+    // Ensure hue is wrapped between 0 and 360
+    H = fmod(H, 360.0);
+    if (H < 0) H += 360.0;
+
+    // Convert hue to a 0-6 range for RGB segment
+    H /= 60.0;
     fract = H - floor(H);
 
     P = V * (1.0 - S);
     Q = V * (1.0 - S * fract);
     T = V * (1.0 - S * (1.0 - fract));
 
-    if (0.0 <= H && H < 1.0) {
+    if (H < 1.0) {
         RGB = (rgb){.r = V, .g = T, .b = P};
-    } else if (1.0 <= H && H < 2.0) {
+    } else if (H < 2.0) {
         RGB = (rgb){.r = Q, .g = V, .b = P};
-    } else if (2.0 <= H && H < 3.0) {
+    } else if (H < 3.0) {
         RGB = (rgb){.r = P, .g = V, .b = T};
-    } else if (3.0 <= H && H < 4.0) {
+    } else if (H < 4.0) {
         RGB = (rgb){.r = P, .g = Q, .b = V};
-    } else if (4.0 <= H && H < 5.0) {
+    } else if (H < 5.0) {
         RGB = (rgb){.r = T, .g = P, .b = V};
-    } else if (5.0 <= H && H < 6.0) {
-        RGB = (rgb){.r = V, .g = P, .b = Q};
     } else {
-        RGB = (rgb){.r = 0.0, .g = 0.0, .b = 0.0};
+        RGB = (rgb){.r = V, .g = P, .b = Q};
     }
+
+    // Apply a per-channel scaling factor to reduce white-ish colors
+    RGB.r = pow(RGB.r, 0.8);  // Reduce the contribution of each channel slightly
+    RGB.g = pow(RGB.g, 0.8);
+    RGB.b = pow(RGB.b, 0.8);
 
     return RGB;
 }
+
 
 void rainbow_task(void* pvParameter) 
 {
     RGBManager_t* rgb_manager = (RGBManager_t*) pvParameter;
     
     while (1) {
-        
-        rgb_manager_rainbow_effect(rgb_manager, settings_get_rgb_speed(G_Settings));
+
+        if (rgb_manager->num_leds > 1)
+        {
+            rgb_manager_rainbow_effect_matrix(rgb_manager, settings_get_rgb_speed(G_Settings));
+        }
+        else 
+        {
+            rgb_manager_rainbow_effect(rgb_manager, settings_get_rgb_speed(G_Settings));
+        }
         
         vTaskDelay(pdMS_TO_TICKS(20));
     }
@@ -86,11 +119,11 @@ void police_task(void *pvParameter)
 }
 
 
-// Clamps an RGB value to the 0-255 range
-static void clamp_rgb(uint8_t *r, uint8_t *g, uint8_t *b) {
-    if (*r > 255) *r = 255;
-    if (*g > 255) *g = 255;
-    if (*b > 255) *b = 255;
+
+void clamp_rgb(uint8_t *r, uint8_t *g, uint8_t *b) {
+    *r = (*r > 255) ? 255 : *r;
+    *g = (*g > 255) ? 255 : *g;
+    *b = (*b > 255) ? 255 : *b;
 }
 
 // Initialize the RGB LED manager
@@ -218,11 +251,27 @@ void pulse_once(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t b
 }
 
 
+
 esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue, bool pulse) {
 #ifdef LED_DATA_PIN
     if (!rgb_manager) return ESP_ERR_INVALID_ARG;
 
-    // For LED strip
+    
+    if (rgb_manager->num_leds > 1) {
+        for (int i = 0; i < rgb_manager->num_leds; i++) {
+            uint8_t r = red, g = green, b = blue;
+            scale_grb_by_brightness(&g, &r, &b, 0.3);
+
+            esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, i, r, g, b);
+            if (ret != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to set LED %d color", i);
+                return ret;
+            }
+        }
+        return led_strip_refresh(rgb_manager->strip);
+    }
+
+
     if (pulse) {
         pulse_once(rgb_manager, red, green, blue);
         return ESP_OK;
@@ -235,68 +284,100 @@ esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t 
         }
         return led_strip_refresh(rgb_manager->strip);
     }
-#elif CONFIG_IDF_TARGET_ESP32S2
 
+#elif CONFIG_IDF_TARGET_ESP32S2
     scale_grb_by_brightness(&green, &red, &blue, -0.3);
 
-    uint8_t ired = (uint8_t)(255 - red);   // Inverted red
-    uint8_t igreen = (uint8_t)(255 - green); // Inverted green
-    uint8_t iblue = (uint8_t)(255 - blue);  // Inverted blue
+    uint8_t ired = (uint8_t)(255 - red);
+    uint8_t igreen = (uint8_t)(255 - green);
+    uint8_t iblue = (uint8_t)(255 - blue);
 
-    
+
     if (ired == 255 && igreen == 255 && iblue == 255) {
-        ledc_stop(LEDC_MODE, LEDC_CHANNEL_RED, 1);   // Hold output low
-        ledc_stop(LEDC_MODE, LEDC_CHANNEL_GREEN, 1); // Hold output low
-        ledc_stop(LEDC_MODE, LEDC_CHANNEL_BLUE, 1);  // Hold output low
+        ledc_stop(LEDC_MODE, LEDC_CHANNEL_RED, 1);
+        ledc_stop(LEDC_MODE, LEDC_CHANNEL_GREEN, 1);
+        ledc_stop(LEDC_MODE, LEDC_CHANNEL_BLUE, 1);
     } else {
-
         ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_RED, ired));
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_RED));
 
-        
         ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_GREEN, igreen));
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_GREEN));
 
-        
         ESP_ERROR_CHECK(ledc_set_duty(LEDC_MODE, LEDC_CHANNEL_BLUE, iblue));
         ESP_ERROR_CHECK(ledc_update_duty(LEDC_MODE, LEDC_CHANNEL_BLUE));
     }
 
-
     return ESP_OK;
 #endif
+
     return ESP_OK;
+}
+
+void rgb_manager_rainbow_effect_matrix(RGBManager_t* rgb_manager, int delay_ms) {
+    double hue = 0.0;
+
+    while (1) {
+        for (int i = 0; i < rgb_manager->num_leds; i++) {
+            uint8_t red, green, blue;
+
+            double hue_offset = fmod(hue + i * (360.0 / rgb_manager->num_leds), 360.0);
+
+
+            hsv hsv_color = { .h = hue_offset, .s = 1.0, .v = 0.5 };
+            rgb rgb_color = hsv2rgb(hsv_color);
+
+            red = (uint8_t)(fmin(rgb_color.r * 255, 120));
+            green = (uint8_t)(fmin(rgb_color.g * 255, 120));
+            blue = (uint8_t)(fmin(rgb_color.b * 255, 120));
+
+            
+            clamp_rgb(&red, &green, &blue);
+
+            scale_grb_by_brightness(&green, &red, &blue, 0.3);
+
+            esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, i, red, green, blue);
+            
+            if (!rgb_manager->is_separate_pins) {
+                led_strip_refresh(rgb_manager->strip);
+            }
+            hue = fmod(hue + 0.5, 360.0);
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
+    }
 }
 
 // Rainbow effect
 void rgb_manager_rainbow_effect(RGBManager_t* rgb_manager, int delay_ms) {
-    double hue = 0.0;  // Start at 0.0
+    double hue = 0.0;
 
     while (1) {
         for (int i = 0; i < rgb_manager->num_leds; i++) {
 RGBSTART:
             uint8_t red, green, blue;
 
-            // Calculate the hue for each LED
+           
             double hue_offset = fmod(hue + i * (360.0 / rgb_manager->num_leds), 360.0);
 
-            // Use HSV values (hue: 0-360, saturation: 1.0, brightness: 1.0)
+           
             hsv hsv_color = { .h = hue_offset, .s = 1.0, .v = 1.0 };
+            hsv_color.v *= 0.5;
             rgb rgb_color = hsv2rgb(hsv_color);
 
-            // Convert RGB from [0.0, 1.0] to [0, 255]
-            red = (uint8_t)(rgb_color.r * 255);
-            green = (uint8_t)(rgb_color.g * 255);
-            blue = (uint8_t)(rgb_color.b * 255);
+          
+            red = (uint8_t)(rgb_color.r * 180);
+            green = (uint8_t)(rgb_color.g * 180);
+            blue = (uint8_t)(rgb_color.b * 180);
 
-            // Clamp the RGB values to ensure they stay within 0-255
+            
             clamp_rgb(&red, &green, &blue);
 
             if (rgb_manager->is_separate_pins)
             {
-                uint8_t ired = (uint8_t)(255 - (rgb_color.r * 255));
-                uint8_t igreen = (uint8_t)(255 - (rgb_color.g * 255));
-                uint8_t iblue = (uint8_t)(255 - (rgb_color.b * 255));
+                uint8_t ired = (uint8_t)(180 - (rgb_color.r * 180));
+                uint8_t igreen = (uint8_t)(180 - (rgb_color.g * 180));
+                uint8_t iblue = (uint8_t)(180 - (rgb_color.b * 180));
                 rgb_manager_set_color(rgb_manager, i, ired, igreen, iblue, false);
                 hue = fmod(hue + 1, 360.0);
 
@@ -305,7 +386,6 @@ RGBSTART:
                 goto RGBSTART;
             }
 
-            // Set the color of the LED
             rgb_manager_set_color(rgb_manager, i, red, green, blue, false);
         }
 
@@ -325,37 +405,36 @@ RGBSTART:
 void rgb_manager_policesiren_effect(RGBManager_t *rgb_manager, int delay_ms) {
     uint8_t brightness;
     bool increasing = true;
-    bool is_red = true;  // Start with red
+    bool is_red = true;
 
     while (1) {
         for (int pulse_step = 0; pulse_step <= 255; pulse_step += 5) {
-            // Determine brightness for pulsing effect
             if (increasing) {
-                brightness = pulse_step;  // Increase brightness
+                brightness = pulse_step;
             } else {
-                brightness = 255 - pulse_step;  // Decrease brightness
+                brightness = 255 - pulse_step;
             }
 
-            // Set the LED to either red or blue based on `is_red` flag
+            
             if (is_red) {
-                rgb_manager_set_color(rgb_manager, 0, brightness, 0, 0, false);  // Red color
+                rgb_manager_set_color(rgb_manager, 0, brightness, 0, 0, false); 
             } else {
-                rgb_manager_set_color(rgb_manager, 0, 0, 0, brightness, false);  // Blue color
+                rgb_manager_set_color(rgb_manager, 0, 0, 0, brightness, false); 
             }
 
-            // Refresh the LED strip to apply the new color
+            
             led_strip_refresh(rgb_manager->strip);
 
-            // Delay to control the speed of the pulsing effect
+            
             vTaskDelay(pdMS_TO_TICKS(delay_ms));
         }
 
-        // Switch between increasing and decreasing brightness
+        
         increasing = !increasing;
 
-        // Alternate between red and blue
+        
         if (!increasing) {
-            is_red = !is_red;  // Switch color only after a full pulse cycle
+            is_red = !is_red;
         }
     }
 }

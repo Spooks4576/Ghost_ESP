@@ -62,6 +62,9 @@ void police_task(void* pvParameter);
 void pulse_once(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t blue);
 
 
+void rgb_manager_rainbow_effect_matrix(RGBManager_t* rgb_manager, int delay_ms);
+
+
 RGBManager_t rgb_manager;
 
 static TaskHandle_t rgb_effect_task_handle;

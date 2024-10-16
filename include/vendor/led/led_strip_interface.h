@@ -88,6 +88,8 @@ struct led_strip_t {
      *      - ESP_FAIL: Free resources failed because error occurred
      */
     esp_err_t (*del)(led_strip_t *strip);
+
+    int led_pixel_format;
 };
 
 #ifdef __cplusplus
