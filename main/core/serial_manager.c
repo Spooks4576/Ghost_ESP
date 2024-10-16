@@ -13,6 +13,11 @@
 #include <core/commandline.h>
 #include "driver/usb_serial_jtag.h"
 
+#if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+    #define JTAG_SUPPORTED 1
+#else
+    #define JTAG_SUPPORTED 0
+#endif
 
 #define UART_NUM UART_NUM_0
 #define BUF_SIZE (1024)
@@ -34,10 +39,11 @@ void serial_task(void *pvParameter) {
         
         length = uart_read_bytes(UART_NUM, data, BUF_SIZE, 10 / portTICK_PERIOD_MS);
 
-        
+#if JTAG_SUPPORTED
         if (length <= 0) {
             length = usb_serial_jtag_read_bytes(data, BUF_SIZE, 10 / portTICK_PERIOD_MS);
         }
+#endif
 
         
         if (length > 0) {
@@ -81,14 +87,13 @@ void serial_manager_init() {
     uart_param_config(UART_NUM, &uart_config);
     uart_driver_install(UART_NUM, BUF_SIZE * 2, 0, 0, NULL, 0);
 
+#if JTAG_SUPPORTED
     usb_serial_jtag_driver_config_t usb_serial_jtag_config = {
         .rx_buffer_size = BUF_SIZE,
         .tx_buffer_size = BUF_SIZE,
     };
-
-
     usb_serial_jtag_driver_install(&usb_serial_jtag_config);
-    
+#endif
 
     xTaskCreate(serial_task, "SerialTask", 4096, NULL, 10, NULL);
 }
