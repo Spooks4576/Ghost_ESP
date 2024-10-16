@@ -26,11 +26,19 @@ int handle_serial_command(const char *command);
 
 void serial_task(void *pvParameter) {
     uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
-    char serial_buffer[SERIAL_BUFFER_SIZE];       
-    int index = 0;                               
+    int index = 0;
 
     while (1) {
-        int length = uart_read_bytes(UART_NUM, data, BUF_SIZE, 100 / portTICK_PERIOD_MS);
+        int length = 0;
+
+        
+        length = uart_read_bytes(UART_NUM, data, BUF_SIZE, 10 / portTICK_PERIOD_MS);
+
+        
+        if (length <= 0) {
+            length = usb_serial_jtag_read_bytes(data, BUF_SIZE, 10 / portTICK_PERIOD_MS);
+        }
+
         
         if (length > 0) {
             for (int i = 0; i < length; i++) {
@@ -43,20 +51,17 @@ void serial_task(void *pvParameter) {
                         handle_serial_command(serial_buffer);
                         index = 0;
                     }
-                }
-                else {
-                    if (index < SERIAL_BUFFER_SIZE - 1) {
-                        serial_buffer[index++] = incoming_char;
-                    } else {
-                        index = 0;
-                    }
+                } else if (index < SERIAL_BUFFER_SIZE - 1) {
+                    serial_buffer[index++] = incoming_char;
+                } else {
+                    index = 0;
                 }
             }
         }
 
-        
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
+
     free(data);
 }
 
@@ -70,9 +75,19 @@ void serial_manager_init() {
         .stop_bits = UART_STOP_BITS_1,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
     };
+
+
     
     uart_param_config(UART_NUM, &uart_config);
     uart_driver_install(UART_NUM, BUF_SIZE * 2, 0, 0, NULL, 0);
+
+    usb_serial_jtag_driver_config_t usb_serial_jtag_config = {
+        .rx_buffer_size = BUF_SIZE,
+        .tx_buffer_size = BUF_SIZE,
+    };
+
+
+    usb_serial_jtag_driver_install(&usb_serial_jtag_config);
     
 
     xTaskCreate(serial_task, "SerialTask", 4096, NULL, 10, NULL);
