@@ -24,7 +24,9 @@ static int num_items = sizeof(menu_items) / sizeof(menu_items[0]);
  */
 static void menu_item_event_handler(lv_event_t *e) {
     lv_obj_t *menu_item = lv_event_get_target(e);
-    int item_index = (int)lv_event_get_user_data(e);
+    int item_index = (int)lv_obj_get_user_data(menu_item);
+
+    printf("Called\n");
 
     // Handle each item index differently
     switch (item_index) {
@@ -65,20 +67,18 @@ void main_menu_create(void) {
     menu_container = lv_obj_create(lv_scr_act());
     lv_obj_set_grid_dsc_array(menu_container, col_dsc, row_dsc);
     lv_obj_set_size(menu_container, LV_HOR_RES, LV_VER_RES);
-    lv_obj_set_scroll_dir(menu_container, LV_DIR_NONE); 
     lv_obj_set_scrollbar_mode(menu_container, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_pad_column(menu_container, 10, 0);
     lv_obj_set_style_bg_opa(menu_container, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(menu_container, 0, 0);
     lv_obj_set_style_pad_all(menu_container, 0, 0);
     lv_obj_set_style_radius(menu_container, 0, 0);
-    lv_obj_clear_flag(menu_container, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_align(menu_container, LV_ALIGN_BOTTOM_MID, 0, 0);
 
 
     for (int i = 0; i < num_items; i++) {
-        lv_obj_t *menu_item = lv_obj_create(menu_container);
+        lv_obj_t *menu_item = lv_btn_create(menu_container);
         lv_obj_set_size(menu_item, 70, 100);
         lv_obj_set_style_bg_color(menu_item, lv_color_black(), 0);
         lv_obj_set_style_border_color(menu_item, menu_items[i].border_color, 0);
@@ -101,11 +101,13 @@ void main_menu_create(void) {
         int row_idx = 2 - (i / 3);  // This reverses the row placement
         lv_obj_set_grid_cell(menu_item, LV_GRID_ALIGN_CENTER, i % 3, 1, LV_GRID_ALIGN_END, row_idx, 1);
 
+        lv_obj_set_user_data(menu_item, (void *)(uintptr_t)i);
 
-        lv_obj_add_event_cb(menu_item, menu_item_event_handler, LV_EVENT_CLICKED, (void *)i);
+
+        lv_obj_add_event_cb(menu_item, menu_item_event_handler, LV_EVENT_CLICKED, NULL);
     }
 
-    display_manager_add_status_bar();
+    display_manager_add_status_bar("Main Menu");
 }
 
 /**

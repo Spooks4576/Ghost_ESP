@@ -104,9 +104,9 @@ bool xpt2046_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
         xpt2046_corr(&x, &y);
         xpt2046_avg(&x, &y);
         last_x = x;
-        last_y = y;
+        last_y = LV_VER_RES - y;
 
-        ESP_LOGV(TAG, "x = %d, y = %d", x, y);
+        ESP_LOGI(TAG, "x = %d, y = %d", x, y);
     }
     else
     {

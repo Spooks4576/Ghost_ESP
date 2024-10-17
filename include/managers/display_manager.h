@@ -53,7 +53,7 @@ void display_manager_fill_screen(lv_color_t color);
 
 void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage);
 
-void display_manager_add_status_bar();
+void display_manager_add_status_bar(const char* CurrentMenuName);
 
 
 LV_IMG_DECLARE(Ghost_ESP);

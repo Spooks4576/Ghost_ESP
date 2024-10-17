@@ -3,6 +3,7 @@
 #include "lvgl_helpers.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "managers/sd_card_manager.h"
 
 #define LVGL_TASK_PERIOD_MS 5
 
@@ -12,6 +13,7 @@ static lv_obj_t *status_bar;
 lv_obj_t *wifi_label = NULL;
 lv_obj_t *bt_label = NULL;
 lv_obj_t *sd_label = NULL;
+lv_obj_t *battery_label = NULL;
 
 void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage) {
     if (wifi_enabled) {
@@ -51,16 +53,40 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
         sd_label = NULL;
     }
 
-    if (batteryPercentage > 0)
-    {
-        
+    const char* battery_symbol;
+
+
+    if (batteryPercentage < 10) {
+        battery_symbol = LV_SYMBOL_BATTERY_EMPTY;
+    } else if (batteryPercentage < 30) {
+        battery_symbol = LV_SYMBOL_BATTERY_1;
+    } else if (batteryPercentage < 60) {
+        battery_symbol = LV_SYMBOL_BATTERY_2;
+    } else if (batteryPercentage < 80) {
+        battery_symbol = LV_SYMBOL_BATTERY_3;
+    } else {
+        battery_symbol = LV_SYMBOL_BATTERY_FULL;
     }
+
+    if (batteryPercentage == 1000) // Marker to signal charging / No Battery
+    {
+        battery_symbol = LV_SYMBOL_CHARGE;
+        batteryPercentage = 100;
+    }
+
+    if (battery_label == NULL) {
+        battery_label = lv_label_create(status_bar);
+        lv_obj_align(battery_label, LV_ALIGN_RIGHT_MID, -5, 0);
+        lv_obj_set_style_text_color(battery_label, lv_color_white(), 0);
+    }
+
+    lv_label_set_text_fmt(battery_label, "%s %d%%", battery_symbol, batteryPercentage);
 
 
     lv_obj_invalidate(status_bar);
 }
 
-void display_manager_add_status_bar()
+void display_manager_add_status_bar(const char* CurrentMenuName)
 {
     status_bar = lv_obj_create(lv_scr_act());
     lv_obj_set_size(status_bar, LV_HOR_RES, 20);
@@ -73,8 +99,22 @@ void display_manager_add_status_bar()
     lv_obj_set_style_border_side(status_bar, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
     lv_obj_set_style_border_width(status_bar, 2, LV_PART_MAIN);
     lv_obj_set_style_border_color(status_bar, lv_color_hex(0x393939), LV_PART_MAIN);
+    lv_obj_clear_flag(status_bar, LV_OBJ_FLAG_SCROLLABLE);
 
-    update_status_bar(true, true, false, 100);
+    lv_obj_t* mainlabel = lv_label_create(status_bar);
+    lv_label_set_text(mainlabel, CurrentMenuName);
+    lv_obj_align(mainlabel, LV_ALIGN_CENTER, -5, 0);
+    lv_obj_set_style_text_color(mainlabel, lv_color_white(), 0);
+
+    bool HasBluetooth;
+
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+    HasBluetooth = true;
+#else
+    HasBluetooth = false;
+#endif
+
+    update_status_bar(true, HasBluetooth, sd_card_exists("/mnt/ghostesp"), 1000);
 }
 
 void display_manager_init(void) {
@@ -100,7 +140,6 @@ void display_manager_init(void) {
     indev_drv.type = LV_INDEV_TYPE_POINTER;
     indev_drv.read_cb = touch_driver_read;
     lv_indev_drv_register(&indev_drv);
-
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, 5, NULL);
 }
