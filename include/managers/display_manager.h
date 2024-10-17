@@ -51,7 +51,7 @@ void display_manager_fill_screen(lv_color_t color);
 
 // Status Bar Functions
 
-void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted);
+void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage);
 
 void display_manager_add_status_bar();
 

@@ -74,7 +74,7 @@ void display_manager_add_status_bar()
     lv_obj_set_style_border_width(status_bar, 2, LV_PART_MAIN);
     lv_obj_set_style_border_color(status_bar, lv_color_hex(0x393939), LV_PART_MAIN);
 
-    update_status_bar(true, true, false);
+    update_status_bar(true, true, false, 100);
 }
 
 void display_manager_init(void) {
