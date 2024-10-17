@@ -1,10 +1,9 @@
 #include "managers/views/splash_screen.h"
+#include "managers/views/main_menu_screen.h"
 #include <stdio.h>
 
 static lv_obj_t *splash_screen;
 static lv_obj_t *img;
-LV_IMG_DECLARE(Ghost_ESP);
-LV_FONT_DECLARE(Juma);
 
 
 static void zoom_anim_cb(void *var, int32_t zoom);
@@ -35,7 +34,7 @@ void splash_create(void) {
     lv_anim_set_values(&zoom_anim, 256 / 2, 512 / 2);
     lv_anim_set_time(&zoom_anim, 500);
     lv_anim_set_playback_time(&zoom_anim, 500);
-    lv_anim_set_repeat_count(&zoom_anim, 1);
+    lv_anim_set_repeat_count(&zoom_anim, 2);
     lv_anim_set_exec_cb(&zoom_anim, zoom_anim_cb);
     lv_anim_set_ready_cb(&zoom_anim, fade_out_cb);
     lv_anim_start(&zoom_anim);
@@ -62,6 +61,7 @@ static void fade_out_cb(void *var) {
 static void transition_to_next_screen(lv_anim_t *a) {
     printf("Transitioning to next screen...\n");
     splash_destroy();
+    display_manager_switch_view(&main_menu_view);
 }
 
 

@@ -218,6 +218,79 @@ esp_err_t rgb_manager_init(RGBManager_t* rgb_manager, gpio_num_t pin, int num_le
     }
 }
 
+int get_pixel_index(int row, int column) {
+    // Map 2D grid to 1D index, adjust based on your wiring
+    return row * 8 + column;
+}
+
+void set_led_column(size_t column, uint8_t height) {
+    // Clear the column first
+    for (int row = 0; row < 8; ++row) {
+        led_strip_set_pixel(rgb_manager.strip, get_pixel_index(row, column), 0, 0, 0);
+    }
+
+    uint8_t r = 255, g = 1, b = 1;
+
+    scale_grb_by_brightness(&g,&r,&b, 0.1);
+
+    // Light up the required number of LEDs with the selected primary color
+    for (int row = 0; row < height; ++row) {
+        led_strip_set_pixel(rgb_manager.strip, get_pixel_index(7 - row, column), r, g, b);
+    }
+}
+
+void set_led_square(uint8_t size, uint8_t red, uint8_t green, uint8_t blue) {
+    // Size is the 'thickness' of the square from the edges. 
+    // Example: size=0 means the outermost 8x8 border, size=1 means one square inward (6x6), and so on.
+
+    // Clear all LEDs first
+    for (int row = 0; row < 8; ++row) {
+        for (int col = 0; col < 8; ++col) {
+            led_strip_set_pixel(rgb_manager.strip, get_pixel_index(row, col), 0, 0, 0);
+        }
+    }
+
+    // Draw square perimeter based on 'size'
+    int start = size;
+    int end = 7 - size;
+
+    // Top and Bottom sides of the square
+    for (int col = start; col <= end; ++col) {
+        led_strip_set_pixel(rgb_manager.strip, get_pixel_index(start, col), red, green, blue); // Top side
+        led_strip_set_pixel(rgb_manager.strip, get_pixel_index(end, col), red, green, blue);   // Bottom side
+    }
+
+    // Left and Right sides of the square
+    for (int row = start + 1; row < end; ++row) { // Avoid corners since they are already set
+        led_strip_set_pixel(rgb_manager.strip, get_pixel_index(row, start), red, green, blue); // Left side
+        led_strip_set_pixel(rgb_manager.strip, get_pixel_index(row, end), red, green, blue);   // Right side
+    }
+}
+
+void update_led_visualizer(uint8_t *amplitudes, size_t num_bars, bool square_mode) {
+    if (square_mode) {
+        // Square visualizer effect
+        uint8_t amplitude = amplitudes[0]; // Use the first amplitude value
+        uint8_t square_size = (amplitude * 4) / 255; // Map amplitude to square size (0 to 4)
+
+        // Randomly select one primary color for the square
+        uint8_t red = 255, green = 0, blue = 0;
+
+        // Draw the square based on the calculated size
+        set_led_square(square_size, red, green, blue);
+    } else {
+        // Original bar visualizer effect
+        for (size_t bar = 0; bar < num_bars; ++bar) {
+            uint8_t amplitude = amplitudes[bar];
+            uint8_t num_pixels_to_light = (amplitude * 8) / 255; // Scale to 8 pixels high
+            set_led_column(bar, num_pixels_to_light);
+        }
+    }
+
+    // Refresh the LED strip
+    led_strip_refresh(rgb_manager.strip);
+}
+
 void pulse_once(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t blue) {
     uint8_t brightness = 0;
     int direction = 1;

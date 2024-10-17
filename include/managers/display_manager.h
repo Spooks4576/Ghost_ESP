@@ -49,4 +49,20 @@ void lvgl_tick_task(void *arg);
 
 void display_manager_fill_screen(lv_color_t color);
 
+// Status Bar Functions
+
+void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted);
+
+void display_manager_add_status_bar();
+
+
+LV_IMG_DECLARE(Ghost_ESP);
+LV_IMG_DECLARE(Map);
+LV_IMG_DECLARE(bluetooth);
+LV_IMG_DECLARE(Settings);
+LV_IMG_DECLARE(wifi);
+LV_FONT_DECLARE(Juma);
+
+
+
 #endif /* DISPLAY_MANAGER_H */
