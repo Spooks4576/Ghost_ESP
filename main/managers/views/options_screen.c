@@ -1,5 +1,11 @@
 #include "managers/views/options_screen.h"
+#include "managers/views/terminal_screen.h"
 #include "managers/views/main_menu_screen.h"
+#include "managers/views/error_popup.h"
+#include "managers/wifi_manager.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "core/serial_manager.h"
 #include <stdio.h>
 
 EOptionsMenuType SelectedMenuType = OT_Wifi;
@@ -74,6 +80,7 @@ static const char *settings_options[] = {
     "Go Back",
     NULL
 };
+
 
 void options_menu_create() {
     int screen_width = LV_HOR_RES;
@@ -211,6 +218,26 @@ void handle_hardware_button_press_options(int ButtonPressed) {
 }
 
 void option_event_cb(const char* Selected_Option) {
+
+    if (strcmp(Selected_Option, "Scan Access Points") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("scanap");
+    }
+
+    if (strcmp(Selected_Option, "Start Deauth Attack") == 0) {
+        if (scanned_aps)
+        {
+            display_manager_switch_view(&terminal_view);
+            vTaskDelay(pdMS_TO_TICKS(10));
+            handle_serial_command("attack -d");
+        }
+        else 
+        {
+            error_popup_create("You Need to Scan AP's First...");
+        }
+    }
+
 
     if (strcmp(Selected_Option, "Go Back") == 0) {
         display_manager_switch_view(&main_menu_view);

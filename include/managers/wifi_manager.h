@@ -20,6 +20,8 @@ typedef struct {
 static station_ap_pair_t station_ap_list[MAX_STATIONS];  // Array to store station-AP pairs
 static int station_count = 0;
 
+extern wifi_ap_record_t* scanned_aps;
+
 static void* beacon_task_handle;
 static void* deauth_task_handle;
 static int beacon_task_running = 0;

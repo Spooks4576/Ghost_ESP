@@ -5,6 +5,7 @@
 #include "freertos/task.h"
 #include "managers/sd_card_manager.h"
 #include "freertos/semphr.h"
+#include "managers/views/error_popup.h"
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
 
@@ -24,12 +25,18 @@ lv_obj_t *battery_label = NULL;
 
 
 void fade_out_cb(void *obj, int32_t v) {
-    lv_obj_set_style_opa(obj, v, LV_PART_MAIN);
+    if (obj)
+    {
+        lv_obj_set_style_opa(obj, v, LV_PART_MAIN);
+    }
 }
 
 
 void fade_in_cb(void *obj, int32_t v) {
-    lv_obj_set_style_opa(obj, v, LV_PART_MAIN);
+    if (obj)
+    {
+        lv_obj_set_style_opa(obj, v, LV_PART_MAIN);
+    }
 }
 
 
@@ -242,8 +249,8 @@ void display_manager_init(void) {
     }
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
-    xTaskCreate(&input_processing_task, "InputProcessing", 2048, NULL, INPUT_PROCESSING_TASK_PRIORITY, NULL);
-    xTaskCreate(&hardware_input_task, "RawInput", 2048, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
+    xTaskCreate(&input_processing_task, "InputProcessing", 4096, NULL, INPUT_PROCESSING_TASK_PRIORITY, NULL);
+    xTaskCreate(&hardware_input_task, "RawInput", 1024, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
 }
 
 bool display_manager_register_view(View *view) {
@@ -269,6 +276,7 @@ void display_manager_switch_view(View *view) {
                 bt_label = NULL;
                 sd_label = NULL;
                 battery_label = NULL;
+                status_bar = NULL;
             }
             display_manager_fade_out(dm.current_view->root, fade_out_ready_cb, view);
         } else {
@@ -360,7 +368,6 @@ void input_processing_task(void *pvParameters) {
 
 
                 printf("[INFO] Button pressed: %d, Current view: %s\n", button, view_name);
-                
 
                 if (callback) {
                     callback(button);

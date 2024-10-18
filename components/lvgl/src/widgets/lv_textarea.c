@@ -368,22 +368,22 @@ void lv_textarea_set_cursor_pos(lv_obj_t * obj, int32_t pos)
     /*Check the top*/
     lv_coord_t font_h = lv_font_get_line_height(font);
     if(cur_pos.y < lv_obj_get_scroll_top(obj)) {
-        lv_obj_scroll_to_y(obj, cur_pos.y, LV_ANIM_ON);
+        lv_obj_scroll_to_y(obj, cur_pos.y, LV_ANIM_OFF);
     }
     /*Check the bottom*/
     lv_coord_t h = lv_obj_get_content_height(obj);
     if(cur_pos.y + font_h - lv_obj_get_scroll_top(obj) > h) {
-        lv_obj_scroll_to_y(obj, cur_pos.y - h + font_h, LV_ANIM_ON);
+        lv_obj_scroll_to_y(obj, cur_pos.y - h + font_h, LV_ANIM_OFF);
     }
 
     /*Check the left*/
     if(cur_pos.x < lv_obj_get_scroll_left(obj)) {
-        lv_obj_scroll_to_x(obj, cur_pos.x, LV_ANIM_ON);
+        lv_obj_scroll_to_x(obj, cur_pos.x, LV_ANIM_OFF);
     }
     /*Check the right*/
     lv_coord_t w = lv_obj_get_content_width(obj);
     if(cur_pos.x + font_h - lv_obj_get_scroll_left(obj) > w) {
-        lv_obj_scroll_to_x(obj, cur_pos.x - w + font_h, LV_ANIM_ON);
+        lv_obj_scroll_to_x(obj, cur_pos.x - w + font_h, LV_ANIM_OFF);
     }
 
     ta->cursor.valid_x = cur_pos.x;
