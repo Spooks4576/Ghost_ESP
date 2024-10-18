@@ -31,8 +31,15 @@ void splash_create(void) {
     
     lv_anim_t zoom_anim;
     lv_anim_init(&zoom_anim);
+
+    
+    lv_disp_t * disp = lv_disp_get_default();
+    int hor_res = lv_disp_get_hor_res(disp);
+    int ver_res = lv_disp_get_ver_res(disp);
+
+
     lv_anim_set_var(&zoom_anim, img);
-    lv_anim_set_values(&zoom_anim, 256 / 2, 512 / 2);
+    lv_anim_set_values(&zoom_anim, hor_res / 2, hor_res);
     lv_anim_set_time(&zoom_anim, 500);
     lv_anim_set_playback_time(&zoom_anim, 500);
     lv_anim_set_repeat_count(&zoom_anim, 2);
@@ -77,5 +84,7 @@ void splash_destroy(void) {
 View splash_view = {
     .root = NULL,
     .create = splash_create,
-    .destroy = splash_destroy
+    .destroy = splash_destroy,
+    .hardwareinput_callback = NULL,
+    .name = "Splash Screen"
 };

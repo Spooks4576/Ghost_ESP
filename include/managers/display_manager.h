@@ -3,18 +3,24 @@
 
 #include "lvgl.h"
 #include <stdbool.h>
+#include "managers/joystick_manager.h"
 
+
+typedef void* SemaphoreHandle_tt; // Because Circular Includes are fun :)
 
 typedef struct {
-    lv_obj_t *root;        // Root object for the view
-    void (*create)(void);  // Create function for the view
-    void (*destroy)(void); // Destroy function for the view
+    lv_obj_t *root;
+    void (*create)(void);  
+    void (*destroy)(void);
+    void (*hardwareinput_callback)(int);
+    const char* name;
 } View;
 
-/* Display Manager structure to store the current and previous views. */
+
 typedef struct {
-    View *current_view;   // Pointer to the active view
-    View *previous_view;  // Pointer to the last view
+    View *current_view; 
+    View *previous_view; 
+    SemaphoreHandle_tt mutex;
 } DisplayManager;
 
 /* Function prototypes */
@@ -61,6 +67,8 @@ LV_IMG_DECLARE(Map);
 LV_IMG_DECLARE(bluetooth);
 LV_IMG_DECLARE(Settings);
 LV_IMG_DECLARE(wifi);
+
+joystick_t joysticks[5];
 
 
 #endif /* DISPLAY_MANAGER_H */

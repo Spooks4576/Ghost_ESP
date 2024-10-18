@@ -8,7 +8,8 @@ MusicVisualizerView view;
 View music_visualizer_view = {
     .root = NULL,
     .create = music_visualizer_view_create,
-    .destroy = music_visualizer_destroy
+    .destroy = music_visualizer_destroy,
+    .name = "Music Visualizer"
 };
 
 

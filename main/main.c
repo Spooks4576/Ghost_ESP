@@ -56,6 +56,22 @@ void app_main(void) {
   esp_err_t err = sd_card_init();
 
 #ifdef WITH_SCREEN
+
+#ifdef USE_JOYSTICK
+
+  #define L_BTN 13
+  #define C_BTN 34
+  #define U_BTN 36
+  #define R_BTN 39
+  #define D_BTN 35
+
+  joystick_init(&joysticks[0], L_BTN, HOLD_LIMIT, true);  
+  joystick_init(&joysticks[1], C_BTN, HOLD_LIMIT, true);
+  joystick_init(&joysticks[2], U_BTN, HOLD_LIMIT, true);
+  joystick_init(&joysticks[3], R_BTN, HOLD_LIMIT, true);
+  joystick_init(&joysticks[4], D_BTN, HOLD_LIMIT, true);
+#endif
+
   display_manager_init();
   display_manager_switch_view(&splash_view);
 #endif
