@@ -297,11 +297,8 @@ void input_processing_task(void *pvParameters) {
 
                 if (callback) {
                     callback(button);
-                } else {
                 }
-            } else {
-            }
-        } else {
+            } 
         }
     }
 
