@@ -7,6 +7,8 @@ int selected_item_index = 0;
 lv_obj_t *menu_container = NULL;
 int num_items = 0;
 
+static void select_menu_item(int index); // Forward Declaration
+
 const char* options_menu_type_to_string(EOptionsMenuType menuType) {
     switch (menuType) {
         case OT_Wifi:
@@ -77,6 +79,9 @@ void options_menu_create() {
     int screen_height = LV_VER_RES;
 
 
+    display_manager_fill_screen(lv_color_black());
+
+
     lv_obj_t *root = lv_obj_create(lv_scr_act());
     lv_obj_set_size(root, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_bg_color(root, lv_color_black(), 0);
@@ -127,7 +132,7 @@ void options_menu_create() {
 
         
         if (screen_height < 200) {
-            lv_obj_set_style_radius(btn, 4, 0);
+            lv_obj_set_style_radius(btn, 2, 0);
             lv_obj_set_style_text_font(btn, &lv_font_montserrat_12, 0);
         } else {
             lv_obj_set_style_radius(btn, 8, 0); 
@@ -138,6 +143,8 @@ void options_menu_create() {
         lv_obj_set_style_bg_color(btn, lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);     
         lv_obj_set_style_text_color(btn, lv_color_white(), LV_PART_MAIN);
+
+        lv_obj_set_user_data(btn, (void *)options[i]);
 
         
         lv_obj_add_event_cb(btn, option_event_cb, LV_EVENT_CLICKED, (void *)options[i]);
@@ -201,18 +208,17 @@ void handle_hardware_button_press_options(int ButtonPressed) {
     } else if (ButtonPressed == 4) {
         select_menu_item(selected_item_index + 1);
     } else if (ButtonPressed == 1) {
-        const char *selected_option = (const char *)lv_event_get_user_data(lv_obj_get_child(menu_container, selected_item_index));
+        const char *selected_option = (const char *)lv_label_get_text(lv_obj_get_child(lv_obj_get_child(menu_container, selected_item_index), 0));
         option_event_cb(selected_option);
     }
 }
 
-void option_event_cb(lv_event_t *e) {
-    const char *option = (const char *)lv_event_get_user_data(e);
+void option_event_cb(const char* Selected_Option) {
 
-    if (strcmp(option, "Go Back") == 0) {
+    if (strcmp(Selected_Option, "Go Back") == 0) {
         display_manager_switch_view(&main_menu_view);
     } else {
-        printf("Option selected: %s\n", option);
+        printf("Option selected: %s\n", Selected_Option);
     }
 }
 
@@ -224,12 +230,15 @@ void options_menu_destroy() {
     }
 }
 
-
+void get_options_menu_callback(void **callback) {
+    *callback = options_menu_view.hardwareinput_callback;
+}
 
 View options_menu_view = {
     .root = NULL,
     .create = options_menu_create,
     .destroy = options_menu_destroy,
     .hardwareinput_callback = handle_hardware_button_press_options,
-    .name = "Options Screen"
+    .name = "Options Screen",
+    .get_hardwareinput_callback = get_options_menu_callback
 };

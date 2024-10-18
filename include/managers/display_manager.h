@@ -28,6 +28,7 @@ typedef struct {
     void (*destroy)(void);
     void (*hardwareinput_callback)(int);
     const char* name;
+    void (*get_hardwareinput_callback)(void **callback);
 } View;
 
 

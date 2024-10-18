@@ -218,8 +218,10 @@ void main_menu_destroy(void) {
         lv_obj_del(menu_container);
         menu_container = NULL;
     }
+}
 
-    main_menu_view.hardwareinput_callback = NULL;
+void get_main_menu_callback(void **callback) {
+    *callback = main_menu_view.hardwareinput_callback;
 }
 
 /**
@@ -230,5 +232,6 @@ View main_menu_view = {
     .create = main_menu_create,
     .destroy = main_menu_destroy,
     .hardwareinput_callback = handle_hardware_button_press,
-    .name = "Main Menu"
+    .name = "Main Menu",
+    .get_hardwareinput_callback = get_main_menu_callback
 };
