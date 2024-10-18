@@ -98,7 +98,7 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_border_side(status_bar, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
     lv_obj_set_style_border_width(status_bar, 2, LV_PART_MAIN);
-    lv_obj_set_style_border_color(status_bar, lv_color_hex(0x393939), LV_PART_MAIN);
+    lv_obj_set_style_border_color(status_bar, lv_color_white(), LV_PART_MAIN); // Previous color lv_color_hex(0x393939)
     lv_obj_clear_flag(status_bar, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t* mainlabel = lv_label_create(status_bar);

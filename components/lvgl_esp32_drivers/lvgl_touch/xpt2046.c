@@ -106,7 +106,7 @@ bool xpt2046_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
         last_x = x;
         last_y = LV_VER_RES - y;
 
-        ESP_LOGI(TAG, "x = %d, y = %d", x, y);
+        ESP_LOGV(TAG, "x = %d, y = %d", x, y);
     }
     else
     {

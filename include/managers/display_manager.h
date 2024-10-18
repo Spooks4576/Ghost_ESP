@@ -61,8 +61,6 @@ LV_IMG_DECLARE(Map);
 LV_IMG_DECLARE(bluetooth);
 LV_IMG_DECLARE(Settings);
 LV_IMG_DECLARE(wifi);
-LV_FONT_DECLARE(Juma);
-
 
 
 #endif /* DISPLAY_MANAGER_H */

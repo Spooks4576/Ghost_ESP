@@ -273,6 +273,7 @@ void handle_wifi_connection(int argc, char** argv) {
     ESP_LOGI("Command Line", "Connecting to SSID: %s", ssid);
     
     wifi_manager_connect_wifi(ssid, password);
+    xTaskCreate(screen_music_visualizer_task, "udp_server", 4096, NULL, 5, NULL);
 }
 
 

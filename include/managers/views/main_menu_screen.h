@@ -2,6 +2,7 @@
 #define MAIN_MENU_SCREEN_H
 
 #include "managers/display_manager.h"
+#include "managers/views/options_screen.h"
 #include "lvgl.h"
 
 /**

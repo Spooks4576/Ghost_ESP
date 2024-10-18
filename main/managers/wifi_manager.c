@@ -22,6 +22,9 @@
 #include <esp_http_server.h>
 #include <core/dns_server.h>
 #include "esp_crt_bundle.h"
+#ifdef WITH_SCREEN
+#include "managers/views/music_visualizer.h"
+#endif
 
 
 #define CHUNK_SIZE 8192
@@ -1165,8 +1168,88 @@ void wifi_manager_select_ap(int index)
 
 #define MAX_PAYLOAD    64
 #define UDP_PORT 6677
+#define TRACK_NAME_LEN 32
+#define ARTIST_NAME_LEN 32
+#define NUM_BARS 15
 
-void udp_server_task(void *pvParameters) {
+void screen_music_visualizer_task(void *pvParameters) {
+    char rx_buffer[128];
+    char track_name[TRACK_NAME_LEN + 1];
+    char artist_name[ARTIST_NAME_LEN + 1];
+    uint8_t amplitudes[NUM_BARS];
+
+    struct sockaddr_in dest_addr;
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(UDP_PORT);
+    dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sock < 0) {
+        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        vTaskDelete(NULL);
+        return;
+    }
+
+    ESP_LOGI(TAG, "Socket created");
+
+    int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    if (err < 0) {
+        ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+        close(sock);
+        vTaskDelete(NULL);
+        return;
+    }
+
+    ESP_LOGI(TAG, "Socket bound, port %d", UDP_PORT);
+
+    while (1) {
+        ESP_LOGI(TAG, "Waiting for data...");
+
+        struct sockaddr_in6 source_addr;
+        socklen_t socklen = sizeof(source_addr);
+
+        int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
+        if (len < 0) {
+            ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+            break;
+        }
+
+        
+        rx_buffer[len] = '\0';
+        ESP_LOGI(TAG, "Received %d bytes from %s:", len, inet6_ntoa(source_addr.sin6_addr));
+        ESP_LOGI(TAG, "%s", rx_buffer);
+
+        
+        if (len >= TRACK_NAME_LEN + ARTIST_NAME_LEN + NUM_BARS) {
+           
+            memcpy(track_name, rx_buffer, TRACK_NAME_LEN);
+            track_name[TRACK_NAME_LEN] = '\0';
+
+            memcpy(artist_name, rx_buffer + TRACK_NAME_LEN, ARTIST_NAME_LEN);
+            artist_name[ARTIST_NAME_LEN] = '\0';
+
+            memcpy(amplitudes, rx_buffer + TRACK_NAME_LEN + ARTIST_NAME_LEN, NUM_BARS);
+
+#ifdef WITH_SCREEN    
+            music_visualizer_view_update(amplitudes, track_name, artist_name);
+#endif
+        } else {
+            ESP_LOGW(TAG, "Received packet of unexpected size");
+        }
+    }
+
+    if (sock != -1) {
+        ESP_LOGE(TAG, "Shutting down socket and restarting...");
+        shutdown(sock, 0);
+        close(sock);
+    }
+
+    vTaskDelete(NULL);
+}
+
+
+void rgb_visualizer_server_task(void *pvParameters) {
     char rx_buffer[MAX_PAYLOAD];
     char addr_str[128];
     int addr_family;

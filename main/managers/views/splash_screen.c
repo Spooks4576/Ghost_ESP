@@ -1,5 +1,6 @@
 #include "managers/views/splash_screen.h"
 #include "managers/views/main_menu_screen.h"
+#include "managers/views/music_visualizer.h"
 #include <stdio.h>
 
 static lv_obj_t *splash_screen;

@@ -123,6 +123,8 @@ void wifi_manager_stop_evil_portal();
 
 void wifi_manager_start_evil_portal(const char* URL, const char* SSID, const char* Password, const char* ap_ssid, const char* domain);
 
-void udp_server_task(void *pvParameters);
+void screen_music_visualizer_task(void *pvParameters);
+
+void rgb_visualizer_server_task(void *pvParameters);
 
 #endif // WIFI_MANAGER_H
