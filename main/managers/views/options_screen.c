@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "core/serial_manager.h"
+#include "esp_wifi_types.h"
 #include <stdio.h>
 
 EOptionsMenuType SelectedMenuType = OT_Wifi;
@@ -34,16 +35,20 @@ const char* options_menu_type_to_string(EOptionsMenuType menuType) {
 static const char *wifi_options[] = {
     "Scan Access Points",
     "Scan Stations",
-    "Stop Scan",
     "List Access Points",
     "List Stations",
+    "Select AP",
     "Start Deauth Attack",
     "Beacon Spam - Random",
     "Beacon Spam - Rickroll",
-    "Stop Beacon Spam",
-    "Stop Deauth",
+    "Beacon Spam - List",
     "Start Evil Portal",
-    "Capture / Sniff Packets",
+    "Capture Probe",
+    "Capture Deauth",
+    "Capture Beacon",
+    "Capture Raw",
+    "Capture Eapol",
+    "Capture WPS",
     "Connect",
     "TV Cast (Dial Connect)",
     "Power Printer",
@@ -54,7 +59,6 @@ static const char *wifi_options[] = {
 static const char *bluetooth_options[] = {
     "Scan BLE Devices",
     "Find Flippers",
-    "Stop BLE Scan",
     "Start AirTag Scanner",
     "Go Back",
     NULL
@@ -72,11 +76,6 @@ static const char *settings_options[] = {
     "Set RGB Mode - Stealth",
     "Set RGB Mode - Normal",
     "Set RGB Mode - Rainbow",
-    "Set Channel Switch Delay - 0.5s",
-    "Enable Channel Hopping",
-    "Disable Channel Hopping",
-    "Enable Random BLE MAC",
-    "Disable Random BLE MAC",
     "Go Back",
     NULL
 };
@@ -237,6 +236,137 @@ void option_event_cb(const char* Selected_Option) {
             error_popup_create("You Need to Scan AP's First...");
         }
     }
+
+    if (strcmp(Selected_Option, "Scan Stations") == 0) {
+        if (strlen((const char*)selected_ap.ssid) > 0)
+        {
+            display_manager_switch_view(&terminal_view);
+            vTaskDelay(pdMS_TO_TICKS(10));
+            handle_serial_command("scansta");
+        }
+        else 
+        {
+            error_popup_create("You Need to Select a Scanned AP First...");
+        }
+    }
+    
+
+    if (strcmp(Selected_Option, "Beacon Spam - Random") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("beaconspam -r");
+    }
+
+
+    if (strcmp(Selected_Option, "Beacon Spam - Rickroll") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("beaconspam -rr");
+    }
+
+
+    if (strcmp(Selected_Option, "Beacon Spam - List") == 0) {
+        if (scanned_aps)
+        {
+            display_manager_switch_view(&terminal_view);
+            vTaskDelay(pdMS_TO_TICKS(10));
+            handle_serial_command("beaconspam -l");
+        }
+        else 
+        {
+            error_popup_create("You Need to Scan AP's First...");
+        }
+    }
+
+
+    if (strcmp(Selected_Option, "Capture Deauth") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("capture -deauth");
+    }
+
+    if (strcmp(Selected_Option, "Capture Probe") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("capture -probe");
+    }
+
+    if (strcmp(Selected_Option, "Capture Beacon") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("capture -beacon");
+    }
+
+    if (strcmp(Selected_Option, "Capture Raw") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("capture -raw");
+    }
+
+    if (strcmp(Selected_Option, "Capture Eapol") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("capture -eapol");
+    }
+
+    if (strcmp(Selected_Option, "Capture WPS") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("capture -wps");
+    }
+
+
+
+    if (strcmp(Selected_Option, "Scan BLE Devices") == 0) {
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("blescan -r");
+#else 
+    error_popup_create("Device Does not Support Bluetooth...");
+#endif
+    }
+
+if (strcmp(Selected_Option, "Start AirTag Scanner") == 0) {
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("blescan -a");
+#else 
+    error_popup_create("Device Does not Support Bluetooth...");
+#endif
+    }
+    
+
+if (strcmp(Selected_Option, "Find Flippers") == 0) {
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        handle_serial_command("blescan -f");
+#else 
+    error_popup_create("Device Does not Support Bluetooth...");
+#endif
+    }
+
+
+    if (strcmp(Selected_Option, "Set RGB Mode - Stealth") == 0) {
+        handle_serial_command("setsetting 1 1");
+        vTaskDelay(pdMS_TO_TICKS(10));
+        error_popup_create("Set RGB Mode Successfully...");
+    }
+
+    if (strcmp(Selected_Option, "Set RGB Mode - Normal") == 0) {
+        handle_serial_command("setsetting 1 2");
+        vTaskDelay(pdMS_TO_TICKS(10));
+        error_popup_create("Set RGB Mode Successfully...");
+    }
+
+    if (strcmp(Selected_Option, "Set RGB Mode - Rainbow") == 0) {
+        handle_serial_command("setsetting 1 3");
+        vTaskDelay(pdMS_TO_TICKS(10));
+        error_popup_create("Set RGB Mode Successfully...");
+    }
+
 
 
     if (strcmp(Selected_Option, "Go Back") == 0) {

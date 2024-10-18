@@ -21,6 +21,7 @@ static station_ap_pair_t station_ap_list[MAX_STATIONS];  // Array to store stati
 static int station_count = 0;
 
 extern wifi_ap_record_t* scanned_aps;
+extern wifi_ap_record_t selected_ap;
 
 static void* beacon_task_handle;
 static void* deauth_task_handle;

@@ -74,7 +74,9 @@ void terminal_view_add_text(const char *text) {
 void terminal_view_hardwareinput_callback(int input) {
     if (input == 1) {
         handle_serial_command("stop");
-        display_manager_switch_view(&main_menu_view);
+        handle_serial_command("beaconspam -s");
+        handle_serial_command("blescan -s");
+        display_manager_switch_view(&options_menu_view);
         return;
     }
 }
