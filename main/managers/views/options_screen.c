@@ -182,9 +182,6 @@ static void select_menu_item(int index) {
 
         printf("Scrolling to view item at index %d\n", selected_item_index);
         lv_obj_scroll_to_view(current_item, LV_ANIM_OFF);
-
-        printf("Focusing item at index %d\n", selected_item_index);
-        lv_group_focus_obj(current_item);
     } else {
         printf("Error: Current item not found for index %d\n", selected_item_index);
     }
