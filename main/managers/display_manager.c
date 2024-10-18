@@ -5,6 +5,7 @@
 #include "freertos/task.h"
 #include "managers/sd_card_manager.h"
 #include "freertos/semphr.h"
+#include "managers/views/options_screen.h"
 
 #define LVGL_TASK_PERIOD_MS 5
 
@@ -176,7 +177,15 @@ void display_manager_init(void) {
         return;
     }
 
-    xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, 5, NULL);
+    input_queue = xQueueCreate(10, sizeof(int));
+    if (input_queue == NULL) {
+        printf("Failed to create input queue\n");
+        return;
+    }
+
+    xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
+    xTaskCreate(&input_processing_task, "InputProcessing", 2048, NULL, INPUT_PROCESSING_TASK_PRIORITY, NULL);
+    xTaskCreate(&hardware_input_task, "RawInput", 2048, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
 }
 
 bool display_manager_register_view(View *view) {
@@ -190,7 +199,7 @@ void display_manager_switch_view(View *view) {
     if (view == NULL) return;
 
     
-    if (xSemaphoreTake(dm.mutex, portMAX_DELAY) == pdTRUE) {
+    if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
         printf("Switching view from %s to %s\n", 
             dm.current_view ? dm.current_view->name : "NULL", 
             view->name);
@@ -199,6 +208,11 @@ void display_manager_switch_view(View *view) {
 
         dm.previous_view = dm.current_view;
         dm.current_view = view;
+
+        if (strcmp(dm.current_view->name, "Options Screen") == 0) // We do this because the Compiler is a sussy baka and always has the same function pointer from the view parameter 📮📮📮📮📮📮📮📮📮📮📮📮📮📮📮📮
+        {   
+            memcpy(&dm.current_view->hardwareinput_callback, &options_menu_view.hardwareinput_callback, sizeof(view->hardwareinput_callback));
+        }
 
         view->create();
 
@@ -234,37 +248,89 @@ void display_manager_fill_screen(lv_color_t color)
     lv_obj_add_style(lv_scr_act(), &style, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void hardware_input_task(void *pvParameters) {
+
+    const TickType_t tick_interval = pdMS_TO_TICKS(10);
+
+    while (1) {
+    #ifdef USE_JOYSTICK
+        for (int i = 0; i < 5; i++) {
+            if (joysticks[i].pin >= 0) {
+                if (joystick_just_pressed(&joysticks[i])) {
+                    if (xQueueSend(input_queue, &i, pdMS_TO_TICKS(10)) != pdTRUE) {
+                        printf("Failed to send input to queue\n");
+                    }
+                }
+            }
+        }
+    #endif
+        vTaskDelay(tick_interval);
+    }
+
+    vTaskDelete(NULL);
+}
+
+
+void input_processing_task(void *pvParameters) {
+    int button;
+    while (1) {
+        printf("[INFO] Waiting for button press in input_processing_task...\n");
+        
+        if (xQueueReceive(input_queue, &button, portMAX_DELAY) == pdTRUE) {
+            printf("[INFO] Button press received: %d\n", button);
+            
+            if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
+                printf("[DEBUG] Mutex acquired in input_processing_task\n");
+                
+                View *current = dm.current_view;
+                void (*callback)(int) = NULL;
+                const char* view_name = "NULL";
+
+
+                if (current) {
+                    view_name = current->name;
+                    callback = current->hardwareinput_callback;
+                    printf("[DEBUG] Current view is valid. Name: %s, Callback: %p\n", view_name, (void*)callback);
+                } else {
+                    printf("[WARNING] Current view is NULL in input_processing_task\n");
+                }
+
+                xSemaphoreGive(dm.mutex);
+                printf("[DEBUG] Mutex released in input_processing_task\n");
+
+
+                printf("[INFO] Button pressed: %d, Current view: %s\n", button, view_name);
+                
+
+                if (callback) {
+                    printf("[INFO] Invoking callback for button: %d\n", button);
+                    callback(button);
+                    printf("[DEBUG] Callback execution completed for button: %d\n", button);
+                } else {
+                    printf("[WARNING] No callback found for view: %s, button press ignored\n", view_name);
+                }
+            } else {
+                printf("[ERROR] Failed to acquire mutex in input_processing_task\n");
+            }
+        } else {
+            printf("[ERROR] Failed to receive button input from queue in input_processing_task\n");
+        }
+    }
+
+
+    vTaskDelete(NULL);
+}
+
 
 void lvgl_tick_task(void *arg) {
     const TickType_t tick_interval = pdMS_TO_TICKS(10);
 
-    
-while (1) 
-{
-
-#ifdef USE_JOYSTICK
-    for (int i = 0; i < 5; i++) {
-        if (joysticks[i].pin >= 0) {
-            if (joystick_just_pressed(&joysticks[i])) {
-                if (xSemaphoreTake(dm.mutex, portMAX_DELAY) == pdTRUE) {
-                    printf("Button pressed: %d, Current view: %s\n", 
-                        i, dm.current_view ? dm.current_view->name : "NULL");
-                    
-                    if (dm.current_view && dm.current_view->hardwareinput_callback) {
-                        dm.current_view->hardwareinput_callback(i);
-                    }
-
-
-                    xSemaphoreGive(dm.mutex);
-                } else {
-
-                }
-            }
-        }
-    }
-#endif
+    while (1) 
+    {
         lv_timer_handler();
         lv_tick_inc(LVGL_TASK_PERIOD_MS);
         vTaskDelay(tick_interval);
     }
+
+    vTaskDelete(NULL);
 }

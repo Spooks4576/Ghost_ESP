@@ -6,7 +6,21 @@
 #include "managers/joystick_manager.h"
 
 
+typedef void* QueueHandle_tt;
 typedef void* SemaphoreHandle_tt; // Because Circular Includes are fun :)
+
+
+
+#define INPUT_QUEUE_LENGTH    10
+#define INPUT_ITEM_SIZE       sizeof(int)
+QueueHandle_tt input_queue;
+
+#define MUTEX_TIMEOUT_MS 100
+
+
+#define HARDWARE_INPUT_TASK_PRIORITY    (4)
+#define INPUT_PROCESSING_TASK_PRIORITY  (3)
+#define RENDERING_TASK_PRIORITY         (5)
 
 typedef struct {
     lv_obj_t *root;
@@ -52,6 +66,10 @@ View *display_manager_get_current_view(void);
 
 
 void lvgl_tick_task(void *arg);
+
+void hardware_input_task(void *pvParameters);
+
+void input_processing_task(void *pvParameters);
 
 void display_manager_fill_screen(lv_color_t color);
 

@@ -145,6 +145,8 @@ void options_menu_create() {
         num_items++;
     }
 
+    select_menu_item(0);
+
     display_manager_add_status_bar(options_menu_type_to_string(SelectedMenuType));
 }
 
@@ -172,7 +174,7 @@ static void select_menu_item(int index) {
         lv_obj_set_style_border_width(current_item, 4, LV_PART_MAIN);
 
         printf("Scrolling to view item at index %d\n", selected_item_index);
-        lv_obj_scroll_to_view(current_item, LV_ANIM_ON);
+        lv_obj_scroll_to_view(current_item, LV_ANIM_OFF);
 
         printf("Focusing item at index %d\n", selected_item_index);
         lv_group_focus_obj(current_item);
@@ -193,7 +195,7 @@ static void select_menu_item(int index) {
     }
 }
 
-void handle_hardware_button_press(int ButtonPressed) {
+void handle_hardware_button_press_options(int ButtonPressed) {
     if (ButtonPressed == 2) {
         select_menu_item(selected_item_index - 1);
     } else if (ButtonPressed == 4) {
@@ -228,6 +230,6 @@ View options_menu_view = {
     .root = NULL,
     .create = options_menu_create,
     .destroy = options_menu_destroy,
-    .hardwareinput_callback = handle_hardware_button_press,
+    .hardwareinput_callback = handle_hardware_button_press_options,
     .name = "Options Screen"
 };
