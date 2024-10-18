@@ -89,25 +89,21 @@ void handle_hardware_button_press(int ButtonPressed) {
             case 0:
                 printf("Settings selected\n");
                 SelectedMenuType = OT_Settings;
-                main_menu_destroy();
                 display_manager_switch_view(&options_menu_view);
                 break;
             case 1:
                 printf("GPS selected\n");
                 SelectedMenuType = OT_GPS;
-                main_menu_destroy();
                 display_manager_switch_view(&options_menu_view);
                 break;
             case 2:
                 printf("BLE selected\n");
                 SelectedMenuType = OT_Bluetooth;
-                main_menu_destroy();
                 display_manager_switch_view(&options_menu_view);
                 break;
             case 3:
                 printf("Wi-Fi selected\n");
                 SelectedMenuType = OT_Wifi;
-                main_menu_destroy();
                 display_manager_switch_view(&options_menu_view);
                 break;
             default:
@@ -134,6 +130,7 @@ void main_menu_create(void) {
     static lv_coord_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
     
     menu_container = lv_obj_create(lv_scr_act());
+    main_menu_view.root = menu_container;
     lv_obj_set_grid_dsc_array(menu_container, col_dsc, row_dsc);
     lv_obj_set_size(menu_container, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_scrollbar_mode(menu_container, LV_SCROLLBAR_MODE_OFF);

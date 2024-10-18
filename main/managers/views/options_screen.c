@@ -4,6 +4,7 @@
 
 EOptionsMenuType SelectedMenuType = OT_Wifi;
 int selected_item_index = 0;
+lv_obj_t *root = NULL;
 lv_obj_t *menu_container = NULL;
 int num_items = 0;
 
@@ -82,13 +83,12 @@ void options_menu_create() {
     display_manager_fill_screen(lv_color_black());
 
 
-    lv_obj_t *root = lv_obj_create(lv_scr_act());
+    root = lv_obj_create(lv_scr_act());
+    options_menu_view.root = root;
     lv_obj_set_size(root, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_bg_color(root, lv_color_black(), 0);
     lv_obj_align(root, LV_ALIGN_BOTTOM_MID, -12, 0);
     lv_obj_set_scrollbar_mode(root, LV_SCROLLBAR_MODE_OFF);
-
-    options_menu_view.root = root;
 
     
     lv_obj_t *list = lv_list_create(root);

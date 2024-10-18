@@ -18,6 +18,63 @@ lv_obj_t *bt_label = NULL;
 lv_obj_t *sd_label = NULL;
 lv_obj_t *battery_label = NULL;
 
+
+
+#define FADE_DURATION_MS 109
+
+
+void fade_out_cb(void *obj, int32_t v) {
+    lv_obj_set_style_opa(obj, v, LV_PART_MAIN);
+}
+
+
+void fade_in_cb(void *obj, int32_t v) {
+    lv_obj_set_style_opa(obj, v, LV_PART_MAIN);
+}
+
+
+void display_manager_fade_out(lv_obj_t *obj, lv_anim_ready_cb_t ready_cb, View* view) {
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, obj);
+    lv_anim_set_values(&anim, LV_OPA_COVER, LV_OPA_TRANSP);
+    lv_anim_set_time(&anim, FADE_DURATION_MS);
+    lv_anim_set_exec_cb(&anim, (lv_anim_exec_xcb_t)fade_out_cb);
+    lv_anim_set_ready_cb(&anim, ready_cb);
+    lv_anim_set_user_data(&anim, view);
+    lv_anim_start(&anim);
+}
+
+
+void display_manager_fade_in(lv_obj_t *obj) {
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, obj);
+    lv_anim_set_values(&anim, LV_OPA_TRANSP, LV_OPA_COVER);
+    lv_anim_set_time(&anim, FADE_DURATION_MS);
+    lv_anim_set_exec_cb(&anim, (lv_anim_exec_xcb_t)fade_in_cb);
+    lv_anim_start(&anim);
+}
+
+
+void fade_out_ready_cb(lv_anim_t *anim) {
+    display_manager_destroy_current_view();
+
+    View *new_view = (View *)anim->user_data;
+    if (new_view) {
+        dm.previous_view = dm.current_view;
+        dm.current_view = new_view;
+        
+        if (new_view->get_hardwareinput_callback) {
+            new_view->get_hardwareinput_callback(&dm.current_view->hardwareinput_callback);
+        }
+
+        new_view->create();
+        display_manager_fade_in(new_view->root);
+        display_manager_fade_in(status_bar);
+    }
+}
+
 void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage) {
     lv_disp_t *disp = lv_disp_get_default();
     int hor_res = lv_disp_get_hor_res(disp);
@@ -204,17 +261,27 @@ void display_manager_switch_view(View *view) {
             dm.current_view ? dm.current_view->name : "NULL", 
             view->name);
 
-        display_manager_destroy_current_view();
+        if (dm.current_view && dm.current_view->root) {
+            if (status_bar)
+            {
+                lv_obj_del(status_bar);
+                wifi_label = NULL;
+                bt_label = NULL;
+                sd_label = NULL;
+                battery_label = NULL;
+            }
+            display_manager_fade_out(dm.current_view->root, fade_out_ready_cb, view);
+        } else {
+            dm.previous_view = dm.current_view;
+            dm.current_view = view;
 
-        dm.previous_view = dm.current_view;
-        dm.current_view = view;
+            if (view->get_hardwareinput_callback) {
+                view->get_hardwareinput_callback(&dm.current_view->hardwareinput_callback);
+            }
 
-        
-        if (view->get_hardwareinput_callback) {
-            view->get_hardwareinput_callback(&dm.current_view->hardwareinput_callback);
+            view->create();
+            display_manager_fade_in(view->root);
         }
-
-        view->create();
 
         xSemaphoreGive(dm.mutex);
     } else {
