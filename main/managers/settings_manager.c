@@ -368,6 +368,8 @@ void settings_save(FSettings* settings) {
         ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err)));
         return;
     }
+
+#ifndef WITH_SCREEN
     
     if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW) {
         xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
@@ -388,4 +390,6 @@ void settings_save(FSettings* settings) {
                                 false);
         }
     }
+
+#endif
 }

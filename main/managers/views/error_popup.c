@@ -37,7 +37,7 @@ void error_popup_create(const char *message) {
     lv_obj_align(error_popup_label, LV_ALIGN_CENTER, 0, 0);
 
 
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(5000));
 
     error_popup_destroy();
 }
