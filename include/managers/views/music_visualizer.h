@@ -7,7 +7,6 @@
 #define NUM_BARS 15
 
 typedef struct {
-    lv_obj_t *screen;
     lv_obj_t *track_label;
     lv_obj_t *artist_label;
     lv_obj_t *bars[NUM_BARS];

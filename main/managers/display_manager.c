@@ -87,7 +87,7 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
     int hor_res = lv_disp_get_hor_res(disp);
 
 
-    int wifi_pos_x = hor_res / 20;
+    int wifi_pos_x = hor_res / 50;
     int bt_pos_x = hor_res / 10;
     int sd_pos_x = hor_res / 6;
     int battery_pos_x = hor_res - (hor_res / 20) - 5;
@@ -100,7 +100,7 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
         if (wifi_label == NULL) {
             wifi_label = lv_label_create(status_bar);
             lv_label_set_text(wifi_label, LV_SYMBOL_WIFI);
-            lv_obj_align(wifi_label, LV_ALIGN_LEFT_MID, wifi_pos_x, 0);
+            lv_obj_align(wifi_label, LV_ALIGN_LEFT_MID, wifi_pos_x + -5, 0);
             lv_obj_set_style_text_color(wifi_label, lv_color_white(), 0);
         }
     } else if (wifi_label != NULL) {
@@ -197,7 +197,7 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
 
     lv_obj_t* mainlabel = lv_label_create(status_bar);
     lv_label_set_text(mainlabel, CurrentMenuName);
-    lv_obj_align(mainlabel, hor_res > 128 ? LV_ALIGN_CENTER : LV_ALIGN_LEFT_MID, -5, 0);
+    lv_obj_align(mainlabel, hor_res > 128 ? LV_ALIGN_CENTER : LV_ALIGN_LEFT_MID, hor_res > 128 ? -15 : -5, 0);
     lv_obj_set_style_text_color(mainlabel, lv_color_white(), 0);
     lv_obj_set_style_text_font(mainlabel, hor_res > 128 ? &lv_font_montserrat_16 : &lv_font_montserrat_10, 0);
 

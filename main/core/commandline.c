@@ -336,7 +336,36 @@ void handle_ble_scan_cmd(int argc, char**argv)
 
 void handle_start_portal(int argc, char **argv)
 {
-    if (argc != 6 && argc != 4) {
+    
+    const char* URLorFilePath = settings_get_portal_url(&G_Settings);
+    const char* SSID = settings_get_portal_ssid(&G_Settings);
+    const char* Password = settings_get_portal_password(&G_Settings);
+    const char* AP_SSID = settings_get_portal_ap_ssid(&G_Settings);
+    const char* Domain = settings_get_portal_domain(&G_Settings);
+    bool offlinemode = settings_get_portal_offline_mode(&G_Settings);
+
+    const char *url = URLorFilePath;
+    const char *ssid = SSID;
+    const char *password = Password;
+    const char *ap_ssid = AP_SSID;
+    const char *domain = Domain;
+
+    if (argc == 6)
+    {
+        url = (argv[1] && argv[1][0] != '\0') ? argv[1] : url;
+        ssid = (argv[2] && argv[2][0] != '\0') ? argv[2] : ssid;
+        password = (argv[3] && argv[3][0] != '\0') ? argv[3] : password;
+        ap_ssid = (argv[4] && argv[4][0] != '\0') ? argv[4] : ap_ssid;
+        domain = (argv[5] && argv[5][0] != '\0') ? argv[5] : domain;
+    }
+    else if (argc == 4)
+    {
+        url = (argv[1] && argv[1][0] != '\0') ? argv[1] : url;
+        ap_ssid = (argv[2] && argv[2][0] != '\0') ? argv[2] : ap_ssid;
+        domain = (argv[3] && argv[3][0] != '\0') ? argv[3] : domain;
+    }
+    else if (argc != 1)
+    {
         printf("Error: Incorrect number of arguments.\n");
         printf("Usage: %s <URL> <SSID> <Password> <AP_ssid> <DOMAIN>\n", argv[0]);
         printf("or\n");
@@ -344,70 +373,29 @@ void handle_start_portal(int argc, char **argv)
         return;
     }
 
-    if (argc == 6)
-    {
-        char *url = argv[1];
-        char *ssid = argv[2];
-        char *password = argv[3];
-        char *ap_ssid = argv[4];
-        char *domain = argv[5];
 
+    if (url == NULL || url[0] == '\0') {
+        printf("Error: URL or File Path cannot be empty.\n");
+        return;
+    }
 
-        if (ssid == NULL || ssid[0] == '\0') {
-            printf("Error: SSID cannot be empty.\n");
-            return;
-        }
+    if (ap_ssid == NULL || ap_ssid[0] == '\0') {
+        printf("Error: AP SSID cannot be empty.\n");
+        return;
+    }
 
-        if (password == NULL || password[0] == '\0') {
-            printf("Error: Password cannot be empty.\n");
-            return;
-        }
+    if (domain == NULL || domain[0] == '\0') {
+        printf("Error: Domain cannot be empty.\n");
+        return;
+    }
 
-        if (ap_ssid == NULL || ap_ssid[0] == '\0') {
-            printf("Error: AP_ssid cannot be empty.\n");
-            return;
-        }
-
-        if (url == NULL || url[0] == '\0') {
-            printf("Error: url cannot be empty.\n");
-            return;
-        }
-
-        if (domain == NULL || domain[0] == '\0') {
-            printf("Error: domain cannot be empty.\n");
-            return;
-        }
-        
-        printf("Starting portal with SSID: %s, Password: %s, AP_ssid: %s\n", ssid, password, ap_ssid);
-
-        
+    if (ssid && ssid[0] != '\0' && password && password[0] != '\0') {
+        printf("Starting portal with SSID: %s, Password: %s, AP_SSID: %s, Domain: %s\n", ssid, password, ap_ssid, domain);
         wifi_manager_start_evil_portal(url, ssid, password, ap_ssid, domain);
     }
-    else if (argc == 4)
-    {
-        char *filepath = argv[1];
-        char *ap_ssid = argv[2];
-        char *domain = argv[3];
-
-        if (filepath == NULL || filepath[0] == '\0') {
-            printf("Error: File Path cannot be empty.\n");
-            return;
-        }
-        
-        if (ap_ssid == NULL || ap_ssid[0] == '\0') {
-            printf("Error: SSID cannot be empty.\n");
-            return;
-        }
-
-        if (domain == NULL || domain[0] == '\0') {
-            printf("Error: domain cannot be empty.\n");
-            return;
-        }
-
-        printf("Starting portal with AP_ssid: %s\n", ap_ssid);
-
-
-        wifi_manager_start_evil_portal(filepath, NULL, NULL, ap_ssid, domain);
+    else if (offlinemode){
+        printf("Starting portal in offline mode with AP_SSID: %s, Domain: %s\n", ap_ssid, domain);
+        wifi_manager_start_evil_portal(url, NULL, NULL, ap_ssid, domain);
     }
 }
 

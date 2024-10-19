@@ -86,6 +86,7 @@ LV_IMG_DECLARE(Map);
 LV_IMG_DECLARE(bluetooth);
 LV_IMG_DECLARE(Settings);
 LV_IMG_DECLARE(wifi);
+LV_IMG_DECLARE(rave);
 
 joystick_t joysticks[5];
 

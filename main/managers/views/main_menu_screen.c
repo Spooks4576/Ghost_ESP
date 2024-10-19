@@ -1,4 +1,5 @@
 #include "managers/views/main_menu_screen.h"
+#include "managers/views/music_visualizer.h"
 #include <stdio.h>
 
 
@@ -16,6 +17,7 @@ static menu_item_t menu_items[] = {
     {"GPS", &Map},
     {"BLE", &bluetooth},
     {"WiFi", &wifi},
+    {"Rave", &rave}
 };
 
 static int num_items = sizeof(menu_items) / sizeof(menu_items[0]);
@@ -80,6 +82,7 @@ static void select_menu_item(int index) {
 
 
 void handle_hardware_button_press(int ButtonPressed) {
+#ifndef USE_TOUCHSCREEN
     if (ButtonPressed == 0) {
         select_menu_item(selected_item_index - 1);
     } else if (ButtonPressed == 3) {
@@ -106,11 +109,16 @@ void handle_hardware_button_press(int ButtonPressed) {
                 SelectedMenuType = OT_Wifi;
                 display_manager_switch_view(&options_menu_view);
                 break;
+            case 4: 
+                printf("Rave Selected\n");
+                display_manager_switch_view(&music_visualizer_view);
+                break;
             default:
                 printf("Unknown menu item selected\n");
                 break;
         }
     }
+#endif
 }
 
 /**
@@ -123,6 +131,7 @@ void main_menu_create(void) {
     menu_items[1].border_color = lv_color_make(255, 0, 0);  
     menu_items[2].border_color = lv_color_make(0, 0, 255);  
     menu_items[3].border_color = lv_color_make(0, 255, 0);
+    menu_items[4].border_color = lv_color_make(147, 112, 219);
 
     display_manager_fill_screen(lv_color_black());
 
@@ -150,8 +159,8 @@ void main_menu_create(void) {
     int button_width = hor_res / 4;
     int button_height = ver_res / 3;
 
-    int icon_width = button_width / 2;
-    int icon_height = button_height / 2;
+    int icon_width = 50;
+    int icon_height = 50;
 
     const lv_font_t *font;
     if (ver_res <= 128) {
@@ -159,7 +168,7 @@ void main_menu_create(void) {
     } else if (ver_res <= 240) {
         font = &lv_font_montserrat_16;
     } else {
-        font = &lv_font_montserrat_24;
+        font = &lv_font_montserrat_18;
     }
 
 
@@ -175,10 +184,13 @@ void main_menu_create(void) {
 
         if (ver_res >= 240) // Dont create icons for smaller screens
         {
-            lv_obj_t *icon = lv_img_create(menu_item);
-            lv_img_set_src(icon, menu_items[i].icon);
-            lv_obj_set_size(icon, icon_width, icon_height);
-            lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 10);
+            if (menu_items[i].icon)
+            {
+                lv_obj_t *icon = lv_img_create(menu_item);
+                lv_img_set_src(icon, menu_items[i].icon);
+                lv_obj_set_size(icon, icon_width, icon_height);
+                lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 10);
+            }
         }
 
         
@@ -193,11 +205,10 @@ void main_menu_create(void) {
         lv_obj_set_grid_cell(menu_item, LV_GRID_ALIGN_CENTER, i % 3, 1, LV_GRID_ALIGN_END, row_idx, 1);
 
         lv_obj_set_user_data(menu_item, (void *)(uintptr_t)i);
-    }
-
 #ifdef USE_TOUCHSCREEN
     lv_obj_add_event_cb(menu_item, menu_item_event_handler, LV_EVENT_CLICKED, NULL);
 #endif
+    }
 
 #ifndef USE_TOUCHSCREEN
     select_menu_item(0);
