@@ -1627,7 +1627,7 @@ void wifi_beacon_task(void *param) {
             wifi_manager_broadcast_ap(ssid);
         }
 
-        vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
+        vTaskDelay(settings_get_broadcast_speed(&G_Settings) / portTICK_PERIOD_MS);
     }
 }
 

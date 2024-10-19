@@ -1,61 +1,32 @@
 #include "managers/settings_manager.h"
-#include "core/system_manager.h"
-#include "managers/rgb_manager.h"
-#include "managers/ap_manager.h"
 #include <string.h>
-#include <stdio.h>
 #include <esp_log.h>
 
-// Define NVS keys
-// Existing keys
+#define S_TAG "SETTINGS"
+
+// NVS Keys
 static const char* NVS_RGB_MODE_KEY = "rgb_mode";
-static const char* NVS_CHANNEL_SWITCH_DELAY_KEY = "channel_delay";
-static const char* NVS_ENABLE_CHANNEL_HOP_KEY = "enable_ch";
-static const char* NVS_RANDOM_BLE_MAC_KEY = "random_ble_mac";
-
-// New keys
-// WiFi/BLE
-static const char* NVS_RANDOM_MAC_KEY = "random_mac";
+static const char* NVS_CHANNEL_DELAY_KEY = "channel_delay";
 static const char* NVS_BROADCAST_SPEED_KEY = "broadcast_speed";
-
-// AP SSID/PWD
 static const char* NVS_AP_SSID_KEY = "ap_ssid";
 static const char* NVS_AP_PASSWORD_KEY = "ap_password";
-
-// RGB
-static const char* NVS_BREATH_MODE_KEY = "breath_mode";
-static const char* NVS_RAINBOW_MODE_KEY = "rainbow_mode";
 static const char* NVS_RGB_SPEED_KEY = "rgb_speed";
-static const char* NVS_STATIC_COLOR_KEY = "static_color";
-
-#define S_TAG "SETTINGS_LOAD"
-
+static const char* NVS_PORTAL_URL_KEY = "portal_url";
+static const char* NVS_PORTAL_SSID_KEY = "portal_ssid";
+static const char* NVS_PORTAL_PASSWORD_KEY = "portal_password";
+static const char* NVS_PORTAL_AP_SSID_KEY = "portal_ap_ssid";
+static const char* NVS_PORTAL_DOMAIN_KEY = "portal_domain";
+static const char* NVS_PORTAL_OFFLINE_KEY = "portal_offline";
+static const char* NVS_PRINTER_IP_KEY = "printer_ip";
+static const char* NVS_PRINTER_TEXT_KEY = "printer_text";
+static const char* NVS_PRINTER_FONT_SIZE_KEY = "printer_font_size";
+static const char* NVS_PRINTER_ALIGNMENT_KEY = "printer_alignment";
+static const char* NVS_PRINTER_CONNECTED_KEY = "printer_connected";
+static const char* NVS_BOARD_TYPE_KEY = "board_type";
+static const char* NVS_CUSTOM_PIN_CONFIG_KEY = "custom_pin_config";
 
 void settings_init(FSettings* settings) {
-
-    // Initialize default values
-    settings->rgbMode = RGB_MODE_STEALTH;
-    settings->channelSwitchDelay = 1.0f; // Default to 1 second
-    settings->enableChannelHopping = true;
-    settings->randomBLEMacEnabled = true;
-
-    // New settings
-    settings->randomMacEnabled = false;
-    settings->broadcastSpeed = 500; // Default broadcast speed
-
-    strcpy(settings->apSSID, "GhostNet");       // Default SSID
-    strcpy(settings->apPassword, "GhostNet"); // Default password
-
-    settings->breathModeEnabled = false;
-    settings->rainbowModeEnabled = false;
-    settings->rgbSpeed = 50; // Default RGB speed
-
-    settings->staticColor.red = 255;
-    settings->staticColor.green = 255;
-    settings->staticColor.blue = 255;
-
-    // Initialize NVS
-
+    settings_set_defaults(settings);
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         nvs_flash_erase();
@@ -65,331 +36,482 @@ void settings_init(FSettings* settings) {
     err = nvs_open("storage", NVS_READWRITE, &nvsHandle);
     if (err == ESP_OK) {
         settings_load(settings);
-        printf("Loaded Settings... %li\n", nvsHandle);
-    }
-    else
-    {
-        printf(esp_err_to_name(err));
+        ESP_LOGI(S_TAG, "Settings loaded successfully.");
+    } else {
+        ESP_LOGE(S_TAG, "Failed to open NVS handle: %s", esp_err_to_name(err));
     }
 }
 
-void settings_deinit(FSettings* settings) {
+void settings_deinit(void) {
     nvs_close(nvsHandle);
 }
 
-// Getter and Setter implementations
+void settings_set_defaults(FSettings* settings) {
+    settings->rgb_mode = RGB_MODE_STEALTH;
+    settings->channel_delay = 1.0f;
+    settings->broadcast_speed = 500;
+    strcpy(settings->ap_ssid, "GhostNet");
+    strcpy(settings->ap_password, "GhostNet");
+    settings->rgb_speed = 50;
 
-// Existing functions
-void settings_set_rgb_mode(FSettings* settings, RGBMode mode) {
-    settings->rgbMode = mode;
+    // Evil Portal defaults
+    strcpy(settings->portal_url, "/default/path");
+    strcpy(settings->portal_ssid, "EvilPortal");
+    strcpy(settings->portal_password, "EvilPortalPass");
+    strcpy(settings->portal_ap_ssid, "EvilAP");
+    strcpy(settings->portal_domain, "portal.local");
+    settings->portal_offline_mode = true;
+
+    // Power Printer defaults
+    strcpy(settings->printer_ip, "192.168.1.100");
+    strcpy(settings->printer_text, "Default Text");
+    settings->printer_font_size = 12;
+    settings->printer_alignment = ALIGNMENT_CM;
+    settings->printer_connected = false;
+
+    // Set the default board type and apply pin defaults
+    settings->board_type = FLIPPER_DEV_BOARD;
+    settings_apply_board_pin_config(settings);
 }
 
-RGBMode settings_get_rgb_mode(const FSettings* settings) {
-    return settings->rgbMode;
+void settings_apply_board_pin_config(FSettings* settings) {
+    if (settings->board_type == CUSTOM) {
+        // Use custom pin configuration, do not override with predefined values
+        return;
+    }
+    settings_set_board_pin_defaults(settings, settings->board_type);
 }
 
-void settings_set_channel_switch_delay(FSettings* settings, float delay_ms) {
-    settings->channelSwitchDelay = delay_ms;
-}
-
-float settings_get_channel_switch_delay(const FSettings* settings) {
-    return settings->channelSwitchDelay;
-}
-
-void settings_set_channel_hopping_enabled(FSettings* settings, bool enabled) {
-    settings->enableChannelHopping = enabled;
-}
-
-bool settings_get_channel_hopping_enabled(const FSettings* settings) {
-    return settings->enableChannelHopping;
-}
-
-void settings_set_random_ble_mac_enabled(FSettings* settings, bool enabled) {
-    settings->randomBLEMacEnabled = enabled;
-}
-
-bool settings_get_random_ble_mac_enabled(const FSettings* settings) {
-    return settings->randomBLEMacEnabled;
-}
-
-// New functions
-
-// WiFi/BLE
-void settings_set_random_mac_enabled(FSettings* settings, bool enabled) {
-    settings->randomMacEnabled = enabled;
-}
-
-bool settings_get_random_mac_enabled(const FSettings* settings) {
-    return settings->randomMacEnabled;
-}
-
-void settings_set_broadcast_speed(FSettings* settings, uint16_t speed) {
-    settings->broadcastSpeed = speed;
-}
-
-uint16_t settings_get_broadcast_speed(const FSettings* settings) {
-    return settings->broadcastSpeed;
-}
-
-// AP SSID/PWD
-void settings_set_ap_ssid(FSettings* settings, const char* ssid) {
-    strncpy(settings->apSSID, ssid, sizeof(settings->apSSID) - 1);
-    settings->apSSID[sizeof(settings->apSSID) - 1] = '\0'; // Ensure null termination
-}
-
-const char* settings_get_ap_ssid(const FSettings* settings) {
-    return settings->apSSID;
-}
-
-void settings_set_ap_password(FSettings* settings, const char* password) {
-    strncpy(settings->apPassword, password, sizeof(settings->apPassword) - 1);
-    settings->apPassword[sizeof(settings->apPassword) - 1] = '\0'; // Ensure null termination
-}
-
-const char* settings_get_ap_password(const FSettings* settings) {
-    return settings->apPassword;
-}
-
-// RGB
-void settings_set_breath_mode_enabled(FSettings* settings, bool enabled) {
-    settings->breathModeEnabled = enabled;
-}
-
-bool settings_get_breath_mode_enabled(const FSettings* settings) {
-    return settings->breathModeEnabled;
-}
-
-void settings_set_rainbow_mode_enabled(FSettings* settings, bool enabled) {
-    settings->rainbowModeEnabled = enabled;
-}
-
-bool settings_get_rainbow_mode_enabled(const FSettings* settings) {
-    return settings->rainbowModeEnabled;
-}
-
-void settings_set_rgb_speed(FSettings* settings, uint8_t speed) {
-    settings->rgbSpeed = speed;
-}
-
-uint8_t settings_get_rgb_speed(const FSettings* settings) {
-    return settings->rgbSpeed;
-}
-
-void settings_set_static_color(FSettings* settings, uint8_t red, uint8_t green, uint8_t blue) {
-    settings->staticColor.red = red;
-    settings->staticColor.green = green;
-    settings->staticColor.blue = blue;
-}
-
-void settings_get_static_color(const FSettings* settings, uint8_t* red, uint8_t* green, uint8_t* blue) {
-    if (red) *red = settings->staticColor.red;
-    if (green) *green = settings->staticColor.green;
-    if (blue) *blue = settings->staticColor.blue;
+static void settings_set_board_pin_defaults(FSettings* settings, SupportedBoard board) {
+    switch (board) {
+        case FLIPPER_DEV_BOARD: // Flipper Dev Board does not have neopixel sd pins to be added when i figure them out 
+            //settings->custom_pin_config = (PinConfig){.neopixel_pin = 5, .sd_card_spi_miso = 19, .sd_card_spi_mosi = 23, .sd_card_spi_clk = 18, .sd_card_spi_cs = 14, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 17, .gps_rx_pin = 16};
+            break;
+        case AWOK_DUAL_MINI:
+            settings->custom_pin_config = (PinConfig){.neopixel_pin = 6, .sd_card_spi_miso = 22, .sd_card_spi_mosi = 21, .sd_card_spi_clk = 27, .sd_card_spi_cs = 13, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 15, .gps_rx_pin = 14};
+            break;
+        case AWOK_DUAL:
+            settings->custom_pin_config = (PinConfig){.neopixel_pin = 7, .sd_card_spi_miso = 25, .sd_card_spi_mosi = 26, .sd_card_spi_clk = 33, .sd_card_spi_cs = 12, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 12, .gps_rx_pin = 13};
+            break;
+        case MARAUDER_V6:
+            settings->custom_pin_config = (PinConfig){.neopixel_pin = 8, .sd_card_spi_miso = 32, .sd_card_spi_mosi = 33, .sd_card_spi_clk = 35, .sd_card_spi_cs = 11, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 10, .gps_rx_pin = 9};
+            break;
+        case CARDPUTER:
+            settings->custom_pin_config = (PinConfig){.neopixel_pin = 9, .sd_card_spi_miso = 34, .sd_card_spi_mosi = 36, .sd_card_spi_clk = 37, .sd_card_spi_cs = 10, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 11, .gps_rx_pin = 12};
+            break;
+        case CUSTOM:
+        default:
+            // Custom board should have pins set manually
+            break;
+    }
 }
 
 void settings_load(FSettings* settings) {
     esp_err_t err;
+    uint8_t value_u8;
+    uint16_t value_u16;
+    float value_float;
+    size_t str_size;
 
-    ESP_LOGI(S_TAG, "Loading settings from NVS...");
-
-    // Load existing settings
-    uint8_t storedRGBMode = 0;
-    err = nvs_get_u8(nvsHandle, NVS_RGB_MODE_KEY, &storedRGBMode);
+    // Load RGB Mode
+    err = nvs_get_u8(nvsHandle, NVS_RGB_MODE_KEY, &value_u8);
     if (err == ESP_OK) {
-        settings->rgbMode = (RGBMode)storedRGBMode;
-        ESP_LOGI(S_TAG, "RGB mode loaded: %d", storedRGBMode);
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load RGB mode (err: %d)", err);
+        settings->rgb_mode = (RGBMode)value_u8;
     }
 
-    size_t required_size = sizeof(float);
-    err = nvs_get_blob(nvsHandle, NVS_CHANNEL_SWITCH_DELAY_KEY, &settings->channelSwitchDelay, &required_size);
+    size_t required_size = sizeof(value_float); // Set the size of the buffer
+    err = nvs_get_blob(nvsHandle, NVS_CHANNEL_DELAY_KEY, &value_float, &required_size);
     if (err == ESP_OK) {
-        ESP_LOGI(S_TAG, "Channel switch delay loaded: %f", settings->channelSwitchDelay);
+        settings->channel_delay = value_float;
     } else {
-        ESP_LOGE(S_TAG, "Failed to load channel switch delay (err: %d)", err);
+        ESP_LOGE(S_TAG, "Failed to load Channel Delay: %s", esp_err_to_name(err));
     }
 
-    int8_t enableChannelHopping = 0;
-    err = nvs_get_i8(nvsHandle, NVS_ENABLE_CHANNEL_HOP_KEY, &enableChannelHopping);
+    // Load Broadcast Speed
+    err = nvs_get_u16(nvsHandle, NVS_BROADCAST_SPEED_KEY, &value_u16);
     if (err == ESP_OK) {
-        settings->enableChannelHopping = (bool)enableChannelHopping;
-        ESP_LOGI(S_TAG, "Channel hopping enabled: %d", enableChannelHopping);
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load channel hopping setting (err: %d)", err);
+        settings->broadcast_speed = value_u16;
     }
 
-    int8_t randomBLEMacEnabled = 0;
-    err = nvs_get_i8(nvsHandle, NVS_RANDOM_BLE_MAC_KEY, &randomBLEMacEnabled);
-    if (err == ESP_OK) {
-        settings->randomBLEMacEnabled = (bool)randomBLEMacEnabled;
-        ESP_LOGI(S_TAG, "Random BLE MAC enabled: %d", randomBLEMacEnabled);
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load random BLE MAC setting (err: %d)", err);
+    // Load AP SSID
+    str_size = sizeof(settings->ap_ssid);
+    err = nvs_get_str(nvsHandle, NVS_AP_SSID_KEY, settings->ap_ssid, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load AP SSID");
     }
 
-    // WiFi/BLE
-    int8_t randomMacEnabled = 0;
-    err = nvs_get_i8(nvsHandle, NVS_RANDOM_MAC_KEY, &randomMacEnabled);
-    if (err == ESP_OK) {
-        settings->randomMacEnabled = (bool)randomMacEnabled;
-        ESP_LOGI(S_TAG, "Random WiFi MAC enabled: %d", randomMacEnabled);
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load random WiFi MAC setting (err: %d)", err);
+    // Load AP Password
+    str_size = sizeof(settings->ap_password);
+    err = nvs_get_str(nvsHandle, NVS_AP_PASSWORD_KEY, settings->ap_password, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load AP Password");
     }
 
-    uint16_t broadcastSpeed = 0;
-    err = nvs_get_u16(nvsHandle, NVS_BROADCAST_SPEED_KEY, &broadcastSpeed);
+    // Load RGB Speed
+    err = nvs_get_u8(nvsHandle, NVS_RGB_SPEED_KEY, &value_u8);
     if (err == ESP_OK) {
-        settings->broadcastSpeed = broadcastSpeed;
-        ESP_LOGI(S_TAG, "Broadcast speed loaded: %d", broadcastSpeed);
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load broadcast speed (err: %d)", err);
+        settings->rgb_speed = value_u8;
     }
 
-    // AP SSID/PWD
-    size_t ssid_size = sizeof(settings->apSSID);
-    err = nvs_get_str(nvsHandle, NVS_AP_SSID_KEY, settings->apSSID, &ssid_size);
-    if (err == ESP_OK) {
-        ESP_LOGI(S_TAG, "AP SSID loaded: %s", settings->apSSID);
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load AP SSID (err: %d)", err);
+    // Load Evil Portal settings
+    str_size = sizeof(settings->portal_url);
+    err = nvs_get_str(nvsHandle, NVS_PORTAL_URL_KEY, settings->portal_url, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load Portal URL");
     }
 
-    size_t pwd_size = sizeof(settings->apPassword);
-    err = nvs_get_str(nvsHandle, NVS_AP_PASSWORD_KEY, settings->apPassword, &pwd_size);
-    if (err == ESP_OK) {
-        ESP_LOGI(S_TAG, "AP password loaded.");
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load AP password (err: %d)", err);
+    str_size = sizeof(settings->portal_ssid);
+    err = nvs_get_str(nvsHandle, NVS_PORTAL_SSID_KEY, settings->portal_ssid, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load Portal SSID");
     }
 
-    // RGB
-    int8_t breathModeEnabled = 0;
-    err = nvs_get_i8(nvsHandle, NVS_BREATH_MODE_KEY, &breathModeEnabled);
-    if (err == ESP_OK) {
-        settings->breathModeEnabled = (bool)breathModeEnabled;
-        ESP_LOGI(S_TAG, "Breath mode enabled: %d", breathModeEnabled);
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load breath mode setting (err: %d)", err);
+    str_size = sizeof(settings->portal_password);
+    err = nvs_get_str(nvsHandle, NVS_PORTAL_PASSWORD_KEY, settings->portal_password, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load Portal Password");
     }
 
-    int8_t rainbowModeEnabled = 0;
-    err = nvs_get_i8(nvsHandle, NVS_RAINBOW_MODE_KEY, &rainbowModeEnabled);
-    if (err == ESP_OK) {
-        settings->rainbowModeEnabled = (bool)rainbowModeEnabled;
-        ESP_LOGI(S_TAG, "Rainbow mode enabled: %d", rainbowModeEnabled);
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load rainbow mode setting (err: %d)", err);
+    str_size = sizeof(settings->portal_ap_ssid);
+    err = nvs_get_str(nvsHandle, NVS_PORTAL_AP_SSID_KEY, settings->portal_ap_ssid, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load Portal AP SSID");
     }
 
-    uint8_t rgbSpeed = 0;
-    err = nvs_get_u8(nvsHandle, NVS_RGB_SPEED_KEY, &rgbSpeed);
-    if (err == ESP_OK) {
-        settings->rgbSpeed = rgbSpeed;
-        ESP_LOGI(S_TAG, "RGB speed loaded: %d", rgbSpeed);
-    } else {
-        settings->rgbSpeed = 15;
-        ESP_LOGE(S_TAG, "Failed to load RGB speed, setting default to 15 (err: %d)", err);
+    str_size = sizeof(settings->portal_domain);
+    err = nvs_get_str(nvsHandle, NVS_PORTAL_DOMAIN_KEY, settings->portal_domain, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load Portal Domain");
     }
 
-    size_t color_size = sizeof(StaticColor);
-    err = nvs_get_blob(nvsHandle, NVS_STATIC_COLOR_KEY, &settings->staticColor, &color_size);
+    err = nvs_get_u8(nvsHandle, NVS_PORTAL_OFFLINE_KEY, &value_u8);
     if (err == ESP_OK) {
-        ESP_LOGI(S_TAG, "Static color loaded.");
-    } else {
-        ESP_LOGE(S_TAG, "Failed to load static color (err: %d)", err);
+        settings->portal_offline_mode = value_u8;
     }
 
-    ESP_LOGI(S_TAG, "Settings load complete.");
+    // Load Power Printer settings
+    str_size = sizeof(settings->printer_ip);
+    err = nvs_get_str(nvsHandle, NVS_PRINTER_IP_KEY, settings->printer_ip, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load Printer IP");
+    }
+
+    str_size = sizeof(settings->printer_text);
+    err = nvs_get_str(nvsHandle, NVS_PRINTER_TEXT_KEY, settings->printer_text, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load Printer Text");
+    }
+
+    err = nvs_get_u8(nvsHandle, NVS_PRINTER_FONT_SIZE_KEY, &value_u8);
+    if (err == ESP_OK) {
+        settings->printer_font_size = value_u8;
+    }
+
+    err = nvs_get_u8(nvsHandle, NVS_PRINTER_ALIGNMENT_KEY, &value_u8);
+    if (err == ESP_OK) {
+        settings->printer_alignment = (PrinterAlignment)value_u8;
+    }
+
+    err = nvs_get_u8(nvsHandle, NVS_PRINTER_CONNECTED_KEY, &value_u8);
+    if (err == ESP_OK) {
+        settings->printer_connected = value_u8;
+    }
+
+    // Load Board Type
+    err = nvs_get_u8(nvsHandle, NVS_BOARD_TYPE_KEY, &value_u8);
+    if (err == ESP_OK) {
+        settings->board_type = (SupportedBoard)value_u8;
+    }
+
+    // Load Custom Pin Configuration
+    str_size = sizeof(PinConfig);
+    err = nvs_get_blob(nvsHandle, NVS_CUSTOM_PIN_CONFIG_KEY, &settings->custom_pin_config, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load custom pin configuration");
+    }
+
+    ESP_LOGI(S_TAG, "Settings loaded from NVS.");
 }
 
-void settings_save(FSettings* settings) {
+void settings_save(const FSettings* settings) {
     esp_err_t err;
 
-    printf("saving Settings... %li\n", nvsHandle);
-
-    err = nvs_set_u8(nvsHandle, NVS_RGB_MODE_KEY, (uint8_t)settings->rgbMode);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-    
-    err = nvs_set_blob(nvsHandle, NVS_CHANNEL_SWITCH_DELAY_KEY, &settings->channelSwitchDelay, sizeof(float));
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    err = nvs_set_i8(nvsHandle, NVS_ENABLE_CHANNEL_HOP_KEY, (int8_t)settings->enableChannelHopping);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    err = nvs_set_i8(nvsHandle, NVS_RANDOM_BLE_MAC_KEY, (int8_t)settings->randomBLEMacEnabled);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    
-    err = nvs_commit(nvsHandle);
+    // Save RGB Mode
+    err = nvs_set_u8(nvsHandle, NVS_RGB_MODE_KEY, (uint8_t)settings->rgb_mode);
     if (err != ESP_OK) {
-        ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err)));
-        return;
+        ESP_LOGE(S_TAG, "Failed to save RGB Mode");
     }
 
-    // Group 2: Save WiFi/BLE settings
-    err = nvs_set_i8(nvsHandle, NVS_RANDOM_MAC_KEY, (int8_t)settings->randomMacEnabled);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    err = nvs_set_u16(nvsHandle, NVS_BROADCAST_SPEED_KEY, settings->broadcastSpeed);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    // AP SSID/PWD
-    err = nvs_set_str(nvsHandle, NVS_AP_SSID_KEY, settings->apSSID);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    err = nvs_set_str(nvsHandle, NVS_AP_PASSWORD_KEY, settings->apPassword);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    // Commit after second group
-    err = nvs_commit(nvsHandle);
+    // Save Channel Delay
+    err = nvs_set_blob(nvsHandle, NVS_CHANNEL_DELAY_KEY, &settings->channel_delay, sizeof(settings->channel_delay));
     if (err != ESP_OK) {
-        ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err)));
-        return;
+        ESP_LOGE(S_TAG, "Failed to save Channel Delay");
     }
 
-    // Group 3: Save RGB settings
-    err = nvs_set_i8(nvsHandle, NVS_BREATH_MODE_KEY, (int8_t)settings->breathModeEnabled);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    err = nvs_set_i8(nvsHandle, NVS_RAINBOW_MODE_KEY, (int8_t)settings->rainbowModeEnabled);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    err = nvs_set_u8(nvsHandle, NVS_RGB_SPEED_KEY, settings->rgbSpeed);
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    err = nvs_set_blob(nvsHandle, NVS_STATIC_COLOR_KEY, &settings->staticColor, sizeof(StaticColor));
-    if (err != ESP_OK) { ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err))); return; }
-
-    
-    err = nvs_commit(nvsHandle);
+    // Save Broadcast Speed
+    err = nvs_set_u16(nvsHandle, NVS_BROADCAST_SPEED_KEY, settings->broadcast_speed);
     if (err != ESP_OK) {
-        ap_manager_add_log(WRAP_MESSAGE(esp_err_to_name(err)));
-        return;
+        ESP_LOGE(S_TAG, "Failed to save Broadcast Speed");
     }
 
-#ifndef WITH_SCREEN
-    
-    if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW) {
-        xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
+    // Save AP SSID
+    err = nvs_set_str(nvsHandle, NVS_AP_SSID_KEY, settings->ap_ssid);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save AP SSID");
+    }
+
+    // Save AP Password
+    err = nvs_set_str(nvsHandle, NVS_AP_PASSWORD_KEY, settings->ap_password);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save AP Password");
+    }
+
+    // Save RGB Speed
+    err = nvs_set_u8(nvsHandle, NVS_RGB_SPEED_KEY, settings->rgb_speed);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save RGB Speed");
+    }
+
+    // Save Evil Portal settings
+    err = nvs_set_str(nvsHandle, NVS_PORTAL_URL_KEY, settings->portal_url);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Portal URL");
+    }
+
+    err = nvs_set_str(nvsHandle, NVS_PORTAL_SSID_KEY, settings->portal_ssid);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Portal SSID");
+    }
+
+    err = nvs_set_str(nvsHandle, NVS_PORTAL_PASSWORD_KEY, settings->portal_password);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Portal Password");
+    }
+
+    err = nvs_set_str(nvsHandle, NVS_PORTAL_AP_SSID_KEY, settings->portal_ap_ssid);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Portal AP SSID");
+    }
+
+    err = nvs_set_str(nvsHandle, NVS_PORTAL_DOMAIN_KEY, settings->portal_domain);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Portal Domain");
+    }
+
+    err = nvs_set_u8(nvsHandle, NVS_PORTAL_OFFLINE_KEY, settings->portal_offline_mode);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Portal Offline Mode");
+    }
+
+    // Save Power Printer settings
+    err = nvs_set_str(nvsHandle, NVS_PRINTER_IP_KEY, settings->printer_ip);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Printer IP");
+    }
+
+    err = nvs_set_str(nvsHandle, NVS_PRINTER_TEXT_KEY, settings->printer_text);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Printer Text");
+    }
+
+    err = nvs_set_u8(nvsHandle, NVS_PRINTER_FONT_SIZE_KEY, settings->printer_font_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Printer Font Size");
+    }
+
+    err = nvs_set_u8(nvsHandle, NVS_PRINTER_ALIGNMENT_KEY, (uint8_t)settings->printer_alignment);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Printer Alignment");
+    }
+
+    err = nvs_set_u8(nvsHandle, NVS_PRINTER_CONNECTED_KEY, settings->printer_connected);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Printer Connected Status");
+    }
+
+    // Save Board Type
+    err = nvs_set_u8(nvsHandle, NVS_BOARD_TYPE_KEY, (uint8_t)settings->board_type);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Board Type");
+    }
+
+    // Save Custom Pin Configuration
+    err = nvs_set_blob(nvsHandle, NVS_CUSTOM_PIN_CONFIG_KEY, &settings->custom_pin_config, sizeof(PinConfig));
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save custom pin configuration");
+    }
+
+    // Commit all changes
+    err = nvs_commit(nvsHandle);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to commit NVS changes");
     } else {
-        if (rgb_effect_task_handle != NULL) {
-            vTaskDelete(rgb_effect_task_handle);  // Delete the task
-            rgb_effect_task_handle = NULL;        // Reset the task handle
-            rgb_manager_set_color(&rgb_manager, 1, 0, 0, 0, false);
-        }
-
-        if ((settings->staticColor.red > 0 && settings->staticColor.red < 255) ||
-            (settings->staticColor.green > 0 && settings->staticColor.green < 255) ||
-            (settings->staticColor.blue > 0 && settings->staticColor.blue < 255)) {
-            rgb_manager_set_color(&rgb_manager, 1, 
-                                settings->staticColor.red, 
-                                settings->staticColor.green, 
-                                settings->staticColor.blue, 
-                                false);
-        }
+        ESP_LOGI(S_TAG, "Settings saved to NVS.");
     }
+}
 
-#endif
+// Core Settings Getters and Setters
+void settings_set_rgb_mode(FSettings* settings, RGBMode mode) {
+    settings->rgb_mode = mode;
+}
+
+RGBMode settings_get_rgb_mode(const FSettings* settings) {
+    return settings->rgb_mode;
+}
+
+void settings_set_channel_delay(FSettings* settings, float delay_ms) {
+    settings->channel_delay = delay_ms;
+}
+
+float settings_get_channel_delay(const FSettings* settings) {
+    return settings->channel_delay;
+}
+
+void settings_set_broadcast_speed(FSettings* settings, uint16_t speed) {
+    settings->broadcast_speed = speed;
+}
+
+uint16_t settings_get_broadcast_speed(const FSettings* settings) {
+    return settings->broadcast_speed;
+}
+
+void settings_set_ap_ssid(FSettings* settings, const char* ssid) {
+    strncpy(settings->ap_ssid, ssid, sizeof(settings->ap_ssid) - 1);
+    settings->ap_ssid[sizeof(settings->ap_ssid) - 1] = '\0';
+}
+
+const char* settings_get_ap_ssid(const FSettings* settings) {
+    return settings->ap_ssid;
+}
+
+void settings_set_ap_password(FSettings* settings, const char* password) {
+    strncpy(settings->ap_password, password, sizeof(settings->ap_password) - 1);
+    settings->ap_password[sizeof(settings->ap_password) - 1] = '\0';
+}
+
+const char* settings_get_ap_password(const FSettings* settings) {
+    return settings->ap_password;
+}
+
+void settings_set_rgb_speed(FSettings* settings, uint8_t speed) {
+    settings->rgb_speed = speed;
+}
+
+uint8_t settings_get_rgb_speed(const FSettings* settings) {
+    return settings->rgb_speed;
+}
+
+// Evil Portal Getters and Setters
+void settings_set_portal_url(FSettings* settings, const char* url) {
+    strncpy(settings->portal_url, url, sizeof(settings->portal_url) - 1);
+    settings->portal_url[sizeof(settings->portal_url) - 1] = '\0';
+}
+
+const char* settings_get_portal_url(const FSettings* settings) {
+    return settings->portal_url;
+}
+
+void settings_set_portal_ssid(FSettings* settings, const char* ssid) {
+    strncpy(settings->portal_ssid, ssid, sizeof(settings->portal_ssid) - 1);
+    settings->portal_ssid[sizeof(settings->portal_ssid) - 1] = '\0';
+}
+
+const char* settings_get_portal_ssid(const FSettings* settings) {
+    return settings->portal_ssid;
+}
+
+void settings_set_portal_password(FSettings* settings, const char* password) {
+    strncpy(settings->portal_password, password, sizeof(settings->portal_password) - 1);
+    settings->portal_password[sizeof(settings->portal_password) - 1] = '\0';
+}
+
+const char* settings_get_portal_password(const FSettings* settings) {
+    return settings->portal_password;
+}
+
+void settings_set_portal_ap_ssid(FSettings* settings, const char* ap_ssid) {
+    strncpy(settings->portal_ap_ssid, ap_ssid, sizeof(settings->portal_ap_ssid) - 1);
+    settings->portal_ap_ssid[sizeof(settings->portal_ap_ssid) - 1] = '\0';
+}
+
+const char* settings_get_portal_ap_ssid(const FSettings* settings) {
+    return settings->portal_ap_ssid;
+}
+
+void settings_set_portal_domain(FSettings* settings, const char* domain) {
+    strncpy(settings->portal_domain, domain, sizeof(settings->portal_domain) - 1);
+    settings->portal_domain[sizeof(settings->portal_domain) - 1] = '\0';
+}
+
+const char* settings_get_portal_domain(const FSettings* settings) {
+    return settings->portal_domain;
+}
+
+void settings_set_portal_offline_mode(FSettings* settings, bool offline_mode) {
+    settings->portal_offline_mode = offline_mode;
+}
+
+bool settings_get_portal_offline_mode(const FSettings* settings) {
+    return settings->portal_offline_mode;
+}
+
+// Power Printer Getters and Setters
+void settings_set_printer_ip(FSettings* settings, const char* ip) {
+    strncpy(settings->printer_ip, ip, sizeof(settings->printer_ip) - 1);
+    settings->printer_ip[sizeof(settings->printer_ip) - 1] = '\0';
+}
+
+const char* settings_get_printer_ip(const FSettings* settings) {
+    return settings->printer_ip;
+}
+
+void settings_set_printer_text(FSettings* settings, const char* text) {
+    strncpy(settings->printer_text, text, sizeof(settings->printer_text) - 1);
+    settings->printer_text[sizeof(settings->printer_text) - 1] = '\0';
+}
+
+const char* settings_get_printer_text(const FSettings* settings) {
+    return settings->printer_text;
+}
+
+void settings_set_printer_font_size(FSettings* settings, uint8_t font_size) {
+    settings->printer_font_size = font_size;
+}
+
+uint8_t settings_get_printer_font_size(const FSettings* settings) {
+    return settings->printer_font_size;
+}
+
+void settings_set_printer_alignment(FSettings* settings, PrinterAlignment alignment) {
+    settings->printer_alignment = alignment;
+}
+
+PrinterAlignment settings_get_printer_alignment(const FSettings* settings) {
+    return settings->printer_alignment;
+}
+
+void settings_set_printer_connected(FSettings* settings, bool connected) {
+    settings->printer_connected = connected;
+}
+
+bool settings_get_printer_connected(const FSettings* settings) {
+    return settings->printer_connected;
+}
+
+// Getters and Setters for Pin Configurations
+void settings_set_board_type(FSettings* settings, SupportedBoard board) {
+    settings->board_type = board;
+    settings_apply_board_pin_config(settings);
+}
+
+SupportedBoard settings_get_board_type(const FSettings* settings) {
+    return settings->board_type;
+}
+
+void settings_set_custom_pin_config(FSettings* settings, PinConfig pin_config) {
+    settings->custom_pin_config = pin_config;
+}
+
+PinConfig settings_get_custom_pin_config(const FSettings* settings) {
+    return settings->custom_pin_config;
 }

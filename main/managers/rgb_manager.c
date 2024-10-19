@@ -94,11 +94,11 @@ void rainbow_task(void* pvParameter)
 
         if (rgb_manager->num_leds > 1)
         {
-            rgb_manager_rainbow_effect_matrix(rgb_manager, settings_get_rgb_speed(G_Settings));
+            rgb_manager_rainbow_effect_matrix(rgb_manager, settings_get_rgb_speed(&G_Settings));
         }
         else 
         {
-            rgb_manager_rainbow_effect(rgb_manager, settings_get_rgb_speed(G_Settings));
+            rgb_manager_rainbow_effect(rgb_manager, settings_get_rgb_speed(&G_Settings));
         }
         
         vTaskDelay(pdMS_TO_TICKS(20));
@@ -111,7 +111,7 @@ void police_task(void *pvParameter)
     RGBManager_t* rgb_manager = (RGBManager_t*) pvParameter;
     while (1) {
         
-        rgb_manager_policesiren_effect(rgb_manager, settings_get_rgb_speed(G_Settings));
+        rgb_manager_policesiren_effect(rgb_manager, settings_get_rgb_speed(&G_Settings));
         
         vTaskDelay(pdMS_TO_TICKS(20));
     }

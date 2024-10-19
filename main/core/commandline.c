@@ -333,126 +333,6 @@ void handle_ble_scan_cmd(int argc, char**argv)
 
 #endif
 
-void handle_set_setting(int argc, char **argv)
-{
-    if (argc < 3) {
-        ap_manager_add_log("Error: Insufficient arguments. Expected 2 integers after the command.\n");
-        return;
-    }
-    
-    char *endptr1;
-    int first_arg = strtol(argv[1], &endptr1, 10);
-    
-    
-    if (*endptr1 != '\0') {
-        ap_manager_add_log("Error: First argument is not a valid integer.\n");
-        return;
-    }
-
-    
-    char *endptr2;
-    int second_arg = strtol(argv[2], &endptr2, 10);
-
-    
-    if (*endptr2 != '\0') {
-        ap_manager_add_log("Error: Second argument is not a valid integer.\n");
-        return;
-    }
-
-    int ActualSettingsIndex = first_arg;
-    int ActualSettingsValue = second_arg;
-
-    if (ActualSettingsIndex == 1) // RGB Mode
-    {
-        switch (ActualSettingsValue)
-        {
-        case 1:
-        {
-            settings_set_rgb_mode(&G_Settings, RGB_MODE_STEALTH);
-            break;
-        }
-        case 2:
-        {
-            settings_set_rgb_mode(&G_Settings, RGB_MODE_NORMAL);
-            break;
-        }
-        case 3:
-        {
-            settings_set_rgb_mode(&G_Settings, RGB_MODE_RAINBOW);
-            break;
-        }
-        }
-    }
-
-    if (ActualSettingsIndex == 2)
-    {
-        switch (ActualSettingsValue)
-        {
-        case 1:
-        {
-            settings_set_channel_switch_delay(&G_Settings, 0.5);
-            break;
-        }
-        case 2:
-        {
-            settings_set_channel_switch_delay(&G_Settings, 1);
-            break;
-        }
-        case 3:
-        {
-            settings_set_channel_switch_delay(&G_Settings, 2);
-            break;
-        }
-        case 4:
-        {
-            settings_set_channel_switch_delay(&G_Settings, 3);
-            break;
-        }
-        case 5:
-        {
-            settings_set_channel_switch_delay(&G_Settings, 4);
-            break;
-        }
-        }
-    }
-
-    if (ActualSettingsIndex == 3)
-    {
-        switch (ActualSettingsValue)
-        {
-        case 1:
-        {
-            settings_set_channel_hopping_enabled(&G_Settings, false);
-            break;
-        }
-        case 2:
-        {
-            settings_set_channel_hopping_enabled(&G_Settings, true);
-            break;
-        }
-        }
-    }
-
-    if (ActualSettingsIndex == 4)
-    {
-        switch (ActualSettingsValue)
-        {
-        case 1:
-        {
-            settings_set_random_ble_mac_enabled(&G_Settings, false);
-            break;
-        }
-        case 2:
-        {
-            settings_set_random_ble_mac_enabled(&G_Settings, true);
-            break;
-        }
-        }
-    }
-
-    settings_save(&G_Settings);
-}
-
 
 void handle_start_portal(int argc, char **argv)
 {
@@ -873,29 +753,6 @@ void handle_help(int argc, char **argv) {
     printf("    Arguments:\n");
     printf("        -a  : AP selection index (must be a valid number)\n\n");
 
-    printf("setsetting\n");
-    printf("    Description: Set various device settings.\n");
-    printf("    Usage: setsetting <index> <value>\n");
-    printf("    Arguments:\n");
-    printf("        <index>: Setting index (1: RGB mode, 2: Channel switch delay, 3: Channel hopping, 4: Random BLE MAC)\n");
-    printf("        <value>: Value corresponding to the setting (varies by setting index)\n");
-    printf("        RGB Mode Values:\n");
-    printf("            1: Stealth Mode\n");
-    printf("            2: Normal Mode\n");
-    printf("            3: Rainbow Mode\n");
-    printf("        Channel Switch Delay Values:\n");
-    printf("            1: 0.5s\n");
-    printf("            2: 1s\n");
-    printf("            3: 2s\n");
-    printf("            4: 3s\n");
-    printf("            5: 4s\n");
-    printf("        Channel Hopping Values:\n");
-    printf("            1: Disabled\n");
-    printf("            2: Enabled\n");
-    printf("        Random BLE MAC Values:\n");
-    printf("            1: Disabled\n");
-    printf("            2: Enabled\n\n");
-
     printf("startportal\n");
     printf("    Description: Start a portal with specified SSID and password.\n");
     printf("    Usage: startportal <URL> <SSID> <Password> <AP_ssid> <Domain>\n");
@@ -963,7 +820,6 @@ void register_commands() {
     register_command("stopspam", handle_stop_spam);
     register_command("stopdeauth", handle_stop_deauth);
     register_command("select", handle_select_cmd);
-    register_command("setsetting", handle_set_setting);
     register_command("capture", handle_capture_scan);
     register_command("startportal", handle_start_portal);
     register_command("stopportal", stop_portal);

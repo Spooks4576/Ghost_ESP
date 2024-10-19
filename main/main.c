@@ -47,9 +47,7 @@ void app_main(void) {
 
   register_commands();
 
-  G_Settings = malloc(sizeof(FSettings));
-
-  settings_init(G_Settings);
+  settings_init(&G_Settings);
 
   ap_manager_init();
 
@@ -79,13 +77,13 @@ void app_main(void) {
 #ifdef LED_DATA_PIN
   rgb_manager_init(&rgb_manager, LED_DATA_PIN, NUM_LEDS, LED_ORDER, LED_MODEL_WS2812, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_NC);
 
-  if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW)
+  if (settings_get_rgb_mode(&G_Settings) == RGB_MODE_RAINBOW)
   {
   xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
   }
 #elif CONFIG_IDF_TARGET_ESP32S2
   rgb_manager_init(&rgb_manager, GPIO_NUM_NC, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812, 4, 5, 6);
-  if (settings_get_rgb_mode(G_Settings) == RGB_MODE_RAINBOW)
+  if (settings_get_rgb_mode(&G_Settings) == RGB_MODE_RAINBOW)
   {
   xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
   }
