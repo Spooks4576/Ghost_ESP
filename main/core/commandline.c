@@ -273,7 +273,10 @@ void handle_wifi_connection(int argc, char** argv) {
     ESP_LOGI("Command Line", "Connecting to SSID: %s", ssid);
     
     wifi_manager_connect_wifi(ssid, password);
+
+#ifdef WITH_SCREEN
     xTaskCreate(screen_music_visualizer_task, "udp_server", 4096, NULL, 5, NULL);
+#endif
 }
 
 
@@ -389,7 +392,7 @@ void handle_start_portal(int argc, char **argv)
         return;
     }
 
-    if (ssid && ssid[0] != '\0' && password && password[0] != '\0') {
+    if (ssid && ssid[0] != '\0' && password && password[0] != '\0' && !offlinemode) {
         printf("Starting portal with SSID: %s, Password: %s, AP_SSID: %s, Domain: %s\n", ssid, password, ap_ssid, domain);
         wifi_manager_start_evil_portal(url, ssid, password, ap_ssid, domain);
     }
@@ -794,7 +797,6 @@ void handle_help(int argc, char **argv) {
     printf("    Description: Print Custom Text to a Printer on your LAN (Requires You to Run Connect First)\n");
     printf("    Usage: connect <Printer IP> <Text> <FontSize> <alignment>\n");
     printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
-
 }
 
 void register_commands() {
