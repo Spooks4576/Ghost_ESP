@@ -5,6 +5,7 @@
 #include "mdns.h"
 #include "esp_log.h"
 #include <string.h>
+#include <managers/settings_manager.h>
 #include <stdio.h>
 
 #define PRINTER_PORT 9100
@@ -160,18 +161,71 @@ void eject_blank_pages(const char *printer_ip, int num_pages) {
 
 
 void handle_printer_command(int argc, char **argv) {
-    if (argc != 5) {
-        ESP_LOGE(TAG, "Usage: <printer_ip> <text> <font_px> <alignment>");
+    
+    const char *stored_printer_ip = settings_get_printer_ip(&G_Settings);
+    const char *stored_text = settings_get_printer_text(&G_Settings);
+    int stored_font_size = settings_get_printer_font_size(&G_Settings);
+    PrinterAlignment stored_alignment = settings_get_printer_alignment(&G_Settings);
+
+    
+    const char *printer_ip = stored_printer_ip;
+    const char *text = stored_text;
+    int font_px = stored_font_size;
+    const char *alignment_str = NULL;
+
+    
+    if (argc >= 2) {
+        printer_ip = (argv[1] && argv[1][0] != '\0') ? argv[1] : stored_printer_ip;
+    }
+    if (argc >= 3) {
+        text = (argv[2] && argv[2][0] != '\0') ? argv[2] : stored_text;
+    }
+    if (argc >= 4) {
+        font_px = (argv[3] && argv[3][0] != '\0') ? atoi(argv[3]) : stored_font_size;
+    }
+    if (argc >= 5) {
+        alignment_str = (argv[4] && argv[4][0] != '\0') ? argv[4] : NULL;
+    }
+
+    
+    if (printer_ip == NULL || printer_ip[0] == '\0') {
+        ESP_LOGE(TAG, "Error: Printer IP cannot be empty.");
+        return;
+    }
+    if (text == NULL || text[0] == '\0') {
+        ESP_LOGE(TAG, "Error: Text to print cannot be empty.");
+        return;
+    }
+    if (font_px <= 0) {
+        ESP_LOGE(TAG, "Error: Font size must be a positive integer.");
         return;
     }
 
-    const char *printer_ip = argv[1];  // Printer IP
-    const char *text = argv[2];        // Text to print
-    int font_px = atoi(argv[3]);       // Font size in pixels
-    const char *alignment = argv[4];   // Alignment option
 
-    ESP_LOGI(TAG, "Printing to printer at IP: %s", printer_ip);
+    if (alignment_str == NULL) {
+        switch (stored_alignment) {
+            case ALIGNMENT_CM:
+                alignment_str = "CM";
+                break;
+            case ALIGNMENT_TL:
+                alignment_str = "TL";
+                break;
+            case ALIGNMENT_TR:
+                alignment_str = "TR";
+                break;
+            case ALIGNMENT_BR:
+                alignment_str = "BR";
+                break;
+            case ALIGNMENT_BL:
+                alignment_str = "BL";
+                break;
+            default:
+                alignment_str = "CM";
+                break;
+        }
+    }
 
-    
-    print_text_to_printer(printer_ip, text, font_px, alignment);
+    ESP_LOGI(TAG, "Printing to printer at IP: %s with text: %s, font size: %d, alignment: %s", printer_ip, text, font_px, alignment_str);
+
+    print_text_to_printer(printer_ip, text, font_px, alignment_str);
 }

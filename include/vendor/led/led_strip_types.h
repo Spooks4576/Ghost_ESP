@@ -17,6 +17,7 @@ extern "C" {
 typedef enum {
     LED_PIXEL_FORMAT_GRB,    /*!< Pixel format: GRB */
     LED_PIXEL_FORMAT_GRBW,   /*!< Pixel format: GRBW */
+    LED_PIXEL_FORMAT_RGB,
     LED_PIXEL_FORMAT_INVALID /*!< Invalid pixel format */
 } led_pixel_format_t;
 

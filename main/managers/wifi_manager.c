@@ -22,6 +22,9 @@
 #include <esp_http_server.h>
 #include <core/dns_server.h>
 #include "esp_crt_bundle.h"
+#ifdef WITH_SCREEN
+#include "managers/views/music_visualizer.h"
+#endif
 
 
 #define CHUNK_SIZE 8192
@@ -928,7 +931,7 @@ void wifi_manager_start_scan() {
     ESP_LOGI(TAG, "WiFi scanning started...");
     esp_err_t err = esp_wifi_scan_start(&scan_config, false);
 
-    vTaskDelay(pdMS_TO_TICKS(1500));
+    vTaskDelay(pdMS_TO_TICKS(700));
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "WiFi scan failed to start: %s", esp_err_to_name(err));
@@ -1163,6 +1166,148 @@ void wifi_manager_select_ap(int index)
     printf("Selected Access Point Successfully\n");
 }
 
+#define MAX_PAYLOAD    64
+#define UDP_PORT 6677
+#define TRACK_NAME_LEN 32
+#define ARTIST_NAME_LEN 32
+#define NUM_BARS 15
+
+void screen_music_visualizer_task(void *pvParameters) {
+    char rx_buffer[128];
+    char track_name[TRACK_NAME_LEN + 1];
+    char artist_name[ARTIST_NAME_LEN + 1];
+    uint8_t amplitudes[NUM_BARS];
+
+    struct sockaddr_in dest_addr;
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(UDP_PORT);
+    dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (sock < 0) {
+        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        vTaskDelete(NULL);
+        return;
+    }
+
+    ESP_LOGI(TAG, "Socket created");
+
+    int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    if (err < 0) {
+        ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+        close(sock);
+        vTaskDelete(NULL);
+        return;
+    }
+
+    ESP_LOGI(TAG, "Socket bound, port %d", UDP_PORT);
+
+    while (1) {
+        ESP_LOGI(TAG, "Waiting for data...");
+
+        struct sockaddr_in6 source_addr;
+        socklen_t socklen = sizeof(source_addr);
+
+        int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
+        if (len < 0) {
+            ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+            break;
+        }
+
+        
+        rx_buffer[len] = '\0';
+        ESP_LOGI(TAG, "Received %d bytes from %s:", len, inet6_ntoa(source_addr.sin6_addr));
+        ESP_LOGI(TAG, "%s", rx_buffer);
+
+        
+        if (len >= TRACK_NAME_LEN + ARTIST_NAME_LEN + NUM_BARS) {
+           
+            memcpy(track_name, rx_buffer, TRACK_NAME_LEN);
+            track_name[TRACK_NAME_LEN] = '\0';
+
+            memcpy(artist_name, rx_buffer + TRACK_NAME_LEN, ARTIST_NAME_LEN);
+            artist_name[ARTIST_NAME_LEN] = '\0';
+
+            memcpy(amplitudes, rx_buffer + TRACK_NAME_LEN + ARTIST_NAME_LEN, NUM_BARS);
+
+#ifdef WITH_SCREEN    
+            music_visualizer_view_update(amplitudes, track_name, artist_name);
+#endif
+        } else {
+            ESP_LOGW(TAG, "Received packet of unexpected size");
+        }
+    }
+
+    if (sock != -1) {
+        ESP_LOGE(TAG, "Shutting down socket and restarting...");
+        shutdown(sock, 0);
+        close(sock);
+    }
+
+    vTaskDelete(NULL);
+}
+
+
+void rgb_visualizer_server_task(void *pvParameters) {
+    char rx_buffer[MAX_PAYLOAD];
+    char addr_str[128];
+    int addr_family;
+    int ip_protocol;
+
+    while (1) {
+        struct sockaddr_in dest_addr;
+        dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        dest_addr.sin_family = AF_INET;
+        dest_addr.sin_port = htons(UDP_PORT);
+        addr_family = AF_INET;
+        ip_protocol = IPPROTO_IP;
+        inet_ntoa_r(dest_addr.sin_addr, addr_str, sizeof(addr_str) - 1);
+
+        int sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
+        if (sock < 0) {
+            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+            break;
+        }
+        ESP_LOGI(TAG, "Socket created");
+
+        int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+        if (err < 0) {
+            ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+        }
+        ESP_LOGI(TAG, "Socket bound, port %d", UDP_PORT);
+
+        while (1) {
+            ESP_LOGI(TAG, "Waiting for data");
+            struct sockaddr_in6 source_addr;
+            socklen_t socklen = sizeof(source_addr);
+            int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0,
+                               (struct sockaddr *)&source_addr, &socklen);
+
+            if (len < 0) {
+                ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+                break;
+            } else {
+                // Data received
+                rx_buffer[len] = 0; // Null-terminate
+                ESP_LOGI(TAG, "Received %d bytes", len);
+
+                // Process the received data
+                uint8_t *amplitudes = (uint8_t *)rx_buffer;
+                size_t num_bars = len;
+                update_led_visualizer(amplitudes, num_bars, false);
+            }
+        }
+
+        if (sock != -1) {
+            ESP_LOGE(TAG, "Shutting down socket and restarting...");
+            shutdown(sock, 0);
+            close(sock);
+        }
+    }
+
+    vTaskDelete(NULL);
+}
 
 void wifi_auto_deauth_task(void* Parameter)
 {
@@ -1482,7 +1627,7 @@ void wifi_beacon_task(void *param) {
             wifi_manager_broadcast_ap(ssid);
         }
 
-        vTaskDelay(settings_get_broadcast_speed(G_Settings) / portTICK_PERIOD_MS);
+        vTaskDelay(settings_get_broadcast_speed(&G_Settings) / portTICK_PERIOD_MS);
     }
 }
 

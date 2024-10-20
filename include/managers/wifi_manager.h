@@ -20,6 +20,9 @@ typedef struct {
 static station_ap_pair_t station_ap_list[MAX_STATIONS];  // Array to store station-AP pairs
 static int station_count = 0;
 
+extern wifi_ap_record_t* scanned_aps;
+extern wifi_ap_record_t selected_ap;
+
 static void* beacon_task_handle;
 static void* deauth_task_handle;
 static int beacon_task_running = 0;
@@ -122,5 +125,9 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
 void wifi_manager_stop_evil_portal();
 
 void wifi_manager_start_evil_portal(const char* URL, const char* SSID, const char* Password, const char* ap_ssid, const char* domain);
+
+void screen_music_visualizer_task(void *pvParameters);
+
+void rgb_visualizer_server_task(void *pvParameters);
 
 #endif // WIFI_MANAGER_H

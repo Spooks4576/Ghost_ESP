@@ -35,12 +35,12 @@ static esp_err_t api_command_handler(httpd_req_t *req);
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data);
 
-// Initialize the network interfaces, mDNS, and HTTP server
+
 esp_err_t ap_manager_init(void) {
     esp_err_t ret;
     wifi_mode_t mode;
 
-    // Check if Wi-Fi is already initialized and get the current mode
+
     ret = esp_wifi_get_mode(&mode);
     if (ret == ESP_ERR_WIFI_NOT_INIT) {
         ESP_LOGI(TAG, "Wi-Fi not initialized, initializing as Access Point...");
@@ -52,7 +52,7 @@ esp_err_t ap_manager_init(void) {
             return ret;
         }
 
-        // Create default Wi-Fi AP interface
+
         esp_netif_t *netif = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
         if (!netif) {
             netif = esp_netif_create_default_wifi_ap();
@@ -75,9 +75,9 @@ esp_err_t ap_manager_init(void) {
         return ret;
     }
 
-    const char* ssid = strlen(settings_get_ap_ssid(G_Settings)) > 0 ? settings_get_ap_ssid(G_Settings) : "GhostNet";
+    const char* ssid = strlen(settings_get_ap_ssid(&G_Settings)) > 0 ? settings_get_ap_ssid(&G_Settings) : "GhostNet";
     
-    const char* password = strlen(settings_get_ap_password(G_Settings)) > 8 ? settings_get_ap_password(G_Settings) : "GhostNet";
+    const char* password = strlen(settings_get_ap_password(&G_Settings)) > 8 ? settings_get_ap_password(&G_Settings) : "GhostNet";
 
     
     wifi_config_t wifi_config = {
@@ -148,7 +148,7 @@ esp_err_t ap_manager_init(void) {
     mdns_freed = false;
 
     
-    FSettings* settings = G_Settings;
+    FSettings* settings = &G_Settings;
 
     ret = mdns_hostname_set("ghostesp");
     if (ret != ESP_OK) {
@@ -564,14 +564,9 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     }
 
     // Update settings
-    FSettings* settings = G_Settings;
+    FSettings* settings = &G_Settings;
 
-    // WiFi/BLE Settings
-    cJSON* random_mac = cJSON_GetObjectItem(root, "random_mac");
-    if (random_mac) {
-        settings_set_random_mac_enabled(settings, random_mac->valueint);
-    }
-
+    // Core settings
     cJSON* broadcast_speed = cJSON_GetObjectItem(root, "broadcast_speed");
     if (broadcast_speed) {
         settings_set_broadcast_speed(settings, broadcast_speed->valueint);
@@ -587,31 +582,9 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_ap_password(settings, ap_password->valuestring);
     }
 
-    // RGB Settings
-    cJSON* breath_mode = cJSON_GetObjectItem(root, "breath_mode");
-    if (breath_mode) {
-        settings_set_breath_mode_enabled(settings, breath_mode->valueint);
-        if (breath_mode->valueint)
-        {
-            settings_set_rgb_mode(G_Settings, RGB_MODE_STEALTH);
-        }
-        else 
-        {
-            settings_set_rgb_mode(G_Settings, RGB_MODE_NORMAL);
-        }
-    }
-
-    cJSON* rainbow_mode = cJSON_GetObjectItem(root, "rainbow_mode");
-    if (rainbow_mode) {
-        settings_set_rainbow_mode_enabled(settings, rainbow_mode->valueint);
-        if (rainbow_mode->valueint)
-        {
-            settings_set_rgb_mode(G_Settings, RGB_MODE_RAINBOW);
-        }
-        else if (breath_mode->valueint == 0)
-        {
-            settings_set_rgb_mode(G_Settings, RGB_MODE_NORMAL);
-        }
+    cJSON* rgb_mode = cJSON_GetObjectItem(root, "rgb_mode");
+    if (rgb_mode) {
+        settings_set_rgb_mode(settings, (RGBMode)rgb_mode->valueint);
     }
 
     cJSON* rgb_speed = cJSON_GetObjectItem(root, "rgb_speed");
@@ -619,21 +592,136 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_rgb_speed(settings, rgb_speed->valueint);
     }
 
-    cJSON* static_color_r = cJSON_GetObjectItem(root, "static_color_r");
-    cJSON* static_color_g = cJSON_GetObjectItem(root, "static_color_g");
-    cJSON* static_color_b = cJSON_GetObjectItem(root, "static_color_b");
-    if (static_color_r && static_color_g && static_color_b) {
-        settings_set_static_color(settings, static_color_r->valueint, static_color_g->valueint, static_color_b->valueint);
+    cJSON* channel_delay = cJSON_GetObjectItem(root, "channel_delay");
+    if (channel_delay) {
+        settings_set_channel_delay(settings, (float)channel_delay->valuedouble);
     }
 
-    // Save updated settings
+    // Evil Portal settings
+    cJSON* portal_url = cJSON_GetObjectItem(root, "portal_url");
+    if (portal_url) {
+        settings_set_portal_url(settings, portal_url->valuestring);
+    }
+
+    cJSON* portal_ssid = cJSON_GetObjectItem(root, "portal_ssid");
+    if (portal_ssid) {
+        settings_set_portal_ssid(settings, portal_ssid->valuestring);
+    }
+
+    cJSON* portal_password = cJSON_GetObjectItem(root, "portal_password");
+    if (portal_password) {
+        settings_set_portal_password(settings, portal_password->valuestring);
+    }
+
+    cJSON* portal_ap_ssid = cJSON_GetObjectItem(root, "portal_ap_ssid");
+    if (portal_ap_ssid) {
+        settings_set_portal_ap_ssid(settings, portal_ap_ssid->valuestring);
+    }
+
+    cJSON* portal_domain = cJSON_GetObjectItem(root, "portal_domain");
+    if (portal_domain) {
+        settings_set_portal_domain(settings, portal_domain->valuestring);
+    }
+
+    cJSON* portal_offline_mode = cJSON_GetObjectItem(root, "portal_offline_mode");
+    if (portal_offline_mode) {
+        settings_set_portal_offline_mode(settings, portal_offline_mode->valueint != 0);
+    }
+
+    // Power Printer settings
+    cJSON* printer_ip = cJSON_GetObjectItem(root, "printer_ip");
+    if (printer_ip) {
+        settings_set_printer_ip(settings, printer_ip->valuestring);
+    }
+
+    cJSON* printer_text = cJSON_GetObjectItem(root, "printer_text");
+    if (printer_text) {
+        settings_set_printer_text(settings, printer_text->valuestring);
+    }
+
+    cJSON* printer_font_size = cJSON_GetObjectItem(root, "printer_font_size");
+    if (printer_font_size) {
+        settings_set_printer_font_size(settings, printer_font_size->valueint);
+    }
+
+    cJSON* printer_alignment = cJSON_GetObjectItem(root, "printer_alignment");
+    if (printer_alignment) {
+        settings_set_printer_alignment(settings, (PrinterAlignment)printer_alignment->valueint);
+    }
+
+    cJSON* printer_connected = cJSON_GetObjectItem(root, "printer_connected");
+    if (printer_connected) {
+        settings_set_printer_connected(settings, printer_connected->valueint != 0);
+    }
+
+    // Pin Configuration settings
+    cJSON* board_type = cJSON_GetObjectItem(root, "board_type");
+    if (board_type) {
+        settings_set_board_type(settings, (SupportedBoard)board_type->valueint);
+    }
+
+    cJSON* custom_pin_config = cJSON_GetObjectItem(root, "custom_pin_config");
+    if (custom_pin_config && settings->board_type == CUSTOM) {
+        PinConfig pin_config;
+
+        cJSON* neopixel_pin = cJSON_GetObjectItem(custom_pin_config, "neopixel_pin");
+        if (neopixel_pin) {
+            pin_config.neopixel_pin = neopixel_pin->valueint;
+        }
+
+        cJSON* sd_card_spi_miso = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_miso");
+        if (sd_card_spi_miso) {
+            pin_config.sd_card_spi_miso = sd_card_spi_miso->valueint;
+        }
+
+        cJSON* sd_card_spi_mosi = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_mosi");
+        if (sd_card_spi_mosi) {
+            pin_config.sd_card_spi_mosi = sd_card_spi_mosi->valueint;
+        }
+
+        cJSON* sd_card_spi_clk = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_clk");
+        if (sd_card_spi_clk) {
+            pin_config.sd_card_spi_clk = sd_card_spi_clk->valueint;
+        }
+
+        cJSON* sd_card_spi_cs = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_cs");
+        if (sd_card_spi_cs) {
+            pin_config.sd_card_spi_cs = sd_card_spi_cs->valueint;
+        }
+
+        cJSON* sd_card_mmc_cmd = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_cmd");
+        if (sd_card_mmc_cmd) {
+            pin_config.sd_card_mmc_cmd = sd_card_mmc_cmd->valueint;
+        }
+
+        cJSON* sd_card_mmc_clk = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_clk");
+        if (sd_card_mmc_clk) {
+            pin_config.sd_card_mmc_clk = sd_card_mmc_clk->valueint;
+        }
+
+        cJSON* sd_card_mmc_d0 = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_d0");
+        if (sd_card_mmc_d0) {
+            pin_config.sd_card_mmc_d0 = sd_card_mmc_d0->valueint;
+        }
+
+        cJSON* gps_tx_pin = cJSON_GetObjectItem(custom_pin_config, "gps_tx_pin");
+        if (gps_tx_pin) {
+            pin_config.gps_tx_pin = gps_tx_pin->valueint;
+        }
+
+        cJSON* gps_rx_pin = cJSON_GetObjectItem(custom_pin_config, "gps_rx_pin");
+        if (gps_rx_pin) {
+            pin_config.gps_rx_pin = gps_rx_pin->valueint;
+        }
+
+        settings_set_custom_pin_config(settings, pin_config);
+    }
+
     settings_save(settings);
 
-    // Send response
     httpd_resp_set_type(req, "application/json");
     httpd_resp_sendstr(req, "{\"status\":\"settings_updated\"}");
 
-    // Clean up
     cJSON_Delete(root);
 
     return ESP_OK;
