@@ -69,22 +69,22 @@ static void menu_item_event_handler(InputEvent *event) {
  */
 static void handle_menu_item_selection(int item_index) {
     switch (item_index) {
-        case 0:
+        case 3:
             printf("Wi-Fi selected\n");
             SelectedMenuType = OT_Wifi;
             display_manager_switch_view(&options_menu_view);
             break;
-        case 1:
+        case 2:
             printf("BLE selected\n");
             SelectedMenuType = OT_Bluetooth;
             display_manager_switch_view(&options_menu_view);
             break;
-        case 2:
+        case 1:
             printf("GPS selected\n");
             SelectedMenuType = OT_GPS;
             display_manager_switch_view(&options_menu_view);
             break;
-        case 3:
+        case 0:
             printf("Settings selected\n");
             SelectedMenuType = OT_Settings;
             display_manager_switch_view(&options_menu_view);
