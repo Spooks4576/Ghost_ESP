@@ -60,7 +60,7 @@ void settings_set_defaults(FSettings* settings) {
     strcpy(settings->portal_password, "EvilPortalPass");
     strcpy(settings->portal_ap_ssid, "EvilAP");
     strcpy(settings->portal_domain, "portal.local");
-    settings->portal_offline_mode = true;
+    settings->portal_offline_mode = false;
 
     // Power Printer defaults
     strcpy(settings->printer_ip, "192.168.1.100");
