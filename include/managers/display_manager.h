@@ -10,6 +10,18 @@ typedef void* QueueHandle_tt;
 typedef void* SemaphoreHandle_tt; // Because Circular Includes are fun :)
 
 
+typedef enum {
+    INPUT_TYPE_JOYSTICK,
+    INPUT_TYPE_TOUCH
+} InputType;
+
+typedef struct {
+    InputType type;
+    union {
+        int joystick_index;           // Used for joystick inputs
+        lv_indev_data_t touch_data;   // Used for touchscreen inputs
+    } data;
+} InputEvent;
 
 #define INPUT_QUEUE_LENGTH    10
 #define INPUT_ITEM_SIZE       sizeof(int)
@@ -19,16 +31,16 @@ QueueHandle_tt input_queue;
 
 
 #define HARDWARE_INPUT_TASK_PRIORITY    (4)
-#define INPUT_PROCESSING_TASK_PRIORITY  (3)
+#define INPUT_PROCESSING_TASK_PRIORITY  (4)
 #define RENDERING_TASK_PRIORITY         (5)
 
 typedef struct {
     lv_obj_t *root;
     void (*create)(void);  
     void (*destroy)(void);
-    void (*hardwareinput_callback)(int);
     const char* name;
     void (*get_hardwareinput_callback)(void **callback);
+    void (*input_callback)(InputEvent*);
 } View;
 
 
@@ -80,6 +92,7 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
 
 void display_manager_add_status_bar(const char* CurrentMenuName);
 
+void apply_calibration_to_point(lv_point_t *point, uint16_t *calData, int screen_width, int screen_height);
 
 LV_IMG_DECLARE(Ghost_ESP);
 LV_IMG_DECLARE(Map);

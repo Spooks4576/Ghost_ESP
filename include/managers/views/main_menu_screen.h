@@ -15,11 +15,12 @@ void main_menu_create(void);
  */
 void main_menu_destroy(void);
 
-/**
- * @brief Main menu screen view object.
- */
 
-static void menu_item_event_handler(lv_event_t *e);
+static void select_menu_item(int index);
+
+static void handle_menu_item_selection(int item_index);
+
+void handle_hardware_button_press(int ButtonPressed);
 
 
 extern View main_menu_view;

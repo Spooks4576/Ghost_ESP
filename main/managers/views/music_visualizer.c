@@ -8,15 +8,21 @@ MusicVisualizerView view;
 lv_obj_t *root;
 
 
-void handle_hardware_input_music_callback(int ButtonPressed) {
-    if (ButtonPressed == 1)
-    {
+void handle_hardware_input_music_callback(InputEvent *event) {
+    if (event->type == INPUT_TYPE_TOUCH) {
         display_manager_switch_view(&main_menu_view);
+    } else if (event->type == INPUT_TYPE_JOYSTICK) {
+        int button = event->data.joystick_index;
+
+        if (button == 1) {
+            display_manager_switch_view(&main_menu_view);
+        }
     }
 }
 
+
 void get_music_visualizer_callback(void **callback) {
-    *callback = music_visualizer_view.hardwareinput_callback;
+    *callback = music_visualizer_view.input_callback;
 }
 
 
@@ -24,7 +30,7 @@ View music_visualizer_view = {
     .root = NULL,
     .create = music_visualizer_view_create,
     .destroy = music_visualizer_destroy,
-    .hardwareinput_callback = handle_hardware_input_music_callback,
+    .input_callback = handle_hardware_input_music_callback,
     .name = "Music Visualizer",
     .get_hardwareinput_callback = get_music_visualizer_callback
 };

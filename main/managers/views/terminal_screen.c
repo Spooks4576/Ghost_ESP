@@ -71,15 +71,24 @@ void terminal_view_add_text(const char *text) {
     lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
 }
 
-void terminal_view_hardwareinput_callback(int input) {
-    if (input == 1) {
+void terminal_view_hardwareinput_callback(InputEvent *event) {
+    if (event->type == INPUT_TYPE_TOUCH) {
         handle_serial_command("stop");
         handle_serial_command("stopspam");
         handle_serial_command("stopdeauth");
         handle_serial_command("blescan -s");
         handle_serial_command("capture -stop");
         display_manager_switch_view(&options_menu_view);
-        return;
+    } else if (event->type == INPUT_TYPE_JOYSTICK) {
+        int button = event->data.joystick_index;
+        if (button == 1) {
+            handle_serial_command("stop");
+            handle_serial_command("stopspam");
+            handle_serial_command("stopdeauth");
+            handle_serial_command("blescan -s");
+            handle_serial_command("capture -stop");
+            display_manager_switch_view(&options_menu_view);
+        }
     }
 }
 
@@ -105,7 +114,7 @@ View terminal_view = {
     .root = NULL,
     .create = terminal_view_create,
     .destroy = terminal_view_destroy,
-    .hardwareinput_callback = terminal_view_hardwareinput_callback,
+    .input_callback = terminal_view_hardwareinput_callback,
     .name = "TerminalView",
     .get_hardwareinput_callback = terminal_view_get_hardwareinput_callback
 };

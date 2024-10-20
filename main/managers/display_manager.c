@@ -21,7 +21,7 @@ lv_obj_t *battery_label = NULL;
 
 
 
-#define FADE_DURATION_MS 109
+#define FADE_DURATION_MS 50
 
 
 void fade_out_cb(void *obj, int32_t v) {
@@ -73,7 +73,7 @@ void fade_out_ready_cb(lv_anim_t *anim) {
         dm.current_view = new_view;
         
         if (new_view->get_hardwareinput_callback) {
-            new_view->get_hardwareinput_callback(&dm.current_view->hardwareinput_callback);
+            new_view->input_callback(&dm.current_view->input_callback);
         }
 
         new_view->create();
@@ -212,6 +212,39 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     update_status_bar(true, HasBluetooth, sd_card_exists("/mnt/ghostesp"), 1000);
 }
 
+
+void apply_calibration_to_point(lv_point_t *point, uint16_t *calData, int screen_width, int screen_height) {
+    uint16_t x_min = calData[0];
+    uint16_t x_max = calData[1];
+    uint16_t y_min = calData[2];
+    uint16_t y_max = calData[3];
+    uint8_t invert_xy = calData[4];
+
+    int32_t x = point->x;
+    int32_t y = point->y;
+
+    
+    x = (x - x_min) * (screen_width - 1) / (x_max - x_min);
+    y = (y - y_min) * (screen_height - 1) / (y_max - y_min);
+
+    
+    if (invert_xy & 0x01) {
+        int32_t temp = x;
+        x = y;
+        y = temp;
+    }
+    if (invert_xy & 0x02) {
+        x = screen_width - 1 - x;
+    }
+    if (invert_xy & 0x04) {
+        y = screen_height - 1 - y;
+    }
+
+    
+    point->x = x;
+    point->y = y;
+}
+
 void display_manager_init(void) {
     lv_init();
     lvgl_driver_init();
@@ -230,19 +263,13 @@ void display_manager_init(void) {
     disp_drv.draw_buf = &disp_buf;
     lv_disp_drv_register(&disp_drv);
 
-    static lv_indev_drv_t indev_drv;
-    lv_indev_drv_init(&indev_drv);
-    indev_drv.type = LV_INDEV_TYPE_POINTER;
-    indev_drv.read_cb = touch_driver_read;
-    lv_indev_drv_register(&indev_drv);
-
     dm.mutex = xSemaphoreCreateMutex();
     if (dm.mutex == NULL) {
         printf("Failed to create mutex\n");
         return;
     }
 
-    input_queue = xQueueCreate(10, sizeof(int));
+    input_queue = xQueueCreate(10, sizeof(InputEvent));
     if (input_queue == NULL) {
         printf("Failed to create input queue\n");
         return;
@@ -250,7 +277,7 @@ void display_manager_init(void) {
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
     xTaskCreate(&input_processing_task, "InputProcessing", 4096, NULL, INPUT_PROCESSING_TASK_PRIORITY, NULL);
-    xTaskCreate(&hardware_input_task, "RawInput", 1024, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
+    xTaskCreate(&hardware_input_task, "RawInput", 4096, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
 }
 
 bool display_manager_register_view(View *view) {
@@ -284,7 +311,7 @@ void display_manager_switch_view(View *view) {
             dm.current_view = view;
 
             if (view->get_hardwareinput_callback) {
-                view->get_hardwareinput_callback(&dm.current_view->hardwareinput_callback);
+                view->input_callback(&dm.current_view->input_callback);
             }
 
             view->create();
@@ -321,22 +348,71 @@ void display_manager_fill_screen(lv_color_t color)
     lv_obj_add_style(lv_scr_act(), &style, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-void hardware_input_task(void *pvParameters) {
+void delete_circle_callback(lv_timer_t *timer) {
+    lv_obj_t *circle = (lv_obj_t *)timer->user_data;  // Access the user_data directly
+    lv_obj_del(circle);  // Delete the circle object
+    lv_timer_del(timer); // Delete the timer to avoid memory leaks
+}
 
+void hardware_input_task(void *pvParameters) {
     const TickType_t tick_interval = pdMS_TO_TICKS(10);
 
+    lv_indev_drv_t touch_driver;
+    lv_indev_data_t touch_data;
+    uint16_t calData[5] = { 339, 3470, 237, 3438, 2 };
+    bool touch_active = false;
+    int screen_width = LV_HOR_RES;
+    int screen_height = LV_VER_RES;
+
     while (1) {
-    #ifdef USE_JOYSTICK
-        for (int i = 0; i < 5; i++) {
-            if (joysticks[i].pin >= 0) {
-                if (joystick_just_pressed(&joysticks[i])) {
-                    if (xQueueSend(input_queue, &i, pdMS_TO_TICKS(10)) != pdTRUE) {
-                        printf("Failed to send input to queue\n");
+        #ifdef USE_JOYSTICK
+            for (int i = 0; i < 5; i++) {
+                if (joysticks[i].pin >= 0) {
+                    if (joystick_just_pressed(&joysticks[i])) {
+                        InputEvent event;
+                        event.type = INPUT_TYPE_JOYSTICK;
+                        event.data.joystick_index = i;
+
+                        if (xQueueSend(input_queue, &event, pdMS_TO_TICKS(10)) != pdTRUE) {
+                            printf("Failed to send joystick input to queue\n");
+                        }
                     }
                 }
             }
-        }
-    #endif
+        #endif
+
+        #ifdef USE_TOUCHSCREEN
+            touch_driver_read(&touch_driver, &touch_data);
+
+            if (touch_data.state == LV_INDEV_STATE_PR && !touch_active) {
+                touch_active = true;
+
+                InputEvent event;
+                event.type = INPUT_TYPE_TOUCH;
+                event.data.touch_data.point.x = touch_data.point.x;
+                event.data.touch_data.point.y = touch_data.point.y;
+                event.data.touch_data.state = touch_data.state;
+
+                if (xQueueSend(input_queue, &event, pdMS_TO_TICKS(10)) != pdTRUE) {
+                    printf("Failed to send touch input to queue\n");
+                }
+
+                
+                lv_obj_t *circle = lv_obj_create(lv_scr_act()); 
+                lv_obj_set_size(circle, 10, 10);
+                lv_obj_set_style_bg_color(circle, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);  // Set the circle color to red
+                lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, LV_PART_MAIN);  // Make the object circular
+                lv_obj_align_to(circle, lv_scr_act(), LV_ALIGN_TOP_LEFT, touch_data.point.x - 5, touch_data.point.y - 5);  // Position the circle at the touch point
+
+                // Set a timer to delete the circle after 500 ms
+                lv_timer_t *timer = lv_timer_create(delete_circle_callback, 500, circle);
+                timer->user_data = circle;  // Assign the circle object to the timer's user data
+            }
+            else if (touch_data.state == LV_INDEV_STATE_REL && touch_active) {
+                touch_active = false;
+            }
+        #endif
+
         vTaskDelay(tick_interval);
     }
 
@@ -345,37 +421,32 @@ void hardware_input_task(void *pvParameters) {
 
 
 void input_processing_task(void *pvParameters) {
-    int button;
-    while (1) {
-        
-        if (xQueueReceive(input_queue, &button,  pdMS_TO_TICKS(10)) == pdTRUE) {
-            
-            if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
-                
-                View *current = dm.current_view;
-                void (*callback)(int) = NULL;
-                const char* view_name = "NULL";
+    InputEvent event;
 
+    while (1) {
+        if (xQueueReceive(input_queue, &event, pdMS_TO_TICKS(10)) == pdTRUE) {
+            if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
+                View *current = dm.current_view;
+                void (*input_callback)(InputEvent*) = NULL;
+                const char* view_name = "NULL";
 
                 if (current) {
                     view_name = current->name;
-                    callback = current->hardwareinput_callback;
+                    input_callback = current->input_callback;
                 } else {
                     printf("[WARNING] Current view is NULL in input_processing_task\n");
                 }
 
                 xSemaphoreGive(dm.mutex);
 
+                printf("[INFO] Input event type: %d, Current view: %s\n", event.type, view_name);
 
-                printf("[INFO] Button pressed: %d, Current view: %s\n", button, view_name);
-
-                if (callback) {
-                    callback(button);
+                if (input_callback) {
+                    input_callback(&event);
                 }
-            } 
+            }
         }
     }
-
 
     vTaskDelete(NULL);
 }

@@ -205,14 +205,36 @@ static void select_menu_item(int index) {
     }
 }
 
-void handle_hardware_button_press_options(int ButtonPressed) {
-    if (ButtonPressed == 2) {
-        select_menu_item(selected_item_index - 1);
-    } else if (ButtonPressed == 4) {
-        select_menu_item(selected_item_index + 1);
-    } else if (ButtonPressed == 1) {
-        const char *selected_option = (const char *)lv_label_get_text(lv_obj_get_child(lv_obj_get_child(menu_container, selected_item_index), 0));
-        option_event_cb(selected_option);
+void handle_hardware_button_press_options(InputEvent *event) {
+    if (event->type == INPUT_TYPE_TOUCH) {
+        lv_indev_data_t *data = &event->data.touch_data;
+
+        int screen_height = LV_VER_RES;
+        int third_height = screen_height / 3;
+
+        if (data->point.y < third_height) {
+            select_menu_item(selected_item_index - 1);
+        } else if (data->point.y > 2 * third_height) {
+            select_menu_item(selected_item_index + 1);
+        } else {
+            const char *selected_option = (const char *)lv_label_get_text(
+                lv_obj_get_child(lv_obj_get_child(menu_container, selected_item_index), 0)
+            );
+            option_event_cb(selected_option);
+        }
+    } else if (event->type == INPUT_TYPE_JOYSTICK) {
+        int button = event->data.joystick_index;
+
+        if (button == 2) {
+            select_menu_item(selected_item_index - 1);
+        } else if (button == 4) {
+            select_menu_item(selected_item_index + 1);
+        } else if (button == 1) {
+            const char *selected_option = (const char *)lv_label_get_text(
+                lv_obj_get_child(lv_obj_get_child(menu_container, selected_item_index), 0)
+            );
+            option_event_cb(selected_option);
+        }
     }
 }
 
@@ -385,14 +407,14 @@ void options_menu_destroy() {
 }
 
 void get_options_menu_callback(void **callback) {
-    *callback = options_menu_view.hardwareinput_callback;
+    *callback = options_menu_view.input_callback;
 }
 
 View options_menu_view = {
     .root = NULL,
     .create = options_menu_create,
     .destroy = options_menu_destroy,
-    .hardwareinput_callback = handle_hardware_button_press_options,
+    .input_callback = handle_hardware_button_press_options,
     .name = "Options Screen",
     .get_hardwareinput_callback = get_options_menu_callback
 };

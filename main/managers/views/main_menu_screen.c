@@ -23,35 +23,96 @@ static menu_item_t menu_items[] = {
 static int num_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
 /**
- * @brief Callback function for menu item click events.
+ * @brief Combined handler for menu item events using either touchscreen or joystick input.
+ * @param event The input event data (either touch data or button press index).
  */
-#ifdef USE_TOUCHSCREEN
-static void menu_item_event_handler(lv_event_t *e) {
-    lv_obj_t *menu_item = lv_event_get_target(e);
-    int item_index = (int)lv_obj_get_user_data(menu_item);
+static void menu_item_event_handler(InputEvent *event) {
+    if (event->type == INPUT_TYPE_TOUCH) {
+        lv_indev_data_t *data = &event->data.touch_data;
+        int touched_item_index = -1;
 
-    printf("Called\n");
+        printf("Touch detected at X: %d, Y: %d\n", data->point.x, data->point.y);
+        
+        for (int i = 0; i < num_items; i++) {
+            lv_obj_t *menu_item = (lv_obj_t *)lv_obj_get_child(menu_container, i);
+            lv_area_t item_area;
+            lv_obj_get_coords(menu_item, &item_area);
 
-    // Handle each item index differently
+
+            printf("Menu item %d area: x1=%d, y1=%d, x2=%d, y2=%d\n", i, item_area.x1, item_area.y1, item_area.x2, item_area.y2);
+
+            
+            if (data->point.x >= item_area.x1 && data->point.x <= item_area.x2 &&
+                data->point.y >= item_area.y1 && data->point.y <= item_area.y2) {
+                touched_item_index = i;
+                break;
+            }
+        }
+
+
+        if (touched_item_index >= 0) {
+            printf("Touch input detected on menu item: %d\n", touched_item_index);
+            handle_menu_item_selection(touched_item_index);
+        } else {
+            printf("Touch input detected but no menu item found at touch coordinates. X: %d, Y: %d\n", data->point.x, data->point.y);
+        }
+
+    } else if (event->type == INPUT_TYPE_JOYSTICK) {
+        int button = event->data.joystick_index;
+        handle_hardware_button_press(button);
+    }
+}
+
+/**
+ * @brief Handles the selection of menu items.
+ * @param item_index The index of the selected menu item.
+ */
+static void handle_menu_item_selection(int item_index) {
     switch (item_index) {
         case 0:
             printf("Wi-Fi selected\n");
+            SelectedMenuType = OT_Wifi;
+            display_manager_switch_view(&options_menu_view);
             break;
         case 1:
             printf("BLE selected\n");
+            SelectedMenuType = OT_Bluetooth;
+            display_manager_switch_view(&options_menu_view);
             break;
         case 2:
             printf("GPS selected\n");
+            SelectedMenuType = OT_GPS;
+            display_manager_switch_view(&options_menu_view);
             break;
         case 3:
             printf("Settings selected\n");
+            SelectedMenuType = OT_Settings;
+            display_manager_switch_view(&options_menu_view);
+            break;
+        case 4:
+            printf("Rave selected\n");
+            display_manager_switch_view(&music_visualizer_view);
             break;
         default:
             printf("Unknown menu item selected\n");
             break;
     }
 }
-#else
+
+/**
+ * @brief Handles hardware button presses for menu navigation.
+ * @param ButtonPressed The index of the pressed button.
+ */
+void handle_hardware_button_press(int ButtonPressed) {
+    if (ButtonPressed == 0) {
+        select_menu_item(selected_item_index - 1);
+    } else if (ButtonPressed == 3) {
+        select_menu_item(selected_item_index + 1);
+    } else if (ButtonPressed == 1) {
+        handle_menu_item_selection(selected_item_index);
+    }
+}
+
 /**
  * @brief Updates the style of the selected and unselected menu items.
  */
@@ -69,7 +130,8 @@ static void update_menu_item_styles(void) {
 }
 
 /**
- * @brief Handles selection of menu items with hardware buttons.
+ * @brief Handles the selection of menu items with hardware buttons.
+ * @param index The index of the menu item to select.
  */
 static void select_menu_item(int index) {
     if (index < 0) index = num_items - 1;
@@ -77,48 +139,6 @@ static void select_menu_item(int index) {
 
     selected_item_index = index;
     update_menu_item_styles();
-}
-#endif
-
-
-void handle_hardware_button_press(int ButtonPressed) {
-#ifndef USE_TOUCHSCREEN
-    if (ButtonPressed == 0) {
-        select_menu_item(selected_item_index - 1);
-    } else if (ButtonPressed == 3) {
-        select_menu_item(selected_item_index + 1);
-    } else if (ButtonPressed == 1) {
-        switch (selected_item_index) {
-            case 0:
-                printf("Settings selected\n");
-                SelectedMenuType = OT_Settings;
-                display_manager_switch_view(&options_menu_view);
-                break;
-            case 1:
-                printf("GPS selected\n");
-                SelectedMenuType = OT_GPS;
-                display_manager_switch_view(&options_menu_view);
-                break;
-            case 2:
-                printf("BLE selected\n");
-                SelectedMenuType = OT_Bluetooth;
-                display_manager_switch_view(&options_menu_view);
-                break;
-            case 3:
-                printf("Wi-Fi selected\n");
-                SelectedMenuType = OT_Wifi;
-                display_manager_switch_view(&options_menu_view);
-                break;
-            case 4: 
-                printf("Rave Selected\n");
-                display_manager_switch_view(&music_visualizer_view);
-                break;
-            default:
-                printf("Unknown menu item selected\n");
-                break;
-        }
-    }
-#endif
 }
 
 /**
@@ -229,7 +249,7 @@ void main_menu_destroy(void) {
 }
 
 void get_main_menu_callback(void **callback) {
-    *callback = main_menu_view.hardwareinput_callback;
+    *callback = main_menu_view.input_callback;
 }
 
 /**
@@ -239,7 +259,7 @@ View main_menu_view = {
     .root = NULL,
     .create = main_menu_create,
     .destroy = main_menu_destroy,
-    .hardwareinput_callback = handle_hardware_button_press,
+    .input_callback = menu_item_event_handler,
     .name = "Main Menu",
-    .get_hardwareinput_callback = get_main_menu_callback
+    .get_hardwareinput_callback = get_main_menu_callback,
 };
