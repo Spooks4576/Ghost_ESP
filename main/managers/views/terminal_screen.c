@@ -31,7 +31,7 @@ void terminal_view_create(void) {
     lv_obj_set_style_border_width(terminal_textarea, 0, 0);
 
     
-    //default_log_vprintf = esp_log_set_vprintf(custom_log_vprintf);
+    //default_log_vprintf = esp_log_set_vprintf(custom_log_vprintf); // This is very slow might have to find a alternative
 
     
     display_manager_add_status_bar("Terminal");
