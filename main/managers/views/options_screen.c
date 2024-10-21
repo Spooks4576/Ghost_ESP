@@ -101,6 +101,7 @@ void options_menu_create() {
     lv_obj_set_size(list, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_pad_all(list, screen_width < 240 ? 2 : 4, 0);
     lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_bg_color(list, lv_color_black(), 0);
 
     menu_container = list;
 
@@ -183,8 +184,6 @@ static void select_menu_item(int index) {
 
         lv_obj_set_style_bg_color(current_item, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(current_item, LV_OPA_COVER, LV_PART_MAIN);
-        lv_obj_set_style_border_color(current_item, lv_color_make(255, 255, 0), LV_PART_MAIN);
-        lv_obj_set_style_border_width(current_item, 4, LV_PART_MAIN);
 
         printf("Scrolling to view item at index %d\n", selected_item_index);
         lv_obj_scroll_to_view(current_item, LV_ANIM_OFF);

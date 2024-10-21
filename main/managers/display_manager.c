@@ -212,39 +212,6 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     update_status_bar(true, HasBluetooth, sd_card_exists("/mnt/ghostesp"), 1000);
 }
 
-
-void apply_calibration_to_point(lv_point_t *point, uint16_t *calData, int screen_width, int screen_height) {
-    uint16_t x_min = calData[0];
-    uint16_t x_max = calData[1];
-    uint16_t y_min = calData[2];
-    uint16_t y_max = calData[3];
-    uint8_t invert_xy = calData[4];
-
-    int32_t x = point->x;
-    int32_t y = point->y;
-
-    
-    x = (x - x_min) * (screen_width - 1) / (x_max - x_min);
-    y = (y - y_min) * (screen_height - 1) / (y_max - y_min);
-
-    
-    if (invert_xy & 0x01) {
-        int32_t temp = x;
-        x = y;
-        y = temp;
-    }
-    if (invert_xy & 0x02) {
-        x = screen_width - 1 - x;
-    }
-    if (invert_xy & 0x04) {
-        y = screen_height - 1 - y;
-    }
-
-    
-    point->x = x;
-    point->y = y;
-}
-
 void display_manager_init(void) {
     lv_init();
     lvgl_driver_init();
