@@ -67,43 +67,6 @@ void settings_set_defaults(FSettings* settings) {
     strcpy(settings->printer_text, "Default Text");
     settings->printer_font_size = 12;
     settings->printer_alignment = ALIGNMENT_CM;
-    settings->printer_connected = false;
-
-    // Set the default board type and apply pin defaults
-    settings->board_type = FLIPPER_DEV_BOARD;
-    settings_apply_board_pin_config(settings);
-}
-
-void settings_apply_board_pin_config(FSettings* settings) {
-    if (settings->board_type == CUSTOM) {
-        // Use custom pin configuration, do not override with predefined values
-        return;
-    }
-    settings_set_board_pin_defaults(settings, settings->board_type);
-}
-
-static void settings_set_board_pin_defaults(FSettings* settings, SupportedBoard board) {
-    switch (board) {
-        case FLIPPER_DEV_BOARD: // Flipper Dev Board does not have neopixel sd pins to be added when i figure them out 
-            //settings->custom_pin_config = (PinConfig){.neopixel_pin = 5, .sd_card_spi_miso = 19, .sd_card_spi_mosi = 23, .sd_card_spi_clk = 18, .sd_card_spi_cs = 14, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 17, .gps_rx_pin = 16};
-            break;
-        case AWOK_DUAL_MINI:
-            settings->custom_pin_config = (PinConfig){.neopixel_pin = 6, .sd_card_spi_miso = 22, .sd_card_spi_mosi = 21, .sd_card_spi_clk = 27, .sd_card_spi_cs = 13, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 15, .gps_rx_pin = 14};
-            break;
-        case AWOK_DUAL:
-            settings->custom_pin_config = (PinConfig){.neopixel_pin = 7, .sd_card_spi_miso = 25, .sd_card_spi_mosi = 26, .sd_card_spi_clk = 33, .sd_card_spi_cs = 12, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 12, .gps_rx_pin = 13};
-            break;
-        case MARAUDER_V6:
-            settings->custom_pin_config = (PinConfig){.neopixel_pin = 8, .sd_card_spi_miso = 32, .sd_card_spi_mosi = 33, .sd_card_spi_clk = 35, .sd_card_spi_cs = 11, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 10, .gps_rx_pin = 9};
-            break;
-        case CARDPUTER:
-            settings->custom_pin_config = (PinConfig){.neopixel_pin = 9, .sd_card_spi_miso = 34, .sd_card_spi_mosi = 36, .sd_card_spi_clk = 37, .sd_card_spi_cs = 10, .sd_card_mmc_cmd = -1, .sd_card_mmc_clk = -1, .sd_card_mmc_d0 = -1, .gps_tx_pin = 11, .gps_rx_pin = 12};
-            break;
-        case CUSTOM:
-        default:
-            // Custom board should have pins set manually
-            break;
-    }
 }
 
 void settings_load(FSettings* settings) {
@@ -212,24 +175,6 @@ void settings_load(FSettings* settings) {
         settings->printer_alignment = (PrinterAlignment)value_u8;
     }
 
-    err = nvs_get_u8(nvsHandle, NVS_PRINTER_CONNECTED_KEY, &value_u8);
-    if (err == ESP_OK) {
-        settings->printer_connected = value_u8;
-    }
-
-    // Load Board Type
-    err = nvs_get_u8(nvsHandle, NVS_BOARD_TYPE_KEY, &value_u8);
-    if (err == ESP_OK) {
-        settings->board_type = (SupportedBoard)value_u8;
-    }
-
-    // Load Custom Pin Configuration
-    str_size = sizeof(PinConfig);
-    err = nvs_get_blob(nvsHandle, NVS_CUSTOM_PIN_CONFIG_KEY, &settings->custom_pin_config, &str_size);
-    if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load custom pin configuration");
-    }
-
     ESP_LOGI(S_TAG, "Settings loaded from NVS.");
 }
 
@@ -322,23 +267,6 @@ void settings_save(const FSettings* settings) {
     err = nvs_set_u8(nvsHandle, NVS_PRINTER_ALIGNMENT_KEY, (uint8_t)settings->printer_alignment);
     if (err != ESP_OK) {
         ESP_LOGE(S_TAG, "Failed to save Printer Alignment");
-    }
-
-    err = nvs_set_u8(nvsHandle, NVS_PRINTER_CONNECTED_KEY, settings->printer_connected);
-    if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Printer Connected Status");
-    }
-
-    // Save Board Type
-    err = nvs_set_u8(nvsHandle, NVS_BOARD_TYPE_KEY, (uint8_t)settings->board_type);
-    if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Board Type");
-    }
-
-    // Save Custom Pin Configuration
-    err = nvs_set_blob(nvsHandle, NVS_CUSTOM_PIN_CONFIG_KEY, &settings->custom_pin_config, sizeof(PinConfig));
-    if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save custom pin configuration");
     }
 
     // Commit all changes
@@ -488,30 +416,4 @@ void settings_set_printer_alignment(FSettings* settings, PrinterAlignment alignm
 
 PrinterAlignment settings_get_printer_alignment(const FSettings* settings) {
     return settings->printer_alignment;
-}
-
-void settings_set_printer_connected(FSettings* settings, bool connected) {
-    settings->printer_connected = connected;
-}
-
-bool settings_get_printer_connected(const FSettings* settings) {
-    return settings->printer_connected;
-}
-
-// Getters and Setters for Pin Configurations
-void settings_set_board_type(FSettings* settings, SupportedBoard board) {
-    settings->board_type = board;
-    settings_apply_board_pin_config(settings);
-}
-
-SupportedBoard settings_get_board_type(const FSettings* settings) {
-    return settings->board_type;
-}
-
-void settings_set_custom_pin_config(FSettings* settings, PinConfig pin_config) {
-    settings->custom_pin_config = pin_config;
-}
-
-PinConfig settings_get_custom_pin_config(const FSettings* settings) {
-    return settings->custom_pin_config;
 }

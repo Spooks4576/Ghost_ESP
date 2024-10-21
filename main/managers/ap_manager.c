@@ -635,69 +635,6 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_printer_connected(settings, printer_connected->valueint != 0);
     }
 
-    // Pin Configuration settings
-    cJSON* board_type = cJSON_GetObjectItem(root, "board_type");
-    if (board_type) {
-        settings_set_board_type(settings, (SupportedBoard)board_type->valueint);
-    }
-
-    cJSON* custom_pin_config = cJSON_GetObjectItem(root, "custom_pin_config");
-    if (custom_pin_config && settings->board_type == CUSTOM) {
-        PinConfig pin_config;
-
-        cJSON* neopixel_pin = cJSON_GetObjectItem(custom_pin_config, "neopixel_pin");
-        if (neopixel_pin) {
-            pin_config.neopixel_pin = neopixel_pin->valueint;
-        }
-
-        cJSON* sd_card_spi_miso = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_miso");
-        if (sd_card_spi_miso) {
-            pin_config.sd_card_spi_miso = sd_card_spi_miso->valueint;
-        }
-
-        cJSON* sd_card_spi_mosi = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_mosi");
-        if (sd_card_spi_mosi) {
-            pin_config.sd_card_spi_mosi = sd_card_spi_mosi->valueint;
-        }
-
-        cJSON* sd_card_spi_clk = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_clk");
-        if (sd_card_spi_clk) {
-            pin_config.sd_card_spi_clk = sd_card_spi_clk->valueint;
-        }
-
-        cJSON* sd_card_spi_cs = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_cs");
-        if (sd_card_spi_cs) {
-            pin_config.sd_card_spi_cs = sd_card_spi_cs->valueint;
-        }
-
-        cJSON* sd_card_mmc_cmd = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_cmd");
-        if (sd_card_mmc_cmd) {
-            pin_config.sd_card_mmc_cmd = sd_card_mmc_cmd->valueint;
-        }
-
-        cJSON* sd_card_mmc_clk = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_clk");
-        if (sd_card_mmc_clk) {
-            pin_config.sd_card_mmc_clk = sd_card_mmc_clk->valueint;
-        }
-
-        cJSON* sd_card_mmc_d0 = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_d0");
-        if (sd_card_mmc_d0) {
-            pin_config.sd_card_mmc_d0 = sd_card_mmc_d0->valueint;
-        }
-
-        cJSON* gps_tx_pin = cJSON_GetObjectItem(custom_pin_config, "gps_tx_pin");
-        if (gps_tx_pin) {
-            pin_config.gps_tx_pin = gps_tx_pin->valueint;
-        }
-
-        cJSON* gps_rx_pin = cJSON_GetObjectItem(custom_pin_config, "gps_rx_pin");
-        if (gps_rx_pin) {
-            pin_config.gps_rx_pin = gps_rx_pin->valueint;
-        }
-
-        settings_set_custom_pin_config(settings, pin_config);
-    }
-
     settings_save(settings);
 
     httpd_resp_set_type(req, "application/json");

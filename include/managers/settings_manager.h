@@ -69,11 +69,6 @@ typedef struct {
     char printer_text[257];       // Last printed text (max 256 characters + null terminator)
     uint8_t printer_font_size;    // Font size for printing
     PrinterAlignment printer_alignment; // Text alignment
-    bool printer_connected;       // Whether the printer is connected or not
-
-    // Pin settings
-    SupportedBoard board_type;    // Type of the selected board
-    PinConfig custom_pin_config;  // Custom pin configuration for "Custom" board type
 } FSettings;
 
 // Function declarations
@@ -133,19 +128,6 @@ uint8_t settings_get_printer_font_size(const FSettings* settings);
 
 void settings_set_printer_alignment(FSettings* settings, PrinterAlignment alignment);
 PrinterAlignment settings_get_printer_alignment(const FSettings* settings);
-
-void settings_set_printer_connected(FSettings* settings, bool connected);
-bool settings_get_printer_connected(const FSettings* settings);
-
-// Getters and Setters for Pin Configurations
-void settings_set_board_type(FSettings* settings, SupportedBoard board);
-SupportedBoard settings_get_board_type(const FSettings* settings);
-
-void settings_set_custom_pin_config(FSettings* settings, PinConfig pin_config);
-PinConfig settings_get_custom_pin_config(const FSettings* settings);
-
-void settings_apply_board_pin_config(FSettings* settings);
-static void settings_set_board_pin_defaults(FSettings* settings, SupportedBoard board);
 
 static nvs_handle_t nvsHandle;
 
