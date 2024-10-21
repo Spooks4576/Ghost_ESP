@@ -795,7 +795,7 @@ void handle_help(int argc, char **argv) {
 
     printf("powerprinter\n");
     printf("    Description: Print Custom Text to a Printer on your LAN (Requires You to Run Connect First)\n");
-    printf("    Usage: connect <Printer IP> <Text> <FontSize> <alignment>\n");
+    printf("    Usage: powerprinter <Printer IP> <Text> <FontSize> <alignment>\n");
     printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
 }
 

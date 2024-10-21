@@ -668,7 +668,6 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
 static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     FSettings* settings = &G_Settings;
 
-    
     cJSON* root = cJSON_CreateObject();
     if (!root) {
         ESP_LOGE(TAG, "Failed to create JSON object");
@@ -683,7 +682,7 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     cJSON_AddNumberToObject(root, "rgb_speed", settings_get_rgb_speed(settings));
     cJSON_AddNumberToObject(root, "channel_delay", settings_get_channel_delay(settings));
 
-    // Evil Portal settings
+    
     cJSON_AddStringToObject(root, "portal_url", settings_get_portal_url(settings));
     cJSON_AddStringToObject(root, "portal_ssid", settings_get_portal_ssid(settings));
     cJSON_AddStringToObject(root, "portal_password", settings_get_portal_password(settings));
@@ -691,12 +690,24 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     cJSON_AddStringToObject(root, "portal_domain", settings_get_portal_domain(settings));
     cJSON_AddBoolToObject(root, "portal_offline_mode", settings_get_portal_offline_mode(settings));
 
-    // Power Printer settings
+    
     cJSON_AddStringToObject(root, "printer_ip", settings_get_printer_ip(settings));
     cJSON_AddStringToObject(root, "printer_text", settings_get_printer_text(settings));
     cJSON_AddNumberToObject(root, "printer_font_size", settings_get_printer_font_size(settings));
     cJSON_AddNumberToObject(root, "printer_alignment", settings_get_printer_alignment(settings));
 
+    
+    esp_netif_ip_info_t ip_info;
+    esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (netif && esp_netif_get_ip_info(netif, &ip_info) == ESP_OK) {
+        if (ip_info.ip.addr != 0) {
+            char ip_str[16];
+            esp_ip4addr_ntoa(&ip_info.ip, ip_str, sizeof(ip_str));
+            cJSON_AddStringToObject(root, "station_ip", ip_str);
+        }
+    }
+
+    
     const char* json_response = cJSON_Print(root);
     if (!json_response) {
         cJSON_Delete(root);
@@ -704,9 +715,11 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
         return ESP_FAIL;
     }
 
+    
     httpd_resp_set_type(req, "application/json");
     httpd_resp_sendstr(req, json_response);
 
+    
     cJSON_Delete(root);
     free((void*)json_response);
 
