@@ -31,6 +31,7 @@ static esp_err_t api_logs_handler(httpd_req_t* req);
 static esp_err_t api_clear_logs_handler(httpd_req_t* req);
 static esp_err_t api_settings_handler(httpd_req_t* req);
 static esp_err_t api_command_handler(httpd_req_t *req);
+static esp_err_t api_settings_get_handler(httpd_req_t* req);
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data);
@@ -200,6 +201,13 @@ esp_err_t ap_manager_init(void) {
         .user_ctx  = NULL
     };
 
+    httpd_uri_t uri_get_settings = {
+        .uri       = "/api/settings",
+        .method    = HTTP_GET,
+        .handler   = api_settings_get_handler,
+        .user_ctx  = NULL
+    };
+
     httpd_uri_t uri_post_command = {
         .uri       = "/api/command",
         .method    = HTTP_POST,
@@ -208,6 +216,11 @@ esp_err_t ap_manager_init(void) {
     };
 
     ret = httpd_register_uri_handler(server, &uri_post_logs);
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+
+     ret = httpd_register_uri_handler(server, &uri_get_settings);
         if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Error registering URI /");
     }
@@ -342,6 +355,13 @@ esp_err_t ap_manager_start_services() {
         .user_ctx  = NULL
     };
 
+    httpd_uri_t uri_get_settings = {
+        .uri       = "/api/settings",
+        .method    = HTTP_GET,
+        .handler   = api_settings_get_handler,
+        .user_ctx  = NULL
+    };
+
     httpd_uri_t uri_post_command = {
         .uri       = "/api/command",
         .method    = HTTP_POST,
@@ -354,6 +374,10 @@ esp_err_t ap_manager_start_services() {
         ESP_LOGE(TAG, "Error registering URI /");
     }
 
+    ret = httpd_register_uri_handler(server, &uri_get_settings);
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
 
     ret = httpd_register_uri_handler(server, &uri_post_settings);
 
@@ -639,6 +663,56 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
 
     return ESP_OK;
 }
+
+
+static esp_err_t api_settings_get_handler(httpd_req_t* req) {
+    FSettings* settings = &G_Settings;
+
+    
+    cJSON* root = cJSON_CreateObject();
+    if (!root) {
+        ESP_LOGE(TAG, "Failed to create JSON object");
+        return ESP_FAIL;
+    }
+
+    
+    cJSON_AddNumberToObject(root, "broadcast_speed", settings_get_broadcast_speed(settings));
+    cJSON_AddStringToObject(root, "ap_ssid", settings_get_ap_ssid(settings));
+    cJSON_AddStringToObject(root, "ap_password", settings_get_ap_password(settings));
+    cJSON_AddNumberToObject(root, "rgb_mode", settings_get_rgb_mode(settings));
+    cJSON_AddNumberToObject(root, "rgb_speed", settings_get_rgb_speed(settings));
+    cJSON_AddNumberToObject(root, "channel_delay", settings_get_channel_delay(settings));
+
+    // Evil Portal settings
+    cJSON_AddStringToObject(root, "portal_url", settings_get_portal_url(settings));
+    cJSON_AddStringToObject(root, "portal_ssid", settings_get_portal_ssid(settings));
+    cJSON_AddStringToObject(root, "portal_password", settings_get_portal_password(settings));
+    cJSON_AddStringToObject(root, "portal_ap_ssid", settings_get_portal_ap_ssid(settings));
+    cJSON_AddStringToObject(root, "portal_domain", settings_get_portal_domain(settings));
+    cJSON_AddBoolToObject(root, "portal_offline_mode", settings_get_portal_offline_mode(settings));
+
+    // Power Printer settings
+    cJSON_AddStringToObject(root, "printer_ip", settings_get_printer_ip(settings));
+    cJSON_AddStringToObject(root, "printer_text", settings_get_printer_text(settings));
+    cJSON_AddNumberToObject(root, "printer_font_size", settings_get_printer_font_size(settings));
+    cJSON_AddNumberToObject(root, "printer_alignment", settings_get_printer_alignment(settings));
+
+    const char* json_response = cJSON_Print(root);
+    if (!json_response) {
+        cJSON_Delete(root);
+        ESP_LOGE(TAG, "Failed to print JSON object");
+        return ESP_FAIL;
+    }
+
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_sendstr(req, json_response);
+
+    cJSON_Delete(root);
+    free((void*)json_response);
+
+    return ESP_OK;
+}
+
 
 // Event handler for Wi-Fi events
 static void event_handler(void* arg, esp_event_base_t event_base,
