@@ -270,14 +270,16 @@ void settings_save(const FSettings* settings) {
         ESP_LOGE(S_TAG, "Failed to save Printer Alignment");
     }
 
+    printf(" RGB MODE INDEX = %i\n", (int)settings_get_rgb_mode(&G_Settings));
 
-    if (settings->rgb_mode == 0)
+    if (settings_get_rgb_mode(&G_Settings) == 0)
     {
         if (rgb_effect_task_handle != NULL)
         {
-            vTaskDelete(&rgb_effect_task_handle);
+            vTaskDelete(rgb_effect_task_handle);
+            rgb_effect_task_handle = NULL;
         }
-        rgb_manager_set_color(&rgb_manager, 1, 0, 0, 0, false);
+        rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
     }
     else 
     {

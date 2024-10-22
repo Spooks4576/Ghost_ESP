@@ -441,7 +441,7 @@ void rgb_manager_rainbow_effect(RGBManager_t* rgb_manager, int delay_ms) {
                 uint8_t iblue = (uint8_t)(255 - blue);
                 rgb_manager_set_color(rgb_manager, i, ired, igreen, iblue, false);
             } else {
-                rgb_manager_set_color(rgb_manager, i, red, green, blue, false);
+                rgb_manager_set_color(rgb_manager, rgb_manager->num_leds == 1 ? 0 : i, red, green, blue, false);
             }
         }
 

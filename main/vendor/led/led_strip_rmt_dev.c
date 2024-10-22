@@ -35,7 +35,6 @@ typedef struct {
 
 static esp_err_t led_strip_rmt_set_pixel(led_strip_t *strip, uint32_t index, uint32_t red, uint32_t green, uint32_t blue) {
     led_strip_rmt_obj *rmt_strip = __containerof(strip, led_strip_rmt_obj, base);
-    ESP_RETURN_ON_FALSE(index < rmt_strip->strip_len, ESP_ERR_INVALID_ARG, TAG, "index out of maximum number of LEDs");
 
     uint32_t start = index * rmt_strip->bytes_per_pixel;
     uint8_t *pixel_buf = rmt_strip->pixel_buf + start;

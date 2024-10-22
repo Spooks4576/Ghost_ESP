@@ -587,9 +587,13 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_ap_password(settings, ap_password->valuestring);
     }
 
-    cJSON* rgb_mode = cJSON_GetObjectItem(root, "rgb_mode");
-    if (rgb_mode) {
-        settings_set_rgb_mode(settings, (RGBMode)rgb_mode->valueint);
+    cJSON* rgb_mode = cJSON_GetObjectItem(root, "rainbow_mode");
+    if (cJSON_IsBool(rgb_mode)) {
+        bool rgb_mode_value = cJSON_IsTrue(rgb_mode);
+         printf("Debug: Passed rgb_mode_value = %d to settings_set_rgb_mode()\n", rgb_mode_value);
+        settings_set_rgb_mode(settings, (RGBMode)rgb_mode_value);
+    } else {
+        printf("Error: 'rgb_mode' is not a boolean.\n");
     }
 
     cJSON* rgb_speed = cJSON_GetObjectItem(root, "rgb_speed");
