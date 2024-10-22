@@ -77,11 +77,6 @@ rgb hsv2rgb(hsv HSV) {
         RGB = (rgb){.r = V, .g = P, .b = Q};
     }
 
-    // Apply a per-channel scaling factor to reduce white-ish colors
-    RGB.r = pow(RGB.r, 0.8);  // Reduce the contribution of each channel slightly
-    RGB.g = pow(RGB.g, 0.8);
-    RGB.b = pow(RGB.b, 0.8);
-
     return RGB;
 }
 
@@ -427,50 +422,35 @@ void rgb_manager_rainbow_effect(RGBManager_t* rgb_manager, int delay_ms) {
 
     while (1) {
         for (int i = 0; i < rgb_manager->num_leds; i++) {
-RGBSTART:
             uint8_t red, green, blue;
 
-           
             double hue_offset = fmod(hue + i * (360.0 / rgb_manager->num_leds), 360.0);
 
-           
             hsv hsv_color = { .h = hue_offset, .s = 1.0, .v = 1.0 };
-            hsv_color.v *= 0.5;
             rgb rgb_color = hsv2rgb(hsv_color);
 
-          
-            red = (uint8_t)(rgb_color.r * 180);
-            green = (uint8_t)(rgb_color.g * 180);
-            blue = (uint8_t)(rgb_color.b * 180);
+            red = (uint8_t)(rgb_color.r * 255);
+            green = (uint8_t)(rgb_color.g * 255);
+            blue = (uint8_t)(rgb_color.b * 255);
 
-            
             clamp_rgb(&red, &green, &blue);
 
-            if (rgb_manager->is_separate_pins)
-            {
-                uint8_t ired = (uint8_t)(180 - (rgb_color.r * 180));
-                uint8_t igreen = (uint8_t)(180 - (rgb_color.g * 180));
-                uint8_t iblue = (uint8_t)(180 - (rgb_color.b * 180));
+            if (rgb_manager->is_separate_pins) {
+                uint8_t ired = (uint8_t)(255 - red);
+                uint8_t igreen = (uint8_t)(255 - green);
+                uint8_t iblue = (uint8_t)(255 - blue);
                 rgb_manager_set_color(rgb_manager, i, ired, igreen, iblue, false);
-                hue = fmod(hue + 1, 360.0);
-
-        
-                vTaskDelay(pdMS_TO_TICKS(delay_ms));
-                goto RGBSTART;
+            } else {
+                rgb_manager_set_color(rgb_manager, i, red, green, blue, false);
             }
-
-            rgb_manager_set_color(rgb_manager, i, red, green, blue, false);
         }
 
-        if (!rgb_manager->is_separate_pins)
-        {
+        if (!rgb_manager->is_separate_pins) {
             led_strip_refresh(rgb_manager->strip);
         }
 
-        
         hue = fmod(hue + 1, 360.0);
 
-        
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 }

@@ -32,7 +32,7 @@ QueueHandle_tt input_queue;
 
 #define HARDWARE_INPUT_TASK_PRIORITY    (4)
 #define INPUT_PROCESSING_TASK_PRIORITY  (4)
-#define RENDERING_TASK_PRIORITY         (5)
+#define RENDERING_TASK_PRIORITY         (4)
 
 typedef struct {
     lv_obj_t *root;

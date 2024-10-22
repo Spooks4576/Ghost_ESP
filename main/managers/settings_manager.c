@@ -1,4 +1,5 @@
 #include "managers/settings_manager.h"
+#include "managers/rgb_manager.h"
 #include <string.h>
 #include <esp_log.h>
 
@@ -47,7 +48,7 @@ void settings_deinit(void) {
 }
 
 void settings_set_defaults(FSettings* settings) {
-    settings->rgb_mode = RGB_MODE_STEALTH;
+    settings->rgb_mode = RGB_MODE_NORMAL;
     settings->channel_delay = 1.0f;
     settings->broadcast_speed = 500;
     strcpy(settings->ap_ssid, "GhostNet");
@@ -267,6 +268,23 @@ void settings_save(const FSettings* settings) {
     err = nvs_set_u8(nvsHandle, NVS_PRINTER_ALIGNMENT_KEY, (uint8_t)settings->printer_alignment);
     if (err != ESP_OK) {
         ESP_LOGE(S_TAG, "Failed to save Printer Alignment");
+    }
+
+
+    if (settings->rgb_mode == 0)
+    {
+        if (rgb_effect_task_handle != NULL)
+        {
+            vTaskDelete(&rgb_effect_task_handle);
+        }
+        rgb_manager_set_color(&rgb_manager, 1, 0, 0, 0, false);
+    }
+    else 
+    {
+        if (rgb_effect_task_handle == NULL)
+        {
+            xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
+        }
     }
 
     // Commit all changes

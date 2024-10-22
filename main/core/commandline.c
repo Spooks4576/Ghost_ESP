@@ -276,6 +276,8 @@ void handle_wifi_connection(int argc, char** argv) {
 
 #ifdef WITH_SCREEN
     xTaskCreate(screen_music_visualizer_task, "udp_server", 4096, NULL, 5, NULL);
+#else
+    xTaskCreate(animate_led_based_on_amplitude, "udp_server", 4096, NULL, 5, NULL);
 #endif
 }
 

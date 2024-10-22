@@ -16,6 +16,7 @@
 #include "esp_timer.h"
 #include <ctype.h>
 #include <stdio.h>
+#include <math.h>
 #include <dhcpserver/dhcpserver.h>
 #include "esp_http_client.h"
 #include "lwip/lwip_napt.h"
@@ -1248,6 +1249,108 @@ void screen_music_visualizer_task(void *pvParameters) {
     vTaskDelete(NULL);
 }
 
+void animate_led_based_on_amplitude(void *pvParameters)
+{
+    char rx_buffer[128];
+    char addr_str[128];
+    int addr_family = AF_INET;
+    int ip_protocol = IPPROTO_IP;
+    struct sockaddr_in dest_addr;
+
+    dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    dest_addr.sin_family = addr_family;
+    dest_addr.sin_port = htons(UDP_PORT);
+
+    int sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
+    if (sock < 0) {
+        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        return;
+    }
+    ESP_LOGI(TAG, "Socket created");
+
+    if (bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr)) < 0) {
+        ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+        close(sock);
+        return;
+    }
+    ESP_LOGI(TAG, "Socket bound, port %d", UDP_PORT);
+
+    float last_amplitude = 0.0f;
+    float smoothing_factor = 0.2f;
+    int color_change_counter = 0;
+    int hue = 0;
+
+    while (1) {
+        struct sockaddr_in source_addr;
+        socklen_t socklen = sizeof(source_addr);
+        int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, MSG_DONTWAIT,
+                           (struct sockaddr *)&source_addr, &socklen);
+
+        if (len > 0) {
+            rx_buffer[len] = '\0';
+            inet_ntoa_r(source_addr.sin_addr, addr_str, sizeof(addr_str) - 1);
+            ESP_LOGI(TAG, "Received %d bytes from %s: %s", len, addr_str, rx_buffer);
+
+            float amplitude = atof(rx_buffer);
+            amplitude = fmaxf(0.0f, fminf(amplitude, 1.0f)); // Clamp between 0.0 and 1.0
+
+            // Smooth amplitude to avoid sudden changes
+            amplitude = (smoothing_factor * amplitude) + ((1.0f - smoothing_factor) * last_amplitude);
+            last_amplitude = amplitude;
+
+            // Calculate brightness based on amplitude
+            uint8_t brightness = (uint8_t)(amplitude * 255);
+
+            // Update the color periodically
+            if (color_change_counter >= 50) { // Change color every 50 iterations
+                hue = (hue + 30) % 360; // Increment hue for a different color, wrap around at 360
+                color_change_counter = 0;
+            }
+            color_change_counter++;
+
+            // Convert hue to RGB (simple HSV to RGB conversion)
+            float h = hue / 60.0f;
+            float s = 1.0f;
+            float v = amplitude; // Use amplitude directly for brightness
+
+            int i = (int)h;
+            float f = h - i;
+            float p = v * (1 - s);
+            float q = v * (1 - s * f);
+            float t = v * (1 - s * (1 - f));
+
+            float r = 0.0f, g = 0.0f, b = 0.0f;
+            switch (i % 6) {
+                case 0: r = v; g = t; b = p; break;
+                case 1: r = q; g = v; b = p; break;
+                case 2: r = p; g = v; b = t; break;
+                case 3: r = p; g = q; b = v; break;
+                case 4: r = t; g = p; b = v; break;
+                case 5: r = v; g = p; b = q; break;
+            }
+
+            uint8_t red = (uint8_t)(r * 255);
+            uint8_t green = (uint8_t)(g * 255);
+            uint8_t blue = (uint8_t)(b * 255);
+
+            // Set the LED color with the calculated brightness and RGB values
+            esp_err_t ret = rgb_manager_set_color(&rgb_manager, 0, red, green, blue, true);
+            if (ret != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to set color");
+            }
+
+            vTaskDelay(10 / portTICK_PERIOD_MS); // Short delay for smooth updates
+        } else {
+            vTaskDelay(10 / portTICK_PERIOD_MS); // Prevent CPU overload when no data is received
+        }
+    }
+
+    if (sock != -1) {
+        ESP_LOGE(TAG, "Shutting down socket...");
+        shutdown(sock, 0);
+        close(sock);
+    }
+}
 
 void rgb_visualizer_server_task(void *pvParameters) {
     char rx_buffer[MAX_PAYLOAD];
