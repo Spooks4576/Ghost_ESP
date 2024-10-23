@@ -31,6 +31,7 @@ static esp_err_t api_logs_handler(httpd_req_t* req);
 static esp_err_t api_clear_logs_handler(httpd_req_t* req);
 static esp_err_t api_settings_handler(httpd_req_t* req);
 static esp_err_t api_command_handler(httpd_req_t *req);
+static esp_err_t api_settings_get_handler(httpd_req_t* req);
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                           int32_t event_id, void* event_data);
@@ -200,6 +201,13 @@ esp_err_t ap_manager_init(void) {
         .user_ctx  = NULL
     };
 
+    httpd_uri_t uri_get_settings = {
+        .uri       = "/api/settings",
+        .method    = HTTP_GET,
+        .handler   = api_settings_get_handler,
+        .user_ctx  = NULL
+    };
+
     httpd_uri_t uri_post_command = {
         .uri       = "/api/command",
         .method    = HTTP_POST,
@@ -208,6 +216,11 @@ esp_err_t ap_manager_init(void) {
     };
 
     ret = httpd_register_uri_handler(server, &uri_post_logs);
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
+
+     ret = httpd_register_uri_handler(server, &uri_get_settings);
         if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Error registering URI /");
     }
@@ -342,6 +355,13 @@ esp_err_t ap_manager_start_services() {
         .user_ctx  = NULL
     };
 
+    httpd_uri_t uri_get_settings = {
+        .uri       = "/api/settings",
+        .method    = HTTP_GET,
+        .handler   = api_settings_get_handler,
+        .user_ctx  = NULL
+    };
+
     httpd_uri_t uri_post_command = {
         .uri       = "/api/command",
         .method    = HTTP_POST,
@@ -354,6 +374,10 @@ esp_err_t ap_manager_start_services() {
         ESP_LOGE(TAG, "Error registering URI /");
     }
 
+    ret = httpd_register_uri_handler(server, &uri_get_settings);
+        if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Error registering URI /");
+    }
 
     ret = httpd_register_uri_handler(server, &uri_post_settings);
 
@@ -426,20 +450,6 @@ static esp_err_t http_get_handler(httpd_req_t* req) {
      return httpd_resp_send(req, (const char*)ghost_site_html, ghost_site_html_size);
 }
 
-static void handle_serial_command_task(void *pvParameters) {
-    const char *command = (char*)pvParameters;
-
-    // Execute the command
-    if (handle_serial_command(command) == ESP_OK) {
-        ESP_LOGI(TAG, "Command executed successfully: %s", command);
-    } else {
-        ESP_LOGE(TAG, "Command execution failed: %s", command);
-    }
-    
-
-    vTaskDelete(NULL);
-}
-
 static esp_err_t api_command_handler(httpd_req_t *req)
 {
     char content[100];
@@ -480,12 +490,7 @@ static esp_err_t api_command_handler(httpd_req_t *req)
     const char *command = command_json->valuestring;
 
 
-    if (xTaskCreate(handle_serial_command_task, "serial_command_task", 4096, command, 5, NULL) != pdPASS) {
-        httpd_resp_set_status(req, "500 Internal Server Error");
-        httpd_resp_send(req, "Failed to create task", strlen("Failed to create task"));
-        cJSON_Delete(json);
-        return ESP_FAIL;
-    }
+    simulateCommand(command);
    
     httpd_resp_send(req, "Command executed", strlen("Command executed"));
 
@@ -582,9 +587,13 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_ap_password(settings, ap_password->valuestring);
     }
 
-    cJSON* rgb_mode = cJSON_GetObjectItem(root, "rgb_mode");
-    if (rgb_mode) {
-        settings_set_rgb_mode(settings, (RGBMode)rgb_mode->valueint);
+    cJSON* rgb_mode = cJSON_GetObjectItem(root, "rainbow_mode");
+    if (cJSON_IsBool(rgb_mode)) {
+        bool rgb_mode_value = cJSON_IsTrue(rgb_mode);
+         printf("Debug: Passed rgb_mode_value = %d to settings_set_rgb_mode()\n", rgb_mode_value);
+        settings_set_rgb_mode(settings, (RGBMode)rgb_mode_value);
+    } else {
+        printf("Error: 'rgb_mode' is not a boolean.\n");
     }
 
     cJSON* rgb_speed = cJSON_GetObjectItem(root, "rgb_speed");
@@ -641,80 +650,14 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
 
     cJSON* printer_font_size = cJSON_GetObjectItem(root, "printer_font_size");
     if (printer_font_size) {
+        printf("PRINTER FONT SIZE %i", printer_font_size->valueint);
         settings_set_printer_font_size(settings, printer_font_size->valueint);
     }
 
     cJSON* printer_alignment = cJSON_GetObjectItem(root, "printer_alignment");
     if (printer_alignment) {
+        printf("printer_alignment %i", printer_alignment->valueint);
         settings_set_printer_alignment(settings, (PrinterAlignment)printer_alignment->valueint);
-    }
-
-    cJSON* printer_connected = cJSON_GetObjectItem(root, "printer_connected");
-    if (printer_connected) {
-        settings_set_printer_connected(settings, printer_connected->valueint != 0);
-    }
-
-    // Pin Configuration settings
-    cJSON* board_type = cJSON_GetObjectItem(root, "board_type");
-    if (board_type) {
-        settings_set_board_type(settings, (SupportedBoard)board_type->valueint);
-    }
-
-    cJSON* custom_pin_config = cJSON_GetObjectItem(root, "custom_pin_config");
-    if (custom_pin_config && settings->board_type == CUSTOM) {
-        PinConfig pin_config;
-
-        cJSON* neopixel_pin = cJSON_GetObjectItem(custom_pin_config, "neopixel_pin");
-        if (neopixel_pin) {
-            pin_config.neopixel_pin = neopixel_pin->valueint;
-        }
-
-        cJSON* sd_card_spi_miso = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_miso");
-        if (sd_card_spi_miso) {
-            pin_config.sd_card_spi_miso = sd_card_spi_miso->valueint;
-        }
-
-        cJSON* sd_card_spi_mosi = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_mosi");
-        if (sd_card_spi_mosi) {
-            pin_config.sd_card_spi_mosi = sd_card_spi_mosi->valueint;
-        }
-
-        cJSON* sd_card_spi_clk = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_clk");
-        if (sd_card_spi_clk) {
-            pin_config.sd_card_spi_clk = sd_card_spi_clk->valueint;
-        }
-
-        cJSON* sd_card_spi_cs = cJSON_GetObjectItem(custom_pin_config, "sd_card_spi_cs");
-        if (sd_card_spi_cs) {
-            pin_config.sd_card_spi_cs = sd_card_spi_cs->valueint;
-        }
-
-        cJSON* sd_card_mmc_cmd = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_cmd");
-        if (sd_card_mmc_cmd) {
-            pin_config.sd_card_mmc_cmd = sd_card_mmc_cmd->valueint;
-        }
-
-        cJSON* sd_card_mmc_clk = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_clk");
-        if (sd_card_mmc_clk) {
-            pin_config.sd_card_mmc_clk = sd_card_mmc_clk->valueint;
-        }
-
-        cJSON* sd_card_mmc_d0 = cJSON_GetObjectItem(custom_pin_config, "sd_card_mmc_d0");
-        if (sd_card_mmc_d0) {
-            pin_config.sd_card_mmc_d0 = sd_card_mmc_d0->valueint;
-        }
-
-        cJSON* gps_tx_pin = cJSON_GetObjectItem(custom_pin_config, "gps_tx_pin");
-        if (gps_tx_pin) {
-            pin_config.gps_tx_pin = gps_tx_pin->valueint;
-        }
-
-        cJSON* gps_rx_pin = cJSON_GetObjectItem(custom_pin_config, "gps_rx_pin");
-        if (gps_rx_pin) {
-            pin_config.gps_rx_pin = gps_rx_pin->valueint;
-        }
-
-        settings_set_custom_pin_config(settings, pin_config);
     }
 
     settings_save(settings);
@@ -726,6 +669,69 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
 
     return ESP_OK;
 }
+
+
+static esp_err_t api_settings_get_handler(httpd_req_t* req) {
+    FSettings* settings = &G_Settings;
+
+    cJSON* root = cJSON_CreateObject();
+    if (!root) {
+        ESP_LOGE(TAG, "Failed to create JSON object");
+        return ESP_FAIL;
+    }
+
+    
+    cJSON_AddNumberToObject(root, "broadcast_speed", settings_get_broadcast_speed(settings));
+    cJSON_AddStringToObject(root, "ap_ssid", settings_get_ap_ssid(settings));
+    cJSON_AddStringToObject(root, "ap_password", settings_get_ap_password(settings));
+    cJSON_AddNumberToObject(root, "rgb_mode", settings_get_rgb_mode(settings));
+    cJSON_AddNumberToObject(root, "rgb_speed", settings_get_rgb_speed(settings));
+    cJSON_AddNumberToObject(root, "channel_delay", settings_get_channel_delay(settings));
+
+    
+    cJSON_AddStringToObject(root, "portal_url", settings_get_portal_url(settings));
+    cJSON_AddStringToObject(root, "portal_ssid", settings_get_portal_ssid(settings));
+    cJSON_AddStringToObject(root, "portal_password", settings_get_portal_password(settings));
+    cJSON_AddStringToObject(root, "portal_ap_ssid", settings_get_portal_ap_ssid(settings));
+    cJSON_AddStringToObject(root, "portal_domain", settings_get_portal_domain(settings));
+    cJSON_AddBoolToObject(root, "portal_offline_mode", settings_get_portal_offline_mode(settings));
+
+    
+    cJSON_AddStringToObject(root, "printer_ip", settings_get_printer_ip(settings));
+    cJSON_AddStringToObject(root, "printer_text", settings_get_printer_text(settings));
+    cJSON_AddNumberToObject(root, "printer_font_size", settings_get_printer_font_size(settings));
+    cJSON_AddNumberToObject(root, "printer_alignment", settings_get_printer_alignment(settings));
+
+    
+    esp_netif_ip_info_t ip_info;
+    esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (netif && esp_netif_get_ip_info(netif, &ip_info) == ESP_OK) {
+        if (ip_info.ip.addr != 0) {
+            char ip_str[16];
+            esp_ip4addr_ntoa(&ip_info.ip, ip_str, sizeof(ip_str));
+            cJSON_AddStringToObject(root, "station_ip", ip_str);
+        }
+    }
+
+    
+    const char* json_response = cJSON_Print(root);
+    if (!json_response) {
+        cJSON_Delete(root);
+        ESP_LOGE(TAG, "Failed to print JSON object");
+        return ESP_FAIL;
+    }
+
+    
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_sendstr(req, json_response);
+
+    
+    cJSON_Delete(root);
+    free((void*)json_response);
+
+    return ESP_OK;
+}
+
 
 // Event handler for Wi-Fi events
 static void event_handler(void* arg, esp_event_base_t event_base,

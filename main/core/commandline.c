@@ -274,9 +274,14 @@ void handle_wifi_connection(int argc, char** argv) {
     
     wifi_manager_connect_wifi(ssid, password);
 
+    if (VisualizerHandle == NULL)
+    {
 #ifdef WITH_SCREEN
-    xTaskCreate(screen_music_visualizer_task, "udp_server", 4096, NULL, 5, NULL);
+    xTaskCreate(screen_music_visualizer_task, "udp_server", 4096, NULL, 5, &VisualizerHandle);
+#else
+    xTaskCreate(animate_led_based_on_amplitude, "udp_server", 4096, NULL, 5, &VisualizerHandle);
 #endif
+    }
 }
 
 
@@ -795,7 +800,7 @@ void handle_help(int argc, char **argv) {
 
     printf("powerprinter\n");
     printf("    Description: Print Custom Text to a Printer on your LAN (Requires You to Run Connect First)\n");
-    printf("    Usage: connect <Printer IP> <Text> <FontSize> <alignment>\n");
+    printf("    Usage: powerprinter <Printer IP> <Text> <FontSize> <alignment>\n");
     printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
 }
 

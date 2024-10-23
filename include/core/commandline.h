@@ -3,6 +3,8 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
+#include "driver/gpio.h"
+
 typedef void (*CommandFunction)(int argc, char **argv);
 
 typedef struct Command {
@@ -16,6 +18,8 @@ void command_init();
 void register_command(const char *name, CommandFunction function);
 void unregister_command(const char *name);
 CommandFunction find_command(const char *name);
+
+void* VisualizerHandle;
 
 void register_commands();
 

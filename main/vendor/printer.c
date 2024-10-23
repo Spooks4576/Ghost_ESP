@@ -198,7 +198,7 @@ void handle_printer_command(int argc, char **argv) {
     }
     if (font_px <= 0) {
         ESP_LOGE(TAG, "Error: Font size must be a positive integer.");
-        return;
+        font_px = 50;
     }
 
 

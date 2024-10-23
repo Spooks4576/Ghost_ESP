@@ -9,6 +9,7 @@
 #include "esp_task_wdt.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include <ctype.h>
 #include <core/commandline.h>
 #include "driver/usb_serial_jtag.h"
@@ -65,6 +66,11 @@ void serial_task(void *pvParameter) {
             }
         }
 
+        SerialCommand command;
+        if (xQueueReceive(commandQueue, &command, 0) == pdTRUE) {
+            handle_serial_command(command.command);
+        }
+
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 
@@ -95,7 +101,9 @@ void serial_manager_init() {
     usb_serial_jtag_driver_install(&usb_serial_jtag_config);
 #endif
 
-    xTaskCreate(serial_task, "SerialTask", 4096, NULL, 10, NULL);
+    commandQueue = xQueueCreate(10, sizeof(SerialCommand));
+
+    xTaskCreate(serial_task, "SerialTask", 8192, NULL, 10, NULL);
 }
 
 
@@ -153,4 +161,14 @@ int handle_serial_command(const char *input) {
     }
 
     free(input_copy);
+}
+
+
+
+void simulateCommand(const char *commandString)
+{
+    SerialCommand command;
+    strncpy(command.command, commandString, sizeof(command.command) - 1);
+    command.command[sizeof(command.command) - 1] = '\0';
+    xQueueSend(commandQueue, &command, portMAX_DELAY);
 }

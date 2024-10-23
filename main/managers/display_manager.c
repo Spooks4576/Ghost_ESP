@@ -212,39 +212,6 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     update_status_bar(true, HasBluetooth, sd_card_exists("/mnt/ghostesp"), 1000);
 }
 
-
-void apply_calibration_to_point(lv_point_t *point, uint16_t *calData, int screen_width, int screen_height) {
-    uint16_t x_min = calData[0];
-    uint16_t x_max = calData[1];
-    uint16_t y_min = calData[2];
-    uint16_t y_max = calData[3];
-    uint8_t invert_xy = calData[4];
-
-    int32_t x = point->x;
-    int32_t y = point->y;
-
-    
-    x = (x - x_min) * (screen_width - 1) / (x_max - x_min);
-    y = (y - y_min) * (screen_height - 1) / (y_max - y_min);
-
-    
-    if (invert_xy & 0x01) {
-        int32_t temp = x;
-        x = y;
-        y = temp;
-    }
-    if (invert_xy & 0x02) {
-        x = screen_width - 1 - x;
-    }
-    if (invert_xy & 0x04) {
-        y = screen_height - 1 - y;
-    }
-
-    
-    point->x = x;
-    point->y = y;
-}
-
 void display_manager_init(void) {
     lv_init();
     lvgl_driver_init();
@@ -348,12 +315,6 @@ void display_manager_fill_screen(lv_color_t color)
     lv_obj_add_style(lv_scr_act(), &style, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-void delete_circle_callback(lv_timer_t *timer) {
-    lv_obj_t *circle = (lv_obj_t *)timer->user_data;  // Access the user_data directly
-    lv_obj_del(circle);  // Delete the circle object
-    lv_timer_del(timer); // Delete the timer to avoid memory leaks
-}
-
 void hardware_input_task(void *pvParameters) {
     const TickType_t tick_interval = pdMS_TO_TICKS(10);
 
@@ -396,17 +357,6 @@ void hardware_input_task(void *pvParameters) {
                 if (xQueueSend(input_queue, &event, pdMS_TO_TICKS(10)) != pdTRUE) {
                     printf("Failed to send touch input to queue\n");
                 }
-
-                
-                lv_obj_t *circle = lv_obj_create(lv_scr_act()); 
-                lv_obj_set_size(circle, 10, 10);
-                lv_obj_set_style_bg_color(circle, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);  // Set the circle color to red
-                lv_obj_set_style_radius(circle, LV_RADIUS_CIRCLE, LV_PART_MAIN);  // Make the object circular
-                lv_obj_align_to(circle, lv_scr_act(), LV_ALIGN_TOP_LEFT, touch_data.point.x - 5, touch_data.point.y - 5);  // Position the circle at the touch point
-
-                // Set a timer to delete the circle after 500 ms
-                lv_timer_t *timer = lv_timer_create(delete_circle_callback, 500, circle);
-                timer->user_data = circle;  // Assign the circle object to the timer's user data
             }
             else if (touch_data.state == LV_INDEV_STATE_REL && touch_active) {
                 touch_active = false;

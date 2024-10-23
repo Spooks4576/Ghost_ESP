@@ -130,4 +130,6 @@ void screen_music_visualizer_task(void *pvParameters);
 
 void rgb_visualizer_server_task(void *pvParameters);
 
+void animate_led_based_on_amplitude(void *pvParameters);
+
 #endif // WIFI_MANAGER_H

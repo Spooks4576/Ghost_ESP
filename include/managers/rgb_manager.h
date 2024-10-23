@@ -70,6 +70,6 @@ void update_led_visualizer(uint8_t *amplitudes, size_t num_bars, bool square_mod
 
 RGBManager_t rgb_manager;
 
-static TaskHandle_t rgb_effect_task_handle;
+TaskHandle_t rgb_effect_task_handle;
 
 #endif // RGB_MANAGER_H
