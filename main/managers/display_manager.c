@@ -370,7 +370,7 @@ void hardware_input_task(void *pvParameters) {
 
 
 void lvgl_tick_task(void *arg) {
-    const TickType_t tick_interval = pdMS_TO_TICKS(10);
+    const TickType_t tick_interval = pdMS_TO_TICKS(5);
 
     InputEvent event;
 
