@@ -81,6 +81,7 @@ void app_main(void) {
 
   if (settings_get_rgb_mode(&G_Settings) == 1)
   {
+
   }
 #elif CONFIG_IDF_TARGET_ESP32S2
   rgb_manager_init(&rgb_manager, GPIO_NUM_NC, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812, 4, 5, 6);

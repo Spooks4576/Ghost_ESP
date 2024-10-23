@@ -650,11 +650,13 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
 
     cJSON* printer_font_size = cJSON_GetObjectItem(root, "printer_font_size");
     if (printer_font_size) {
+        printf("PRINTER FONT SIZE %i", printer_font_size->valueint);
         settings_set_printer_font_size(settings, printer_font_size->valueint);
     }
 
     cJSON* printer_alignment = cJSON_GetObjectItem(root, "printer_alignment");
     if (printer_alignment) {
+        printf("printer_alignment %i", printer_alignment->valueint);
         settings_set_printer_alignment(settings, (PrinterAlignment)printer_alignment->valueint);
     }
 
