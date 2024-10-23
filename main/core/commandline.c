@@ -274,11 +274,14 @@ void handle_wifi_connection(int argc, char** argv) {
     
     wifi_manager_connect_wifi(ssid, password);
 
+    if (VisualizerHandle == NULL)
+    {
 #ifdef WITH_SCREEN
-    xTaskCreate(screen_music_visualizer_task, "udp_server", 4096, NULL, 5, NULL);
+    xTaskCreate(screen_music_visualizer_task, "udp_server", 4096, NULL, 5, &VisualizerHandle);
 #else
-    xTaskCreate(animate_led_based_on_amplitude, "udp_server", 4096, NULL, 5, NULL);
+    xTaskCreate(animate_led_based_on_amplitude, "udp_server", 4096, NULL, 5, &VisualizerHandle);
 #endif
+    }
 }
 
 

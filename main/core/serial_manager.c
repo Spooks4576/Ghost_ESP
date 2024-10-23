@@ -103,7 +103,7 @@ void serial_manager_init() {
 
     commandQueue = xQueueCreate(10, sizeof(SerialCommand));
 
-    xTaskCreate(serial_task, "SerialTask", 4096, NULL, 10, NULL);
+    xTaskCreate(serial_task, "SerialTask", 8192, NULL, 10, NULL);
 }
 
 
