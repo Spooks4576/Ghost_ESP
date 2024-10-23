@@ -28,6 +28,13 @@
 #endif
 
 
+// Include Outside so we have access to the Terminal View Macro
+#include "managers/views/terminal_screen.h"
+
+
+
+
+
 #define CHUNK_SIZE 8192
 
 uint16_t ap_count;
@@ -843,13 +850,15 @@ void wifi_manager_start_monitor_mode(wifi_promiscuous_cb_t_t callback) {
     
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(callback));
 
-    ESP_LOGI(TAG, "WiFi monitor mode started. Scanning for stations...");
+    ESP_LOGI(TAG, "WiFi monitor mode started.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode started.");
 }
 
 void wifi_manager_stop_monitor_mode() {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
 
     ESP_LOGI(TAG, "WiFi monitor mode stopped.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.");
 }
 
 void wifi_manager_init() {
@@ -914,9 +923,11 @@ void wifi_manager_init() {
 
 void wifi_manager_start_scan() {
     ap_manager_stop_services();
+    TERMINAL_VIEW_ADD_TEXT("Stopped AP Manager...");
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
+    TERMINAL_VIEW_ADD_TEXT("Set Wifi Modes...");
 
     
     wifi_scan_config_t scan_config = {
@@ -930,12 +941,14 @@ void wifi_manager_start_scan() {
     rgb_manager_set_color(&rgb_manager, 0, 50, 255, 50, false);
 
     ESP_LOGI(TAG, "WiFi scanning started...");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scanning started...");
     esp_err_t err = esp_wifi_scan_start(&scan_config, false);
 
     vTaskDelay(pdMS_TO_TICKS(700));
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "WiFi scan failed to start: %s", esp_err_to_name(err));
+        TERMINAL_VIEW_ADD_TEXT("WiFi scan failed to start");
         return;
     }
 
@@ -953,6 +966,7 @@ void wifi_manager_stop_scan() {
     err = esp_wifi_scan_stop();
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to stop WiFi scan: %s", esp_err_to_name(err));
+        TERMINAL_VIEW_ADD_TEXT("Failed to stop WiFi scan");
         return;
     }
 
@@ -967,10 +981,12 @@ void wifi_manager_stop_scan() {
     err = esp_wifi_scan_get_ap_num(&initial_ap_count);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to get AP count: %s", esp_err_to_name(err));
+        TERMINAL_VIEW_ADD_TEXT( "Failed to get AP count: %s", esp_err_to_name(err));
         return;
     }
 
     ESP_LOGI(TAG, "Initial AP count: %u", initial_ap_count);
+    TERMINAL_VIEW_ADD_TEXT("Initial AP count: %u", initial_ap_count);
 
     if (initial_ap_count > 0) {
 
@@ -1000,12 +1016,14 @@ void wifi_manager_stop_scan() {
 
         ap_count = actual_ap_count;
         ESP_LOGI(TAG, "Actual AP count retrieved: %u", ap_count);
+        TERMINAL_VIEW_ADD_TEXT("Actual AP count retrieved: %u", ap_count);
     } else {
         ESP_LOGI(TAG, "No access points found");
         ap_count = 0;
     }
 
     ESP_LOGI(TAG, "WiFi scanning stopped.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scanning stopped.");
 }
 
 void wifi_manager_list_stations() {
@@ -1126,6 +1144,7 @@ void wifi_manager_start_deauth()
 {
     if (!beacon_task_running) {
         ESP_LOGI(TAG, "Starting deauth transmission...");
+        TERMINAL_VIEW_ADD_TEXT("Starting deauth transmission...");
         ap_manager_stop_services();
         ESP_ERROR_CHECK(esp_wifi_start());
         xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
@@ -1133,6 +1152,7 @@ void wifi_manager_start_deauth()
         rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23, false);
     } else {
         ESP_LOGW(TAG, "Deauth transmission already running.");
+        TERMINAL_VIEW_ADD_TEXT("Deauth transmission already running.");
     }
 }
 
@@ -1163,8 +1183,14 @@ void wifi_manager_select_ap(int index)
              selected_ap.ssid,
              selected_ap.bssid[0], selected_ap.bssid[1], selected_ap.bssid[2],
              selected_ap.bssid[3], selected_ap.bssid[4], selected_ap.bssid[5]);
+    
+    TERMINAL_VIEW_ADD_TEXT("Selected Access Point: SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
+             selected_ap.ssid,
+             selected_ap.bssid[0], selected_ap.bssid[1], selected_ap.bssid[2],
+             selected_ap.bssid[3], selected_ap.bssid[4], selected_ap.bssid[5]);
 
     printf("Selected Access Point Successfully\n");
+    TERMINAL_VIEW_ADD_TEXT("Selected Access Point Successfully\n");
 }
 
 #define MAX_PAYLOAD    64
@@ -1479,6 +1505,7 @@ void wifi_manager_stop_deauth()
 {
     if (beacon_task_running) {
         ESP_LOGI(TAG, "Stopping deauth transmission...");
+        TERMINAL_VIEW_ADD_TEXT("Stopping deauth transmission...");
         if (deauth_task_handle != NULL) {
             vTaskDelete(deauth_task_handle);
             deauth_task_handle = NULL;
@@ -1527,6 +1554,13 @@ void wifi_manager_print_scan_results_with_oui() {
 
         
         ESP_LOGI(TAG, "[%u] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X, RSSI: %d, Company: %s",
+                i,
+                ssid_str,
+                scanned_aps[i].bssid[0], scanned_aps[i].bssid[1], scanned_aps[i].bssid[2],
+                scanned_aps[i].bssid[3], scanned_aps[i].bssid[4], scanned_aps[i].bssid[5],
+                scanned_aps[i].rssi, company_str);
+
+        TERMINAL_VIEW_ADD_TEXT("[%u] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X, RSSI: %d, Company: %s",
                 i,
                 ssid_str,
                 scanned_aps[i].bssid[0], scanned_aps[i].bssid[1], scanned_aps[i].bssid[2],
@@ -1622,6 +1656,7 @@ void wifi_manager_stop_beacon()
 {
     if (beacon_task_running) {
         ESP_LOGI(TAG, "Stopping beacon transmission...");
+        TERMINAL_VIEW_ADD_TEXT("Stopping beacon transmission...");
         if (beacon_task_handle != NULL) {
             vTaskDelete(beacon_task_handle);
             beacon_task_handle = NULL;
@@ -1662,16 +1697,19 @@ void wifi_manager_connect_wifi(const char* ssid, const char* password)
     int retry_count = 0;
     while (retry_count < 5) {
         ESP_LOGI(TAG, "Attempting to connect to Wi-Fi (Attempt %d/%d)...", retry_count + 1, 5);
+        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi (Attempt %d/%d)...", retry_count + 1, 5);
         
         int ret = esp_wifi_connect();
         if (ret == ESP_OK) {
             ESP_LOGI(TAG, "Connecting...");
+            TERMINAL_VIEW_ADD_TEXT("Connecting...");
             vTaskDelay(5000 / portTICK_PERIOD_MS);  // Wait for 5 seconds
             
             // Check if connected to the AP
             wifi_ap_record_t ap_info;
             if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
                 ESP_LOGI(TAG, "Successfully connected to Wi-Fi network: %s", ap_info.ssid);
+                TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network: %s", ap_info.ssid);
                 break;
             } else {
                 ESP_LOGW(TAG, "Connection failed or timed out, retrying...");
@@ -1687,6 +1725,7 @@ void wifi_manager_connect_wifi(const char* ssid, const char* password)
 
     // Final status after retries
     if (retry_count == 5) {
+        TERMINAL_VIEW_ADD_TEXT("Failed to connect to Wi-Fi after %d attempts", 5);
         ESP_LOGE(TAG, "Failed to connect to Wi-Fi after %d attempts", 5);
     }
 }
@@ -1736,6 +1775,7 @@ void wifi_manager_start_beacon(const char *ssid) {
     if (!beacon_task_running) {
         ap_manager_stop_services();
         ESP_LOGI(TAG, "Starting beacon transmission...");
+        TERMINAL_VIEW_ADD_TEXT("Starting beacon transmission...");
         configure_hidden_ap();
         esp_wifi_start();
         xTaskCreate(wifi_beacon_task, "beacon_task", 2048, (void *)ssid, 5, &beacon_task_handle);
@@ -1743,5 +1783,6 @@ void wifi_manager_start_beacon(const char *ssid) {
         rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, false);
     } else {
         ESP_LOGW(TAG, "Beacon transmission already running.");
+        TERMINAL_VIEW_ADD_TEXT("Beacon transmission already running.");
     }
 }

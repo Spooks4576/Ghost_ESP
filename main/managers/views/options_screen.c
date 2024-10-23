@@ -34,10 +34,6 @@ const char* options_menu_type_to_string(EOptionsMenuType menuType) {
 
 static const char *wifi_options[] = {
     "Scan Access Points",
-    "Scan Stations",
-    "List Access Points",
-    "List Stations",
-    "Select AP",
     "Start Deauth Attack",
     "Beacon Spam - Random",
     "Beacon Spam - Rickroll",
@@ -49,7 +45,6 @@ static const char *wifi_options[] = {
     "Capture Raw",
     "Capture Eapol",
     "Capture WPS",
-    "Connect",
     "TV Cast (Dial Connect)",
     "Power Printer",
     "Go Back",
@@ -57,7 +52,6 @@ static const char *wifi_options[] = {
 };
 
 static const char *bluetooth_options[] = {
-    "Scan BLE Devices",
     "Find Flippers",
     "Start AirTag Scanner",
     "Go Back",
@@ -337,16 +331,22 @@ void option_event_cb(const char* Selected_Option) {
         simulateCommand("capture -wps");
     }
 
-
-
-    if (strcmp(Selected_Option, "Scan BLE Devices") == 0) {
-#ifndef CONFIG_IDF_TARGET_ESP32S2
+    if (strcmp(Selected_Option, "TV Cast (Dial Connect)") == 0) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
-        simulateCommand("blescan -r");
-#else 
-    error_popup_create("Device Does not Support Bluetooth...");
-#endif
+        simulateCommand("dialconnect");
+    }
+
+    if (strcmp(Selected_Option, "Power Printer") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("powerprinter");
+    }
+
+    if (strcmp(Selected_Option, "Start Evil Portal") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("startportal");
     }
 
 if (strcmp(Selected_Option, "Start AirTag Scanner") == 0) {
