@@ -178,6 +178,19 @@ static void select_menu_item(int index) {
 
     printf("Previous index: %d, New selected index: %d\n", previous_index, selected_item_index);
 
+    if (previous_index != selected_item_index) {
+        lv_obj_t *previous_item = lv_obj_get_child(menu_container, previous_index);
+        if (previous_item) {
+            printf("Resetting style for previous item at index %d\n", previous_index);
+
+            lv_obj_set_style_bg_color(previous_item, lv_color_black(), LV_PART_MAIN);
+            lv_obj_set_style_border_width(previous_item, 0, LV_PART_MAIN);
+        } else {
+            printf("Error: Previous item not found for index %d\n", previous_index);
+        }
+    }
+
+
     lv_obj_t *current_item = lv_obj_get_child(menu_container, selected_item_index);
     if (current_item) {
         printf("Current item found for index %d\n", selected_item_index);
@@ -189,18 +202,6 @@ static void select_menu_item(int index) {
         lv_obj_scroll_to_view(current_item, LV_ANIM_OFF);
     } else {
         printf("Error: Current item not found for index %d\n", selected_item_index);
-    }
-
-    if (previous_index != selected_item_index) {
-        lv_obj_t *previous_item = lv_obj_get_child(menu_container, previous_index);
-        if (previous_item) {
-            printf("Resetting style for previous item at index %d\n", previous_index);
-
-            lv_obj_set_style_bg_color(previous_item, lv_color_black(), LV_PART_MAIN);
-            lv_obj_set_style_border_width(previous_item, 0, LV_PART_MAIN);
-        } else {
-            printf("Error: Previous item not found for index %d\n", previous_index);
-        }
     }
 }
 

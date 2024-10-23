@@ -31,7 +31,6 @@ QueueHandle_tt input_queue;
 
 
 #define HARDWARE_INPUT_TASK_PRIORITY    (4)
-#define INPUT_PROCESSING_TASK_PRIORITY  (4)
 #define RENDERING_TASK_PRIORITY         (4)
 
 typedef struct {
@@ -81,8 +80,6 @@ View *display_manager_get_current_view(void);
 void lvgl_tick_task(void *arg);
 
 void hardware_input_task(void *pvParameters);
-
-void input_processing_task(void *pvParameters);
 
 void display_manager_fill_screen(lv_color_t color);
 
