@@ -89,12 +89,9 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
 
 void display_manager_add_status_bar(const char* CurrentMenuName);
 
-void apply_calibration_to_point(lv_point_t *point, uint16_t *calData, int screen_width, int screen_height);
-
 LV_IMG_DECLARE(Ghost_ESP);
 LV_IMG_DECLARE(Map);
 LV_IMG_DECLARE(bluetooth);
-LV_IMG_DECLARE(Settings);
 LV_IMG_DECLARE(wifi);
 LV_IMG_DECLARE(rave);
 LV_IMG_DECLARE(GESPFlappyghost);

@@ -82,6 +82,8 @@ void fade_out_ready_cb(lv_anim_t *anim) {
     }
 }
 
+
+
 void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage) {
     lv_disp_t *disp = lv_disp_get_default();
     int hor_res = lv_disp_get_hor_res(disp);
@@ -374,7 +376,7 @@ void lvgl_tick_task(void *arg) {
 
     InputEvent event;
 
-    while (1) 
+    while (1)
     {
 
         if (xQueueReceive(input_queue, &event, pdMS_TO_TICKS(10)) == pdTRUE) {
