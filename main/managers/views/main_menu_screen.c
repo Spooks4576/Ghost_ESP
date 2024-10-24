@@ -17,7 +17,8 @@ static menu_item_t menu_items[] = {
     {"GPS", &Map},
     {"BLE", &bluetooth},
     {"WiFi", &wifi},
-    {"Rave", &rave}
+    {"Rave", &rave},
+    //{"Flap", &GESPFlappyghost}
 };
 
 static int num_items = sizeof(menu_items) / sizeof(menu_items[0]);
@@ -152,6 +153,7 @@ void main_menu_create(void) {
     menu_items[2].border_color = lv_color_make(0, 0, 255);  
     menu_items[3].border_color = lv_color_make(0, 255, 0);
     menu_items[4].border_color = lv_color_make(147, 112, 219);
+    //menu_items[5].border_color = lv_color_make(255, 165, 0);
 
     display_manager_fill_screen(lv_color_black());
 
