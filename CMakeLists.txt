@@ -10,7 +10,7 @@ add_link_options("-Wl,-z,muldefs")
 add_compile_definitions(HOLD_LIMIT=1000) # for joystick
 #add_compile_definitions(USE_JOYSTICK)
 #add_compile_definitions(USE_CARDPUTER)
-add_compile_definitions(WITH_SCREEN=1)
+#add_compile_definitions(WITH_SCREEN=1)
 add_compile_definitions(TFT_WIDTH=135) # TFT Width TFT_WIDTH=240
 add_compile_definitions(TFT_HEIGHT=240) # TFT Height TFT_WIDTH=320
 add_compile_definitions(LED_ORDER=0) # 2 For RGB 0 for GRB

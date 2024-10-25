@@ -617,7 +617,7 @@ esp_err_t captive_portal_redirect_handler(httpd_req_t *req) {
     httpd_resp_set_status(req, "301 Moved Permanently");
     char LocationRedir[512];
         snprintf(LocationRedir, sizeof(LocationRedir),
-                 "http://%s.local/login", DOMAIN);
+                 "http://192.168.4.1/login");
     httpd_resp_set_hdr(req, "Location", LocationRedir);
     httpd_resp_send(req, NULL, 0);
     return ESP_OK;
