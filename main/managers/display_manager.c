@@ -8,7 +8,10 @@
 #include "managers/views/error_popup.h"
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
+#ifdef USE_CARDPUTER
 #include "vendor/m5gfx_wrapper.h"
+#include "vendor/keyboard_handler.h"
+#endif
 
 #define LVGL_TASK_PERIOD_MS 5
 
@@ -24,6 +27,8 @@ lv_obj_t *battery_label = NULL;
 
 #define FADE_DURATION_MS 50
 
+#ifdef USE_CARDPUTER
+Keyboard_t gkeyboard;
 
 void m5stack_lvgl_render_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p) {
     int32_t x1 = area->x1;
@@ -35,6 +40,8 @@ void m5stack_lvgl_render_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_
 
     lv_disp_flush_ready(drv);
 }
+
+#endif
 
 
 void fade_out_cb(void *obj, int32_t v) {
@@ -266,6 +273,11 @@ void display_manager_init(void) {
         return;
     }
 
+#ifdef USE_CARDPUTER
+    keyboard_init(&gkeyboard);
+    keyboard_begin(&gkeyboard);
+#endif
+
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
     xTaskCreate(&hardware_input_task, "RawInput", 4096, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
 }
@@ -349,6 +361,57 @@ void hardware_input_task(void *pvParameters) {
     int screen_height = LV_VER_RES;
 
     while (1) {
+        #ifdef USE_CARDPUTER
+            keyboard_update_key_list(&gkeyboard);
+            keyboard_update_keys_state(&gkeyboard);
+            if (gkeyboard.key_list_buffer_len > 0) {
+                for (size_t i = 0; i < gkeyboard.key_list_buffer_len; ++i) {
+                    Point2D_t key_pos = gkeyboard.key_list_buffer[i];
+                    uint8_t key_value = keyboard_get_key(&gkeyboard, key_pos);
+
+
+                    if (key_value != 0 && !touch_active) {
+                        touch_active = true;
+                        InputEvent event;
+                        event.type = INPUT_TYPE_JOYSTICK;
+
+
+                        switch (key_value) {
+                            case 52:
+                                event.data.joystick_index = 1;
+                                break;
+                            case 39:
+                                event.data.joystick_index = 0;
+                                break;
+                            case 30:
+                                event.data.joystick_index = 3;
+                                break;
+                            case 32:
+                                event.data.joystick_index = 2;
+                                break;
+                            case 56:
+                                event.data.joystick_index = 4;
+                                break;
+                            default:
+                                //printf("Unhandled key value: %d\n", key_value);
+                                continue;
+                        }
+
+                        if (xQueueSend(input_queue, &event, pdMS_TO_TICKS(10)) != pdTRUE) {
+                            printf("Failed to send button input to queue\n");
+                        }
+
+                        vTaskDelay(pdMS_TO_TICKS(300));
+                    }
+                    else if (touch_active)
+                    {
+                        touch_active = false;
+                    }
+                }
+            }
+        #endif
+
+
         #ifdef USE_JOYSTICK
             for (int i = 0; i < 5; i++) {
                 if (joysticks[i].pin >= 0) {
