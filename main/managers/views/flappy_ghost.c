@@ -24,6 +24,43 @@ int pipe_width = 20;
 int score = 0;
 bool is_game_over = false;
 
+void draw_halloween_night_sky(lv_obj_t *parent) {
+    lv_obj_set_style_bg_color(parent, lv_color_hex(0x0D0D40), 0);
+
+    
+    lv_obj_t *moon = lv_obj_create(parent);
+    lv_obj_set_size(moon, 40, 40);
+    lv_obj_set_style_bg_color(moon, lv_color_hex(0xFFFFDD), 0);
+    lv_obj_set_style_radius(moon, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_pos(moon, LV_HOR_RES - 60, 30);
+
+    
+    for (int i = 0; i < 30; i++) {
+        lv_obj_t *star = lv_obj_create(parent);
+        lv_obj_set_size(star, 2, 2);
+        lv_obj_set_style_bg_color(star, lv_color_hex(0xFFFFFF), 0);
+        int x_pos = rand() % LV_HOR_RES;
+        int y_pos = rand() % (LV_VER_RES / 2);
+        lv_obj_set_pos(star, x_pos, y_pos);
+    }
+
+    
+    for (int i = 0; i < 5; i++) {
+        lv_obj_t *twinkling_star = lv_obj_create(parent);
+        lv_obj_set_size(twinkling_star, 4, 4);
+        lv_obj_set_style_bg_color(twinkling_star, lv_color_hex(0xFFFF88), 0);
+        int x_pos = rand() % LV_HOR_RES;
+        int y_pos = rand() % (LV_VER_RES / 2);
+        lv_obj_set_pos(twinkling_star, x_pos, y_pos);
+    }
+
+    
+    lv_obj_t *ground = lv_obj_create(parent);
+    lv_obj_set_size(ground, LV_HOR_RES, 40);
+    lv_obj_set_style_bg_color(ground, lv_color_hex(0x101010), 0);
+    lv_obj_set_pos(ground, 0, LV_VER_RES - 40);
+}
+
 
 void flappy_bird_view_create(void) {
     if (flappy_bird_view.root != NULL) {
@@ -36,6 +73,8 @@ void flappy_bird_view_create(void) {
     flappy_bird_view.root = lv_obj_create(lv_scr_act());
     lv_obj_set_size(flappy_bird_view.root, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_bg_color(flappy_bird_view.root, lv_color_black(), 0);
+
+    draw_halloween_night_sky(flappy_bird_view.root);
 
     
     flappy_bird_canvas = lv_canvas_create(flappy_bird_view.root);
@@ -61,6 +100,7 @@ void flappy_bird_view_create(void) {
     score_label = lv_label_create(flappy_bird_view.root);
     lv_label_set_text_fmt(score_label, "Score: %d", score);
     lv_obj_align(score_label, LV_ALIGN_TOP_LEFT, 10, 10);
+    lv_obj_set_style_text_color(score_label, lv_color_white(), 0);
 
     
     display_manager_add_status_bar("Flappy Ghost");
@@ -122,29 +162,29 @@ void flappy_bird_game_loop(lv_timer_t *timer) {
         return;
     }
 
-    // Apply gravity to the bird's velocity and update position
+    
     bird_velocity += gravity;
     bird_y_position += bird_velocity;
     lv_obj_set_pos(bird, LV_HOR_RES / 4, bird_y_position);
 
-    int angle = (int)(bird_velocity * 5); // Adjust multiplier for sensitivity
-    if (angle > 45) angle = 45; // Limit max rotation downwards
-    if (angle < -45) angle = -45; // Limit max rotation upwards
+    int angle = (int)(bird_velocity * 5); 
+    if (angle > 45) angle = 45;
+    if (angle < -45) angle = -45;
 
-    // Apply the calculated angle to the bird image
-    lv_img_set_angle(bird, angle * 10); // Angle in LVGL is in tenths of a degree
+    
+    lv_img_set_angle(bird, angle * 10);
 
-    // Check if the bird hits the ground or goes off the screen
+  
     if (bird_y_position >= LV_VER_RES - 10 || bird_y_position <= 0) {
         flappy_bird_game_over();
     }
 
-    // Move the pipes
+    
     for (int i = 0; i < 2; i++) {
         int pipe_x = lv_obj_get_x(pipes[i]);
         pipe_x -= pipe_speed;
 
-        // If the pipe goes off-screen, reset its position and adjust the gap
+       
         if (pipe_x < -pipe_width) {
             pipe_x = LV_HOR_RES;
             int initial_gap_position = rand() % (pipe_max_gap_y - pipe_min_gap_y) + pipe_min_gap_y;
@@ -155,7 +195,7 @@ void flappy_bird_game_loop(lv_timer_t *timer) {
 
         lv_obj_set_x(pipes[i], pipe_x);
 
-        // Check for collision with the bird (with padding)
+       
         if (flappy_bird_check_collision(bird, pipes[i])) {
             flappy_bird_game_over();
         }
@@ -163,47 +203,58 @@ void flappy_bird_game_loop(lv_timer_t *timer) {
 }
 
 int flappy_bird_check_collision(lv_obj_t *bird, lv_obj_t *pipe) {
-    int padding = 2; // Padding to make the game a bit more forgiving
+    int padding = 2;
     int bird_x = lv_obj_get_x(bird);
     int bird_y = lv_obj_get_y(bird);
-    int bird_width = 10;  // Assuming bird's width is 10
-    int bird_height = 10; // Assuming bird's height is 10
+    int bird_width = 10; 
+    int bird_height = 10;
 
     int pipe_x = lv_obj_get_x(pipe);
-    int pipe_gap_y = lv_obj_get_y(pipe); // The Y position where the gap starts
+    int pipe_gap_y = lv_obj_get_y(pipe);
 
     if (bird_x + bird_width > pipe_x - padding && bird_x < pipe_x + pipe_width + padding) {
 
-        // Check if the bird is within the x-range of the pipe
+        
         if (bird_y > pipe_gap_y + padding || bird_y + bird_height < pipe_gap_y - pipe_gap - padding) {
-            return 1; // Collision detected
+            return 1;
         }
     }
 
-    return 0; // No collision
+    return 0;
 }
 
 void flappy_bird_game_over() {
     is_game_over = true;
-    // Display game over message
-    lv_obj_t *game_over_label = lv_label_create(flappy_bird_view.root);
-    lv_label_set_text(game_over_label, "Game Over! Press OK to restart.");
+
+    
+    lv_obj_t *game_over_container = lv_obj_create(flappy_bird_view.root);
+    lv_obj_set_size(game_over_container, LV_HOR_RES - 40, 60);
+    lv_obj_align(game_over_container, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_color(game_over_container, lv_color_hex(0x000000), 0);
+    lv_obj_set_style_bg_opa(game_over_container, LV_OPA_70, 0);
+    lv_obj_set_style_border_width(game_over_container, 2, 0);
+    lv_obj_set_style_border_color(game_over_container, lv_color_hex(0xFFFFFF), 0);
+
+    
+    lv_obj_t *game_over_label = lv_label_create(game_over_container);
+    lv_label_set_text(game_over_label, "Game Over!");
+    lv_obj_set_style_text_color(game_over_label, lv_color_hex(0xFFFF00), 0);
     lv_obj_align(game_over_label, LV_ALIGN_CENTER, 0, 0);
 }
 
 void flappy_bird_restart() {
     is_game_over = false;
-    bird_y_position = LV_VER_RES / 2; // Reset the bird to the center of the screen.
+    bird_y_position = LV_VER_RES / 2;
     bird_velocity = 0;
     score = 0;
     lv_label_set_text_fmt(score_label, "Score: %d", score);
 
-    // Reset pipe positions
+    
     for (int i = 0; i < 2; i++) {
         lv_obj_set_pos(pipes[i], LV_HOR_RES + i * (LV_HOR_RES / 2), rand() % (pipe_max_gap_y - pipe_min_gap_y) + pipe_min_gap_y);
     }
 
-    // Remove game over message
+    
     lv_obj_t *game_over_label = lv_obj_get_child(flappy_bird_view.root, -1);
     if (game_over_label) {
         lv_obj_del(game_over_label);
