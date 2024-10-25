@@ -1,5 +1,3 @@
-// serial_manager.c
-
 #include "core/serial_manager.h"
 #include "driver/uart.h"
 #include "core/system_manager.h"
@@ -29,15 +27,26 @@ char serial_buffer[SERIAL_BUFFER_SIZE];
 // Forward declaration of command handler
 int handle_serial_command(const char *command);
 
+#if IS_GHOST_BOARD
+    #define UART_NUM_1 UART_NUM_1
+    #define GHOST_UART_RX_PIN (2)
+    #define GHOST_UART_TX_PIN (3)
+    #define GHOST_UART_BUF_SIZE (1024)
+#endif
 
 void serial_task(void *pvParameter) {
     uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
     int index = 0;
 
+#if IS_GHOST_BOARD
+    uint8_t *ghost_data = (uint8_t *)malloc(GHOST_UART_BUF_SIZE);
+    int ghost_index = 0;
+#endif
+
     while (1) {
         int length = 0;
 
-        
+        // Read data from the main UART
         length = uart_read_bytes(UART_NUM, data, BUF_SIZE, 10 / portTICK_PERIOD_MS);
 
 #if JTAG_SUPPORTED
@@ -46,12 +55,11 @@ void serial_task(void *pvParameter) {
         }
 #endif
 
-        
+        // Process data from the main UART
         if (length > 0) {
             for (int i = 0; i < length; i++) {
                 char incoming_char = (char)data[i];
 
-                
                 if (incoming_char == '\n' || incoming_char == '\r') {
                     serial_buffer[index] = '\0';
                     if (index > 0) {
@@ -66,6 +74,28 @@ void serial_task(void *pvParameter) {
             }
         }
 
+#if IS_GHOST_BOARD
+        int ghost_length = uart_read_bytes(UART_NUM_1, ghost_data, GHOST_UART_BUF_SIZE, 10 / portTICK_PERIOD_MS);
+        if (ghost_length > 0) {
+            for (int i = 0; i < ghost_length; i++) {
+                char incoming_char = (char)ghost_data[i];
+
+                if (incoming_char == '\n' || incoming_char == '\r') {
+                    serial_buffer[ghost_index] = '\0';
+                    if (ghost_index > 0) {
+                        printf(serial_buffer);
+                        ghost_index = 0;
+                    }
+                } else if (ghost_index < SERIAL_BUFFER_SIZE - 1) {
+                    serial_buffer[ghost_index++] = incoming_char;
+                } else {
+                    ghost_index = 0;
+                }
+            }
+        }
+#endif
+
+        // Check command queue for simulated commands
         SerialCommand command;
         if (xQueueReceive(commandQueue, &command, 0) == pdTRUE) {
             handle_serial_command(command.command);
@@ -75,12 +105,16 @@ void serial_task(void *pvParameter) {
     }
 
     free(data);
+
+#if IS_GHOST_BOARD
+    free(ghost_data);
+#endif
 }
 
 // Initialize the SerialManager
 void serial_manager_init() {
-    
-     const uart_config_t uart_config = {
+    // UART configuration for main UART
+    const uart_config_t uart_config = {
         .baud_rate = 115200,
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
@@ -88,8 +122,6 @@ void serial_manager_init() {
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
     };
 
-
-    
     uart_param_config(UART_NUM, &uart_config);
     uart_driver_install(UART_NUM, BUF_SIZE * 2, 0, 0, NULL, 0);
 
@@ -101,19 +133,31 @@ void serial_manager_init() {
     usb_serial_jtag_driver_install(&usb_serial_jtag_config);
 #endif
 
+#if IS_GHOST_BOARD
+    const uart_config_t ghost_uart_config = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+    };
+
+    uart_param_config(UART_NUM_1, &ghost_uart_config);
+    uart_set_pin(UART_NUM_1, GHOST_UART_TX_PIN, GHOST_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_driver_install(UART_NUM_1, GHOST_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
+#endif
+
     commandQueue = xQueueCreate(10, sizeof(SerialCommand));
 
     xTaskCreate(serial_task, "SerialTask", 8192, NULL, 10, NULL);
 }
 
-
 int handle_serial_command(const char *input) {
-    char *input_copy = strdup(input);  // Make a copy of the input string
-    char *argv[10];  // Max 10 arguments
+    char *input_copy = strdup(input);
+    char *argv[10];
     int argc = 0;
     char *p = input_copy;
-    
-    // Skip leading spaces
+
     while (isspace((unsigned char)*p)) {
         p++;
     }
@@ -150,7 +194,6 @@ int handle_serial_command(const char *input) {
         return ESP_ERR_INVALID_ARG;
     }
 
-    // Find the command function
     CommandFunction cmd_func = find_command(argv[0]);
     if (cmd_func != NULL) {
         cmd_func(argc, argv);
@@ -163,10 +206,7 @@ int handle_serial_command(const char *input) {
     free(input_copy);
 }
 
-
-
-void simulateCommand(const char *commandString)
-{
+void simulateCommand(const char *commandString) {
     SerialCommand command;
     strncpy(command.command, commandString, sizeof(command.command) - 1);
     command.command[sizeof(command.command) - 1] = '\0';

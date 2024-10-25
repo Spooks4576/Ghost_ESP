@@ -26,10 +26,10 @@ sd_card_manager_t sd_card_manager = { // Change this based on board config
     .d1pin = 21,
     .d2pin = 22,
     .d3pin = 23,
-    .spi_cs_pin = 12,
-    .spi_clk_pin = 18,
-    .spi_miso_pin = 19,
-    .spi_mosi_pin = 23
+    .spi_cs_pin = 23,
+    .spi_clk_pin = 19,
+    .spi_miso_pin = 20,
+    .spi_mosi_pin = 18
 };
 
 static void get_next_pcap_file_name(char *file_name_buffer, const char* base_name) {
@@ -169,7 +169,7 @@ esp_err_t sd_card_init(void) {
     bus_config.mosi_io_num = sd_card_manager.spi_mosi_pin;
     bus_config.sclk_io_num = sd_card_manager.spi_clk_pin;
 
-    ret = spi_bus_initialize(HSPI_HOST, &bus_config, 2);
+    ret = spi_bus_initialize(SPI2_HOST, &bus_config, SPI_DMA_CH_AUTO);
     if (ret != ESP_OK) {
         ESP_LOGE(SD_TAG, "Failed to initialize SPI bus: %s", esp_err_to_name(ret));
         return ret;
@@ -183,7 +183,7 @@ esp_err_t sd_card_init(void) {
 
     sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
     slot_config.gpio_cs = sd_card_manager.spi_cs_pin;
-    slot_config.host_id = HSPI_HOST;
+    slot_config.host_id = SPI2_HOST;
 
     ret = esp_vfs_fat_sdspi_mount("/mnt", &host, &slot_config, &mount_config, &sd_card_manager.card);
     if (ret != ESP_OK) {

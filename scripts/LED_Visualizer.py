@@ -4,7 +4,7 @@ import socket
 import logging
 
 # Replace with the IP address and port of your ESP32
-UDP_IP = "192.168.1.105"
+UDP_IP = "192.168.1.255"
 UDP_PORT = 6677
 
 # Audio configuration
@@ -14,16 +14,13 @@ CHANNELS = 1  # Mono audio
 RATE = 44100  # Sampling rate in Hz
 
 # Scaling factor to adjust the amplitude range
-AMPLITUDE_SCALING_FACTOR = 6
+AMPLITUDE_SCALING_FACTOR = 2
 
-# Decay rate for amplitude
-DECAY_RATE = 0.2  # Adjust this value between 0 and 1
-
-# Threshold above which decay is not applied
-DECAY_THRESHOLD = 0.5  # Amplitude threshold to stop decay
+# Gravity rate for amplitude decay
+GRAVITY = 0.95  # Adjust this value to control the rate of decay (like gravity)
 
 # Noise threshold to eliminate low-level signals
-NOISE_THRESHOLD = 0.7  # Amplitude below which is considered noise and set to zero
+NOISE_THRESHOLD = 0.2  # Amplitude below which is considered noise and set to zero
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -40,7 +37,7 @@ def send_amplitude(amplitude):
 
 def calculate_amplitude_fft(audio_data):
     """
-    Calculates amplitude using FFT method and logs the spectrum.
+    Calculates amplitude using FFT method, focusing on the kick drum range.
     """
     try:
         # Apply a window function to reduce spectral leakage
@@ -54,9 +51,9 @@ def calculate_amplitude_fft(audio_data):
         # Compute frequency bins
         freqs = np.fft.rfftfreq(len(windowed_data), d=1./RATE)
 
-        # Calculate overall amplitude in the low frequency range (e.g., 40 Hz to 150 Hz)
-        lowcut = 40
-        highcut = 170
+        # Focus on the kick drum range (e.g., 20 Hz to 60 Hz)
+        lowcut = 20
+        highcut = 60
         freq_indices = np.where((freqs >= lowcut) & (freqs <= highcut))[0]
         amplitude = np.sum(magnitude_spectrum[freq_indices])
 
@@ -70,9 +67,6 @@ def calculate_amplitude_fft(audio_data):
         # Clamp amplitude between 0.0 and 1.0
         scaled_amplitude = min(max(scaled_amplitude, 0.0), 1.0)
 
-        if scaled_amplitude < 0.7:
-            scaled_amplitude = 0
-
         return scaled_amplitude
     except Exception as e:
         logging.error(f"Error in calculate_amplitude_fft: {e}")
@@ -83,7 +77,8 @@ def main():
     p = pyaudio.PyAudio()
 
     stream = None
-    previous_amplitude = 0.0  # Initialize previous amplitude
+    amplitude = 0.0  # Initialize amplitude
+    dynamic_threshold = NOISE_THRESHOLD * 1.5  # Initial threshold for beat detection
     try:
         # Get the default input device index
         default_device_index = p.get_default_input_device_info()['index']
@@ -108,17 +103,22 @@ def main():
                 # Convert binary data to numpy array
                 audio_data = np.frombuffer(data, dtype=np.int16)
 
-                # Calculate the amplitude using FFT method and log the data
-                amplitude = calculate_amplitude_fft(audio_data)
+                # Calculate the amplitude using FFT method
+                current_amplitude = calculate_amplitude_fft(audio_data)
 
-                # Apply exponential decay when amplitude decreases below the threshold
-                if amplitude < previous_amplitude and amplitude < DECAY_THRESHOLD:
-                    amplitude = previous_amplitude * DECAY_RATE
+                # Detect transient spikes typical of a kick
+                if current_amplitude > dynamic_threshold:
+                    logging.info(f"Kick detected with amplitude: {current_amplitude}")
+                    amplitude = current_amplitude  # Update amplitude with detected value
 
-                previous_amplitude = amplitude  # Update previous amplitude
-
-                logging.info(f"Calculated (scaled) amplitude: {amplitude}")
+                # Send the current amplitude even as it decays
                 send_amplitude(amplitude)
+
+                # Apply "gravity" to pull the amplitude back towards zero
+                amplitude = max(amplitude - GRAVITY, 0.0)
+
+                # Adjust the dynamic threshold slowly to adapt to the environment
+                dynamic_threshold = max(NOISE_THRESHOLD, dynamic_threshold * 0.99 + current_amplitude * 0.01)
 
             except IOError as e:
                 logging.warning(f"Audio input overflow or other error: {e}")
