@@ -83,7 +83,20 @@ void flappy_bird_view_create(void) {
     lv_obj_set_scrollbar_mode(flappy_bird_view.root, LV_SCROLLBAR_MODE_OFF);
 
     bird = lv_img_create(flappy_bird_view.root);
-    lv_img_set_src(bird, &ghost);
+
+
+    bool use_ghost_image = rand() % 2 == 0;
+
+    if (use_ghost_image)
+    {
+        lv_img_set_src(bird, &ghost);
+    }
+    else 
+    {
+        lv_img_set_src(bird, &yappy);
+    }
+
+    
     lv_obj_set_size(bird, 32, 32);
     lv_obj_set_pos(bird, LV_HOR_RES / 4, LV_VER_RES / 2);
 
@@ -228,8 +241,8 @@ int flappy_bird_check_collision(lv_obj_t *bird, lv_obj_t *pipe) {
     int padding = 2;
     int bird_x = lv_obj_get_x(bird);
     int bird_y = lv_obj_get_y(bird);
-    int bird_width = 10; 
-    int bird_height = 10;
+    int bird_width = 32; 
+    int bird_height = 32;
 
     int pipe_x = lv_obj_get_x(pipe);
     int pipe_gap_y = lv_obj_get_y(pipe);
