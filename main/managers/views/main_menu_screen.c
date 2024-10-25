@@ -1,5 +1,6 @@
 #include "managers/views/main_menu_screen.h"
 #include "managers/views/music_visualizer.h"
+#include "managers/views/flappy_ghost_screen.h"
 #include <stdio.h>
 
 
@@ -16,7 +17,7 @@ static menu_item_t menu_items[] = {
     {"BLE", &bluetooth},
     {"WiFi", &wifi},
     {"Rave", &rave},
-    //{"Flap", &GESPFlappyghost}
+    {"Flap", &GESPFlappyghost}
 };
 
 static int num_items = sizeof(menu_items) / sizeof(menu_items[0]);
@@ -82,6 +83,9 @@ static void handle_menu_item_selection(int item_index) {
             printf("Rave selected\n");
             display_manager_switch_view(&music_visualizer_view);
             break;
+        case 3:
+            printf("Flappy Ghost Selected\n");
+            display_manager_switch_view(&flappy_bird_view);
         default:
             printf("Unknown menu item selected\n");
             break;
@@ -137,7 +141,7 @@ void main_menu_create(void) {
     menu_items[0].border_color = lv_color_make(0, 0, 255);  
     menu_items[1].border_color = lv_color_make(0, 255, 0);
     menu_items[2].border_color = lv_color_make(147, 112, 219);
-    //menu_items[3].border_color = lv_color_make(255, 165, 0);
+    menu_items[3].border_color = lv_color_make(255, 165, 0);
 
     display_manager_fill_screen(lv_color_black());
 

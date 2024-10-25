@@ -95,6 +95,7 @@ LV_IMG_DECLARE(bluetooth);
 LV_IMG_DECLARE(wifi);
 LV_IMG_DECLARE(rave);
 LV_IMG_DECLARE(GESPFlappyghost);
+LV_IMG_DECLARE(ghost);
 
 joystick_t joysticks[5];
 
