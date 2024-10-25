@@ -34,10 +34,6 @@ const char* options_menu_type_to_string(EOptionsMenuType menuType) {
 
 static const char *wifi_options[] = {
     "Scan Access Points",
-    "Scan Stations",
-    "List Access Points",
-    "List Stations",
-    "Select AP",
     "Start Deauth Attack",
     "Beacon Spam - Random",
     "Beacon Spam - Rickroll",
@@ -49,7 +45,6 @@ static const char *wifi_options[] = {
     "Capture Raw",
     "Capture Eapol",
     "Capture WPS",
-    "Connect",
     "TV Cast (Dial Connect)",
     "Power Printer",
     "Go Back",
@@ -57,7 +52,6 @@ static const char *wifi_options[] = {
 };
 
 static const char *bluetooth_options[] = {
-    "Scan BLE Devices",
     "Find Flippers",
     "Start AirTag Scanner",
     "Go Back",
@@ -178,6 +172,19 @@ static void select_menu_item(int index) {
 
     printf("Previous index: %d, New selected index: %d\n", previous_index, selected_item_index);
 
+    if (previous_index != selected_item_index) {
+        lv_obj_t *previous_item = lv_obj_get_child(menu_container, previous_index);
+        if (previous_item) {
+            printf("Resetting style for previous item at index %d\n", previous_index);
+
+            lv_obj_set_style_bg_color(previous_item, lv_color_black(), LV_PART_MAIN);
+            lv_obj_set_style_border_width(previous_item, 0, LV_PART_MAIN);
+        } else {
+            printf("Error: Previous item not found for index %d\n", previous_index);
+        }
+    }
+
+
     lv_obj_t *current_item = lv_obj_get_child(menu_container, selected_item_index);
     if (current_item) {
         printf("Current item found for index %d\n", selected_item_index);
@@ -189,18 +196,6 @@ static void select_menu_item(int index) {
         lv_obj_scroll_to_view(current_item, LV_ANIM_OFF);
     } else {
         printf("Error: Current item not found for index %d\n", selected_item_index);
-    }
-
-    if (previous_index != selected_item_index) {
-        lv_obj_t *previous_item = lv_obj_get_child(menu_container, previous_index);
-        if (previous_item) {
-            printf("Resetting style for previous item at index %d\n", previous_index);
-
-            lv_obj_set_style_bg_color(previous_item, lv_color_black(), LV_PART_MAIN);
-            lv_obj_set_style_border_width(previous_item, 0, LV_PART_MAIN);
-        } else {
-            printf("Error: Previous item not found for index %d\n", previous_index);
-        }
     }
 }
 
@@ -336,16 +331,22 @@ void option_event_cb(const char* Selected_Option) {
         simulateCommand("capture -wps");
     }
 
-
-
-    if (strcmp(Selected_Option, "Scan BLE Devices") == 0) {
-#ifndef CONFIG_IDF_TARGET_ESP32S2
+    if (strcmp(Selected_Option, "TV Cast (Dial Connect)") == 0) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
-        simulateCommand("blescan -r");
-#else 
-    error_popup_create("Device Does not Support Bluetooth...");
-#endif
+        simulateCommand("dialconnect");
+    }
+
+    if (strcmp(Selected_Option, "Power Printer") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("powerprinter");
+    }
+
+    if (strcmp(Selected_Option, "Start Evil Portal") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("startportal");
     }
 
 if (strcmp(Selected_Option, "Start AirTag Scanner") == 0) {

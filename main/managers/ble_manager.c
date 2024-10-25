@@ -14,6 +14,8 @@
 #include <esp_mac.h>
 #include <managers/rgb_manager.h>
 #include <managers/settings_manager.h>
+#include "managers/views/terminal_screen.h"
+
 
 #define MAX_DEVICES 30
 #define MAX_HANDLERS 10
@@ -219,14 +221,17 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
     for (int i = 0; i < uuids.uuid16_count; i++) {
         if (uuids.uuid16[i] == 0x3082) {
             printf("Found White Flipper Device: MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (uuids.uuid16[i] == 0x3081) {
             printf("Found Black Flipper Device: MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (uuids.uuid16[i] == 0x3083) {
             printf("Found Transparent Flipper Device: MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
     }
@@ -235,14 +240,17 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
     for (int i = 0; i < uuids.uuid32_count; i++) {
         if (uuids.uuid32[i] == 0x3082) {
             printf("Found White Flipper Device (32-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (uuids.uuid32[i] == 0x3081) {
             printf("Found Black Flipper Device (32-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (uuids.uuid32[i] == 0x3083) {
             printf("Found Transparent Flipper Device (32-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
     }
@@ -251,14 +259,17 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
     for (int i = 0; i < uuids.uuid128_count; i++) {
         if (strstr(uuids.uuid128[i], "3082") != NULL) {
             printf("Found White Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (strstr(uuids.uuid128[i], "3081") != NULL) {
             printf("Found Black Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (strstr(uuids.uuid128[i], "3083") != NULL) {
             printf("Found Transparent Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
     }
@@ -362,6 +373,17 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
                 printf("%02X ", payload[i]);
             }
             printf("\n\n");
+
+            TERMINAL_VIEW_ADD_TEXT("AirTag found!\n");
+            TERMINAL_VIEW_ADD_TEXT("Tag: %d\n", airTagCount);
+            TERMINAL_VIEW_ADD_TEXT("MAC Address: %s\n", macAddress);
+            TERMINAL_VIEW_ADD_TEXT("RSSI: %d dBm\n", rssi);
+
+            TERMINAL_VIEW_ADD_TEXT("Payload Data: ");
+            for (size_t i = 0; i < payloadLength; i++) {
+                TERMINAL_VIEW_ADD_TEXT("%02X ", payload[i]);
+            }
+            TERMINAL_VIEW_ADD_TEXT("\n\n");
         }
     }
 }
@@ -378,6 +400,7 @@ void ble_start_scanning(void) {
         ESP_LOGE(TAG_BLE, "Error starting BLE scan; rc=%d", rc);
     } else {
         ESP_LOGI(TAG_BLE, "Scanning started...");
+        TERMINAL_VIEW_ADD_TEXT("Scanning started...");
     }
 }
 
@@ -450,6 +473,7 @@ void ble_stop(void) {
 
     if (rc == 0) {
         ESP_LOGI(TAG_BLE, "BLE scanning stopped successfully.");
+        TERMINAL_VIEW_ADD_TEXT("BLE scanning stopped successfully.");
     } else if (rc == BLE_HS_EALREADY) {
         ESP_LOGW(TAG_BLE, "BLE scanning was not active.");
     } else {

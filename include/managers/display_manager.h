@@ -31,7 +31,6 @@ QueueHandle_tt input_queue;
 
 
 #define HARDWARE_INPUT_TASK_PRIORITY    (4)
-#define INPUT_PROCESSING_TASK_PRIORITY  (4)
 #define RENDERING_TASK_PRIORITY         (4)
 
 typedef struct {
@@ -82,8 +81,6 @@ void lvgl_tick_task(void *arg);
 
 void hardware_input_task(void *pvParameters);
 
-void input_processing_task(void *pvParameters);
-
 void display_manager_fill_screen(lv_color_t color);
 
 // Status Bar Functions
@@ -92,14 +89,12 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
 
 void display_manager_add_status_bar(const char* CurrentMenuName);
 
-void apply_calibration_to_point(lv_point_t *point, uint16_t *calData, int screen_width, int screen_height);
-
 LV_IMG_DECLARE(Ghost_ESP);
 LV_IMG_DECLARE(Map);
 LV_IMG_DECLARE(bluetooth);
-LV_IMG_DECLARE(Settings);
 LV_IMG_DECLARE(wifi);
 LV_IMG_DECLARE(rave);
+LV_IMG_DECLARE(GESPFlappyghost);
 
 joystick_t joysticks[5];
 

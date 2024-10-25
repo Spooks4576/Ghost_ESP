@@ -2,6 +2,17 @@
 #include "managers/views/main_menu_screen.h"
 
 
+#define NUM_PARTICLES 10
+
+typedef struct {
+    lv_obj_t *obj;
+    int x;  // Current x position
+    int y;  // Current y position
+    int velocity;  // Horizontal velocity
+} Particle;
+
+Particle particles[NUM_PARTICLES];
+
 
 MusicVisualizerView view;
 
@@ -105,13 +116,28 @@ void music_visualizer_view_create() {
         lv_obj_set_style_bg_grad_dir(view.bars[i], LV_GRAD_DIR_VER, LV_PART_MAIN);
     }
 
+    for (int i = 0; i < NUM_PARTICLES; i++) {
+        particles[i].obj = lv_obj_create(music_visualizer_view.root);
+        lv_obj_set_size(particles[i].obj, 1, 1);
+        lv_obj_set_style_radius(particles[i].obj, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(particles[i].obj, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(particles[i].obj, LV_OPA_80, LV_PART_MAIN);
+
+        
+        particles[i].x = 0;
+        particles[i].y = rand() % LV_VER_RES;
+        particles[i].velocity = 1 + rand() % 3;
+
+        
+        lv_obj_align(particles[i].obj, LV_ALIGN_TOP_LEFT, particles[i].x, particles[i].y);
+    }
+
     display_manager_add_status_bar("Rave Mode");
 }
 
 void music_visualizer_view_update(const uint8_t *amplitudes, const char *track_name, const char *artist_name) {
 
-    if (music_visualizer_view.root)
-    {
+    if (music_visualizer_view.root) {
         if (strcmp(lv_label_get_text(view.track_label), track_name) != 0) {
             lv_label_set_text(view.track_label, track_name);
         }
@@ -121,14 +147,25 @@ void music_visualizer_view_update(const uint8_t *amplitudes, const char *track_n
 
         for (int i = 0; i < NUM_BARS; i++) {
             int new_height = amplitudes[i];
-            
             lv_obj_set_height(view.bars[i], new_height);
-
-            
-            lv_obj_align(view.bars[i], LV_ALIGN_BOTTOM_LEFT, 10 + (15 * i), -100);
-            lv_obj_set_height(view.bars[0], 0); // Attempt To 0 out deadzone
         }
-    }   
+
+
+        for (int i = 0; i < NUM_PARTICLES; i++) {
+            particles[i].x += particles[i].velocity;
+
+            if (particles[i].x > LV_HOR_RES) {
+                particles[i].x = 0;
+                particles[i].y = rand() % LV_VER_RES;
+
+                
+                particles[i].velocity = 1 + rand() % 3;
+            }
+
+
+            lv_obj_set_pos(particles[i].obj, particles[i].x, particles[i].y);
+        }
+    }
 }
 
 

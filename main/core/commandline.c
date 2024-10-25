@@ -10,7 +10,6 @@
 #include <string.h>
 #include <vendor/dial_client.h>
 #include "managers/dial_manager.h"
-#include <wps/pixie.h>
 #include "core/callbacks.h"
 #include <esp_timer.h>
 #include "vendor/pcap.h"
@@ -199,30 +198,6 @@ void handle_select_cmd(int argc, char **argv)
 }
 
 
-void wps_phase_2()
-{
-    wifi_manager_stop_monitor_mode();
-
-    for (int i = 0; i < MAX_WPS_NETWORKS; i++) {
-        wps_network_t *network = &detected_wps_networks[i];
-
-
-        bool is_valid_bssid = memcmp(network->bssid, "\x00\x00\x00\x00\x00\x00", 6) != 0;
-        bool is_valid_ssid = strlen(network->ssid) > 0;
-        
-        if (network->wps_enabled && is_valid_bssid && is_valid_ssid && network->wps_mode == WPS_MODE_PIN) {
-            ESP_LOGI("WPS_PHASE_2", "Valid network detected: SSID: %s, BSSID: %02x:%02x:%02x:%02x:%02x:%02x", 
-                network->ssid,
-                network->bssid[0], network->bssid[1], network->bssid[2], 
-                network->bssid[3], network->bssid[4], network->bssid[5]);
-
-            wps_start_connection(network->bssid);
-            break;
-        }
-    }
-}
-
-
 void discover_task(void *pvParameter) {
     DIALClient client;
     DIALManager manager;
@@ -282,23 +257,6 @@ void handle_wifi_connection(int argc, char** argv) {
     xTaskCreate(animate_led_based_on_amplitude, "udp_server", 4096, NULL, 5, &VisualizerHandle);
 #endif
     }
-}
-
-
-void wps_test(int argc, char** argv)
-{
-
-    should_store_wps = 1;
-
-    wifi_manager_start_monitor_mode(wifi_wps_detection_callback);
-
-    const esp_timer_create_args_t stop_timer_args = {
-        .callback = &wps_phase_2,
-        .name = "stop_timer"
-    };
-    ESP_ERROR_CHECK(esp_timer_create(&stop_timer_args, &stop_timer));
-    ESP_ERROR_CHECK(esp_timer_start_once(stop_timer, 15 * 1000000));
-
 }
 
 
@@ -629,6 +587,18 @@ void handle_capture_scan(int argc, char** argv)
         wifi_manager_start_monitor_mode(wifi_eapol_scan_callback);
     }
 
+    if (strcmp(capturetype, "-pwn") == 0)
+    {
+        int err = pcap_file_open("pwnscan");
+        
+        if (err != ESP_OK)
+        {
+            printf("Error: pcap failed to open\n");
+            return;
+        }
+        wifi_manager_start_monitor_mode(wifi_pwn_scan_callback);
+    }
+
     if (strcmp(capturetype, "-wps") == 0)
     {
         int err = pcap_file_open("wpsscan");
@@ -786,6 +756,7 @@ void handle_help(int argc, char **argv) {
     printf("        -deauth   : Start Capturing Deauth Packets\n");
     printf("        -raw   :   Start Capturing Raw Packets\n");
     printf("        -wps   :   Start Capturing WPS Packets and there Auth Type");
+    printf("        -pwn   :   Start Capturing Pwnagotchi Packets");
     printf("        -stop   : Stops the active capture\n\n");
 
 
@@ -821,7 +792,6 @@ void register_commands() {
     register_command("connect", handle_wifi_connection);
     register_command("dialconnect", handle_dial_command);
     register_command("powerprinter", handle_printer_command);
-    register_command("wpstest", wps_test);
     register_command("tplinktest", handle_tp_link_test);
     register_command("stop", handle_stop_flipper);
 #ifdef DEBUG

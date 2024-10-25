@@ -82,6 +82,8 @@ void fade_out_ready_cb(lv_anim_t *anim) {
     }
 }
 
+
+
 void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage) {
     lv_disp_t *disp = lv_disp_get_default();
     int hor_res = lv_disp_get_hor_res(disp);
@@ -243,7 +245,6 @@ void display_manager_init(void) {
     }
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
-    xTaskCreate(&input_processing_task, "InputProcessing", 4096, NULL, INPUT_PROCESSING_TASK_PRIORITY, NULL);
     xTaskCreate(&hardware_input_task, "RawInput", 4096, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
 }
 
@@ -370,10 +371,14 @@ void hardware_input_task(void *pvParameters) {
 }
 
 
-void input_processing_task(void *pvParameters) {
+void lvgl_tick_task(void *arg) {
+    const TickType_t tick_interval = pdMS_TO_TICKS(10);
+
     InputEvent event;
 
-    while (1) {
+    while (1)
+    {
+
         if (xQueueReceive(input_queue, &event, pdMS_TO_TICKS(10)) == pdTRUE) {
             if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
                 View *current = dm.current_view;
@@ -396,17 +401,7 @@ void input_processing_task(void *pvParameters) {
                 }
             }
         }
-    }
 
-    vTaskDelete(NULL);
-}
-
-
-void lvgl_tick_task(void *arg) {
-    const TickType_t tick_interval = pdMS_TO_TICKS(10);
-
-    while (1) 
-    {
         lv_timer_handler();
         lv_tick_inc(LVGL_TASK_PERIOD_MS);
         vTaskDelay(tick_interval);

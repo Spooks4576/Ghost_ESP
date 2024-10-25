@@ -13,11 +13,10 @@ typedef struct {
 } menu_item_t;
 
 static menu_item_t menu_items[] = {
-    {"SET", &Settings},
-    {"GPS", &Map},
     {"BLE", &bluetooth},
     {"WiFi", &wifi},
-    {"Rave", &rave}
+    {"Rave", &rave},
+    //{"Flap", &GESPFlappyghost}
 };
 
 static int num_items = sizeof(menu_items) / sizeof(menu_items[0]);
@@ -69,27 +68,17 @@ static void menu_item_event_handler(InputEvent *event) {
  */
 static void handle_menu_item_selection(int item_index) {
     switch (item_index) {
-        case 3:
+        case 1:
             printf("Wi-Fi selected\n");
             SelectedMenuType = OT_Wifi;
             display_manager_switch_view(&options_menu_view);
             break;
-        case 2:
+        case 0:
             printf("BLE selected\n");
             SelectedMenuType = OT_Bluetooth;
             display_manager_switch_view(&options_menu_view);
             break;
-        case 1:
-            printf("GPS selected\n");
-            SelectedMenuType = OT_GPS;
-            display_manager_switch_view(&options_menu_view);
-            break;
-        case 0:
-            printf("Settings selected\n");
-            SelectedMenuType = OT_Settings;
-            display_manager_switch_view(&options_menu_view);
-            break;
-        case 4:
+        case 2:
             printf("Rave selected\n");
             display_manager_switch_view(&music_visualizer_view);
             break;
@@ -144,14 +133,11 @@ static void select_menu_item(int index) {
 /**
  * @brief Creates the main menu screen view.
  */
-void main_menu_create(void) {
-
-    
-    menu_items[0].border_color = lv_color_make(255, 255, 255);
-    menu_items[1].border_color = lv_color_make(255, 0, 0);  
-    menu_items[2].border_color = lv_color_make(0, 0, 255);  
-    menu_items[3].border_color = lv_color_make(0, 255, 0);
-    menu_items[4].border_color = lv_color_make(147, 112, 219);
+void main_menu_create(void) {  
+    menu_items[0].border_color = lv_color_make(0, 0, 255);  
+    menu_items[1].border_color = lv_color_make(0, 255, 0);
+    menu_items[2].border_color = lv_color_make(147, 112, 219);
+    //menu_items[3].border_color = lv_color_make(255, 165, 0);
 
     display_manager_fill_screen(lv_color_black());
 
@@ -225,9 +211,6 @@ void main_menu_create(void) {
         lv_obj_set_grid_cell(menu_item, LV_GRID_ALIGN_CENTER, i % 3, 1, LV_GRID_ALIGN_END, row_idx, 1);
 
         lv_obj_set_user_data(menu_item, (void *)(uintptr_t)i);
-#ifdef USE_TOUCHSCREEN
-    lv_obj_add_event_cb(menu_item, menu_item_event_handler, LV_EVENT_CLICKED, NULL);
-#endif
     }
 
 #ifndef USE_TOUCHSCREEN
