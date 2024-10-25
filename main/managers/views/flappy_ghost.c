@@ -106,7 +106,7 @@ void flappy_bird_view_create(void) {
     display_manager_add_status_bar("Flappy Ghost");
 
     
-    game_loop_timer = lv_timer_create(flappy_bird_game_loop, 20, NULL);
+    game_loop_timer = lv_timer_create(flappy_bird_game_loop, 10, NULL);
 }
 
 void flappy_bird_view_destroy(void) {
@@ -132,13 +132,33 @@ void flappy_bird_view_destroy(void) {
 
 void flappy_bird_view_hardwareinput_callback(InputEvent *event) {
     if (is_game_over) {
-        if (event->type == INPUT_TYPE_JOYSTICK && event->data.joystick_index == 1) {
-            flappy_bird_restart();
+        lv_obj_t *game_over_label = lv_obj_get_child(flappy_bird_view.root, -1);
+
+        if (event->type == INPUT_TYPE_TOUCH) {
+            int touch_x = event->data.touch_data.point.x;
+            int touch_y = event->data.touch_data.point.y;
+
+            lv_area_t area;
+            lv_obj_get_coords(game_over_label, &area);
+
+            int padding = 10;
+
+            if (touch_x >= area.x1 - padding && touch_x <= area.x2 + padding &&
+    touch_y >= area.y1 - padding && touch_y <= area.y2 + padding) {
+                display_manager_switch_view(&main_menu_view);
+            } else {
+                flappy_bird_restart();
+            }
         }
-        else if (event->type == INPUT_TYPE_JOYSTICK && event->data.joystick_index == 0)
-        {
-            display_manager_switch_view(&main_menu_view);
+
+        else if (event->type == INPUT_TYPE_JOYSTICK) {
+            if (event->data.joystick_index == 1) {
+                flappy_bird_restart();
+            } else if (event->data.joystick_index == 0) {
+                display_manager_switch_view(&main_menu_view);
+            }
         }
+
         return;
     }
 
@@ -148,6 +168,8 @@ void flappy_bird_view_hardwareinput_callback(InputEvent *event) {
         if (button == 1) {
             bird_velocity = flap_strength;
         }
+    } else if (event->type == INPUT_TYPE_TOUCH) {
+        bird_velocity = flap_strength;
     }
 }
 
