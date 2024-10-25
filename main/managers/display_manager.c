@@ -8,6 +8,7 @@
 #include "managers/views/error_popup.h"
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
+#include "vendor/m5gfx_wrapper.h"
 
 #define LVGL_TASK_PERIOD_MS 5
 
@@ -22,6 +23,18 @@ lv_obj_t *battery_label = NULL;
 
 
 #define FADE_DURATION_MS 50
+
+
+void m5stack_lvgl_render_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p) {
+    int32_t x1 = area->x1;
+    int32_t y1 = area->y1;
+    int32_t x2 = area->x2;
+    int32_t y2 = area->y2;
+
+    m5gfx_write_pixels(x1, y1, x2, y2, (uint16_t *)color_p);
+
+    lv_disp_flush_ready(drv);
+}
 
 
 void fade_out_cb(void *obj, int32_t v) {
@@ -216,7 +229,11 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
 
 void display_manager_init(void) {
     lv_init();
+#ifdef USE_CARDPUTER
+    init_m5gfx_display();
+#else 
     lvgl_driver_init();
+#endif
 
     static lv_color_t buf1[TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_color_t buf2[TFT_WIDTH * 20] __attribute__((aligned(4)));
@@ -228,7 +245,12 @@ void display_manager_init(void) {
     lv_disp_drv_init(&disp_drv);
     disp_drv.hor_res = TFT_WIDTH;
     disp_drv.ver_res = TFT_HEIGHT;
+
+#ifdef USE_CARDPUTER
+    disp_drv.flush_cb = m5stack_lvgl_render_callback;
+#else 
     disp_drv.flush_cb = disp_driver_flush;
+#endif
     disp_drv.draw_buf = &disp_buf;
     lv_disp_drv_register(&disp_drv);
 
