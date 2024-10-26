@@ -2,7 +2,7 @@
 #include "managers/views/main_menu_screen.h"
 
 
-#define NUM_PARTICLES 10
+#define NUM_PARTICLES 5
 
 typedef struct {
     lv_obj_t *obj;
