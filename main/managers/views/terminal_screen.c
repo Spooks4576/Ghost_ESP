@@ -1,11 +1,16 @@
 #include "managers/views/terminal_screen.h"
 #include "managers/views/main_menu_screen.h"
 #include "core/serial_manager.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
 #include <stdlib.h>
 #include "esp_log.h"
 #include <string.h>
 
 lv_obj_t *terminal_textarea = NULL;
+char text_buffer[1024] = "";
+uint32_t last_update = 0;
+#define MAX_TEXT_LENGTH 4096
 
 int custom_log_vprintf(const char *fmt, va_list args);
 static int (*default_log_vprintf)(const char *, va_list) = NULL;
@@ -25,7 +30,7 @@ void terminal_view_create(void) {
     lv_textarea_set_one_line(terminal_textarea, false);
     lv_textarea_set_text(terminal_textarea, "");
     lv_obj_set_size(terminal_textarea, LV_HOR_RES, LV_VER_RES);
-    lv_obj_set_scrollbar_mode(terminal_textarea, LV_SCROLLBAR_MODE_AUTO);
+    lv_obj_set_scrollbar_mode(terminal_textarea, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_text_color(terminal_textarea, lv_color_hex(0x00FF00), 0); 
     lv_obj_set_style_text_font(terminal_textarea, &lv_font_montserrat_10, 0);
     lv_obj_set_style_border_width(terminal_textarea, 0, 0);
@@ -48,27 +53,21 @@ void terminal_view_destroy(void) {
 }
 
 void terminal_view_add_text(const char *text) {
-    if (terminal_textarea == NULL) {
-        return;
+    if (terminal_textarea == NULL) return;
+
+    // Append new text to the buffer
+    strcat(text_buffer, text);
+    strcat(text_buffer, "\n");
+
+    // Get the current tick count
+    TickType_t now = xTaskGetTickCount();
+    if ((now - last_update) * portTICK_PERIOD_MS > 100) {
+        lv_textarea_set_text(terminal_textarea, text_buffer);
+        lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
+        last_update = now;
+
+        text_buffer[0] = '\0';
     }
-
-    
-    const char *current_text = lv_textarea_get_text(terminal_textarea);
-    size_t new_length = strlen(current_text) + strlen(text) + 2;
-    char *new_text = malloc(new_length);
-    if (new_text == NULL) {
-        return;
-    }
-
-    snprintf(new_text, new_length, "%s\n%s", current_text, text);
-
-    
-    lv_textarea_set_text(terminal_textarea, new_text);
-
-    
-    free(new_text);
-
-    lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
 }
 
 void terminal_view_hardwareinput_callback(InputEvent *event) {

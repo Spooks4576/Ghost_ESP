@@ -25,7 +25,7 @@ lv_obj_t *battery_label = NULL;
 
 
 
-#define FADE_DURATION_MS 50
+#define FADE_DURATION_MS 10
 
 #ifdef USE_CARDPUTER
 Keyboard_t gkeyboard;
