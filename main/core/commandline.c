@@ -625,6 +625,11 @@ void stop_portal(int argc, char **argv)
     wifi_manager_stop_evil_portal();
 }
 
+void handle_reboot(int argc, char **argv)
+{
+    esp_restart();
+}
+
 void print_art()
 {
     printf("@@@@@@@@@@@@@@@@@@@@@@#SSS#@@@@@@@@@@@@@@@@@@@@@@@\n");
@@ -794,6 +799,7 @@ void register_commands() {
     register_command("powerprinter", handle_printer_command);
     register_command("tplinktest", handle_tp_link_test);
     register_command("stop", handle_stop_flipper);
+    register_command("reboot", handle_reboot);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif

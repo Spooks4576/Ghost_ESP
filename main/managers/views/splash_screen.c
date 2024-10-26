@@ -40,8 +40,8 @@ void splash_create(void) {
 
     lv_anim_set_var(&zoom_anim, img);
     lv_anim_set_values(&zoom_anim, hor_res / 2, hor_res);
-    lv_anim_set_time(&zoom_anim, 500);
-    lv_anim_set_playback_time(&zoom_anim, 500);
+    lv_anim_set_time(&zoom_anim, 100);
+    lv_anim_set_playback_time(&zoom_anim, 100);
     lv_anim_set_repeat_count(&zoom_anim, 1);
     lv_anim_set_exec_cb(&zoom_anim, zoom_anim_cb);
     lv_anim_set_ready_cb(&zoom_anim, fade_out_cb);

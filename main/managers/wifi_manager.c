@@ -617,7 +617,7 @@ esp_err_t captive_portal_redirect_handler(httpd_req_t *req) {
     httpd_resp_set_status(req, "301 Moved Permanently");
     char LocationRedir[512];
         snprintf(LocationRedir, sizeof(LocationRedir),
-                 "http://%s.local/login", DOMAIN);
+                 "http://192.168.4.1/login");
     httpd_resp_set_hdr(req, "Location", LocationRedir);
     httpd_resp_send(req, NULL, 0);
     return ESP_OK;
@@ -933,8 +933,13 @@ void wifi_manager_start_scan() {
     wifi_scan_config_t scan_config = {
         .ssid = NULL,
         .bssid = NULL,
-        .channel = 0,
-        .show_hidden = true
+        .channel = 0,            
+        .show_hidden = true,
+        .scan_time = {
+            .active.min = 450,
+            .active.max = 500,
+            .passive = 500
+        }
     };
 
     
@@ -944,7 +949,7 @@ void wifi_manager_start_scan() {
     TERMINAL_VIEW_ADD_TEXT("WiFi scanning started...");
     esp_err_t err = esp_wifi_scan_start(&scan_config, false);
 
-    vTaskDelay(pdMS_TO_TICKS(700));
+    vTaskDelay(pdMS_TO_TICKS(1500));
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "WiFi scan failed to start: %s", esp_err_to_name(err));
