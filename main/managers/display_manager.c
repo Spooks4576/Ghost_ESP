@@ -9,7 +9,7 @@
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
 #ifdef USE_CARDPUTER
-#include "vendor/m5gfx_wrapper.h"
+#include "vendor/m5/m5gfx_wrapper.h"
 #include "vendor/keyboard_handler.h"
 #endif
 

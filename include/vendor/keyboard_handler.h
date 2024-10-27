@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include "driver/gpio.h"
-#include "m5_keyboard_def.h"
+#include "vendor/m5/m5_keyboard_def.h"
 
 #ifdef __cplusplus
 extern "C" {
