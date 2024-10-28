@@ -452,7 +452,7 @@ static esp_err_t http_get_handler(httpd_req_t* req) {
 
 static esp_err_t api_command_handler(httpd_req_t *req)
 {
-    char content[100];
+    char content[500];
     int ret, command_len;
 
     
