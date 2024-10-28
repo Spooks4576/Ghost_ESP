@@ -13,6 +13,10 @@
 #include "vendor/keyboard_handler.h"
 #endif
 
+#ifdef USE_7_INCHER
+#include "vendor/drivers/ST7262.h"
+#endif
+
 #define LVGL_TASK_PERIOD_MS 5
 
 DisplayManager dm = { .current_view = NULL, .previous_view = NULL };
@@ -242,6 +246,7 @@ void display_manager_init(void) {
     lvgl_driver_init();
 #endif
 
+#ifndef USE_7_INCHER
     static lv_color_t buf1[TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_color_t buf2[TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_disp_draw_buf_t disp_buf;
@@ -260,6 +265,21 @@ void display_manager_init(void) {
 #endif
     disp_drv.draw_buf = &disp_buf;
     lv_disp_drv_register(&disp_drv);
+#else 
+
+    esp_err_t ret = lcd_st7262_init();
+    if (ret != ESP_OK) {
+        printf("LCD initialization failed");
+        return;
+    }
+
+    ret = lcd_st7262_lvgl_init();
+    if (ret != ESP_OK) {
+        printf("LVGL initialization failed");
+        return;
+    }
+
+#endif
 
     dm.mutex = xSemaphoreCreateMutex();
     if (dm.mutex == NULL) {
@@ -457,7 +477,7 @@ void hardware_input_task(void *pvParameters) {
 
 
 void lvgl_tick_task(void *arg) {
-    const TickType_t tick_interval = pdMS_TO_TICKS(10);
+    const TickType_t tick_interval = pdMS_TO_TICKS(5);
 
     InputEvent event;
 
@@ -488,7 +508,7 @@ void lvgl_tick_task(void *arg) {
         }
 
         lv_timer_handler();
-        lv_tick_inc(LVGL_TASK_PERIOD_MS);
+        lv_tick_inc(1);
         vTaskDelay(tick_interval);
     }
 

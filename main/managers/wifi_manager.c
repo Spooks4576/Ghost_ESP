@@ -522,7 +522,7 @@ esp_err_t file_handler(httpd_req_t *req) {
     }
 
     
-    char file_url[256];
+    char file_url[512];
     build_file_url(host, uri, file_url, sizeof(file_url));
 
     

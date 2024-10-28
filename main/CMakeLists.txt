@@ -21,6 +21,10 @@ if(USE_CARDPUTER)
     set(app_sources ${app_sources} "vendor/m5/m5gfx_wrapper.cpp")
 endif()
 
+if(USE_7_INCHER)
+   list(APPEND required_components esp_lcd)
+endif()
+
 # Register the component with the dynamically collected source files and include directories
 idf_component_register(SRCS ${app_sources}
                        INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/include"
