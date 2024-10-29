@@ -5,8 +5,10 @@
 #include <lvgl.h>
 #include <math.h> 
 
-#define NUM_PARTICLES 0
+#define NUM_PARTICLES 5
 #define ANIMATION_INTERVAL_MS 5  // Approximately 30 FPS
+
+lv_timer_t *animation_timer = NULL;
 
 typedef struct {
     lv_obj_t *obj;
@@ -126,7 +128,7 @@ void music_visualizer_view_create() {
     display_manager_add_status_bar("Rave Mode");
 
     amplitudeQueue = xQueueCreate(10, sizeof(AmplitudeData));
-    lv_timer_create(animation_timer_callback, ANIMATION_INTERVAL_MS, NULL);
+    animation_timer = lv_timer_create(animation_timer_callback, ANIMATION_INTERVAL_MS, NULL);
 }
 
 void animation_timer_callback(lv_timer_t *timer) {
@@ -169,6 +171,12 @@ void music_visualizer_view_update(const uint8_t *amplitudes, const char *track_n
 }
 
 void music_visualizer_destroy(void) {
+
+    if (animation_timer) {
+        lv_timer_del(animation_timer);
+        animation_timer = NULL;
+    }
+
     if (root) {
         lv_obj_del(root);
         root = NULL;
