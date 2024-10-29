@@ -946,6 +946,7 @@ void wifi_manager_start_scan() {
     rgb_manager_set_color(&rgb_manager, 0, 50, 255, 50, false);
 
     ESP_LOGI(TAG, "WiFi scanning started...");
+    ESP_LOGI(TAG, "Please wait 5 Seconds...");
     TERMINAL_VIEW_ADD_TEXT("WiFi scanning started...");
     esp_err_t err = esp_wifi_scan_start(&scan_config, true);
 
