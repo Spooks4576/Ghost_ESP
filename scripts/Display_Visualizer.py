@@ -71,7 +71,7 @@ try:
             normalized_amplitudes = [0] * num_bands
         else:
             # Normalize and ensure no NaN values
-            normalized_amplitudes = [int(np.nan_to_num((amp / max_amplitude) * 50)) for amp in band_amplitudes]
+            normalized_amplitudes = [int(np.nan_to_num((amp / max_amplitude) * 200)) for amp in band_amplitudes]
 
         # Apply decay to each bar for a smoother fall-off effect
         for i in range(num_bands):

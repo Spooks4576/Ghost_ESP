@@ -1,3 +1,5 @@
+// flappy_bird_game.c
+
 #include "managers/views/flappy_ghost_screen.h"
 #include "core/serial_manager.h"
 #include "managers/views/main_menu_screen.h"
@@ -6,9 +8,22 @@
 #include <string.h>
 #include "lvgl.h"
 
+// Define a structure for a single pipe
+typedef struct {
+    lv_obj_t *pipe;
+    int gap_center_y;
+} pipe_set_t;
+
+// Constants
+#define MAX_PIPE_SETS 2
+#define PIPE_SPEED 3
+#define PIPE_WIDTH 30
+#define PIPE_GAP_RATIO 0.3f // 30% of screen height
+
+// Global Variables
 lv_obj_t *flappy_bird_canvas = NULL;
 lv_obj_t *bird = NULL;
-lv_obj_t *pipes[2] = {NULL, NULL};
+pipe_set_t pipes[MAX_PIPE_SETS];
 lv_obj_t *score_label = NULL;
 
 lv_timer_t *game_loop_timer = NULL;
@@ -16,25 +31,35 @@ int bird_y_position = 0;
 float bird_velocity = 0;
 float gravity = 2;
 float flap_strength = -10;
-int pipe_speed = 3;
-int pipe_gap = 80;
-int pipe_min_gap_y = 60;
-int pipe_max_gap_y = 0;
-int pipe_width = 20;
+int pipe_gap; // Gap size between pipe and top of the screen
+int pipe_min_gap_y;
+int pipe_max_gap_y;
 int score = 0;
 bool is_game_over = false;
 
+// Function Prototypes
+void draw_halloween_night_sky(lv_obj_t *parent);
+void flappy_bird_view_create(void);
+void flappy_bird_view_destroy(void);
+void flappy_bird_view_hardwareinput_callback(InputEvent *event);
+void flappy_bird_view_get_hardwareinput_callback(void **callback);
+void flappy_bird_game_loop(lv_timer_t *timer);
+int flappy_bird_check_collision(lv_obj_t *bird, lv_obj_t *pipe);
+void flappy_bird_game_over();
+void flappy_bird_restart();
+
+// Drawing the background
 void draw_halloween_night_sky(lv_obj_t *parent) {
     lv_obj_set_style_bg_color(parent, lv_color_hex(0x0D0D40), 0);
 
-    
+    // Create the moon
     lv_obj_t *moon = lv_obj_create(parent);
     lv_obj_set_size(moon, 40, 40);
     lv_obj_set_style_bg_color(moon, lv_color_hex(0xFFFFDD), 0);
-    lv_obj_set_style_radius(moon, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_radius(moon, 0, 0); // Ensure sharp edges
     lv_obj_set_pos(moon, LV_HOR_RES - 60, 30);
 
-    
+    // Create stars
     for (int i = 0; i < 30; i++) {
         lv_obj_t *star = lv_obj_create(parent);
         lv_obj_set_size(star, 2, 2);
@@ -44,7 +69,7 @@ void draw_halloween_night_sky(lv_obj_t *parent) {
         lv_obj_set_pos(star, x_pos, y_pos);
     }
 
-    
+    // Create twinkling stars
     for (int i = 0; i < 5; i++) {
         lv_obj_t *twinkling_star = lv_obj_create(parent);
         lv_obj_set_size(twinkling_star, 4, 4);
@@ -54,80 +79,86 @@ void draw_halloween_night_sky(lv_obj_t *parent) {
         lv_obj_set_pos(twinkling_star, x_pos, y_pos);
     }
 
-    
+    // Create the ground
     lv_obj_t *ground = lv_obj_create(parent);
     lv_obj_set_size(ground, LV_HOR_RES, 40);
     lv_obj_set_style_bg_color(ground, lv_color_hex(0x101010), 0);
     lv_obj_set_pos(ground, 0, LV_VER_RES - 40);
 }
 
-
+// View Creation
 void flappy_bird_view_create(void) {
     if (flappy_bird_view.root != NULL) {
         return;
     }
 
+    // Initialize variables based on the screen dimensions
+    pipe_gap = (int)(LV_VER_RES * PIPE_GAP_RATIO); // 30% of screen height
+    pipe_min_gap_y = (int)(LV_VER_RES * 0.05);    // Minimum gap position near the top
+    pipe_max_gap_y = LV_VER_RES - pipe_gap - 40;  // 40 accounts for ground height
     bird_y_position = LV_VER_RES / 2;
-    pipe_max_gap_y = LV_VER_RES - pipe_gap - 40;
 
+    // Create root object
     flappy_bird_view.root = lv_obj_create(lv_scr_act());
     lv_obj_set_size(flappy_bird_view.root, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_bg_color(flappy_bird_view.root, lv_color_black(), 0);
 
+    // Draw background
     draw_halloween_night_sky(flappy_bird_view.root);
 
-    
+    // Create canvas for pipes
     flappy_bird_canvas = lv_canvas_create(flappy_bird_view.root);
     lv_obj_set_size(flappy_bird_canvas, LV_HOR_RES, LV_VER_RES);
-
     lv_obj_set_scrollbar_mode(flappy_bird_view.root, LV_SCROLLBAR_MODE_OFF);
 
+    // Create bird
     bird = lv_img_create(flappy_bird_view.root);
-
 
     bool use_ghost_image = rand() % 2 == 0;
 
-    if (use_ghost_image)
-    {
+    if (use_ghost_image) {
         lv_img_set_src(bird, &ghost);
-    }
-    else 
-    {
+    } else {
         lv_img_set_src(bird, &yappy);
     }
 
-    
     lv_obj_set_size(bird, 32, 32);
-    lv_obj_set_pos(bird, LV_HOR_RES / 4, LV_VER_RES / 2);
+    lv_obj_set_pos(bird, LV_HOR_RES / 4, bird_y_position);
 
-    
-    for (int i = 0; i < 2; i++) {
-        pipes[i] = lv_obj_create(flappy_bird_canvas);
-        lv_obj_set_size(pipes[i], pipe_width, LV_VER_RES);
-        lv_obj_set_style_bg_color(pipes[i], lv_color_hex(0x00FF00), 0);
-        int initial_gap_position = rand() % (pipe_max_gap_y - pipe_min_gap_y) + pipe_min_gap_y;
-        lv_obj_set_pos(pipes[i], LV_HOR_RES + i * (LV_HOR_RES / 2), initial_gap_position);
+    // Create pipe sets
+    for (int i = 0; i < MAX_PIPE_SETS; i++) {
+        // Initialize gap center position
+        pipes[i].gap_center_y = rand() % (pipe_max_gap_y - pipe_min_gap_y + 1) + pipe_min_gap_y;
+
+        // Create pipe
+        pipes[i].pipe = lv_obj_create(flappy_bird_canvas);
+        lv_obj_set_size(pipes[i].pipe, PIPE_WIDTH, LV_VER_RES - pipes[i].gap_center_y - 40); // 40 for ground
+        lv_obj_set_style_bg_color(pipes[i].pipe, lv_color_hex(0x00FF00), 0);
+        lv_obj_set_style_radius(pipes[i].pipe, 0, 0); // Ensure sharp edges
+        lv_obj_set_pos(pipes[i].pipe, LV_HOR_RES + i * (LV_HOR_RES / MAX_PIPE_SETS), pipes[i].gap_center_y + pipe_gap);
     }
 
-    
+    // Create score label
     score_label = lv_label_create(flappy_bird_view.root);
     lv_label_set_text_fmt(score_label, "Score: %d", score);
     lv_obj_align(score_label, LV_ALIGN_TOP_LEFT, 10, 10);
     lv_obj_set_style_text_color(score_label, lv_color_white(), 0);
 
-    
+    // Add status bar
     display_manager_add_status_bar("Flappy Ghost");
 
-    
+    // Create game loop timer
     game_loop_timer = lv_timer_create(flappy_bird_game_loop, 10, NULL);
 }
 
+// View Destruction
 void flappy_bird_view_destroy(void) {
     if (flappy_bird_view.root != NULL) {
         is_game_over = false;
         bird_y_position = LV_VER_RES / 2;
         bird_velocity = 0;
         score = 0;
+
         if (game_loop_timer != NULL) {
             lv_timer_del(game_loop_timer);
             game_loop_timer = NULL;
@@ -137,47 +168,48 @@ void flappy_bird_view_destroy(void) {
         flappy_bird_view.root = NULL;
         flappy_bird_canvas = NULL;
         bird = NULL;
-        pipes[0] = NULL;
-        pipes[1] = NULL;
+        for (int i = 0; i < MAX_PIPE_SETS; i++) {
+            pipes[i].pipe = NULL;
+        }
         score_label = NULL;
     }
 }
 
+// Input Callback
 void flappy_bird_view_hardwareinput_callback(InputEvent *event) {
     if (is_game_over) {
-        lv_obj_t *game_over_label = lv_obj_get_child(flappy_bird_view.root, -1);
+        lv_obj_t *game_over_container = lv_obj_get_child(flappy_bird_view.root, -1);
+        if (!game_over_container) return;
+
+        lv_obj_t *game_over_label = lv_obj_get_child(game_over_container, -1);
 
         if (event->type == INPUT_TYPE_TOUCH) {
             int touch_x = event->data.touch_data.point.x;
             int touch_y = event->data.touch_data.point.y;
 
             lv_area_t area;
-            lv_obj_get_coords(game_over_label, &area);
+            lv_obj_get_coords(game_over_container, &area);
 
             int padding = 10;
 
             if (touch_x >= area.x1 - padding && touch_x <= area.x2 + padding &&
-    touch_y >= area.y1 - padding && touch_y <= area.y2 + padding) {
+                touch_y >= area.y1 - padding && touch_y <= area.y2 + padding) {
                 display_manager_switch_view(&main_menu_view);
             } else {
                 flappy_bird_restart();
             }
-        }
-
-        else if (event->type == INPUT_TYPE_JOYSTICK) {
+        } else if (event->type == INPUT_TYPE_JOYSTICK) {
             if (event->data.joystick_index == 1) {
                 flappy_bird_restart();
             } else if (event->data.joystick_index == 0) {
                 display_manager_switch_view(&main_menu_view);
             }
         }
-
         return;
     }
 
     if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
-
         if (button == 1) {
             bird_velocity = flap_strength;
         }
@@ -186,97 +218,110 @@ void flappy_bird_view_hardwareinput_callback(InputEvent *event) {
     }
 }
 
+// Get Input Callback
 void flappy_bird_view_get_hardwareinput_callback(void **callback) {
     if (callback != NULL) {
         *callback = (void *)flappy_bird_view_hardwareinput_callback;
     }
 }
 
+// Game Loop
 void flappy_bird_game_loop(lv_timer_t *timer) {
     if (is_game_over) {
         return;
     }
 
-    
+    // Update bird's physics
     bird_velocity += gravity;
-    bird_y_position += bird_velocity;
+    bird_y_position += (int)bird_velocity;
     lv_obj_set_pos(bird, LV_HOR_RES / 4, bird_y_position);
 
+    // Update bird's angle based on velocity
     int angle = (int)(bird_velocity * 5); 
     if (angle > 45) angle = 45;
     if (angle < -45) angle = -45;
-
-    
     lv_img_set_angle(bird, angle * 10);
 
-  
-    if (bird_y_position >= LV_VER_RES - 10 || bird_y_position <= 0) {
+    // Check for collision with ground or ceiling
+    if ((bird_y_position + lv_obj_get_height(bird)) >= (LV_VER_RES - 40) || bird_y_position <= 0) { // 40 for ground height
         flappy_bird_game_over();
     }
 
-    
-    for (int i = 0; i < 2; i++) {
-        int pipe_x = lv_obj_get_x(pipes[i]);
-        pipe_x -= pipe_speed;
+    // Update each pipe set
+    for (int i = 0; i < MAX_PIPE_SETS; i++) {
+        // Move pipe left
+        int pipe_x = lv_obj_get_x(pipes[i].pipe);
+        pipe_x -= PIPE_SPEED;
 
-       
-        if (pipe_x < -pipe_width) {
+        if (pipe_x < -PIPE_WIDTH) {
             pipe_x = LV_HOR_RES;
-            int initial_gap_position = rand() % (pipe_max_gap_y - pipe_min_gap_y) + pipe_min_gap_y;
-            lv_obj_set_pos(pipes[i], LV_HOR_RES + i * (LV_HOR_RES / 2), initial_gap_position);
+
+            // Update gap center position
+            pipes[i].gap_center_y = rand() % (pipe_max_gap_y - pipe_min_gap_y + 1) + pipe_min_gap_y;
+
+            // Resize and reposition pipe
+            lv_obj_set_size(pipes[i].pipe, PIPE_WIDTH, LV_VER_RES - pipes[i].gap_center_y - 40); // 40 for ground
+            lv_obj_set_pos(pipes[i].pipe, pipe_x, pipes[i].gap_center_y + pipe_gap);
+
+            // Update score
             score++;
             lv_label_set_text_fmt(score_label, "Score: %d", score);
+        } else {
+            // Update pipe position
+            lv_obj_set_x(pipes[i].pipe, pipe_x);
         }
 
-        lv_obj_set_x(pipes[i], pipe_x);
-
-       
-        if (flappy_bird_check_collision(bird, pipes[i])) {
+        // Check collision with pipe
+        if (flappy_bird_check_collision(bird, pipes[i].pipe)) {
             flappy_bird_game_over();
         }
     }
 }
 
+// Collision Detection
 int flappy_bird_check_collision(lv_obj_t *bird, lv_obj_t *pipe) {
-    int padding = 2;
-    int bird_x = lv_obj_get_x(bird);
-    int bird_y = lv_obj_get_y(bird);
-    int bird_width = 32; 
-    int bird_height = 32;
+    int padding = 2;  // Adjust padding as needed
 
-    int pipe_x = lv_obj_get_x(pipe);
-    int pipe_gap_y = lv_obj_get_y(pipe);
+    // Get bird's absolute coordinates
+    lv_area_t bird_area;
+    lv_obj_get_coords(bird, &bird_area);
 
-    if (bird_x + bird_width > pipe_x - padding && bird_x < pipe_x + pipe_width + padding) {
+    // Get pipe's absolute coordinates
+    lv_area_t pipe_area;
+    lv_obj_get_coords(pipe, &pipe_area);
 
-        
-        if (bird_y > pipe_gap_y + padding || bird_y + bird_height < pipe_gap_y - pipe_gap - padding) {
-            return 1;
-        }
-    }
+    // Check for overlap with padding
+    bool overlap_x = (bird_area.x2 + padding) >= pipe_area.x1 && (bird_area.x1 - padding) <= pipe_area.x2;
+    bool overlap_y = (bird_area.y2 + padding) >= pipe_area.y1 && (bird_area.y1 - padding) <= pipe_area.y2;
 
-    return 0;
+    bool collision = overlap_x && overlap_y;
+
+    return collision ? 1 : 0;
 }
 
+// Game Over Handling
 void flappy_bird_game_over() {
+    if (is_game_over) return; // Prevent multiple triggers
     is_game_over = true;
 
-    
+    // Create a semi-transparent overlay
     lv_obj_t *game_over_container = lv_obj_create(flappy_bird_view.root);
-    lv_obj_set_size(game_over_container, LV_HOR_RES - 40, 60);
+    lv_obj_set_size(game_over_container, LV_HOR_RES - 40, 100);
     lv_obj_align(game_over_container, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style_bg_color(game_over_container, lv_color_hex(0x000000), 0);
     lv_obj_set_style_bg_opa(game_over_container, LV_OPA_70, 0);
     lv_obj_set_style_border_width(game_over_container, 2, 0);
     lv_obj_set_style_border_color(game_over_container, lv_color_hex(0xFFFFFF), 0);
 
-    
+    // Create "Game Over" label
     lv_obj_t *game_over_label = lv_label_create(game_over_container);
-    lv_label_set_text(game_over_label, "Game Over!");
+    lv_label_set_text(game_over_label, "Game Over!\nTap to Restart");
     lv_obj_set_style_text_color(game_over_label, lv_color_hex(0xFFFF00), 0);
+    lv_obj_set_style_text_font(game_over_label, &lv_font_montserrat_24, 0);
     lv_obj_align(game_over_label, LV_ALIGN_CENTER, 0, 0);
 }
 
+// Restart Game
 void flappy_bird_restart() {
     is_game_over = false;
     bird_y_position = LV_VER_RES / 2;
@@ -284,18 +329,27 @@ void flappy_bird_restart() {
     score = 0;
     lv_label_set_text_fmt(score_label, "Score: %d", score);
 
-    
-    for (int i = 0; i < 2; i++) {
-        lv_obj_set_pos(pipes[i], LV_HOR_RES + i * (LV_HOR_RES / 2), rand() % (pipe_max_gap_y - pipe_min_gap_y) + pipe_min_gap_y);
+    // Reset bird position
+    lv_obj_set_pos(bird, LV_HOR_RES / 4, bird_y_position);
+
+    // Reset pipe positions and sizes
+    for (int i = 0; i < MAX_PIPE_SETS; i++) {
+        // Reposition pipe off-screen
+        lv_obj_set_pos(pipes[i].pipe, LV_HOR_RES + i * (LV_HOR_RES / MAX_PIPE_SETS), pipes[i].gap_center_y + pipe_gap);
+
+        // Reset pipe size based on new gap center
+        pipes[i].gap_center_y = rand() % (pipe_max_gap_y - pipe_min_gap_y + 1) - 40;
+        lv_obj_set_size(pipes[i].pipe, PIPE_WIDTH, LV_VER_RES - pipes[i].gap_center_y - 40); // 40 for ground
     }
 
-    
-    lv_obj_t *game_over_label = lv_obj_get_child(flappy_bird_view.root, -1);
-    if (game_over_label) {
-        lv_obj_del(game_over_label);
+    // Remove the game over overlay if it exists
+    lv_obj_t *game_over_container = lv_obj_get_child(flappy_bird_view.root, -1);
+    if (game_over_container) {
+        lv_obj_del(game_over_container);
     }
 }
 
+// View Structure Initialization
 View flappy_bird_view = {
     .root = NULL,
     .create = flappy_bird_view_create,

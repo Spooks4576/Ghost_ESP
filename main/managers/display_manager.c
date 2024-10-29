@@ -299,7 +299,9 @@ void display_manager_init(void) {
 #endif
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
-    xTaskCreate(&hardware_input_task, "RawInput", 4096, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
+    if (xTaskCreate(hardware_input_task, "RawInput", 2048, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL) != pdPASS) {
+        printf("Failed to create RawInput task\n");
+    }
 }
 
 bool display_manager_register_view(View *view) {
@@ -380,6 +382,7 @@ void hardware_input_task(void *pvParameters) {
     int screen_width = LV_HOR_RES;
     int screen_height = LV_VER_RES;
 
+    
     while (1) {
         #ifdef USE_CARDPUTER
             keyboard_update_key_list(&gkeyboard);
@@ -508,7 +511,7 @@ void lvgl_tick_task(void *arg) {
         }
 
         lv_timer_handler();
-        lv_tick_inc(5);
+        lv_tick_inc(10);
         vTaskDelay(tick_interval);
     }
 

@@ -1,6 +1,5 @@
 #include "managers/views/app_gallery_screen.h"
 #include "managers/views/main_menu_screen.h"
-#include "managers/views/ghost_man.h"
 #include <stdio.h>
 #include <string.h>
 

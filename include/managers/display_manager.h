@@ -99,6 +99,7 @@ LV_IMG_DECLARE(ghost);
 LV_IMG_DECLARE(yappy);
 LV_IMG_DECLARE(GESPAppGallery);
 
+
 joystick_t joysticks[5];
 
 

@@ -23,6 +23,7 @@
 
 static const char *TAG_BLE = "BLE_MANAGER";
 static int airTagCount = 0;
+static bool ble_initialized = false;
 
 typedef struct {
     ble_data_handler_t handler;
@@ -444,12 +445,15 @@ esp_err_t ble_unregister_handler(ble_data_handler_t handler) {
 
 void ble_init(void) {
 #ifndef CONFIG_IDF_TARGET_ESP32S2
+if (!ble_initialized) {
     nvs_flash_init();
     nimble_port_init();
 
     nimble_port_freertos_init(nimble_host_task);
+    ble_initialized = true;
 
     ESP_LOGI(TAG_BLE, "BLE initialized");
+}
 #endif
 }
 
@@ -457,6 +461,14 @@ void ble_start_find_flippers(void)
 {
     ble_register_handler(ble_findtheflippers_callback);
     ble_start_scanning();
+}
+
+void ble_deinit(void) {
+    if (ble_initialized) {
+        nimble_port_stop();
+        ble_initialized = false;
+        ESP_LOGI(TAG_BLE, "BLE deinitialized successfully.");
+    }
 }
 
 void ble_stop(void) {

@@ -114,33 +114,6 @@ esp_err_t lcd_st7262_init(void)
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 
-    // Initialize SPI bus for control interface (if required)
-    spi_bus_config_t buscfg = {
-        .sclk_io_num = LCD_SPI_SCK_GPIO_NUM,
-        .mosi_io_num = LCD_SPI_MOSI_GPIO_NUM,
-        .miso_io_num = -1,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = 64,
-        .flags = 0,
-        .intr_flags = 0,
-    };
-    ret = spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
-    ESP_RETURN_ON_ERROR(ret, TAG, "Failed to initialize SPI bus");
-
-    // Create SPI panel IO handle
-    esp_lcd_panel_io_spi_config_t io_config = {
-        .dc_gpio_num = -1,  // Not used in 3-wire SPI
-        .cs_gpio_num = LCD_SPI_CS_GPIO_NUM,
-        .pclk_hz = LCD_SPI_CLK_FREQ_HZ,
-        .spi_mode = 0,
-        .trans_queue_depth = 10,
-        .lcd_cmd_bits = 8,
-        .lcd_param_bits = 8,
-    };
-    ret = esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)SPI2_HOST, &io_config, &io_handle);
-    ESP_RETURN_ON_ERROR(ret, TAG, "Failed to create SPI panel IO");
-
     // Prepare RGB panel configuration with accurate timings
     esp_lcd_rgb_panel_config_t panel_config = {
         .clk_src = LCD_CLK_SRC_PLL160M,
@@ -183,7 +156,7 @@ esp_err_t lcd_st7262_init(void)
         },
         .flags.fb_in_psram = true,
         .num_fbs = 2, // Use double buffering
-        .bounce_buffer_size_px = 10 * 480,
+        .bounce_buffer_size_px = 20 * 480,
     };
 
     // Create RGB panel
