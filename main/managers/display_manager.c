@@ -508,7 +508,7 @@ void lvgl_tick_task(void *arg) {
         }
 
         lv_timer_handler();
-        lv_tick_inc(1);
+        lv_tick_inc(5);
         vTaskDelay(tick_interval);
     }
 

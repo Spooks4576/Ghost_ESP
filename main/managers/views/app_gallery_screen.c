@@ -1,5 +1,6 @@
 #include "managers/views/app_gallery_screen.h"
 #include "managers/views/main_menu_screen.h"
+#include "managers/views/ghost_man.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -212,7 +213,7 @@ void refresh_apps_menu(void) {
         int row_idx = 1 + (display_index / 3); // Rows 1 and 2 for apps
         lv_obj_set_grid_cell(app_item, LV_GRID_ALIGN_CENTER, display_index % 3, 1, LV_GRID_ALIGN_START, row_idx, 1);
 
-        lv_obj_set_user_data(app_item, (void *)(uintptr_t)i);
+        lv_obj_set_user_data(app_item, (void *)(intptr_t)i);
     }
 
 #ifdef USE_TOUCHSCREEN
@@ -244,12 +245,14 @@ void handle_apps_button_press(int ButtonPressed) {
         select_app_item(selected_app_index - 1);
     } else if (ButtonPressed == 3) { // Right
         select_app_item(selected_app_index + 1);
-    } else if (ButtonPressed == 1) {
+    } else if (ButtonPressed == 1) { // Select
         if (selected_app_index == -1) {
             printf("Back button pressed\n");
             display_manager_switch_view(&main_menu_view);
         } else {
-            launch_app(selected_app_index);
+            printf("Launching app via joystick: %d\n", selected_app_index);
+            if (selected_app_index == 0) {
+            }
         }
     }
 }
@@ -301,7 +304,8 @@ void apps_menu_event_handler(InputEvent *event) {
 
         if (touched_app_index >= 0) {
             printf("Touch input detected on app item: %d\n", touched_app_index);
-            launch_app(touched_app_index);
+            if (touched_app_index == 0) {
+            }
         } else {
             printf("Touch input detected but no app item found at touch coordinates. X: %d, Y: %d\n",
                    data->point.x, data->point.y);
@@ -354,16 +358,6 @@ void select_app_item(int index) {
     }
 }
 
-void launch_app(int index) {
-    printf("Launching app: %s\n", app_items[index].name);
-
-    // Implement app launching logic here
-    // For example:
-    // if (strcmp(app_items[index].name, "Pacman") == 0) {
-    //     display_manager_switch_view(&pacman_view);
-    // }
-}
-
 void apps_menu_destroy(void) {
     if (apps_container) {
         lv_obj_clean(apps_container);
@@ -373,7 +367,7 @@ void apps_menu_destroy(void) {
 }
 
 void get_apps_menu_callback(void **callback) {
-    *callback = apps_menu_view.input_callback;
+    *callback = apps_menu_event_handler;
 }
 
 View apps_menu_view = {
