@@ -148,7 +148,7 @@ void flappy_bird_view_create(void) {
     display_manager_add_status_bar("Flappy Ghost");
 
     // Create game loop timer
-    game_loop_timer = lv_timer_create(flappy_bird_game_loop, 10, NULL);
+    game_loop_timer = lv_timer_create(flappy_bird_game_loop, 30, NULL);
 }
 
 // View Destruction
