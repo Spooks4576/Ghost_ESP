@@ -484,6 +484,16 @@ void lvgl_tick_task(void *arg) {
 
     InputEvent event;
 
+    int tick_increment;
+    
+    if (LV_VER_RES <= 128) {
+        tick_increment = 3;   // For screens 128x128 or smaller
+    } else if (LV_VER_RES > 240) {
+        tick_increment = 10;  // For screens larger than 240x320
+    } else {
+        tick_increment = 5;   // For 240x320 screens
+    }
+
     while (1)
     {
 
@@ -511,7 +521,7 @@ void lvgl_tick_task(void *arg) {
         }
 
         lv_timer_handler();
-        lv_tick_inc(10);
+        lv_tick_inc(tick_increment);
         vTaskDelay(tick_interval);
     }
 

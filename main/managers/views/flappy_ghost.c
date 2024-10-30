@@ -18,7 +18,7 @@ typedef struct {
 #define MAX_PIPE_SETS 2
 #define PIPE_SPEED 3
 #define PIPE_WIDTH 30
-#define PIPE_GAP_RATIO 0.3f // 30% of screen height
+#define PIPE_GAP_RATIO LV_VER_RES <= 128 ? 0.05f : 0.3f
 
 // Global Variables
 lv_obj_t *flappy_bird_canvas = NULL;
@@ -56,8 +56,8 @@ void draw_halloween_night_sky(lv_obj_t *parent) {
     lv_obj_t *moon = lv_obj_create(parent);
     lv_obj_set_size(moon, 40, 40);
     lv_obj_set_style_bg_color(moon, lv_color_hex(0xFFFFDD), 0);
-    lv_obj_set_style_radius(moon, 0, 0); // Ensure sharp edges
     lv_obj_set_pos(moon, LV_HOR_RES - 60, 30);
+    lv_obj_set_scrollbar_mode(moon, LV_SCROLLBAR_MODE_OFF);
 
     // Create stars
     for (int i = 0; i < 30; i++) {
@@ -96,7 +96,7 @@ void flappy_bird_view_create(void) {
     pipe_gap = (int)(LV_VER_RES * PIPE_GAP_RATIO); // 30% of screen height
     pipe_min_gap_y = (int)(LV_VER_RES * 0.05);    // Minimum gap position near the top
     pipe_max_gap_y = LV_VER_RES - pipe_gap - 40;  // 40 accounts for ground height
-    bird_y_position = LV_VER_RES / 2;
+    bird_y_position = LV_VER_RES / LV_VER_RES <= 128 ? 3 : 2;
 
     // Create root object
     flappy_bird_view.root = lv_obj_create(lv_scr_act());
@@ -136,6 +136,7 @@ void flappy_bird_view_create(void) {
         lv_obj_set_style_bg_color(pipes[i].pipe, lv_color_hex(0x00FF00), 0);
         lv_obj_set_style_radius(pipes[i].pipe, 0, 0); // Ensure sharp edges
         lv_obj_set_pos(pipes[i].pipe, LV_HOR_RES + i * (LV_HOR_RES / MAX_PIPE_SETS), pipes[i].gap_center_y + pipe_gap);
+        lv_obj_set_scrollbar_mode(pipes[i].pipe, LV_SCROLLBAR_MODE_OFF);
     }
 
     // Create score label
@@ -145,10 +146,10 @@ void flappy_bird_view_create(void) {
     lv_obj_set_style_text_color(score_label, lv_color_white(), 0);
 
     // Add status bar
-    display_manager_add_status_bar("Flappy Ghost");
+    display_manager_add_status_bar(LV_VER_RES > 135 ? "Flappy Ghost" : "Flap");
 
     // Create game loop timer
-    game_loop_timer = lv_timer_create(flappy_bird_game_loop, 30, NULL);
+    game_loop_timer = lv_timer_create(flappy_bird_game_loop, 20, NULL);
 }
 
 // View Destruction
@@ -242,9 +243,11 @@ void flappy_bird_game_loop(lv_timer_t *timer) {
     if (angle < -45) angle = -45;
     lv_img_set_angle(bird, angle * 10);
 
-    // Check for collision with ground or ceiling
-    if ((bird_y_position + lv_obj_get_height(bird)) >= (LV_VER_RES - 40) || bird_y_position <= 0) { // 40 for ground height
-        flappy_bird_game_over();
+    // Bypass checks for smaller screens
+    if (LV_VER_RES > 135) {
+        if ((bird_y_position + lv_obj_get_height(bird)) >= (LV_VER_RES - 40) || bird_y_position <= 0) {
+            flappy_bird_game_over();
+        }
     }
 
     // Update each pipe set
@@ -280,7 +283,7 @@ void flappy_bird_game_loop(lv_timer_t *timer) {
 
 // Collision Detection
 int flappy_bird_check_collision(lv_obj_t *bird, lv_obj_t *pipe) {
-    int padding = 2;  // Adjust padding as needed
+    int padding = LV_VER_RES <= 128 ? 0 : 2;
 
     // Get bird's absolute coordinates
     lv_area_t bird_area;
@@ -312,10 +315,11 @@ void flappy_bird_game_over() {
     lv_obj_set_style_bg_opa(game_over_container, LV_OPA_70, 0);
     lv_obj_set_style_border_width(game_over_container, 2, 0);
     lv_obj_set_style_border_color(game_over_container, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_scrollbar_mode(game_over_container, LV_SCROLLBAR_MODE_OFF);
 
     // Create "Game Over" label
     lv_obj_t *game_over_label = lv_label_create(game_over_container);
-    lv_label_set_text(game_over_label, "Game Over!\nTap to Restart");
+    lv_label_set_text(game_over_label, "Game Over!");
     lv_obj_set_style_text_color(game_over_label, lv_color_hex(0xFFFF00), 0);
     lv_obj_set_style_text_font(game_over_label, &lv_font_montserrat_24, 0);
     lv_obj_align(game_over_label, LV_ALIGN_CENTER, 0, 0);
@@ -324,7 +328,7 @@ void flappy_bird_game_over() {
 // Restart Game
 void flappy_bird_restart() {
     is_game_over = false;
-    bird_y_position = LV_VER_RES / 2;
+    bird_y_position = LV_VER_RES / LV_VER_RES <= 128 ? 3 : 2;
     bird_velocity = 0;
     score = 0;
     lv_label_set_text_fmt(score_label, "Score: %d", score);

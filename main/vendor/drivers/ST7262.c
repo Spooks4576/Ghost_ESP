@@ -150,15 +150,15 @@ esp_err_t lcd_st7262_init(void)
     esp_lcd_rgb_panel_config_t panel_config = {
         .clk_src = LCD_CLK_SRC_PLL160M,
         .timings = {
-            .pclk_hz = 16 * 1000 * 1000, // Pixel clock frequency based on the typical 25 MHz from datasheet
+            .pclk_hz = 25 * 1000 * 1000, // Pixel clock frequency based on the typical 25 MHz from datasheet
             .h_res = 800,
             .v_res = 480,
-            .hsync_back_porch = 40,
-            .hsync_front_porch = 40,
-            .hsync_pulse_width = 48,
-            .vsync_back_porch = 13,
-            .vsync_front_porch = 1,
-            .vsync_pulse_width = 31,
+            .hsync_back_porch = 4,
+            .hsync_front_porch = 4,
+            .hsync_pulse_width = 2,
+            .vsync_back_porch = 4,
+            .vsync_front_porch = 4,
+            .vsync_pulse_width = 2,
             .flags.pclk_active_neg = true, // Use as per your display’s requirements
         },
         .data_width = 16,
@@ -208,7 +208,7 @@ esp_err_t lcd_st7262_init(void)
     // esp_rom_gpio_pad_select_gpio(2);
     // gpio_set_direction(2, GPIO_MODE_OUTPUT);
 
-    gpio_set_level(2, 1);
+    //gpio_set_level(2, 1);
 
     ESP_LOGI(TAG, "ST7262 LCD panel initialized successfully");
     return ESP_OK;
@@ -299,7 +299,7 @@ esp_err_t lcd_st7262_lvgl_init(void)
     disp_drv.flush_cb = lcd_st7262_lvgl_flush_cb;
     disp_drv.draw_buf = &draw_buf;
     disp_drv.user_data = (void *)rgb_panel_handle;
-    disp_drv.full_refresh = false; // Enable full refresh mode for synchronization
+    disp_drv.full_refresh = true; // Enable full refresh mode for synchronization
 
     // Register the display driver with LVGL
     lv_disp_drv_register(&disp_drv);
