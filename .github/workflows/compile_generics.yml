@@ -41,13 +41,15 @@ jobs:
             ${{ runner.os }}-esp-idf-
             ${{ runner.os }}-
 
-      # Corrected ESP-IDF Setup Action
+      # Manual ESP-IDF Installation
       - name: Install ESP-IDF
-        uses: espressif/setup-esp-idf@v1
-        with:
-          version: 'v4.4'
-          tools: true
-          python-version: 3.9
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget git flex bison gperf python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util
+          git clone -b v4.4 --depth 1 https://github.com/espressif/esp-idf.git ~/esp-idf
+          ~/esp-idf/install.sh
+          echo "source ~/esp-idf/export.sh" >> $GITHUB_ENV
+        shell: bash
 
       - name: Set Target
         run: idf.py set-target ${{ matrix.target }}
@@ -140,10 +142,9 @@ jobs:
           name: ${{ matrix.target }}-build-failure-${{ github.run_id }}
           path: build/
 
-      # Corrected Discord Notification Step
       - name: Notify on Failure
         if: failure()
-        uses: rtCamp/action-slack-notify@v2  # New notification action for Discord/Slack
+        uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
         with:
