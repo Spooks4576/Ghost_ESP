@@ -153,25 +153,33 @@ class ESP32ControlGUI(QMainWindow):
         # Capture Operations Tab
         self.tab_widget.addTab(self.create_capture_tab(), "Capture Operations")
 
-        # Settings Tab
-        self.tab_widget.addTab(self.create_settings_tab(), "Settings")
-
         # Evil Portal Tab
         self.tab_widget.addTab(self.create_evil_portal_tab(), "Evil Portal")
+
+        # Settings Tab
+        self.tab_widget.addTab(self.create_settings_tab(), "Settings")
 
         # Custom Command Area
         custom_group = QGroupBox("Custom Command")
         custom_layout = QVBoxLayout(custom_group)
 
+        # Custom command input
         self.cmd_entry = QLineEdit()
         self.cmd_entry.setPlaceholderText("Enter custom command...")
         self.cmd_entry.returnPressed.connect(self.send_custom_command)
         custom_layout.addWidget(self.cmd_entry)
 
+        # Send Command button
         send_btn = QPushButton("Send Command")
         send_btn.clicked.connect(self.send_custom_command)
         custom_layout.addWidget(send_btn)
 
+        # Help Command button
+        help_btn = QPushButton("Help Command")
+        help_btn.clicked.connect(lambda: self.send_command("help"))
+        custom_layout.addWidget(help_btn)
+
+        # Adding widgets to layout
         layout.addWidget(self.tab_widget)
         layout.addWidget(custom_group)
 
@@ -253,7 +261,7 @@ class ESP32ControlGUI(QMainWindow):
         capture_widget = QWidget()
         capture_layout = QGridLayout(capture_widget)
 
-        self.create_command_group("Packet Capture", [
+        self.create_command_group("Packet Capture (Requires SD Card or Flipper)", [
             ("Capture Probes", "capture -probe"),
             ("Capture Beacons", "capture -beacon"),
             ("Capture Deauth", "capture -deauth"),
@@ -264,36 +272,6 @@ class ESP32ControlGUI(QMainWindow):
         ], capture_layout, 0, 0)
 
         return capture_widget
-
-    def create_settings_tab(self):
-        settings_widget = QWidget()
-        settings_layout = QFormLayout(settings_widget)
-
-        # RGB Mode
-        rgb_mode = QComboBox()
-        rgb_mode.addItems(["Stealth Mode", "Normal Mode", "Rainbow Mode"])
-        rgb_mode.currentIndexChanged.connect(lambda i: self.send_command(f"setsetting 1 {i+1}"))
-        settings_layout.addRow("RGB Mode:", rgb_mode)
-
-        # Channel Switch Delay
-        channel_delay = QComboBox()
-        channel_delay.addItems(["0.5s", "1s", "2s", "3s", "4s"])
-        channel_delay.currentIndexChanged.connect(lambda i: self.send_command(f"setsetting 2 {i+1}"))
-        settings_layout.addRow("Channel Switch Delay:", channel_delay)
-
-        # Channel Hopping
-        channel_hopping = QComboBox()
-        channel_hopping.addItems(["Disabled", "Enabled"])
-        channel_hopping.currentIndexChanged.connect(lambda i: self.send_command(f"setsetting 3 {i+1}"))
-        settings_layout.addRow("Channel Hopping:", channel_hopping)
-
-        # Random BLE MAC
-        ble_mac = QComboBox()
-        ble_mac.addItems(["Disabled", "Enabled"])
-        ble_mac.currentIndexChanged.connect(lambda i: self.send_command(f"setsetting 4 {i+1}"))
-        settings_layout.addRow("Random BLE MAC:", ble_mac)
-
-        return settings_widget
 
     def create_evil_portal_tab(self):
         portal_widget = QWidget()
@@ -324,6 +302,49 @@ class ESP32ControlGUI(QMainWindow):
         portal_layout.addRow(button_layout)
 
         return portal_widget
+
+    def create_settings_tab(self):
+        settings_widget = QWidget()
+        settings_layout = QFormLayout(settings_widget)
+
+        # RGB Mode
+        rgb_mode = QComboBox()
+        rgb_mode.addItems(["Stealth Mode", "Normal Mode", "Rainbow Mode"])
+        rgb_mode.currentIndexChanged.connect(lambda i: self.send_command(f"setsetting 1 {i+1}"))
+        settings_layout.addRow("RGB Mode:", rgb_mode)
+
+        # Channel Switch Delay
+        channel_delay = QComboBox()
+        channel_delay.addItems(["0.5s", "1s", "2s", "3s", "4s"])
+        channel_delay.currentIndexChanged.connect(lambda i: self.send_command(f"setsetting 2 {i+1}"))
+        settings_layout.addRow("Channel Switch Delay:", channel_delay)
+
+        # Channel Hopping
+        channel_hopping = QComboBox()
+        channel_hopping.addItems(["Disabled", "Enabled"])
+        channel_hopping.currentIndexChanged.connect(lambda i: self.send_command(f"setsetting 3 {i+1}"))
+        settings_layout.addRow("Channel Hopping:", channel_hopping)
+
+        # Random BLE MAC
+        ble_mac = QComboBox()
+        ble_mac.addItems(["Disabled", "Enabled"])
+        ble_mac.currentIndexChanged.connect(lambda i: self.send_command(f"setsetting 4 {i+1}"))
+        settings_layout.addRow("Random BLE MAC:", ble_mac)
+
+        # Reboot and Save buttons side by side
+        button_layout = QHBoxLayout()
+        reboot_btn = QPushButton("Reboot")
+        reboot_btn.clicked.connect(lambda: self.send_command("reboot"))
+        button_layout.addWidget(reboot_btn)
+
+        save_btn = QPushButton("Save Settings")
+        save_btn.clicked.connect(lambda: self.send_command("savesetting"))
+        button_layout.addWidget(save_btn)
+
+        # Add the button layout to settings layout
+        settings_layout.addRow(button_layout)
+
+        return settings_widget
 
     def create_command_group(self, title, commands, layout, row, col):
         group = QGroupBox(title)
@@ -477,7 +498,7 @@ class ESP32ControlGUI(QMainWindow):
     def show_custom_beacon_dialog(self):
         ssid, ok = QInputDialog.getText(self, "Custom Beacon", "Enter SSID for beacon spam:")
         if ok and ssid:
-            self.send_command(f"beaconspam {ssid}")
+            self.send_command(f'beaconspam "{ssid}"')
 
     def show_printer_dialog(self):
         dialog = QDialog(self)
