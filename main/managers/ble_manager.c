@@ -390,6 +390,10 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
 }
 
 void ble_start_scanning(void) {
+    if (!ble_initialized)
+    {
+        ble_init();
+    }
     struct ble_gap_disc_params disc_params = {0};
     disc_params.itvl = BLE_HCI_SCAN_ITVL_DEF;
     disc_params.window = BLE_HCI_SCAN_WINDOW_DEF;
@@ -491,6 +495,8 @@ void ble_stop(void) {
     } else {
         ESP_LOGE(TAG_BLE, "Failed to stop BLE scanning; rc=%d", rc);
     }
+
+    ble_deinit();
 }
 
 void ble_start_blespam_detector(void)
