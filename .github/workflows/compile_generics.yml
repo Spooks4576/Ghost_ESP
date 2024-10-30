@@ -48,17 +48,20 @@ jobs:
           sudo apt-get install -y wget git flex bison gperf python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util
           git clone -b v4.4 --depth 1 https://github.com/espressif/esp-idf.git ~/esp-idf
           ~/esp-idf/install.sh
-          echo "source ~/esp-idf/export.sh" >> $GITHUB_ENV
-        shell: bash
 
       - name: Set Target
-        run: idf.py set-target ${{ matrix.target }}
+        run: |
+          . ~/esp-idf/export.sh
+          idf.py set-target ${{ matrix.target }}
 
       - name: Apply Base sdkconfig
-        run: cp sdkconfig.defaults sdkconfig
+        run: |
+          . ~/esp-idf/export.sh
+          cp sdkconfig.defaults sdkconfig
 
       - name: Override Build Options
         run: |
+          . ~/esp-idf/export.sh
           idf.py set-config FLASH_SIZE 4MB
           idf.py set-config CONFIG_COMPILER_OPTIMIZATION_SIZE=y
           idf.py set-config PARTITION_TABLE_CUSTOM=y
@@ -93,13 +96,18 @@ jobs:
           idf.py reconfigure
 
       - name: Clean Build Environment
-        run: idf.py fullclean
+        run: |
+          . ~/esp-idf/export.sh
+          idf.py fullclean
 
       - name: Build Project
-        run: idf.py build
+        run: |
+          . ~/esp-idf/export.sh
+          idf.py build
 
       - name: Package Build Artifacts
         run: |
+          . ~/esp-idf/export.sh
           mkdir -p packaged_artifacts
           BOOTLOADER_BIN=build/bootloader/bootloader.bin
           PARTITION_TABLE_BIN=build/partition_table/partition-table.bin
