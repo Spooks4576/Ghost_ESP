@@ -46,7 +46,7 @@ jobs:
 
       # Step 4: Install ESP-IDF
       - name: Install ESP-IDF
-        uses: espressif/esp-idf-action@v2
+        uses: espressif/esp-idf-action@v1
         with:
           version: v4.4              # Specify your ESP-IDF version
           tools: true                # Install necessary tools like cmake, ninja
@@ -169,9 +169,9 @@ jobs:
       # Step 13: Notify on Failure via Discord
       - name: Notify on Failure
         if: failure()
-        uses: Ilshidur/action-discord@v2  # A Discord webhook action
+        uses: peter-evans/discord-webhook@v1  # Updated to a maintained Discord webhook action
         with:
-          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           content: |
             🚨 **Build Failed**
             **Repository**: `${{ github.repository }}`
