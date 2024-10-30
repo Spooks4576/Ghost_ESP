@@ -1,5 +1,6 @@
 #include "managers/views/app_gallery_screen.h"
 #include "managers/views/main_menu_screen.h"
+#include "managers/views/flappy_ghost_screen.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -13,7 +14,8 @@ typedef struct {
 } app_item_t;
 
 static app_item_t app_items[] = {
-    {"Pacman", NULL},
+    {"Flap", &GESPFlappyghost},
+    {"PVZ", NULL}
 };
 
 static int num_apps = sizeof(app_items) / sizeof(app_items[0]);
@@ -33,7 +35,7 @@ void apps_menu_create(void) {
     display_manager_fill_screen(lv_color_black());
 
     // Set border colors for apps
-    app_items[0].border_color = lv_color_make(255, 215, 0);     // Pacman
+    app_items[0].border_color = lv_color_make(255, 215, 0);
 
     // Calculate total pages
     total_pages = (num_apps + apps_per_page - 1) / apps_per_page;
@@ -86,7 +88,7 @@ void apps_menu_create(void) {
     lv_obj_set_grid_cell(back_button, LV_GRID_ALIGN_CENTER, 1, 1, LV_GRID_ALIGN_START, 0, 1);
     lv_obj_set_user_data(back_button, (void *)(uintptr_t)(-1));
 
-     lv_obj_add_flag(back_button, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(back_button, LV_OBJ_FLAG_HIDDEN);
 
 #ifdef USE_TOUCHSCREEN
     // Create Next and Previous Buttons
@@ -147,7 +149,7 @@ void apps_menu_create(void) {
     select_app_item(current_page * apps_per_page);
 #endif
 
-    display_manager_add_status_bar("Apps Menu");
+    display_manager_add_status_bar("Apps");
 }
 
 void refresh_apps_menu(void) {
@@ -251,6 +253,7 @@ void handle_apps_button_press(int ButtonPressed) {
         } else {
             printf("Launching app via joystick: %d\n", selected_app_index);
             if (selected_app_index == 0) {
+                display_manager_switch_view(&flappy_bird_view);
             }
         }
     }
@@ -304,6 +307,7 @@ void apps_menu_event_handler(InputEvent *event) {
         if (touched_app_index >= 0) {
             printf("Touch input detected on app item: %d\n", touched_app_index);
             if (touched_app_index == 0) {
+                display_manager_switch_view(&flappy_bird_view);
             }
         } else {
             printf("Touch input detected but no app item found at touch coordinates. X: %d, Y: %d\n",
