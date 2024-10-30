@@ -208,7 +208,7 @@ void refresh_apps_menu(void) {
         lv_obj_t *label = lv_label_create(app_item);
         lv_label_set_text(label, app_items[i].name);
         lv_obj_set_style_text_font(label, font, 0);
-        lv_obj_align(label, LV_ALIGN_CENTER, 0, 20);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, LV_VER_RES > 135 ? 20 : 0);
         lv_obj_set_style_text_color(label, lv_color_white(), 0);
 
         int row_idx = 1 + (display_index / 3); // Rows 1 and 2 for apps
