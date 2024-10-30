@@ -398,6 +398,8 @@ void hardware_input_task(void *pvParameters) {
                         InputEvent event;
                         event.type = INPUT_TYPE_JOYSTICK;
 
+                        printf("Unhandled key value: %d\n", key_value);
+
 
                         switch (key_value) {
                             case 52:
@@ -407,16 +409,16 @@ void hardware_input_task(void *pvParameters) {
                                 event.data.joystick_index = 0;
                                 break;
                             case 30:
-                                event.data.joystick_index = 3;
+                                event.data.joystick_index = 2;
                                 break;
                             case 32:
-                                event.data.joystick_index = 2;
+                                event.data.joystick_index = 3;
                                 break;
                             case 56:
                                 event.data.joystick_index = 4;
                                 break;
                             default:
-                                //printf("Unhandled key value: %d\n", key_value);
+                                printf("Unhandled key value: %d\n", key_value);
                                 continue;
                         }
 
