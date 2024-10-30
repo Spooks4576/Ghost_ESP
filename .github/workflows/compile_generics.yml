@@ -1,0 +1,180 @@
+name: Compile Generics
+
+on:
+  release:
+    types: [published]      # Automatically triggers on new releases
+  workflow_dispatch:        # Enables manual triggering
+
+jobs:
+  build:
+    name: Build for ${{ matrix.target }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        target:
+          - esp32
+          - esp32s2
+          - esp32s3
+          - esp32c3
+          - esp32c6        # Added esp32c6 to the target matrix
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'  # ESP-IDF compatible version
+
+      # Step 3: Cache ESP-IDF and tools
+      - name: Cache ESP-IDF and Tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.espressif
+            ~/.idf_tools
+            ~/.cache/pip
+          key: ${{ runner.os }}-esp-idf-${{ matrix.target }}-${{ hashFiles('**/sdkconfig.defaults') }}
+          restore-keys: |
+            ${{ runner.os }}-esp-idf-${{ matrix.target }}-
+            ${{ runner.os }}-esp-idf-
+            ${{ runner.os }}-
+
+      # Step 4: Install ESP-IDF
+      - name: Install ESP-IDF
+        uses: espressif/esp-idf-action@v2
+        with:
+          version: v4.4              # Specify your ESP-IDF version
+          tools: true                # Install necessary tools like cmake, ninja
+          python-version: 3.9
+
+      # Step 5: Set the target device
+      - name: Set Target
+        run: idf.py set-target ${{ matrix.target }}
+
+      # Step 6: Apply the base sdkconfig
+      - name: Apply Base sdkconfig
+        run: cp sdkconfig.defaults sdkconfig
+
+      # Step 7: Override Build Options
+      - name: Override Build Options
+        run: |
+          # Set Serial Flash Size to 4MB
+          idf.py set-config FLASH_SIZE 4MB
+
+          # Enable Compiler Optimization for Size
+          idf.py set-config CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+
+          # Use Custom Partition Table with Default Option
+          idf.py set-config PARTITION_TABLE_CUSTOM=y
+          idf.py set-config PARTITION_TABLE_FILENAME "partitions.csv"  # Replace with your partition table file if different
+
+          # Enable Long File Names in FAT Filesystem and Store in Heap
+          idf.py set-config CONFIG_FATFS_LFN_ENABLED=y
+          idf.py set-config CONFIG_FATFS_LFN_CODE_PAGE=437  # Example code page, adjust if needed
+          idf.py set-config CONFIG_FATFS_MAX_LFN=255
+          # Ensure that FAT filesystem uses heap memory where applicable
+
+          # Configure Bluetooth and NimBLE based on target
+          if [ "${{ matrix.target }}" = "esp32s2" ]; then
+            idf.py set-config CONFIG_BT_ENABLED=n
+            idf.py set-config CONFIG_BLUEDROID_ENABLED=n
+            idf.py set-config CONFIG_BLUETOOTH_ENABLED=n
+            idf.py set-config CONFIG_BLE_ENABLED=n
+            idf.py set-config CONFIG_BT_NIMBLE_ENABLED=n
+          else
+            idf.py set-config CONFIG_BT_ENABLED=y
+            idf.py set-config CONFIG_BLUEDROID_ENABLED=y
+            idf.py set-config CONFIG_BLUETOOTH_ENABLED=y
+            idf.py set-config CONFIG_BLE_ENABLED=y
+            idf.py set-config CONFIG_BT_NIMBLE_ENABLED=y
+          fi
+
+          # Configure LVGL Font Sizes for Montserrat
+          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_8=y
+          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_10=y
+          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_12=y
+          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_14=y
+          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_16=y
+          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_18=y
+          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_24=y
+
+          # Save the updated configuration
+          idf.py menuconfig --disableconfig  # Ensures non-interactive save
+          idf.py reconfigure
+
+      # Step 8: Clean the build environment
+      - name: Clean Build Environment
+        run: idf.py fullclean
+
+      # Step 9: Build the project
+      - name: Build Project
+        run: idf.py build
+
+      # Step 10: Package Specific Build Artifacts into a ZIP File
+      - name: Package Build Artifacts
+        run: |
+          mkdir -p packaged_artifacts
+          # Define the paths to the artifacts
+          BOOTLOADER_BIN=build/bootloader/bootloader.bin
+          PARTITION_TABLE_BIN=build/partition_table/partition-table.bin
+          GHOST_ESP_IDF_BIN=build/Ghost_ESP_IDF.bin
+
+          # Check if files exist
+          if [ ! -f "$BOOTLOADER_BIN" ]; then
+            echo "Error: $BOOTLOADER_BIN not found!"
+            exit 1
+          fi
+
+          if [ ! -f "$PARTITION_TABLE_BIN" ]; then
+            echo "Error: $PARTITION_TABLE_BIN not found!"
+            exit 1
+          fi
+
+          if [ ! -f "$GHOST_ESP_IDF_BIN" ]; then
+            echo "Error: $GHOST_ESP_IDF_BIN not found!"
+            exit 1
+          fi
+
+          # Copy files to the packaged_artifacts directory
+          cp "$BOOTLOADER_BIN" packaged_artifacts/
+          cp "$PARTITION_TABLE_BIN" packaged_artifacts/
+          cp "$GHOST_ESP_IDF_BIN" packaged_artifacts/
+
+          # Create a ZIP file
+          ZIP_NAME="${{ matrix.target }}-build-${{ github.run_id }}.zip"
+          cd packaged_artifacts
+          zip "$ZIP_NAME" bootloader.bin partition-table.bin Ghost_ESP_IDF.bin
+          cd ..
+
+      # Step 11: Upload the ZIP File as a Build Artifact
+      - name: Upload Build Artifacts ZIP
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}-build-${{ github.run_id }}.zip
+          path: packaged_artifacts/${{ matrix.target }}-build-${{ github.run_id }}.zip
+
+      # Step 12: Archive build directory on failure (Optional)
+      - name: Archive Build Directory on Failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}-build-failure-${{ github.run_id }}
+          path: build/
+
+      # Step 13: Notify on Failure via Discord
+      - name: Notify on Failure
+        if: failure()
+        uses: Ilshidur/action-discord@v2  # A Discord webhook action
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          content: |
+            🚨 **Build Failed**
+            **Repository**: `${{ github.repository }}`
+            **Target**: `${{ matrix.target }}`
+            **Run ID**: `${{ github.run_id }}`
+            **View Details**: `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`

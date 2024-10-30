@@ -522,7 +522,7 @@ esp_err_t file_handler(httpd_req_t *req) {
     }
 
     
-    char file_url[256];
+    char file_url[512];
     build_file_url(host, uri, file_url, sizeof(file_url));
 
     
@@ -946,10 +946,9 @@ void wifi_manager_start_scan() {
     rgb_manager_set_color(&rgb_manager, 0, 50, 255, 50, false);
 
     ESP_LOGI(TAG, "WiFi scanning started...");
+    ESP_LOGI(TAG, "Please wait 5 Seconds...");
     TERMINAL_VIEW_ADD_TEXT("WiFi scanning started...");
-    esp_err_t err = esp_wifi_scan_start(&scan_config, false);
-
-    vTaskDelay(pdMS_TO_TICKS(1500));
+    esp_err_t err = esp_wifi_scan_start(&scan_config, true);
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "WiFi scan failed to start: %s", esp_err_to_name(err));

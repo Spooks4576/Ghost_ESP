@@ -9,8 +9,12 @@
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
 #ifdef USE_CARDPUTER
-#include "vendor/m5gfx_wrapper.h"
+#include "vendor/m5/m5gfx_wrapper.h"
 #include "vendor/keyboard_handler.h"
+#endif
+
+#ifdef USE_7_INCHER
+#include "vendor/drivers/ST7262.h"
 #endif
 
 #define LVGL_TASK_PERIOD_MS 5
@@ -242,6 +246,7 @@ void display_manager_init(void) {
     lvgl_driver_init();
 #endif
 
+#ifndef USE_7_INCHER
     static lv_color_t buf1[TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_color_t buf2[TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_disp_draw_buf_t disp_buf;
@@ -260,6 +265,21 @@ void display_manager_init(void) {
 #endif
     disp_drv.draw_buf = &disp_buf;
     lv_disp_drv_register(&disp_drv);
+#else 
+
+    esp_err_t ret = lcd_st7262_init();
+    if (ret != ESP_OK) {
+        printf("LCD initialization failed");
+        return;
+    }
+
+    ret = lcd_st7262_lvgl_init();
+    if (ret != ESP_OK) {
+        printf("LVGL initialization failed");
+        return;
+    }
+
+#endif
 
     dm.mutex = xSemaphoreCreateMutex();
     if (dm.mutex == NULL) {
@@ -279,7 +299,9 @@ void display_manager_init(void) {
 #endif
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
-    xTaskCreate(&hardware_input_task, "RawInput", 4096, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL);
+    if (xTaskCreate(hardware_input_task, "RawInput", 2048, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL) != pdPASS) {
+        printf("Failed to create RawInput task\n");
+    }
 }
 
 bool display_manager_register_view(View *view) {
@@ -360,6 +382,7 @@ void hardware_input_task(void *pvParameters) {
     int screen_width = LV_HOR_RES;
     int screen_height = LV_VER_RES;
 
+    
     while (1) {
         #ifdef USE_CARDPUTER
             keyboard_update_key_list(&gkeyboard);
@@ -375,6 +398,8 @@ void hardware_input_task(void *pvParameters) {
                         InputEvent event;
                         event.type = INPUT_TYPE_JOYSTICK;
 
+                        printf("Unhandled key value: %d\n", key_value);
+
 
                         switch (key_value) {
                             case 52:
@@ -384,16 +409,16 @@ void hardware_input_task(void *pvParameters) {
                                 event.data.joystick_index = 0;
                                 break;
                             case 30:
-                                event.data.joystick_index = 3;
+                                event.data.joystick_index = 2;
                                 break;
                             case 32:
-                                event.data.joystick_index = 2;
+                                event.data.joystick_index = 3;
                                 break;
                             case 56:
                                 event.data.joystick_index = 4;
                                 break;
                             default:
-                                //printf("Unhandled key value: %d\n", key_value);
+                                printf("Unhandled key value: %d\n", key_value);
                                 continue;
                         }
 
@@ -457,9 +482,19 @@ void hardware_input_task(void *pvParameters) {
 
 
 void lvgl_tick_task(void *arg) {
-    const TickType_t tick_interval = pdMS_TO_TICKS(10);
+    const TickType_t tick_interval = pdMS_TO_TICKS(5);
 
     InputEvent event;
+
+    int tick_increment;
+    
+    if (LV_VER_RES <= 128) {
+        tick_increment = 3;   // For screens 128x128 or smaller
+    } else if (LV_VER_RES > 240) {
+        tick_increment = 10;  // For screens larger than 240x320
+    } else {
+        tick_increment = 5;   // For 240x320 screens
+    }
 
     while (1)
     {
@@ -488,7 +523,7 @@ void lvgl_tick_task(void *arg) {
         }
 
         lv_timer_handler();
-        lv_tick_inc(LVGL_TASK_PERIOD_MS);
+        lv_tick_inc(tick_increment);
         vTaskDelay(tick_interval);
     }
 

@@ -79,19 +79,19 @@ CommandFunction find_command(const char *name) {
 }
 
 void cmd_wifi_scan_start(int argc, char **argv) {
-    ap_manager_add_log("WiFi scan started.\n");
+    printf("WiFi scan started.\n");
     wifi_manager_start_scan();
     wifi_manager_print_scan_results_with_oui();
 }
 
 void cmd_wifi_scan_stop(int argc, char **argv) {
     pcap_file_close();
-    ap_manager_add_log("WiFi scan stopped.\n");
+    printf("WiFi scan stopped.\n");
 }
 
 void cmd_wifi_scan_results(int argc, char **argv) {
     wifi_manager_print_scan_results_with_oui();
-    ap_manager_add_log("WiFi scan results displayed with OUI matching.\n");
+    printf("WiFi scan results displayed with OUI matching.\n");
 }
 
 void handle_list(int argc, char **argv) {
@@ -102,29 +102,29 @@ void handle_list(int argc, char **argv) {
     else if (argc > 1 && strcmp(argv[1], "-s") == 0)
     {
         wifi_manager_list_stations();
-        ap_manager_add_log("Listed Stations...");
+        printf("Listed Stations...");
         return;
     }
     else {
-        ap_manager_add_log("Usage: list -a (for Wi-Fi scan results)\n");
+        printf("Usage: list -a (for Wi-Fi scan results)\n");
     }
 }
 
 void handle_beaconspam(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-r") == 0) {
-        ap_manager_add_log("Starting Random beacon spam...\n");
+        printf("Starting Random beacon spam...\n");
         wifi_manager_start_beacon(NULL);
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-rr") == 0) {
-        ap_manager_add_log("Starting Rickroll beacon spam...\n");
+        printf("Starting Rickroll beacon spam...\n");
         wifi_manager_start_beacon("RICKROLL");
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-l") == 0) {
-        ap_manager_add_log("Starting AP List beacon spam...\n");
+        printf("Starting AP List beacon spam...\n");
         wifi_manager_start_beacon("APLISTMODE");
         return;
     }
@@ -135,7 +135,7 @@ void handle_beaconspam(int argc, char **argv) {
         return;
     }
     else {
-        ap_manager_add_log("Usage: beaconspam -r (for Beacon Spam Random)\n");
+        printf("Usage: beaconspam -r (for Beacon Spam Random)\n");
     }
 }
 
@@ -143,26 +143,26 @@ void handle_beaconspam(int argc, char **argv) {
 void handle_stop_spam(int argc, char **argv)
 {
     wifi_manager_stop_beacon();
-    ap_manager_add_log("Beacon Spam Stopped...");
+    printf("Beacon Spam Stopped...");
 }
 
 void handle_sta_scan(int argc, char **argv)
 {
     wifi_manager_start_monitor_mode(wifi_stations_sniffer_callback);
-    ap_manager_add_log("Started Station Scan...");
+    printf("Started Station Scan...");
 }
 
 
 void handle_attack_cmd(int argc, char **argv)
 {
     if (argc > 1 && strcmp(argv[1], "-d") == 0) {
-        ap_manager_add_log("Deauth Attack Starting...");
+        printf("Deauth Attack Starting...");
         wifi_manager_start_deauth();
         return;
     }
     else 
     {
-        ap_manager_add_log("Usage: attack -d (for deauthing access points)\n");
+        printf("Usage: attack -d (for deauthing access points)\n");
     }
 }
 
@@ -170,14 +170,14 @@ void handle_attack_cmd(int argc, char **argv)
 void handle_stop_deauth(int argc, char **argv)
 {
     wifi_manager_stop_deauth();
-    ap_manager_add_log("Deauthing Stopped....\n");
+    printf("Deauthing Stopped....\n");
 }
 
 
 void handle_select_cmd(int argc, char **argv)
 {
     if (argc != 3) {
-        ap_manager_add_log("Invalid number of arguments. Usage: select -a <number>\n");
+        printf("Invalid number of arguments. Usage: select -a <number>\n");
         return;
     }
 
@@ -190,10 +190,10 @@ void handle_select_cmd(int argc, char **argv)
         if (*endptr == '\0') {
             wifi_manager_select_ap(num);
         } else {
-            ap_manager_add_log("Error: is not a valid number.\n");
+            printf("Error: is not a valid number.\n");
         }
     } else {
-        ap_manager_add_log("Invalid option. Usage: select -a <number>\n");
+        printf("Invalid option. Usage: select -a <number>\n");
     }
 }
 
@@ -265,36 +265,36 @@ void handle_wifi_connection(int argc, char** argv) {
 void handle_ble_scan_cmd(int argc, char**argv)
 {
     if (argc > 1 && strcmp(argv[1], "-f") == 0) {
-        ap_manager_add_log("Starting Find the Flippers...\n");
+        printf("Starting Find the Flippers...\n");
         ble_start_find_flippers();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-ds") == 0) {
-        ap_manager_add_log("Starting BLE Spam Detector...\n");
+        printf("Starting BLE Spam Detector...\n");
         ble_start_blespam_detector();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-a") == 0) {
-        ap_manager_add_log("Starting AirTag Scanner...\n");
+        printf("Starting AirTag Scanner...\n");
         ble_start_airtag_scanner();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-r") == 0) {
-        ap_manager_add_log("Scanning for Raw Packets\n");
+        printf("Scanning for Raw Packets\n");
         ble_start_raw_ble_packetscan();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-s") == 0) {
-        ap_manager_add_log("Stopping BLE Scan...\n");
+        printf("Stopping BLE Scan...\n");
         ble_stop();
         return;
     }
 
-    ap_manager_add_log("Invalid Command Syntax...");
+    printf("Invalid Command Syntax...");
 }
 
 #endif

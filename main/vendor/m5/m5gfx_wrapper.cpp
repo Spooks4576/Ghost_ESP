@@ -1,7 +1,7 @@
 // m5gfx_wrapper.cpp
 #include <M5GFX.h>
 #include <lgfx/v1/panel/Panel_ST7789.hpp>
-#include "vendor/m5gfx_wrapper.h"
+#include "vendor/m5/m5gfx_wrapper.h"
 
 M5GFX display;
 

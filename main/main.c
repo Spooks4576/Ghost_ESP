@@ -35,7 +35,7 @@ void app_main(void) {
   serial_manager_init();
   wifi_manager_init();
 #ifndef CONFIG_IDF_TARGET_ESP32S2
-  ble_init();
+  //ble_init();
 #endif
 
 #ifdef USB_MODULE

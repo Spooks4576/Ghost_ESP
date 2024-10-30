@@ -7,7 +7,7 @@ lv_obj_t *splash_screen;
 lv_obj_t *img;
 
 
-static void zoom_anim_cb(void *var, int32_t zoom);
+static void fade_anim_cb(void *var, int32_t opacity);
 static void fade_out_cb(void *var);
 
 
@@ -28,29 +28,32 @@ void splash_create(void) {
     img = lv_img_create(splash_screen);
     lv_img_set_src(img, &Ghost_ESP);
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
-    
-    lv_anim_t zoom_anim;
-    lv_anim_init(&zoom_anim);
 
     
-    lv_disp_t * disp = lv_disp_get_default();
-    int hor_res = lv_disp_get_hor_res(disp);
-    int ver_res = lv_disp_get_ver_res(disp);
+    if (LV_VER_RES < 140)
+    {
+        lv_img_set_zoom(img, 128);
+    }
 
+   
+    
+    lv_anim_t fade_anim;
+    lv_anim_init(&fade_anim);
 
-    lv_anim_set_var(&zoom_anim, img);
-    lv_anim_set_values(&zoom_anim, hor_res / 2, hor_res);
-    lv_anim_set_time(&zoom_anim, 100);
-    lv_anim_set_playback_time(&zoom_anim, 100);
-    lv_anim_set_repeat_count(&zoom_anim, 1);
-    lv_anim_set_exec_cb(&zoom_anim, zoom_anim_cb);
-    lv_anim_set_ready_cb(&zoom_anim, fade_out_cb);
-    lv_anim_start(&zoom_anim);
+    lv_anim_set_var(&fade_anim, img);
+    lv_anim_set_values(&fade_anim, LV_OPA_0, LV_OPA_100);
+    lv_anim_set_time(&fade_anim, 100);
+    lv_anim_set_playback_delay(&fade_anim, 0);
+    lv_anim_set_playback_time(&fade_anim, 100);
+    lv_anim_set_repeat_count(&fade_anim, 2);
+    lv_anim_set_exec_cb(&fade_anim, fade_anim_cb);
+    lv_anim_set_ready_cb(&fade_anim, fade_out_cb);
+    lv_anim_start(&fade_anim);
 }
 
 
-static void zoom_anim_cb(void *var, int32_t zoom) {
-    lv_img_set_zoom((lv_obj_t *)var, zoom);
+static void fade_anim_cb(void *var, int32_t opacity) {
+    lv_obj_set_style_img_opa((lv_obj_t *)var, opacity, LV_PART_MAIN);
 }
 
 
