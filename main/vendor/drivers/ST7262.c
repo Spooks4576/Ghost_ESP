@@ -299,7 +299,7 @@ esp_err_t lcd_st7262_lvgl_init(void)
     disp_drv.flush_cb = lcd_st7262_lvgl_flush_cb;
     disp_drv.draw_buf = &draw_buf;
     disp_drv.user_data = (void *)rgb_panel_handle;
-    disp_drv.full_refresh = true; // Enable full refresh mode for synchronization
+    disp_drv.full_refresh = false; // Enable full refresh mode for synchronization
 
     // Register the display driver with LVGL
     lv_disp_drv_register(&disp_drv);

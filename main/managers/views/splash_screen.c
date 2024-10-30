@@ -30,8 +30,12 @@ void splash_create(void) {
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
 
     
-    lv_img_set_zoom(img, 128);
+    if (LV_VER_RES < 140)
+    {
+        lv_img_set_zoom(img, 128);
+    }
 
+   
     
     lv_anim_t fade_anim;
     lv_anim_init(&fade_anim);

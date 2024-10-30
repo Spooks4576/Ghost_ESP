@@ -50,12 +50,15 @@ void flappy_bird_restart();
 
 // Drawing the background
 void draw_halloween_night_sky(lv_obj_t *parent) {
-    lv_obj_set_style_bg_color(parent, lv_color_hex(0x0D0D40), 0);
+    // Set up the gradient for the night sky background
+    lv_obj_set_style_bg_color(parent, lv_color_hex(0x0D0D40), 0); // Dark blue
+    lv_obj_set_style_bg_grad_color(parent, lv_color_hex(0x0A0A30), 0); // Near black
+    lv_obj_set_style_bg_grad_dir(parent, LV_GRAD_DIR_VER, 0); // Vertical gradient
 
     // Create the moon
     lv_obj_t *moon = lv_obj_create(parent);
     lv_obj_set_size(moon, 40, 40);
-    lv_obj_set_style_bg_color(moon, lv_color_hex(0xFFFFDD), 0);
+    lv_obj_set_style_bg_color(moon, lv_color_hex(0xFFFFDD), 0); // Pale yellow
     lv_obj_set_pos(moon, LV_HOR_RES - 60, 30);
     lv_obj_set_scrollbar_mode(moon, LV_SCROLLBAR_MODE_OFF);
 
@@ -63,7 +66,7 @@ void draw_halloween_night_sky(lv_obj_t *parent) {
     for (int i = 0; i < 30; i++) {
         lv_obj_t *star = lv_obj_create(parent);
         lv_obj_set_size(star, 2, 2);
-        lv_obj_set_style_bg_color(star, lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_style_bg_color(star, lv_color_hex(0xFFFFFF), 0); // White
         int x_pos = rand() % LV_HOR_RES;
         int y_pos = rand() % (LV_VER_RES / 2);
         lv_obj_set_pos(star, x_pos, y_pos);
@@ -73,7 +76,7 @@ void draw_halloween_night_sky(lv_obj_t *parent) {
     for (int i = 0; i < 5; i++) {
         lv_obj_t *twinkling_star = lv_obj_create(parent);
         lv_obj_set_size(twinkling_star, 4, 4);
-        lv_obj_set_style_bg_color(twinkling_star, lv_color_hex(0xFFFF88), 0);
+        lv_obj_set_style_bg_color(twinkling_star, lv_color_hex(0xFFFF88), 0); // Light yellow
         int x_pos = rand() % LV_HOR_RES;
         int y_pos = rand() % (LV_VER_RES / 2);
         lv_obj_set_pos(twinkling_star, x_pos, y_pos);
@@ -82,7 +85,7 @@ void draw_halloween_night_sky(lv_obj_t *parent) {
     // Create the ground
     lv_obj_t *ground = lv_obj_create(parent);
     lv_obj_set_size(ground, LV_HOR_RES, 40);
-    lv_obj_set_style_bg_color(ground, lv_color_hex(0x101010), 0);
+    lv_obj_set_style_bg_color(ground, lv_color_hex(0x101010), 0); // Dark gray
     lv_obj_set_pos(ground, 0, LV_VER_RES - 40);
 }
 

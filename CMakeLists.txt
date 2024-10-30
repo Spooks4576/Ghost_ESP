@@ -6,15 +6,15 @@ add_link_options("-Wl,-z,muldefs")
 #add_compile_definitions(LED_DATA_PIN=10)
 #add_compile_definitions(USB_MODULE=1)
 #add_compile_definitions(DEBUG=1)
-#add_compile_definitions(USE_TOUCHSCREEN=1)
+add_compile_definitions(USE_TOUCHSCREEN=1)
 add_compile_definitions(HOLD_LIMIT=1000) # for joystick
 #add_compile_definitions(USE_JOYSTICK)
-add_compile_definitions(USE_CARDPUTER=1)
+#add_compile_definitions(USE_CARDPUTER=1)
 add_compile_definitions(WITH_SCREEN=1)
-add_compile_definitions(TFT_WIDTH=240) # TFT Width TFT_WIDTH=240
-add_compile_definitions(TFT_HEIGHT=135) # TFT Height TFT_WIDTH=320
+add_compile_definitions(TFT_WIDTH=800) # TFT Width TFT_WIDTH=240
+add_compile_definitions(TFT_HEIGHT=480) # TFT Height TFT_WIDTH=320
 add_compile_definitions(LED_ORDER=0) # 2 For RGB 0 for GRB
-#add_compile_definitions(USE_7_INCHER=1)
+add_compile_definitions(USE_7_INCHER=1)
 add_compile_definitions(NUM_LEDS=3)
 add_compile_definitions(IS_GHOST_BOARD=0)
 add_compile_definitions(USING_SPI=0)

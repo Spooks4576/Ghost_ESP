@@ -15,7 +15,7 @@ typedef struct {
 
 static app_item_t app_items[] = {
     {"Flap", &GESPFlappyghost},
-    {"PVZ", NULL}
+    {"HLSL", NULL}
 };
 
 static int num_apps = sizeof(app_items) / sizeof(app_items[0]);
@@ -208,7 +208,7 @@ void refresh_apps_menu(void) {
         lv_obj_t *label = lv_label_create(app_item);
         lv_label_set_text(label, app_items[i].name);
         lv_obj_set_style_text_font(label, font, 0);
-        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 20);
         lv_obj_set_style_text_color(label, lv_color_white(), 0);
 
         int row_idx = 1 + (display_index / 3); // Rows 1 and 2 for apps
@@ -254,6 +254,10 @@ void handle_apps_button_press(int ButtonPressed) {
             printf("Launching app via joystick: %d\n", selected_app_index);
             if (selected_app_index == 0) {
                 display_manager_switch_view(&flappy_bird_view);
+            }
+            else if (selected_app_index == 1)
+            {
+
             }
         }
     }
@@ -308,6 +312,10 @@ void apps_menu_event_handler(InputEvent *event) {
             printf("Touch input detected on app item: %d\n", touched_app_index);
             if (touched_app_index == 0) {
                 display_manager_switch_view(&flappy_bird_view);
+            }
+            else if (touched_app_index == 1)
+            {
+
             }
         } else {
             printf("Touch input detected but no app item found at touch coordinates. X: %d, Y: %d\n",
