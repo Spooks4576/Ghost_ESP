@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build for ${{ matrix.target.name }} - LED ${{ matrix.led }} - Screen ${{ matrix.screen_support }} - Input ${{ matrix.input_type }}
+    name: Build for ${{ matrix.target.name }} - LED ${{ matrix.target.led }} - Screen ${{ matrix.target.screen_support }} - Input ${{ matrix.target.input_type }}
     runs-on: ubuntu-latest
 
     strategy:
@@ -78,30 +78,30 @@ jobs:
         run: |
           DEST_FILE="sdkconfig"
 
-          echo "Applying SDK Config: ${{matrix.sdkconfig_file}} to $DEST_FILE"
+          echo "Applying SDK Config: ${{matrix.target.sdkconfig_file}} to $DEST_FILE"
 
-          if [ -f "${{matrix.sdkconfig_file}}" ]; then
-            cp "${{matrix.sdkconfig_file}}" "$DEST_FILE"
+          if [ -f "${{matrix.target.sdkconfig_file}}" ]; then
+            cp "${{matrix.target.sdkconfig_file}}" "$DEST_FILE"
           else
-            echo "Error: Source config file ${{matrix.sdkconfig_file}} does not exist."
+            echo "Error: Source config file ${{matrix.target.sdkconfig_file}} does not exist."
             exit 1
           fi
 
       - name: Set Environment Variables for Matrix Configuration
         run: |
-          if [ "${{ matrix.led }}" = "true" ]; then
-            echo "LED_DATA_PIN=${{ matrix.led_pin }}" >> $GITHUB_ENV
-            echo "NUM_LEDS=${{ matrix.num_leds }}" >> $GITHUB_ENV
+          if [ "${{ matrix.target.led }}" = "true" ]; then
+            echo "LED_DATA_PIN=${{ matrix.target.led_pin }}" >> $GITHUB_ENV
+            echo "NUM_LEDS=${{ matrix.target.num_leds }}" >> $GITHUB_ENV
           fi
-          if [ "${{ matrix.is_ghost_board }}" = "true" ]; then
+          if [ "${{ matrix.target.is_ghost_board }}" = "true" ]; then
             echo "IS_GHOST_BOARD=1" >> $GITHUB_ENV
           fi
-          if [ "${{ matrix.screen_support }}" = "true" ]; then
+          if [ "${{ matrix.target.screen_support }}" = "true" ]; then
             echo "WITH_SCREEN=1" >> $GITHUB_ENV
-            echo "TFT_WIDTH=${{ matrix.screen_width }}" >> $GITHUB_ENV
-            echo "TFT_HEIGHT=${{ matrix.screen_height }}" >> $GITHUB_ENV
+            echo "TFT_WIDTH=${{ matrix.target.screen_width }}" >> $GITHUB_ENV
+            echo "TFT_HEIGHT=${{ matrix.target.screen_height }}" >> $GITHUB_ENV
           fi
-          case "${{ matrix.input_type }}" in
+          case "${{ matrix.target.input_type }}" in
             "touchscreen")
               echo "USE_TOUCHSCREEN=1" >> $GITHUB_ENV
               ;;
@@ -112,13 +112,13 @@ jobs:
               echo "USE_CARDPUTER=1" >> $GITHUB_ENV
               ;;
           esac
-          if [ "${{ matrix.use_7_incher }}" = "true" ]; then
+          if [ "${{ matrix.target.use_7_incher }}" = "true" ]; then
             echo "USE_7_INCHER=0" >> $GITHUB_ENV
           fi
-          if [ "${{ matrix.waveshare_lcd }}" = "true" ]; then
+          if [ "${{ matrix.target.waveshare_lcd }}" = "true" ]; then
             echo "Waveshare_LCD=1" >> $GITHUB_ENV
           fi
-          if [ "${{ matrix.crowtech_lcd }}" = "true" ]; then
+          if [ "${{ matrix.target.crowtech_lcd }}" = "true" ]; then
             echo "Crowtech_LCD=1" >> $GITHUB_ENV
           fi
 
@@ -159,7 +159,7 @@ jobs:
           cp "$PARTITION_TABLE_BIN" packaged_artifacts/
           cp "$GHOST_ESP_IDF_BIN" packaged_artifacts/
 
-          ZIP_NAME="${{ matrix.zip_name }}"
+          ZIP_NAME="${{ matrix.target.zip_name }}"
           cd packaged_artifacts
           zip "$ZIP_NAME" bootloader.bin partition-table.bin Ghost_ESP_IDF.bin
           cd ..
@@ -181,7 +181,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          zip_file="packaged_artifacts/${{ matrix.zip_name }}"
+          zip_file="packaged_artifacts/${{ matrix.target.zip_name }}"
           release_id=${{ steps.get_release.outputs.release_id }}
           curl -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
