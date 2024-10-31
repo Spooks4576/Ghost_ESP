@@ -122,6 +122,9 @@ jobs:
           . ~/esp-idf/export.sh
           idf.py fullclean
 
+      - name: Set Target Environment Variable
+        run: echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
+
       - name: Build Project
         run: |
           . ~/esp-idf/export.sh
