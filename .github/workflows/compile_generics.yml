@@ -117,20 +117,19 @@ jobs:
             echo "Crowtech_LCD=1" >> $GITHUB_ENV
           fi
 
-      - name: Clean Build Environment
-        run: |
-          . ~/esp-idf/export.sh
-          idf.py fullclean
-
       - name: Set Target Environment Variable
         run: echo "IDF_TARGET_SPOOKY=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
 
-      - name: Set Actual Target
-        run: echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
-
-      - name: Build Project
+      - name: Set up ESP-IDF and Target
         run: |
           . ~/esp-idf/export.sh
+          echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
+          export IDF_TARGET=${{ matrix.target.idf_target }}
+          echo "IDF_TARGET is set to $IDF_TARGET"
+          
+      - name: Build Project
+        run: |
+          . ~/esp-idf/export.sh  # Re-source to confirm environment
           idf.py build
 
       - name: Verify IDF_TARGET
