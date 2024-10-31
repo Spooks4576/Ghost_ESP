@@ -35,7 +35,7 @@ jobs:
             ~/.espressif
             ~/.idf_tools
             ~/.cache/pip
-          key: ${{ runner.os }}-esp-idf-${{ matrix.target }}-${{ hashFiles('**/sdkconfig.defaults') }}
+          key: ${{ runner.os }}-esp-idf-${{ matrix.target }}-${{ hashFiles('**/sdkconfig') }}
           restore-keys: |
             ${{ runner.os }}-esp-idf-${{ matrix.target }}-
             ${{ runner.os }}-esp-idf-
@@ -54,10 +54,11 @@ jobs:
           . ~/esp-idf/export.sh
           idf.py set-target ${{ matrix.target }}
 
+      # Use sdkconfig instead of sdkconfig.defaults
       - name: Apply Base sdkconfig
         run: |
           . ~/esp-idf/export.sh
-          cp sdkconfig.defaults sdkconfig
+          cp sdkconfig sdkconfig.build
 
       - name: Override Build Options
         run: |
@@ -150,6 +151,7 @@ jobs:
           name: ${{ matrix.target }}-build-failure-${{ github.run_id }}
           path: build/
 
+      # Discord notification using curl
       - name: Notify on Failure
         if: failure()
         run: |
