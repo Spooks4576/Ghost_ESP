@@ -207,10 +207,12 @@ esp_err_t lcd_st7262_init(void)
     // Turn on the display
     ret = esp_lcd_panel_disp_on_off(rgb_panel_handle, true);
 
-    // esp_rom_gpio_pad_select_gpio(2);
-    // gpio_set_direction(2, GPIO_MODE_OUTPUT);
+#ifdef Crowtech_LCD
+    esp_rom_gpio_pad_select_gpio(2);
+    gpio_set_direction(2, GPIO_MODE_OUTPUT);
 
-    //gpio_set_level(2, 1);
+    gpio_set_level(2, 1);
+#endif
 
     ESP_LOGI(TAG, "ST7262 LCD panel initialized successfully");
     return ESP_OK;
