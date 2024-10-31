@@ -101,9 +101,11 @@ void submit_score_to_api(const char *name, int score) {
     char post_data[128];
     snprintf(post_data, sizeof(post_data), "{\"name\": \"%s\", \"score\": %d, \"width\": %d, \"height\": %d}", 
              name, score, LV_HOR_RES, LV_VER_RES);
+
+    const char* WebHookURL = FLAPPY_GHOST_WEB_HOOK;
     
     esp_http_client_config_t config = {
-        .url = FLAPPY_GHOST_WEB_HOOK,
+        .url = WebHookURL,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     
