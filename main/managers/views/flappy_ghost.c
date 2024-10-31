@@ -7,6 +7,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include "lvgl.h"
+#include "esp_wifi.h"   // For internet connectivity check
+#include "esp_http_client.h"  // For HTTP requests
+#include "managers/settings_manager.h"
+
+lv_obj_t *name_text_area = NULL;
+lv_obj_t *keyboard = NULL;
+bool internet_connected = false;
+
+#ifndef FLAPPY_GHOST_WEB_HOOK
+    #define FLAPPY_GHOST_WEB_HOOK ""
+#endif
 
 // Define a structure for a single pipe
 typedef struct {
@@ -75,6 +86,40 @@ void draw_halloween_night_sky(lv_obj_t *parent, lv_color_t bg_color, lv_color_t 
     lv_obj_set_size(ground, LV_HOR_RES, 40);
     lv_obj_set_style_bg_color(ground, lv_color_hex(0x101010), 0); // Dark gray
     lv_obj_set_pos(ground, 0, LV_VER_RES - 40);
+}
+
+bool check_internet_connectivity() {
+    wifi_ap_record_t info;
+    if (esp_wifi_sta_get_ap_info(&info) == ESP_OK) {
+        return true;
+    }
+    return false;
+}
+
+void submit_score_to_api(const char *name, int score) {
+    esp_log_level_set("esp_http_client", ESP_LOG_NONE);
+    char post_data[128];
+    snprintf(post_data, sizeof(post_data), "{\"name\": \"%s\", \"score\": %d, \"width\": %d, \"height\": %d}", 
+             name, score, LV_HOR_RES, LV_VER_RES);
+    
+    esp_http_client_config_t config = {
+        .url = FLAPPY_GHOST_WEB_HOOK,
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    
+    esp_http_client_set_method(client, HTTP_METHOD_POST);
+    esp_http_client_set_header(client, "Content-Type", "application/json");
+    esp_http_client_set_post_field(client, post_data, strlen(post_data));
+
+    esp_err_t err = esp_http_client_perform(client);
+    if (err == ESP_OK) {
+        ESP_LOGI("HTTP", "Score submitted successfully");
+    } else {
+        ESP_LOGE("HTTP", "Failed to submit score");
+    }
+
+    esp_http_client_cleanup(client);
+    esp_log_level_set("esp_http_client", ESP_LOG_INFO);
 }
 
 // View Creation
@@ -297,6 +342,13 @@ int flappy_bird_check_collision(lv_obj_t *bird, lv_obj_t *pipe) {
 void flappy_bird_game_over() {
     if (is_game_over) return; // Prevent multiple triggers
     is_game_over = true;
+
+    internet_connected = check_internet_connectivity();
+
+    if (internet_connected)
+    {
+        submit_score_to_api(settings_get_flappy_ghost_name(&G_Settings), score);
+    }
 
     // Create a semi-transparent overlay
     lv_obj_t *game_over_container = lv_obj_create(flappy_bird_view.root);

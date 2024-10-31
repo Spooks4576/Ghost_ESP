@@ -114,6 +114,7 @@ jobs:
       - name: Set up ESP-IDF and Target
         run: |
           . ~/esp-idf/export.sh
+          echo "FLAPPY_GHOST_WEB_HOOK=${{ secrets.FLAPPY_GHOST_WEB_HOOK }}" >> $GITHUB_ENV
           echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
           export IDF_TARGET=${{ matrix.target.idf_target }}
           echo "IDF_TARGET is set to $IDF_TARGET"

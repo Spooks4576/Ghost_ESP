@@ -2,6 +2,7 @@
 #include "managers/rgb_manager.h"
 #include <string.h>
 #include <esp_log.h>
+#include "settings_manager.h"
 
 #define S_TAG "SETTINGS"
 
@@ -25,6 +26,7 @@ static const char* NVS_PRINTER_ALIGNMENT_KEY = "printer_alignment";
 static const char* NVS_PRINTER_CONNECTED_KEY = "printer_connected";
 static const char* NVS_BOARD_TYPE_KEY = "board_type";
 static const char* NVS_CUSTOM_PIN_CONFIG_KEY = "custom_pin_config";
+static const char* NVS_FLAPPY_GHOST_NAME = "flappy_ghost_name";
 
 void settings_init(FSettings* settings) {
     settings_set_defaults(settings);
@@ -68,6 +70,7 @@ void settings_set_defaults(FSettings* settings) {
     strcpy(settings->printer_text, "Default Text");
     settings->printer_font_size = 12;
     settings->printer_alignment = ALIGNMENT_CM;
+    strcpy(settings->flappy_ghost_name, "Bob");
 }
 
 void settings_load(FSettings* settings) {
@@ -176,6 +179,12 @@ void settings_load(FSettings* settings) {
         settings->printer_alignment = (PrinterAlignment)value_u8;
     }
 
+    str_size = sizeof(settings->flappy_ghost_name);
+    err = nvs_get_str(nvsHandle, NVS_FLAPPY_GHOST_NAME, settings->flappy_ghost_name, &str_size);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to load Flappy Ghost Name");
+    }
+
     ESP_LOGI(S_TAG, "Settings loaded from NVS.");
 }
 
@@ -270,6 +279,11 @@ void settings_save(const FSettings* settings) {
         ESP_LOGE(S_TAG, "Failed to save Printer Alignment");
     }
 
+    err = nvs_set_str(nvsHandle, NVS_FLAPPY_GHOST_NAME, settings->flappy_ghost_name);
+    if (err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to save Flappy Ghost Name");
+    }
+
     printf(" RGB MODE INDEX = %i\n", (int)settings_get_rgb_mode(&G_Settings));
 
     if (settings_get_rgb_mode(&G_Settings) == 0)
@@ -323,7 +337,19 @@ uint16_t settings_get_broadcast_speed(const FSettings* settings) {
     return settings->broadcast_speed;
 }
 
-void settings_set_ap_ssid(FSettings* settings, const char* ssid) {
+void settings_set_flappy_ghost_name(FSettings *settings, const char *Name)
+{
+    strncpy(settings->flappy_ghost_name, Name, sizeof(settings->flappy_ghost_name) - 1);
+    settings->flappy_ghost_name[sizeof(settings->flappy_ghost_name) - 1] = '\0';
+}
+
+const char *settings_get_flappy_ghost_name(const FSettings *settings)
+{
+    return settings->flappy_ghost_name;
+}
+
+void settings_set_ap_ssid(FSettings *settings, const char *ssid)
+{
     strncpy(settings->ap_ssid, ssid, sizeof(settings->ap_ssid) - 1);
     settings->ap_ssid[sizeof(settings->ap_ssid) - 1] = '\0';
 }

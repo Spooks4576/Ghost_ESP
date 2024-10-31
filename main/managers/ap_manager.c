@@ -660,6 +660,11 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_printer_alignment(settings, (PrinterAlignment)printer_alignment->valueint);
     }
 
+    cJSON* flappy_ghost_name = cJSON_GetObjectItem(root, "flappy_ghost_name");
+    if (printer_alignment) {
+        settings_set_flappy_ghost_name(settings, flappy_ghost_name->valuestring);
+    }
+
     settings_save(settings);
 
     httpd_resp_set_type(req, "application/json");

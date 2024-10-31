@@ -13,6 +13,11 @@ set(PARTITION_TABLE_CUSTOM_FILENAME "partitions/min_spiffs.csv")
 set(PARTITION_TABLE_CUSTOM_PARTITION_FILENAME "partitions/min_spiffs.csv")
 add_link_options("-Wl,-z,muldefs")
 
+
+if(DEFINED ENV{FLAPPY_GHOST_WEB_HOOK})
+    add_compile_definitions(FLAPPY_GHOST_WEB_HOOK=$ENV{FLAPPY_GHOST_WEB_HOOK})
+endif()
+
 # LED configuration
 if(DEFINED ENV{LED_DATA_PIN})
     add_compile_definitions(LED_DATA_PIN=$ENV{LED_DATA_PIN})

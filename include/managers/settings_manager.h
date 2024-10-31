@@ -68,6 +68,7 @@ typedef struct {
     char printer_text[257];       // Last printed text (max 256 characters + null terminator)
     uint8_t printer_font_size;    // Font size for printing
     PrinterAlignment printer_alignment; // Text alignment
+    char flappy_ghost_name[65];
 } FSettings;
 
 // Function declarations
@@ -86,6 +87,9 @@ float settings_get_channel_delay(const FSettings* settings);
 
 void settings_set_broadcast_speed(FSettings* settings, uint16_t speed);
 uint16_t settings_get_broadcast_speed(const FSettings* settings);
+
+void settings_set_flappy_ghost_name(FSettings* settings, const char* Name);
+const char* settings_get_flappy_ghost_name(const FSettings* settings);
 
 void settings_set_ap_ssid(FSettings* settings, const char* ssid);
 const char* settings_get_ap_ssid(const FSettings* settings);
