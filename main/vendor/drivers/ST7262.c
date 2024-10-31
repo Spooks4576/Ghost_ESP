@@ -29,6 +29,38 @@ static SemaphoreHandle_t sem_vsync_end = NULL;
 static SemaphoreHandle_t sem_gui_ready = NULL;
 
 // Data lines D0 to D15
+#ifdef Crowtech_LCD
+// Crowtech display (formerly Sasquatch display)
+static const int lcd_data_gpio_nums[] = {
+    GPIO_NUM_15, // D0 - B0
+    GPIO_NUM_7,  // D1 - B1
+    GPIO_NUM_6,  // D2 - B2
+    GPIO_NUM_5,  // D3 - B3
+    GPIO_NUM_4,  // D4 - B4
+    GPIO_NUM_9,  // D5 - G0
+    GPIO_NUM_46, // D6 - G1
+    GPIO_NUM_3,  // D7 - G2
+    GPIO_NUM_8,  // D8 - G3
+    GPIO_NUM_16, // D9 - G4
+    GPIO_NUM_1,  // D10 - G5
+    GPIO_NUM_14, // D11 - R0
+    GPIO_NUM_21, // D12 - R1
+    GPIO_NUM_47, // D13 - R2
+    GPIO_NUM_48, // D14 - R3
+    GPIO_NUM_45  // D15 - R4
+};
+
+// Control signals for Crowtech display
+#define LCD_HSYNC_GPIO_NUM   GPIO_NUM_39
+#define LCD_VSYNC_GPIO_NUM   GPIO_NUM_40
+#define LCD_DE_GPIO_NUM      GPIO_NUM_41
+#define LCD_PCLK_GPIO_NUM    GPIO_NUM_0
+#define LCD_DISP_GPIO_NUM    -1      // Not used
+#define LCD_BACKLIGHT_GPIO   2       // Not used
+#define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
+
+#else
+// Waveshare display
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_14, // D0 - B3
     GPIO_NUM_38, // D1 - B4
@@ -48,29 +80,7 @@ static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_40  // D15 - R7
 };
 
-
-// Sasquatch Display
-
-// static const int lcd_data_gpio_nums[] = {
-//     GPIO_NUM_15, // D0 - B0
-//     GPIO_NUM_7,  // D1 - B1
-//     GPIO_NUM_6,  // D2 - B2
-//     GPIO_NUM_5,  // D3 - B3
-//     GPIO_NUM_4,  // D4 - B4
-//     GPIO_NUM_9,  // D5 - G0
-//     GPIO_NUM_46, // D6 - G1
-//     GPIO_NUM_3,  // D7 - G2
-//     GPIO_NUM_8,  // D8 - G3
-//     GPIO_NUM_16, // D9 - G4
-//     GPIO_NUM_1,  // D10 - G5
-//     GPIO_NUM_14, // D11 - R0
-//     GPIO_NUM_21, // D12 - R1
-//     GPIO_NUM_47, // D13 - R2
-//     GPIO_NUM_48, // D14 - R3
-//     GPIO_NUM_45  // D15 - R4
-// };
-
-// Control signals
+// Control signals for Waveshare display
 #define LCD_HSYNC_GPIO_NUM   GPIO_NUM_46
 #define LCD_VSYNC_GPIO_NUM   GPIO_NUM_3
 #define LCD_DE_GPIO_NUM      GPIO_NUM_5
@@ -79,15 +89,7 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_BACKLIGHT_GPIO   -1      // Not used
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
 
-
-// Sasquach
-// #define LCD_HSYNC_GPIO_NUM   GPIO_NUM_39
-// #define LCD_VSYNC_GPIO_NUM   GPIO_NUM_40
-// #define LCD_DE_GPIO_NUM      GPIO_NUM_41
-// #define LCD_PCLK_GPIO_NUM    GPIO_NUM_0
-// #define LCD_DISP_GPIO_NUM    -1      // Not used
-// #define LCD_BACKLIGHT_GPIO   2      // Not used
-// #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
+#endif
 
 // SPI pins for control interface (if used)
 #define LCD_SPI_CS_GPIO_NUM      GPIO_NUM_13 // Adjust as per your hardware
@@ -205,10 +207,12 @@ esp_err_t lcd_st7262_init(void)
     // Turn on the display
     ret = esp_lcd_panel_disp_on_off(rgb_panel_handle, true);
 
-    // esp_rom_gpio_pad_select_gpio(2);
-    // gpio_set_direction(2, GPIO_MODE_OUTPUT);
+#ifdef Crowtech_LCD
+    esp_rom_gpio_pad_select_gpio(2);
+    gpio_set_direction(2, GPIO_MODE_OUTPUT);
 
-    //gpio_set_level(2, 1);
+    gpio_set_level(2, 1);
+#endif
 
     ESP_LOGI(TAG, "ST7262 LCD panel initialized successfully");
     return ESP_OK;
