@@ -71,7 +71,7 @@ jobs:
           sed -i 's/^CONFIG_FATFS_LFN_CODE_PAGE.*/CONFIG_FATFS_LFN_CODE_PAGE_437=y/' sdkconfig.build
           sed -i 's/^CONFIG_FATFS_MAX_LFN.*/CONFIG_FATFS_MAX_LFN=255/' sdkconfig.build
 
-          # Enable NimBLE for all targets except esp32s2
+          # Enable Bluetooth and NimBLE for all targets except esp32s2
           if [ "${{ matrix.target }}" = "esp32s2" ]; then
             sed -i 's/^CONFIG_BT_ENABLED.*/CONFIG_BT_ENABLED=n/' sdkconfig.build
             sed -i 's/^CONFIG_BLUEDROID_ENABLED.*/CONFIG_BLUEDROID_ENABLED=n/' sdkconfig.build
@@ -84,6 +84,11 @@ jobs:
             sed -i 's/^CONFIG_BLUETOOTH_ENABLED.*/CONFIG_BLUETOOTH_ENABLED=y/' sdkconfig.build
             sed -i 's/^CONFIG_BLE_ENABLED.*/CONFIG_BLE_ENABLED=y/' sdkconfig.build
             sed -i 's/^CONFIG_BT_NIMBLE_ENABLED.*/CONFIG_BT_NIMBLE_ENABLED=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY.*/CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BTDM_CONTROLLER_BLE_MAX_CONN.*/CONFIG_BTDM_CONTROLLER_BLE_MAX_CONN=3/' sdkconfig.build
+            sed -i 's/^CONFIG_BT_NIMBLE_ROLE_PERIPHERAL.*/CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BT_NIMBLE_ROLE_CENTRAL.*/CONFIG_BT_NIMBLE_ROLE_CENTRAL=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BT_NIMBLE_MAX_CONNECTIONS.*/CONFIG_BT_NIMBLE_MAX_CONNECTIONS=3/' sdkconfig.build
           fi
 
           # Set LVGL font configurations
