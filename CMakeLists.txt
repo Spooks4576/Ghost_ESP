@@ -15,7 +15,7 @@ add_link_options("-Wl,-z,muldefs")
 
 
 if(DEFINED ENV{FLAPPY_GHOST_WEB_HOOK})
-    add_compile_definitions(FLAPPY_GHOST_WEB_HOOK=$ENV{FLAPPY_GHOST_WEB_HOOK})
+    add_compile_definitions(FLAPPY_GHOST_WEB_HOOK=\"${ENV{FLAPPY_GHOST_WEB_HOOK}}\")
 endif()
 
 # LED configuration
