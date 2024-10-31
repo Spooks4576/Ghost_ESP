@@ -17,11 +17,17 @@ endif()
 if(DEFINED ENV{WITH_SCREEN} AND "$ENV{WITH_SCREEN}" STREQUAL "1")
     add_compile_definitions(WITH_SCREEN=1)
 endif()
+
 if(DEFINED ENV{TFT_WIDTH})
     add_compile_definitions(TFT_WIDTH=$ENV{TFT_WIDTH})
+else()
+    add_compile_definitions(TFT_WIDTH=0)
 endif()
+
 if(DEFINED ENV{TFT_HEIGHT})
     add_compile_definitions(TFT_HEIGHT=$ENV{TFT_HEIGHT})
+else()
+    add_compile_definitions(TFT_HEIGHT=0)
 endif()
 
 # Input type (touchscreen, joystick, cardputer)
