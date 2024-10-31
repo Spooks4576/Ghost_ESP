@@ -10,6 +10,7 @@
 #include "esp_wifi.h"   // For internet connectivity check
 #include "esp_http_client.h"  // For HTTP requests
 #include "managers/settings_manager.h"
+#include "esp_crt_bundle.h"
 
 lv_obj_t *name_text_area = NULL;
 lv_obj_t *keyboard = NULL;
@@ -106,6 +107,9 @@ void submit_score_to_api(const char *name, int score) {
     
     esp_http_client_config_t config = {
         .url = WebHookURL,
+        .timeout_ms = 5000,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .transport_type = HTTP_TRANSPORT_OVER_SSL,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     
@@ -282,10 +286,9 @@ void flappy_bird_game_loop(lv_timer_t *timer) {
     lv_img_set_angle(bird, angle * 10);
 
     // Bypass checks for smaller screens
-    if (LV_VER_RES > 135) {
-        if ((bird_y_position + lv_obj_get_height(bird)) >= (LV_VER_RES - 40) || bird_y_position <= 0) {
-            flappy_bird_game_over();
-        }
+   
+    if ((bird_y_position + lv_obj_get_height(bird)) >= (LV_VER_RES - 40) || bird_y_position <= 0) {
+        flappy_bird_game_over();
     }
 
     // Update each pipe set
