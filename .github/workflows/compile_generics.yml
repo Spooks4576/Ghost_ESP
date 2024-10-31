@@ -32,10 +32,6 @@ jobs:
           - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128 }
           - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
 
-          # CYD (Cheap Yellow Display) with touch screen
-          #- { name: "CYD-1", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig_cyd_1", zip_name: "CYD-1.zip", screen_width: 240, screen_height: 320 }
-          #- { name: "CYD-2", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig_cyd_2", zip_name: "CYD-2.zip", screen_width: 240, screen_height: 320 }
-
           # 7-inch boards
           - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
           - { name: "Crowtech_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, crowtech_lcd: true }
@@ -72,13 +68,11 @@ jobs:
       - name: Apply Custom SDK Config
         run: |
           DEST_FILE="sdkconfig"
-
-          echo "Applying SDK Config: ${{matrix.target.sdkconfig_file}} to $DEST_FILE"
-
-          if [ -f "${{matrix.target.sdkconfig_file}}" ]; then
-            cp "${{matrix.target.sdkconfig_file}}" "$DEST_FILE"
+          echo "Applying SDK Config: ${{ matrix.target.sdkconfig_file }} to $DEST_FILE"
+          if [ -f "${{ matrix.target.sdkconfig_file }}" ]; then
+            cp "${{ matrix.target.sdkconfig_file }}" "$DEST_FILE"
           else
-            echo "Error: Source config file ${{matrix.target.sdkconfig_file}} does not exist."
+            echo "Error: Source config file ${{ matrix.target.sdkconfig_file }} does not exist."
             exit 1
           fi
 
@@ -117,51 +111,47 @@ jobs:
             echo "Crowtech_LCD=1" >> $GITHUB_ENV
           fi
 
-      - name: Set Target Environment Variable
-        run: echo "IDF_TARGET_SPOOKY=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
-
       - name: Set up ESP-IDF and Target
         run: |
           . ~/esp-idf/export.sh
           echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
           export IDF_TARGET=${{ matrix.target.idf_target }}
           echo "IDF_TARGET is set to $IDF_TARGET"
-          
+
       - name: Build Project
         run: |
-          . ~/esp-idf/export.sh  # Re-source to confirm environment
+          . ~/esp-idf/export.sh
           idf.py build
 
-      - name: Verify IDF_TARGET
-        run: echo "IDF_TARGET is set to $IDF_TARGET"
+      - name: Download Correct Bootloader
+        run: |
+          BOOTLOADER_URL="https://cdn.spookytools.com/bootloaders/${{ matrix.target.idf_target }}.bin"
+          BOOTLOADER_PATH="packaged_artifacts/bootloader.bin"
+          echo "Downloading bootloader from $BOOTLOADER_URL"
+          mkdir -p packaged_artifacts
+          curl -L -o "$BOOTLOADER_PATH" "$BOOTLOADER_URL"
+          if [ ! -f "$BOOTLOADER_PATH" ]; then
+            echo "Error: Bootloader could not be downloaded from $BOOTLOADER_URL"
+            exit 1
+          else
+            echo "Bootloader downloaded successfully to $BOOTLOADER_PATH"
+          fi
 
       - name: Package Build Artifacts
         run: |
           . ~/esp-idf/export.sh
-          mkdir -p packaged_artifacts
-          BOOTLOADER_BIN=build/bootloader/bootloader.bin
           PARTITION_TABLE_BIN=build/partition_table/partition-table.bin
           GHOST_ESP_IDF_BIN=build/Ghost_ESP_IDF.bin
-
-          if [ ! -f "$BOOTLOADER_BIN" ]; then
-            echo "Error: $BOOTLOADER_BIN not found!"
-            exit 1
-          fi
-
           if [ ! -f "$PARTITION_TABLE_BIN" ]; then
             echo "Error: $PARTITION_TABLE_BIN not found!"
             exit 1
           fi
-
           if [ ! -f "$GHOST_ESP_IDF_BIN" ]; then
             echo "Error: $GHOST_ESP_IDF_BIN not found!"
             exit 1
           fi
-
-          cp "$BOOTLOADER_BIN" packaged_artifacts/
           cp "$PARTITION_TABLE_BIN" packaged_artifacts/
           cp "$GHOST_ESP_IDF_BIN" packaged_artifacts/
-
           ZIP_NAME="${{ matrix.target.zip_name }}"
           cd packaged_artifacts
           zip "$ZIP_NAME" bootloader.bin partition-table.bin Ghost_ESP_IDF.bin
@@ -191,7 +181,6 @@ jobs:
             -H "Content-Type: application/zip" \
             --data-binary @"$zip_file" \
             "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=$(basename $zip_file)"
-      
 
       - name: Install rclone
         run: |
@@ -202,7 +191,6 @@ jobs:
           R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
           R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
         run: |
-          # Create rclone configuration file
           mkdir -p ~/.config/rclone
           echo "[cloudflare_r2]" > ~/.config/rclone/rclone.conf
           echo "type = s3" >> ~/.config/rclone/rclone.conf
@@ -217,7 +205,6 @@ jobs:
           R2_PATH: "GhostESPBins"
         run: |
           rclone copy packaged_artifacts "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress
-
 
       - name: Notify Discord of Successful Release
         if: success()
