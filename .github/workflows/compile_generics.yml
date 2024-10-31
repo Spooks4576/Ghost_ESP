@@ -85,7 +85,7 @@ jobs:
       - name: Set ESP-IDF Target in SDK Config
         run: |
           TARGET_VAR="CONFIG_IDF_TARGET=${{ matrix.target.idf_target }}"
-          SDKCONFIG_FILE="${{ matrix.target.sdkconfig_file }}"
+          SDKCONFIG_FILE="sdkconfig"
 
           echo "Setting target in SDK Config: $TARGET_VAR in $SDKCONFIG_FILE"
 
