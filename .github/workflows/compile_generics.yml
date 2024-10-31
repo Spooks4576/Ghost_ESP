@@ -152,13 +152,7 @@ jobs:
 
       - name: Notify on Failure
         if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        with:
-          message: |
-            🚨 **Build Failed**
-            **Repository**: `${{ github.repository }}`
-            **Target**: `${{ matrix.target }}`
-            **Run ID**: `${{ github.run_id }}`
-            **View Details**: `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"content\": \"🚨 **Build Failed**\n**Repository**: \`${{ github.repository }}\`\n**Target**: \`${{ matrix.target }}\`\n**Run ID**: \`${{ github.run_id }}\`\n**View Details**: [Click Here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
