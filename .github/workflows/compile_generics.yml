@@ -71,6 +71,7 @@ jobs:
           sed -i 's/^CONFIG_FATFS_LFN_CODE_PAGE.*/CONFIG_FATFS_LFN_CODE_PAGE_437=y/' sdkconfig.build
           sed -i 's/^CONFIG_FATFS_MAX_LFN.*/CONFIG_FATFS_MAX_LFN=255/' sdkconfig.build
 
+          # Enable NimBLE for all targets except esp32s2
           if [ "${{ matrix.target }}" = "esp32s2" ]; then
             sed -i 's/^CONFIG_BT_ENABLED.*/CONFIG_BT_ENABLED=n/' sdkconfig.build
             sed -i 's/^CONFIG_BLUEDROID_ENABLED.*/CONFIG_BLUEDROID_ENABLED=n/' sdkconfig.build
@@ -79,12 +80,13 @@ jobs:
             sed -i 's/^CONFIG_BT_NIMBLE_ENABLED.*/CONFIG_BT_NIMBLE_ENABLED=n/' sdkconfig.build
           else
             sed -i 's/^CONFIG_BT_ENABLED.*/CONFIG_BT_ENABLED=y/' sdkconfig.build
-            sed -i 's/^CONFIG_BLUEDROID_ENABLED.*/CONFIG_BLUEDROID_ENABLED=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BLUEDROID_ENABLED.*/CONFIG_BLUEDROID_ENABLED=n/' sdkconfig.build
             sed -i 's/^CONFIG_BLUETOOTH_ENABLED.*/CONFIG_BLUETOOTH_ENABLED=y/' sdkconfig.build
             sed -i 's/^CONFIG_BLE_ENABLED.*/CONFIG_BLE_ENABLED=y/' sdkconfig.build
             sed -i 's/^CONFIG_BT_NIMBLE_ENABLED.*/CONFIG_BT_NIMBLE_ENABLED=y/' sdkconfig.build
           fi
 
+          # Set LVGL font configurations
           sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_8.*/CONFIG_LV_FONT_MONTSERRAT_8=y/' sdkconfig.build
           sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_10.*/CONFIG_LV_FONT_MONTSERRAT_10=y/' sdkconfig.build
           sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_12.*/CONFIG_LV_FONT_MONTSERRAT_12=y/' sdkconfig.build
