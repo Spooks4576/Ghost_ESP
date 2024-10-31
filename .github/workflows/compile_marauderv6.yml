@@ -1,0 +1,220 @@
+name: Compile Generics
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for ${{ matrix.target.name }} - LED ${{ matrix.target.led }} - Screen ${{ matrix.target.screen_support }} - Input ${{ matrix.target.input_type }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        target:
+          # Generic configurations (no LED, no screen support)
+          # - { name: "esp32-generic", idf_target: "esp32", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32", zip_name: "esp32-generic.zip" }
+          # - { name: "esp32s2-generic", idf_target: "esp32s2", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32s2-generic.zip" }
+          # - { name: "esp32s3-generic", idf_target: "esp32s3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "esp32s3-generic.zip" }
+          # - { name: "esp32c3-generic", idf_target: "esp32c3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-generic.zip" }
+          # - { name: "esp32c6-generic", idf_target: "esp32c6", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
+
+          # # Dev Kit configurations (LED on, no screen support)
+          # - { name: "esp32c3-devkit", idf_target: "esp32c3", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-devkit.zip", led_pin: 8, num_leds: 1 }
+          # - { name: "esp32c6-devkit", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-devkit.zip", led_pin: 8, num_leds: 1 }
+
+          # # Ghost board (LED on, special pin and LED count)
+          # - { name: "ghostboard", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "ghostboard.zip", led_pin: 10, num_leds: 3, is_ghost_board: true }
+
+          # Screen-supported builds
+          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320 }
+          # - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128 }
+          # - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
+
+          # # 7-inch boards
+          # - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
+          # - { name: "Crowtech_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, crowtech_lcd: true }
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Cache ESP-IDF and Tools
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.espressif
+            ~/.idf_tools
+            ~/.cache/pip
+          key: ${{ runner.os }}-esp-idf-${{ matrix.target.name }}-${{ matrix.led }}-${{ matrix.screen_support }}-${{ matrix.input_type }}
+          restore-keys: |
+            ${{ runner.os }}-esp-idf-${{ matrix.target.name }}-
+            ${{ runner.os }}-esp-idf-
+
+      # Manual ESP-IDF Installation
+      - name: Install ESP-IDF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget git flex bison gperf python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util
+          git clone -b v5.3.1 --depth 1 https://github.com/espressif/esp-idf.git ~/esp-idf
+          ~/esp-idf/install.sh
+
+      - name: Apply Custom SDK Config
+        run: |
+          DEST_FILE="sdkconfig"
+          echo "Applying SDK Config: ${{ matrix.target.sdkconfig_file }} to $DEST_FILE"
+          if [ -f "${{ matrix.target.sdkconfig_file }}" ]; then
+            cp "${{ matrix.target.sdkconfig_file }}" "$DEST_FILE"
+          else
+            echo "Error: Source config file ${{ matrix.target.sdkconfig_file }} does not exist."
+            exit 1
+          fi
+
+      - name: Set Environment Variables for Matrix Configuration
+        run: |
+          if [ "${{ matrix.target.led }}" = "true" ]; then
+            echo "LED_DATA_PIN=${{ matrix.target.led_pin }}" >> $GITHUB_ENV
+            echo "NUM_LEDS=${{ matrix.target.num_leds }}" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.target.is_ghost_board }}" = "true" ]; then
+            echo "IS_GHOST_BOARD=1" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.target.screen_support }}" = "true" ]; then
+            echo "WITH_SCREEN=1" >> $GITHUB_ENV
+            echo "TFT_WIDTH=${{ matrix.target.screen_width }}" >> $GITHUB_ENV
+            echo "TFT_HEIGHT=${{ matrix.target.screen_height }}" >> $GITHUB_ENV
+          fi
+          case "${{ matrix.target.input_type }}" in
+            "touchscreen")
+              echo "USE_TOUCHSCREEN=1" >> $GITHUB_ENV
+              ;;
+            "joystick")
+              echo "USE_JOYSTICK=1" >> $GITHUB_ENV
+              ;;
+            "cardputer")
+              echo "USE_CARDPUTER=1" >> $GITHUB_ENV
+              ;;
+          esac
+          if [ "${{ matrix.target.use_7_incher }}" = "true" ]; then
+            echo "USE_7_INCHER=0" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.target.waveshare_lcd }}" = "true" ]; then
+            echo "Waveshare_LCD=1" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.target.crowtech_lcd }}" = "true" ]; then
+            echo "Crowtech_LCD=1" >> $GITHUB_ENV
+          fi
+
+      - name: Set up ESP-IDF and Target
+        run: |
+          . ~/esp-idf/export.sh
+          echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
+          export IDF_TARGET=${{ matrix.target.idf_target }}
+          echo "IDF_TARGET is set to $IDF_TARGET"
+
+      - name: Build Project
+        run: |
+          . ~/esp-idf/export.sh
+          idf.py build
+
+      - name: Download Correct Bootloader
+        run: |
+          BOOTLOADER_URL="https://cdn.spookytools.com/bootloaders/${{ matrix.target.idf_target }}.bin"
+          BOOTLOADER_PATH="packaged_artifacts/bootloader.bin"
+          echo "Downloading bootloader from $BOOTLOADER_URL"
+          mkdir -p packaged_artifacts
+          curl -L -o "$BOOTLOADER_PATH" "$BOOTLOADER_URL"
+          if [ ! -f "$BOOTLOADER_PATH" ]; then
+            echo "Error: Bootloader could not be downloaded from $BOOTLOADER_URL"
+            exit 1
+          else
+            echo "Bootloader downloaded successfully to $BOOTLOADER_PATH"
+          fi
+
+      - name: Package Build Artifacts
+        run: |
+          . ~/esp-idf/export.sh
+          PARTITION_TABLE_BIN=build/partition_table/partition-table.bin
+          GHOST_ESP_IDF_BIN=build/Ghost_ESP_IDF.bin
+          if [ ! -f "$PARTITION_TABLE_BIN" ]; then
+            echo "Error: $PARTITION_TABLE_BIN not found!"
+            exit 1
+          fi
+          if [ ! -f "$GHOST_ESP_IDF_BIN" ]; then
+            echo "Error: $GHOST_ESP_IDF_BIN not found!"
+            exit 1
+          fi
+          cp "$PARTITION_TABLE_BIN" packaged_artifacts/
+          cp "$GHOST_ESP_IDF_BIN" packaged_artifacts/
+          ZIP_NAME="${{ matrix.target.zip_name }}"
+          cd packaged_artifacts
+          zip "$ZIP_NAME" bootloader.bin partition-table.bin Ghost_ESP_IDF.bin
+          cd ..
+
+      - name: Get the Latest Release ID
+        id: get_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          latest_release=$(curl -s \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/latest")
+          release_id=$(echo "$latest_release" | jq -r '.id')
+          echo "Latest release ID is $release_id"
+          echo "::set-output name=release_id::$release_id"
+
+      - name: Upload to Latest Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          zip_file="packaged_artifacts/${{ matrix.target.zip_name }}"
+          release_id=${{ steps.get_release.outputs.release_id }}
+          curl -X POST \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"$zip_file" \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=$(basename $zip_file)"
+
+      - name: Install rclone
+        run: |
+          curl -fsSL https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone for Cloudflare R2
+        env:
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "[cloudflare_r2]" > ~/.config/rclone/rclone.conf
+          echo "type = s3" >> ~/.config/rclone/rclone.conf
+          echo "provider = Cloudflare" >> ~/.config/rclone/rclone.conf
+          echo "access_key_id = $R2_ACCESS_KEY" >> ~/.config/rclone/rclone.conf
+          echo "secret_access_key = $R2_SECRET_KEY" >> ~/.config/rclone/rclone.conf
+          echo "endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com" >> ~/.config/rclone/rclone.conf
+          
+      - name: Upload Artifacts to Cloudflare R2
+        env:
+          R2_BUCKET: "spooksapi"
+          R2_PATH: "GhostESPBins"
+        run: |
+          rclone copy packaged_artifacts "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress
+
+      - name: Notify Discord of Successful Release
+        if: success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          payload='{
+            "content": "🎉 A new release has been successfully compiled and is now available! Check the latest release for details."
+          }'
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_WEBHOOK_URL"
