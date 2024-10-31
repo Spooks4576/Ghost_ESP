@@ -76,7 +76,15 @@ jobs:
 
       - name: Apply Custom SDK Config
         run: |
-          cp ${{ matrix.sdkconfig_file }} "${{ github.workspace }}/sdkconfig"
+          SDKCONFIG_FILE="${{ matrix.sdkconfig_file }}"
+          DEST_FILE="${{ github.workspace }}/sdkconfig"
+
+          if [ -f "$SDKCONFIG_FILE" ]; then
+            cp "$SDKCONFIG_FILE" "$DEST_FILE"
+          else
+            echo "Error: Source config file $SDKCONFIG_FILE does not exist."
+            exit 1
+          fi
 
       - name: Set Environment Variables for Matrix Configuration
         run: |
