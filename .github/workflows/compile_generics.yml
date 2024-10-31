@@ -125,6 +125,9 @@ jobs:
       - name: Set Target Environment Variable
         run: echo "IDF_TARGET_SPOOKY=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
 
+      - name: Set Actual Target
+        run: echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
+
       - name: Build Project
         run: |
           . ~/esp-idf/export.sh
