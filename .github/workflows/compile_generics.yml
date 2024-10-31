@@ -76,8 +76,10 @@ jobs:
 
       - name: Apply Custom SDK Config
         run: |
-          SDKCONFIG_FILE="${{ matrix.sdkconfig_file }}"
+          SDKCONFIG_FILE="${{ github.workspace }}/${{ matrix.sdkconfig_file }}"
           DEST_FILE="${{ github.workspace }}/sdkconfig"
+
+          echo "Applying SDK Config: $SDKCONFIG_FILE to $DEST_FILE"
 
           if [ -f "$SDKCONFIG_FILE" ]; then
             cp "$SDKCONFIG_FILE" "$DEST_FILE"
