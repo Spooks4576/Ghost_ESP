@@ -60,41 +60,38 @@ jobs:
           . ~/esp-idf/export.sh
           cp sdkconfig sdkconfig.build
 
-      - name: Override Build Options
+      - name: Override Build Options in sdkconfig
         run: |
           . ~/esp-idf/export.sh
-          idf.py set-config FLASH_SIZE 4MB
-          idf.py set-config CONFIG_COMPILER_OPTIMIZATION_SIZE=y
-          idf.py set-config PARTITION_TABLE_CUSTOM=y
-          idf.py set-config PARTITION_TABLE_FILENAME "partitions.csv"
-          idf.py set-config CONFIG_FATFS_LFN_ENABLED=y
-          idf.py set-config CONFIG_FATFS_LFN_CODE_PAGE=437
-          idf.py set-config CONFIG_FATFS_MAX_LFN=255
+          sed -i 's/^CONFIG_FLASH_SIZE.*/CONFIG_FLASH_SIZE_4MB=y/' sdkconfig.build
+          sed -i 's/^CONFIG_COMPILER_OPTIMIZATION_SIZE.*/CONFIG_COMPILER_OPTIMIZATION_SIZE=y/' sdkconfig.build
+          sed -i 's/^CONFIG_PARTITION_TABLE_CUSTOM.*/CONFIG_PARTITION_TABLE_CUSTOM=y/' sdkconfig.build
+          sed -i 's/^CONFIG_PARTITION_TABLE_FILENAME.*/CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"/' sdkconfig.build
+          sed -i 's/^CONFIG_FATFS_LFN_ENABLED.*/CONFIG_FATFS_LFN_ENABLED=y/' sdkconfig.build
+          sed -i 's/^CONFIG_FATFS_LFN_CODE_PAGE.*/CONFIG_FATFS_LFN_CODE_PAGE_437=y/' sdkconfig.build
+          sed -i 's/^CONFIG_FATFS_MAX_LFN.*/CONFIG_FATFS_MAX_LFN=255/' sdkconfig.build
 
           if [ "${{ matrix.target }}" = "esp32s2" ]; then
-            idf.py set-config CONFIG_BT_ENABLED=n
-            idf.py set-config CONFIG_BLUEDROID_ENABLED=n
-            idf.py set-config CONFIG_BLUETOOTH_ENABLED=n
-            idf.py set-config CONFIG_BLE_ENABLED=n
-            idf.py set-config CONFIG_BT_NIMBLE_ENABLED=n
+            sed -i 's/^CONFIG_BT_ENABLED.*/CONFIG_BT_ENABLED=n/' sdkconfig.build
+            sed -i 's/^CONFIG_BLUEDROID_ENABLED.*/CONFIG_BLUEDROID_ENABLED=n/' sdkconfig.build
+            sed -i 's/^CONFIG_BLUETOOTH_ENABLED.*/CONFIG_BLUETOOTH_ENABLED=n/' sdkconfig.build
+            sed -i 's/^CONFIG_BLE_ENABLED.*/CONFIG_BLE_ENABLED=n/' sdkconfig.build
+            sed -i 's/^CONFIG_BT_NIMBLE_ENABLED.*/CONFIG_BT_NIMBLE_ENABLED=n/' sdkconfig.build
           else
-            idf.py set-config CONFIG_BT_ENABLED=y
-            idf.py set-config CONFIG_BLUEDROID_ENABLED=y
-            idf.py set-config CONFIG_BLUETOOTH_ENABLED=y
-            idf.py set-config CONFIG_BLE_ENABLED=y
-            idf.py set-config CONFIG_BT_NIMBLE_ENABLED=y
+            sed -i 's/^CONFIG_BT_ENABLED.*/CONFIG_BT_ENABLED=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BLUEDROID_ENABLED.*/CONFIG_BLUEDROID_ENABLED=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BLUETOOTH_ENABLED.*/CONFIG_BLUETOOTH_ENABLED=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BLE_ENABLED.*/CONFIG_BLE_ENABLED=y/' sdkconfig.build
+            sed -i 's/^CONFIG_BT_NIMBLE_ENABLED.*/CONFIG_BT_NIMBLE_ENABLED=y/' sdkconfig.build
           fi
 
-          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_8=y
-          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_10=y
-          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_12=y
-          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_14=y
-          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_16=y
-          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_18=y
-          idf.py set-config CONFIG_LV_FONT_MONTSERRAT_24=y
-
-          idf.py menuconfig --disableconfig
-          idf.py reconfigure
+          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_8.*/CONFIG_LV_FONT_MONTSERRAT_8=y/' sdkconfig.build
+          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_10.*/CONFIG_LV_FONT_MONTSERRAT_10=y/' sdkconfig.build
+          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_12.*/CONFIG_LV_FONT_MONTSERRAT_12=y/' sdkconfig.build
+          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_14.*/CONFIG_LV_FONT_MONTSERRAT_14=y/' sdkconfig.build
+          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_16.*/CONFIG_LV_FONT_MONTSERRAT_16=y/' sdkconfig.build
+          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_18.*/CONFIG_LV_FONT_MONTSERRAT_18=y/' sdkconfig.build
+          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_24.*/CONFIG_LV_FONT_MONTSERRAT_24=y/' sdkconfig.build
 
       - name: Clean Build Environment
         run: |
