@@ -18,6 +18,4 @@ set(required_components bt nvs_flash driver esp_http_server mdns json esp_http_c
 # Register the component with the dynamically collected source files and include directories
 idf_component_register(SRCS ${app_sources} "vendor/m5/m5gfx_wrapper.cpp"
                        INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/include"
-                                     "C:/Espressif/frameworks/esp-idf-v5.3.1/components/wpa_supplicant/esp_supplicant/src"
-                                     "C:/Espressif/frameworks/esp-idf-v5.3.1/components/wpa_supplicant/src"
                        REQUIRES ${required_components})
