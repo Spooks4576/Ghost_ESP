@@ -76,15 +76,14 @@ jobs:
 
       - name: Apply Custom SDK Config
         run: |
-          SDKCONFIG_FILE="${{matrix.sdkconfig_file}}"
           DEST_FILE="sdkconfig"
 
-          echo "Applying SDK Config: $SDKCONFIG_FILE to $DEST_FILE"
+          echo "Applying SDK Config: ${{matrix.sdkconfig_file}} to $DEST_FILE"
 
-          if [ -f "$SDKCONFIG_FILE" ]; then
-            cp "$SDKCONFIG_FILE" "$DEST_FILE"
+          if [ -f "${{matrix.sdkconfig_file}}" ]; then
+            cp "${{matrix.sdkconfig_file}}" "$DEST_FILE"
           else
-            echo "Error: Source config file $SDKCONFIG_FILE does not exist."
+            echo "Error: Source config file ${{matrix.sdkconfig_file}} does not exist."
             exit 1
           fi
 
