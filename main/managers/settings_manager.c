@@ -2,7 +2,6 @@
 #include "managers/rgb_manager.h"
 #include <string.h>
 #include <esp_log.h>
-#include "settings_manager.h"
 
 #define S_TAG "SETTINGS"
 
