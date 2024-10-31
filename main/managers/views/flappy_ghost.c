@@ -20,6 +20,13 @@ typedef struct {
 #define PIPE_WIDTH 30
 #define PIPE_GAP_RATIO LV_VER_RES <= 128 ? 0.05f : 0.3f
 
+
+#define DAY_NIGHT_CYCLE_DURATION 10000 // Duration of day-night cycle in milliseconds
+#define NIGHT_COLOR_BG lv_color_hex(0x0D0D40)
+#define NIGHT_COLOR_GRAD lv_color_hex(0x0A0A30)
+#define DAY_COLOR_BG lv_color_hex(0x87CEEB) // Light blue for sky
+#define DAY_COLOR_GRAD lv_color_hex(0xFFA500) // Light orange for gradient
+
 // Global Variables
 lv_obj_t *flappy_bird_canvas = NULL;
 lv_obj_t *bird = NULL;
@@ -35,10 +42,11 @@ int pipe_gap; // Gap size between pipe and top of the screen
 int pipe_min_gap_y;
 int pipe_max_gap_y;
 int score = 0;
+int day_night_cycle_time = 0;
 bool is_game_over = false;
 
 // Function Prototypes
-void draw_halloween_night_sky(lv_obj_t *parent);
+void draw_halloween_night_sky(lv_obj_t *parent, lv_color_t bg_color, lv_color_t grad_color);
 void flappy_bird_view_create(void);
 void flappy_bird_view_destroy(void);
 void flappy_bird_view_hardwareinput_callback(InputEvent *event);
@@ -49,11 +57,11 @@ void flappy_bird_game_over();
 void flappy_bird_restart();
 
 // Drawing the background
-void draw_halloween_night_sky(lv_obj_t *parent) {
+void draw_halloween_night_sky(lv_obj_t *parent, lv_color_t bg_color, lv_color_t grad_color) {
     // Set up the gradient for the night sky background
-    lv_obj_set_style_bg_color(parent, lv_color_hex(0x0D0D40), 0); // Dark blue
-    lv_obj_set_style_bg_grad_color(parent, lv_color_hex(0x0A0A30), 0); // Near black
-    lv_obj_set_style_bg_grad_dir(parent, LV_GRAD_DIR_VER, 0); // Vertical gradient
+    lv_obj_set_style_bg_color(parent, bg_color, 0);
+    lv_obj_set_style_bg_grad_color(parent, grad_color, 0);
+    lv_obj_set_style_bg_grad_dir(parent, LV_GRAD_DIR_VER, 0);
 
     // Create the moon
     lv_obj_t *moon = lv_obj_create(parent);
@@ -61,26 +69,6 @@ void draw_halloween_night_sky(lv_obj_t *parent) {
     lv_obj_set_style_bg_color(moon, lv_color_hex(0xFFFFDD), 0); // Pale yellow
     lv_obj_set_pos(moon, LV_HOR_RES - 60, 30);
     lv_obj_set_scrollbar_mode(moon, LV_SCROLLBAR_MODE_OFF);
-
-    // Create stars
-    for (int i = 0; i < 30; i++) {
-        lv_obj_t *star = lv_obj_create(parent);
-        lv_obj_set_size(star, 2, 2);
-        lv_obj_set_style_bg_color(star, lv_color_hex(0xFFFFFF), 0); // White
-        int x_pos = rand() % LV_HOR_RES;
-        int y_pos = rand() % (LV_VER_RES / 2);
-        lv_obj_set_pos(star, x_pos, y_pos);
-    }
-
-    // Create twinkling stars
-    for (int i = 0; i < 5; i++) {
-        lv_obj_t *twinkling_star = lv_obj_create(parent);
-        lv_obj_set_size(twinkling_star, 4, 4);
-        lv_obj_set_style_bg_color(twinkling_star, lv_color_hex(0xFFFF88), 0); // Light yellow
-        int x_pos = rand() % LV_HOR_RES;
-        int y_pos = rand() % (LV_VER_RES / 2);
-        lv_obj_set_pos(twinkling_star, x_pos, y_pos);
-    }
 
     // Create the ground
     lv_obj_t *ground = lv_obj_create(parent);
@@ -107,7 +95,7 @@ void flappy_bird_view_create(void) {
     lv_obj_set_style_bg_color(flappy_bird_view.root, lv_color_black(), 0);
 
     // Draw background
-    draw_halloween_night_sky(flappy_bird_view.root);
+    draw_halloween_night_sky(flappy_bird_view.root, DAY_COLOR_BG, DAY_COLOR_GRAD);
 
     // Create canvas for pipes
     flappy_bird_canvas = lv_canvas_create(flappy_bird_view.root);
