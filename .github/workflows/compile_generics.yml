@@ -14,23 +14,23 @@ jobs:
       matrix:
         target:
           # Generic configurations (no LED, no screen support)
-          - { name: "esp32-generic", idf_target: "esp32", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "esp32-generic.zip" }
-          - { name: "esp32s2-generic", idf_target: "esp32s2", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "esp32s2-generic.zip" }
-          - { name: "esp32s3-generic", idf_target: "esp32s3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "esp32s3-generic.zip" }
-          - { name: "esp32c3-generic", idf_target: "esp32c3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "esp32c3-generic.zip" }
-          - { name: "esp32c6-generic", idf_target: "esp32c6", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "esp32c6-generic.zip" }
+          - { name: "esp32-generic", idf_target: "esp32", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32", zip_name: "esp32-generic.zip" }
+          - { name: "esp32s2-generic", idf_target: "esp32s2", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32s2-generic.zip" }
+          - { name: "esp32s3-generic", idf_target: "esp32s3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "esp32s3-generic.zip" }
+          - { name: "esp32c3-generic", idf_target: "esp32c3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-generic.zip" }
+          - { name: "esp32c6-generic", idf_target: "esp32c6", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
 
           # Dev Kit configurations (LED on, no screen support)
-          - { name: "esp32c3-devkit", idf_target: "esp32c3", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "esp32c3-devkit.zip", led_pin: 8, num_leds: 1 }
-          - { name: "esp32c6-devkit", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "esp32c6-devkit.zip", led_pin: 8, num_leds: 1 }
+          - { name: "esp32c3-devkit", idf_target: "esp32c3", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c3-devkit.zip", led_pin: 8, num_leds: 1 }
+          - { name: "esp32c6-devkit", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-devkit.zip", led_pin: 8, num_leds: 1 }
 
           # Ghost board (LED on, special pin and LED count)
-          - { name: "ghostboard", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "ghostboard.zip", led_pin: 10, num_leds: 3, is_ghost_board: true }
+          - { name: "ghostboard", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "ghostboard.zip", led_pin: 10, num_leds: 3, is_ghost_board: true }
 
           # Screen-supported builds
           - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320 }
           - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128 }
-          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
+          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
 
           # CYD (Cheap Yellow Display) with touch screen
           #- { name: "CYD-1", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig_cyd_1", zip_name: "CYD-1.zip", screen_width: 240, screen_height: 320 }
@@ -80,19 +80,6 @@ jobs:
           else
             echo "Error: Source config file ${{matrix.target.sdkconfig_file}} does not exist."
             exit 1
-          fi
-
-      - name: Set ESP-IDF Target in SDK Config
-        run: |
-          TARGET_VAR="CONFIG_IDF_TARGET=${{ matrix.target.idf_target }}"
-          SDKCONFIG_FILE="sdkconfig"
-
-          echo "Setting target in SDK Config: $TARGET_VAR in $SDKCONFIG_FILE"
-
-          if grep -q "^CONFIG_IDF_TARGET=" "$SDKCONFIG_FILE"; then
-            sed -i "s/^CONFIG_IDF_TARGET=.*/$TARGET_VAR/" "$SDKCONFIG_FILE"
-          else
-            echo "$TARGET_VAR" >> "$SDKCONFIG_FILE"
           fi
 
       - name: Set Environment Variables for Matrix Configuration
