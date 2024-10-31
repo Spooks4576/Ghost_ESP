@@ -30,7 +30,7 @@ typedef struct {
 #define MAX_PIPE_SETS 2
 #define PIPE_SPEED 3
 #define PIPE_WIDTH 30
-#define PIPE_GAP_RATIO LV_VER_RES <= 128 ? 0.05f : 0.3f
+#define PIPE_GAP_RATIO LV_VER_RES <= 138 ? 0.05f : 0.3f
 
 
 #define DAY_NIGHT_CYCLE_DURATION 10000 // Duration of day-night cycle in milliseconds
@@ -101,9 +101,20 @@ void submit_score_to_api(const char *name, int score) {
     esp_log_level_set("esp_http_client", ESP_LOG_NONE);
     
     
-    char post_data[256];
+    char post_data[512];
     snprintf(post_data, sizeof(post_data), 
-             "{\"content\": \"**Player:** %s\\n**Score:** %d\\n**Resolution:** %dx%d\"}", 
+             "{"
+             "\"embeds\": [{"
+             "\"title\": \"New Score Submitted!\","
+             "\"description\": \"A new score has been recorded.\","
+             "\"color\": 16766720,"
+             "\"fields\": ["
+             "{ \"name\": \"Player\", \"value\": \"%s\", \"inline\": true },"
+             "{ \"name\": \"Score\", \"value\": \"%d\", \"inline\": true },"
+             "{ \"name\": \"Resolution\", \"value\": \"%dx%d\", \"inline\": true }"
+             "]"
+             "}]"
+             "}", 
              name, score, LV_HOR_RES, LV_VER_RES);
 
     const char* WebHookURL = FLAPPY_GHOST_WEB_HOOK;

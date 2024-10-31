@@ -36,13 +36,13 @@ endif()
 if(DEFINED ENV{TFT_WIDTH})
     add_compile_definitions(TFT_WIDTH=$ENV{TFT_WIDTH})
 else()
-    add_compile_definitions(TFT_WIDTH=0)
+    add_compile_definitions(TFT_WIDTH=240)
 endif()
 
 if(DEFINED ENV{TFT_HEIGHT})
     add_compile_definitions(TFT_HEIGHT=$ENV{TFT_HEIGHT})
 else()
-    add_compile_definitions(TFT_HEIGHT=0)
+    add_compile_definitions(TFT_HEIGHT=320)
 endif()
 
 # Input type (touchscreen, joystick, cardputer)
@@ -72,6 +72,9 @@ if(DEFINED ENV{Crowtech_LCD} AND "$ENV{Crowtech_LCD}" STREQUAL "1")
     add_compile_definitions(Crowtech_LCD=1)
 endif()
 
+
+add_compile_definitions(USE_TOUCHSCREEN=1)
+add_compile_definitions(WITH_SCREEN=1)
 # Other default configurations
 add_compile_definitions(HOLD_LIMIT=1000) # For joystick hold duration
 add_compile_definitions(LED_ORDER=0)     # 2 for RGB, 0 for GRB
