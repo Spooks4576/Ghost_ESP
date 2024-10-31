@@ -76,8 +76,8 @@ jobs:
 
       - name: Apply Custom SDK Config
         run: |
-          SDKCONFIG_FILE="${{ matrix.sdkconfig_file }}"
-          DEST_FILE="/sdkconfig"
+          SDKCONFIG_FILE="${{matrix.sdkconfig_file}}"
+          DEST_FILE="sdkconfig"
 
           echo "Applying SDK Config: $SDKCONFIG_FILE to $DEST_FILE"
 
