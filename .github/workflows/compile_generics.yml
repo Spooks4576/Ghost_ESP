@@ -82,10 +82,18 @@ jobs:
             exit 1
           fi
 
-      - name: Set Target
+      - name: Set ESP-IDF Target in SDK Config
         run: |
-          . ~/esp-idf/export.sh
-          idf.py set-target ${{ matrix.target.idf_target }}
+          TARGET_VAR="CONFIG_IDF_TARGET=${{ matrix.target.idf_target }}"
+          SDKCONFIG_FILE="${{ matrix.target.sdkconfig_file }}"
+
+          echo "Setting target in SDK Config: $TARGET_VAR in $SDKCONFIG_FILE"
+
+          if grep -q "^CONFIG_IDF_TARGET=" "$SDKCONFIG_FILE"; then
+            sed -i "s/^CONFIG_IDF_TARGET=.*/$TARGET_VAR/" "$SDKCONFIG_FILE"
+          else
+            echo "$TARGET_VAR" >> "$SDKCONFIG_FILE"
+          fi
 
       - name: Set Environment Variables for Matrix Configuration
         run: |
