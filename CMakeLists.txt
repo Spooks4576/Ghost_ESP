@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16.0)
 
 # Set IDF_TARGET from environment variable if defined
-if(DEFINED ENV{IDF_TARGET})
-    set(IDF_TARGET $ENV{IDF_TARGET})
-    message(STATUS "Setting IDF_TARGET to ${IDF_TARGET} from environment variable")
+if(DEFINED ENV{IDF_TARGET_SPOOKY})
+    set(IDF_TARGET $ENV{IDF_TARGET_SPOOKY})
+    message(STATUS "Setting IDF_TARGET to ${IDF_TARGET_SPOOKY} from environment variable")
 else()
     message(FATAL_ERROR "IDF_TARGET environment variable is not defined. Please set it before building.")
 endif()
