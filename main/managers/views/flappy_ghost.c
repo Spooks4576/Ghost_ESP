@@ -99,10 +99,32 @@ bool check_internet_connectivity() {
 
 void submit_score_to_api(const char *name, int score) {
     esp_log_level_set("esp_http_client", ESP_LOG_NONE);
+
     
+    int post_data_len = snprintf(NULL, 0, 
+                                  "{"
+                                  "\"embeds\": [{"
+                                  "\"title\": \"New Score Submitted!\","
+                                  "\"description\": \"A new score has been recorded.\","
+                                  "\"color\": 16766720,"
+                                  "\"fields\": ["
+                                  "{ \"name\": \"Player\", \"value\": \"%s\", \"inline\": true },"
+                                  "{ \"name\": \"Score\", \"value\": \"%d\", \"inline\": true },"
+                                  "{ \"name\": \"Resolution\", \"value\": \"%dx%d\", \"inline\": true }"
+                                  "]"
+                                  "}]"
+                                  "}", 
+                                  name, score, LV_HOR_RES, LV_VER_RES) + 1;
+
     
-    char post_data[512];
-    snprintf(post_data, sizeof(post_data), 
+    char *post_data = (char *)malloc(post_data_len);
+    if (!post_data) {
+        ESP_LOGE("HTTP", "Failed to allocate memory for post_data");
+        return;
+    }
+
+   
+    snprintf(post_data, post_data_len, 
              "{"
              "\"embeds\": [{"
              "\"title\": \"New Score Submitted!\","
@@ -128,12 +150,12 @@ void submit_score_to_api(const char *name, int score) {
     
     esp_http_client_handle_t client = esp_http_client_init(&config);
     
-    // Set HTTP method, headers, and body
+    
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
 
-    // Perform the HTTP request
+    
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
         ESP_LOGI("HTTP", "Score submitted successfully to Discord webhook");
@@ -141,7 +163,8 @@ void submit_score_to_api(const char *name, int score) {
         ESP_LOGE("HTTP", "Failed to submit score to Discord webhook");
     }
 
-    // Clean up the client and restore log level
+    free(post_data);
+
     esp_http_client_cleanup(client);
     esp_log_level_set("esp_http_client", ESP_LOG_INFO);
 }
