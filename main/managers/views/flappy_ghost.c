@@ -99,31 +99,38 @@ bool check_internet_connectivity() {
 
 void submit_score_to_api(const char *name, int score) {
     esp_log_level_set("esp_http_client", ESP_LOG_NONE);
-    char post_data[128];
-    snprintf(post_data, sizeof(post_data), "{\"name\": \"%s\", \"score\": %d, \"width\": %d, \"height\": %d}", 
+    
+    
+    char post_data[256];
+    snprintf(post_data, sizeof(post_data), 
+             "{\"content\": \"**Player:** %s\\n**Score:** %d\\n**Resolution:** %dx%d\"}", 
              name, score, LV_HOR_RES, LV_VER_RES);
 
     const char* WebHookURL = FLAPPY_GHOST_WEB_HOOK;
-    
+
     esp_http_client_config_t config = {
         .url = WebHookURL,
         .timeout_ms = 5000,
         .crt_bundle_attach = esp_crt_bundle_attach,
         .transport_type = HTTP_TRANSPORT_OVER_SSL,
     };
+    
     esp_http_client_handle_t client = esp_http_client_init(&config);
     
+    // Set HTTP method, headers, and body
     esp_http_client_set_method(client, HTTP_METHOD_POST);
     esp_http_client_set_header(client, "Content-Type", "application/json");
     esp_http_client_set_post_field(client, post_data, strlen(post_data));
 
+    // Perform the HTTP request
     esp_err_t err = esp_http_client_perform(client);
     if (err == ESP_OK) {
-        ESP_LOGI("HTTP", "Score submitted successfully");
+        ESP_LOGI("HTTP", "Score submitted successfully to Discord webhook");
     } else {
-        ESP_LOGE("HTTP", "Failed to submit score");
+        ESP_LOGE("HTTP", "Failed to submit score to Discord webhook");
     }
 
+    // Clean up the client and restore log level
     esp_http_client_cleanup(client);
     esp_log_level_set("esp_http_client", ESP_LOG_INFO);
 }
@@ -348,13 +355,6 @@ void flappy_bird_game_over() {
     if (is_game_over) return; // Prevent multiple triggers
     is_game_over = true;
 
-    internet_connected = check_internet_connectivity();
-
-    if (internet_connected)
-    {
-        submit_score_to_api(settings_get_flappy_ghost_name(&G_Settings), score);
-    }
-
     // Create a semi-transparent overlay
     lv_obj_t *game_over_container = lv_obj_create(flappy_bird_view.root);
     lv_obj_set_size(game_over_container, LV_HOR_RES - 40, 100);
@@ -371,6 +371,13 @@ void flappy_bird_game_over() {
     lv_obj_set_style_text_color(game_over_label, lv_color_hex(0xFFFF00), 0);
     lv_obj_set_style_text_font(game_over_label, &lv_font_montserrat_24, 0);
     lv_obj_align(game_over_label, LV_ALIGN_CENTER, 0, 0);
+
+    internet_connected = check_internet_connectivity();
+
+    if (internet_connected)
+    {
+        submit_score_to_api(settings_get_flappy_ghost_name(&G_Settings), score);
+    }
 }
 
 // Restart Game
