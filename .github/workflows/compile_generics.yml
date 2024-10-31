@@ -28,7 +28,7 @@ jobs:
           - { name: "ghostboard", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default", zip_name: "ghostboard.zip", led_pin: 10, num_leds: 3, is_ghost_board: true }
 
           # Screen-supported builds
-          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6&AwokDual.zip", screen_width: 240, screen_height: 320 }
+          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320 }
           - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128 }
           - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
 
@@ -69,11 +69,6 @@ jobs:
           git clone -b v5.3.1 --depth 1 https://github.com/espressif/esp-idf.git ~/esp-idf
           ~/esp-idf/install.sh
 
-      - name: Set Target
-        run: |
-          . ~/esp-idf/export.sh
-          idf.py set-target ${{ matrix.target.idf_target }}
-
       - name: Apply Custom SDK Config
         run: |
           DEST_FILE="sdkconfig"
@@ -86,6 +81,11 @@ jobs:
             echo "Error: Source config file ${{matrix.target.sdkconfig_file}} does not exist."
             exit 1
           fi
+
+      - name: Set Target
+        run: |
+          . ~/esp-idf/export.sh
+          idf.py set-target ${{ matrix.target.idf_target }}
 
       - name: Set Environment Variables for Matrix Configuration
         run: |
