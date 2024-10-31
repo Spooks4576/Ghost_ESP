@@ -184,7 +184,7 @@ jobs:
             --data-binary @"$zip_file" \
             "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=$(basename $zip_file)"
       
-       - name: Notify Discord of Successful Release
+      - name: Notify Discord of Successful Release
         if: success()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
