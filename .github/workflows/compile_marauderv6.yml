@@ -1,4 +1,4 @@
-name: Compile Generics
+name: Compile Marauder V6
 
 on:
   release:
