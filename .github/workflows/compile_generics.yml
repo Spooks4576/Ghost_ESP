@@ -187,6 +187,33 @@ jobs:
             --data-binary @"$zip_file" \
             "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=$(basename $zip_file)"
       
+
+      - name: Install rclone
+        run: |
+          curl -fsSL https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone for Cloudflare R2
+        env:
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+        run: |
+          # Create rclone configuration file
+          mkdir -p ~/.config/rclone
+          echo "[cloudflare_r2]" > ~/.config/rclone/rclone.conf
+          echo "type = s3" >> ~/.config/rclone/rclone.conf
+          echo "provider = Cloudflare" >> ~/.config/rclone/rclone.conf
+          echo "access_key_id = $R2_ACCESS_KEY" >> ~/.config/rclone/rclone.conf
+          echo "secret_access_key = $R2_SECRET_KEY" >> ~/.config/rclone/rclone.conf
+          echo "endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com" >> ~/.config/rclone/rclone.conf
+          
+      - name: Upload Artifacts to Cloudflare R2
+        env:
+          R2_BUCKET: "spooksapi"
+          R2_PATH: "GhostESPBins"
+        run: |
+          rclone copy packaged_artifacts "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress
+
+
       - name: Notify Discord of Successful Release
         if: success()
         env:
