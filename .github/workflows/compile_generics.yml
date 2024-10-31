@@ -35,7 +35,7 @@ jobs:
             ~/.espressif
             ~/.idf_tools
             ~/.cache/pip
-          key: ${{ runner.os }}-esp-idf-${{ matrix.target }}-${{ hashFiles('**/sdkconfig') }}
+          key: ${{ runner.os }}-esp-idf-${{ matrix.target }}-${{ hashFiles('**/configs/sdkconfig.nimble') }}
           restore-keys: |
             ${{ runner.os }}-esp-idf-${{ matrix.target }}-
             ${{ runner.os }}-esp-idf-
@@ -54,51 +54,11 @@ jobs:
           . ~/esp-idf/export.sh
           idf.py set-target ${{ matrix.target }}
 
-      # Use sdkconfig instead of sdkconfig.defaults
-      - name: Apply Base sdkconfig
+      # Use the custom sdkconfig for NimBLE
+      - name: Apply Custom sdkconfig for NimBLE
         run: |
           . ~/esp-idf/export.sh
-          cp sdkconfig sdkconfig.build
-
-      - name: Override Build Options in sdkconfig
-        run: |
-          . ~/esp-idf/export.sh
-          sed -i 's/^CONFIG_FLASH_SIZE.*/CONFIG_FLASH_SIZE_4MB=y/' sdkconfig.build
-          sed -i 's/^CONFIG_COMPILER_OPTIMIZATION_SIZE.*/CONFIG_COMPILER_OPTIMIZATION_SIZE=y/' sdkconfig.build
-          sed -i 's/^CONFIG_PARTITION_TABLE_CUSTOM.*/CONFIG_PARTITION_TABLE_CUSTOM=y/' sdkconfig.build
-          sed -i 's/^CONFIG_PARTITION_TABLE_FILENAME.*/CONFIG_PARTITION_TABLE_FILENAME="partitions.csv"/' sdkconfig.build
-          sed -i 's/^CONFIG_FATFS_LFN_ENABLED.*/CONFIG_FATFS_LFN_ENABLED=y/' sdkconfig.build
-          sed -i 's/^CONFIG_FATFS_LFN_CODE_PAGE.*/CONFIG_FATFS_LFN_CODE_PAGE_437=y/' sdkconfig.build
-          sed -i 's/^CONFIG_FATFS_MAX_LFN.*/CONFIG_FATFS_MAX_LFN=255/' sdkconfig.build
-
-          # Enable Bluetooth and NimBLE for all targets except esp32s2
-          if [ "${{ matrix.target }}" = "esp32s2" ]; then
-            sed -i 's/^CONFIG_BT_ENABLED.*/CONFIG_BT_ENABLED=n/' sdkconfig.build
-            sed -i 's/^CONFIG_BLUEDROID_ENABLED.*/CONFIG_BLUEDROID_ENABLED=n/' sdkconfig.build
-            sed -i 's/^CONFIG_BLUETOOTH_ENABLED.*/CONFIG_BLUETOOTH_ENABLED=n/' sdkconfig.build
-            sed -i 's/^CONFIG_BLE_ENABLED.*/CONFIG_BLE_ENABLED=n/' sdkconfig.build
-            sed -i 's/^CONFIG_BT_NIMBLE_ENABLED.*/CONFIG_BT_NIMBLE_ENABLED=n/' sdkconfig.build
-          else
-            sed -i 's/^CONFIG_BT_ENABLED.*/CONFIG_BT_ENABLED=y/' sdkconfig.build
-            sed -i 's/^CONFIG_BLUEDROID_ENABLED.*/CONFIG_BLUEDROID_ENABLED=n/' sdkconfig.build
-            sed -i 's/^CONFIG_BLUETOOTH_ENABLED.*/CONFIG_BLUETOOTH_ENABLED=y/' sdkconfig.build
-            sed -i 's/^CONFIG_BLE_ENABLED.*/CONFIG_BLE_ENABLED=y/' sdkconfig.build
-            sed -i 's/^CONFIG_BT_NIMBLE_ENABLED.*/CONFIG_BT_NIMBLE_ENABLED=y/' sdkconfig.build
-            sed -i 's/^CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY.*/CONFIG_BTDM_CONTROLLER_MODE_BLE_ONLY=y/' sdkconfig.build
-            sed -i 's/^CONFIG_BTDM_CONTROLLER_BLE_MAX_CONN.*/CONFIG_BTDM_CONTROLLER_BLE_MAX_CONN=3/' sdkconfig.build
-            sed -i 's/^CONFIG_BT_NIMBLE_ROLE_PERIPHERAL.*/CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y/' sdkconfig.build
-            sed -i 's/^CONFIG_BT_NIMBLE_ROLE_CENTRAL.*/CONFIG_BT_NIMBLE_ROLE_CENTRAL=y/' sdkconfig.build
-            sed -i 's/^CONFIG_BT_NIMBLE_MAX_CONNECTIONS.*/CONFIG_BT_NIMBLE_MAX_CONNECTIONS=3/' sdkconfig.build
-          fi
-
-          # Set LVGL font configurations
-          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_8.*/CONFIG_LV_FONT_MONTSERRAT_8=y/' sdkconfig.build
-          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_10.*/CONFIG_LV_FONT_MONTSERRAT_10=y/' sdkconfig.build
-          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_12.*/CONFIG_LV_FONT_MONTSERRAT_12=y/' sdkconfig.build
-          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_14.*/CONFIG_LV_FONT_MONTSERRAT_14=y/' sdkconfig.build
-          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_16.*/CONFIG_LV_FONT_MONTSERRAT_16=y/' sdkconfig.build
-          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_18.*/CONFIG_LV_FONT_MONTSERRAT_18=y/' sdkconfig.build
-          sed -i 's/^CONFIG_LV_FONT_MONTSERRAT_24.*/CONFIG_LV_FONT_MONTSERRAT_24=y/' sdkconfig.build
+          cp configs/sdkconfig.nimble sdkconfig
 
       - name: Clean Build Environment
         run: |
