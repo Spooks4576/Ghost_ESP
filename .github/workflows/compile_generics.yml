@@ -7,17 +7,38 @@ on:
 
 jobs:
   build:
-    name: Build for ${{ matrix.target }}
+    name: Build for ${{ matrix.target.name }} - LED: ${{ matrix.led }} - Screen: ${{ matrix.screen_support }} - Input: ${{ matrix.input_type }}
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         target:
-          - esp32
-          - esp32s2
-          - esp32s3
-          - esp32c3
-          - esp32c6
+          # Generic configurations (no LED, no screen support)
+          - { name: "esp32-generic", idf_target: "esp32", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig_default", zip_name: "esp32-generic.zip" }
+          - { name: "esp32s2-generic", idf_target: "esp32s2", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig_default", zip_name: "esp32s2-generic.zip" }
+          - { name: "esp32s3-generic", idf_target: "esp32s3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig_default", zip_name: "esp32s3-generic.zip" }
+          - { name: "esp32c3-generic", idf_target: "esp32c3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig_default", zip_name: "esp32c3-generic.zip" }
+          - { name: "esp32c6-generic", idf_target: "esp32c6", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig_default", zip_name: "esp32c6-generic.zip" }
+
+          # Dev Kit configurations (LED on, no screen support)
+          - { name: "esp32c3-devkit", idf_target: "esp32c3", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig_default", zip_name: "esp32c3-devkit.zip", led_pin: 8, num_leds: 1 }
+          - { name: "esp32c6-devkit", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig_default", zip_name: "esp32c6-devkit.zip", led_pin: 8, num_leds: 1 }
+
+          # Ghost board (LED on, special pin and LED count)
+          - { name: "ghostboard", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig_default", zip_name: "ghostboard.zip", led_pin: 10, num_leds: 3, is_ghost_board: true }
+
+          # Screen-supported builds
+          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig_marauderv6", zip_name: "MarauderV6&AwokDual.zip", screen_width: 240, screen_height: 320 }
+          - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig_awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128 }
+          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig_default", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
+
+          # CYD (Cheap Yellow Display) with touch screen
+          #- { name: "CYD-1", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig_cyd_1", zip_name: "CYD-1.zip", screen_width: 240, screen_height: 320 }
+          #- { name: "CYD-2", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig_cyd_2", zip_name: "CYD-2.zip", screen_width: 240, screen_height: 320 }
+
+          # 7-inch boards
+          - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig_waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
+          - { name: "Crowtech_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig_crowtech7inch", zip_name: "Crowtech_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, crowtech_lcd: true }
 
     steps:
       - name: Checkout Repository
@@ -35,11 +56,10 @@ jobs:
             ~/.espressif
             ~/.idf_tools
             ~/.cache/pip
-          key: ${{ runner.os }}-esp-idf-${{ matrix.target }}-${{ hashFiles('**/configs/sdkconfig.nimble') }}
+          key: ${{ runner.os }}-esp-idf-${{ matrix.target.name }}-${{ matrix.led }}-${{ matrix.screen_support }}-${{ matrix.input_type }}
           restore-keys: |
-            ${{ runner.os }}-esp-idf-${{ matrix.target }}-
+            ${{ runner.os }}-esp-idf-${{ matrix.target.name }}-
             ${{ runner.os }}-esp-idf-
-            ${{ runner.os }}-
 
       # Manual ESP-IDF Installation
       - name: Install ESP-IDF
@@ -52,13 +72,46 @@ jobs:
       - name: Set Target
         run: |
           . ~/esp-idf/export.sh
-          idf.py set-target ${{ matrix.target }}
+          idf.py set-target ${{ matrix.target.idf_target }}
 
-      # Use the custom sdkconfig for NimBLE
-      - name: Apply Custom sdkconfig for NimBLE
+      - name: Apply Custom SDK Config
         run: |
-          . ~/esp-idf/export.sh
-          cp configs/sdkconfig.nimble sdkconfig
+          cp ${{ matrix.sdkconfig_file }} sdkconfig
+
+      - name: Set Environment Variables for Matrix Configuration
+        run: |
+          if [ "${{ matrix.led }}" = "true" ]; then
+            echo "LED_DATA_PIN=${{ matrix.led_pin }}" >> $GITHUB_ENV
+            echo "NUM_LEDS=${{ matrix.num_leds }}" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.is_ghost_board }}" = "true" ]; then
+            echo "IS_GHOST_BOARD=1" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.screen_support }}" = "true" ]; then
+            echo "WITH_SCREEN=1" >> $GITHUB_ENV
+            echo "TFT_WIDTH=${{ matrix.screen_width }}" >> $GITHUB_ENV
+            echo "TFT_HEIGHT=${{ matrix.screen_height }}" >> $GITHUB_ENV
+          fi
+          case "${{ matrix.input_type }}" in
+            "touchscreen")
+              echo "USE_TOUCHSCREEN=1" >> $GITHUB_ENV
+              ;;
+            "joystick")
+              echo "USE_JOYSTICK=1" >> $GITHUB_ENV
+              ;;
+            "cardputer")
+              echo "USE_CARDPUTER=1" >> $GITHUB_ENV
+              ;;
+          esac
+          if [ "${{ matrix.use_7_incher }}" = "true" ]; then
+            echo "USE_7_INCHER=0" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.waveshare_lcd }}" = "true" ]; then
+            echo "Waveshare_LCD=1" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.crowtech_lcd }}" = "true" ]; then
+            echo "Crowtech_LCD=1" >> $GITHUB_ENV
+          fi
 
       - name: Clean Build Environment
         run: |
@@ -97,16 +150,10 @@ jobs:
           cp "$PARTITION_TABLE_BIN" packaged_artifacts/
           cp "$GHOST_ESP_IDF_BIN" packaged_artifacts/
 
-          ZIP_NAME="${{ matrix.target }}-build-${{ github.run_id }}.zip"
+          ZIP_NAME="${{ matrix.zip_name }}"
           cd packaged_artifacts
           zip "$ZIP_NAME" bootloader.bin partition-table.bin Ghost_ESP_IDF.bin
           cd ..
-
-      - name: Upload Build Artifacts ZIP
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}-build-${{ github.run_id }}.zip
-          path: packaged_artifacts/${{ matrix.target }}-build-${{ github.run_id }}.zip
 
       - name: Get the Latest Release ID
         id: get_release
@@ -125,25 +172,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          zip_file="packaged_artifacts/${{ matrix.target }}-build-${{ github.run_id }}.zip"
+          zip_file="packaged_artifacts/${{ matrix.zip_name }}"
           release_id=${{ steps.get_release.outputs.release_id }}
           curl -X POST \
             -H "Authorization: token $GITHUB_TOKEN" \
             -H "Content-Type: application/zip" \
             --data-binary @"$zip_file" \
             "https://uploads.github.com/repos/${{ github.repository }}/releases/$release_id/assets?name=$(basename $zip_file)"
-
-      - name: Archive Build Directory on Failure
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}-build-failure-${{ github.run_id }}
-          path: build/
-
-      # Discord notification using curl
-      - name: Notify on Failure
-        if: failure()
-        run: |
-          curl -X POST -H "Content-Type: application/json" \
-          -d "{\"content\": \"🚨 **Build Failed**\n**Repository**: \`${{ github.repository }}\`\n**Target**: \`${{ matrix.target }}\`\n**Run ID**: \`${{ github.run_id }}\`\n**View Details**: [Click Here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\"}" \
-          ${{ secrets.DISCORD_WEBHOOK_URL }}
