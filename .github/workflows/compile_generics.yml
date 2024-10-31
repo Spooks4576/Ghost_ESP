@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build for ${{ matrix.target.name }} - LED: ${{ matrix.led }} - Screen: ${{ matrix.screen_support }} - Input: ${{ matrix.input_type }}
+    name: Build for ${{ matrix.target.name }} - LED ${{ matrix.led }} - Screen ${{ matrix.screen_support }} - Input ${{ matrix.input_type }}
     runs-on: ubuntu-latest
 
     strategy:
