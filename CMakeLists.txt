@@ -5,7 +5,7 @@ if(DEFINED ENV{IDF_TARGET})
     set(IDF_TARGET $ENV{IDF_TARGET})
     message(STATUS "Setting IDF_TARGET to ${IDF_TARGET} from environment variable")
 else()
-    message(FATAL_ERROR "IDF_TARGET environment variable is not defined. Please set it before building.")
+    #message(FATAL_ERROR "IDF_TARGET environment variable is not defined. Please set it before building.")
 endif()
 
 # Partition table settings
