@@ -76,7 +76,7 @@ jobs:
 
       - name: Apply Custom SDK Config
         run: |
-          cp ${{ matrix.sdkconfig_file }} sdkconfig
+          cp ${{ matrix.sdkconfig_file }} "${{ github.workspace }}/sdkconfig"
 
       - name: Set Environment Variables for Matrix Configuration
         run: |
