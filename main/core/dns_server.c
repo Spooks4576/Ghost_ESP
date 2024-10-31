@@ -83,7 +83,7 @@ static char *parse_dns_name(char *raw_name, char *parsed_name, size_t parsed_nam
             return NULL;
         }
 
-        // Copy the sub name that follows the the label
+        // Copy the sub name that follows the label
         memcpy(name_itr, label + 1, sub_name_len);
         name_itr[sub_name_len] = '.';
         name_itr += (sub_name_len + 1);
