@@ -21,7 +21,7 @@ jobs:
           - { name: "esp32c6-generic", idf_target: "esp32c6", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
 
           # Dev Kit configurations (LED on, no screen support)
-          - { name: "esp32c3-devkit", idf_target: "esp32c3", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c3-devkit.zip", led_pin: 8, num_leds: 1 }
+          - { name: "esp32c3-devkit", idf_target: "esp32c3", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-devkit.zip", led_pin: 8, num_leds: 1 }
           - { name: "esp32c6-devkit", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-devkit.zip", led_pin: 8, num_leds: 1 }
 
           # Ghost board (LED on, special pin and LED count)
