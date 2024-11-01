@@ -35,6 +35,8 @@ jobs:
           # CYD (Cheap Yellow Display) with touch screen
           - { name: "CYD2USB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.cheapyellowdisplayCYD2USB", zip_name: "CYD2USB.zip", screen_width: 240, screen_height: 320 }
           - { name: "CYDMicroUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip", screen_width: 240, screen_height: 320 }
+          - { name: "CYDDualUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip", screen_width: 240, screen_height: 320}
+          
 
           # 7-inch boards
           - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
@@ -113,6 +115,9 @@ jobs:
           fi
           if [ "${{ matrix.target.crowtech_lcd }}" = "true" ]; then
             echo "Crowtech_LCD=1" >> $GITHUB_ENV
+          fi
+          if [ "${{ matrix.target.name }}" = "CYDDualUSB" ]; then
+            echo "USE_ILI9341_2=1" >> $GITHUB_ENV
           fi
 
       - name: Set up ESP-IDF and Target
