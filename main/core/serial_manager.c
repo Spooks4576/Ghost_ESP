@@ -10,6 +10,7 @@
 #include "freertos/queue.h"
 #include <ctype.h>
 #include <core/commandline.h>
+#include "managers/gps_manager.h"
 #include "driver/usb_serial_jtag.h"
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3) || defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
@@ -41,6 +42,8 @@ void serial_task(void *pvParameter) {
 #if IS_GHOST_BOARD
     uint8_t *ghost_data = (uint8_t *)malloc(GHOST_UART_BUF_SIZE);
     int ghost_index = 0;
+#elif HAS_GPS
+    uint8_t *gps_data = (uint8_t *)malloc(1024);
 #endif
 
     while (1) {
@@ -73,6 +76,17 @@ void serial_task(void *pvParameter) {
                 }
             }
         }
+
+    #ifdef HAS_GPS
+        int gps_length = uart_read_bytes(UART_NUM_1, gps_data, 1024, 10 / portTICK_PERIOD_MS);
+        if (gps_length > 0) {
+            for (int i = 0; i < gps_length; i++) {
+                char incoming_char = (char)ghost_data[i];
+
+                gps_manager_process_char(&g_gpsManager, incoming_char);
+            }
+        }
+    #endif
 
 #if IS_GHOST_BOARD
         int ghost_length = uart_read_bytes(UART_NUM_1, ghost_data, GHOST_UART_BUF_SIZE, 10 / portTICK_PERIOD_MS);
@@ -145,6 +159,20 @@ void serial_manager_init() {
     uart_param_config(UART_NUM_1, &ghost_uart_config);
     uart_set_pin(UART_NUM_1, GHOST_UART_TX_PIN, GHOST_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(UART_NUM_1, GHOST_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
+#elif HAS_GPS
+
+    const uart_config_t gps_uart_config = {
+        .baud_rate = 9600,                     // Most GPS modules use 9600 baud by default
+        .data_bits = UART_DATA_8_BITS,         // 8 data bits
+        .parity = UART_PARITY_DISABLE,         // No parity
+        .stop_bits = UART_STOP_BITS_1,         // 1 stop bit
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE, // Typically no hardware flow control
+    };
+
+    uart_param_config(UART_NUM_1, &gps_uart_config);
+    uart_set_pin(UART_NUM_1, GPS_UART_TX_PIN, GPS_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_driver_install(UART_NUM_1, GHOST_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
+    gps_manager_init(&g_gpsManager);
 #endif
 
     commandQueue = xQueueCreate(10, sizeof(SerialCommand));
