@@ -72,7 +72,8 @@ if(DEFINED ENV{Crowtech_LCD} AND "$ENV{Crowtech_LCD}" STREQUAL "1")
     add_compile_definitions(Crowtech_LCD=1)
 endif()
 
-
+add_compile_definitions(WITH_SCREEN=1)
+add_compile_definitions(USE_TOUCHSCREEN=1)
 # Other default configurations
 add_compile_definitions(HOLD_LIMIT=1000) # For joystick hold duration
 add_compile_definitions(LED_ORDER=0)     # 2 for RGB, 0 for GRB
