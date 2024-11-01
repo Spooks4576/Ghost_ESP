@@ -16,7 +16,7 @@
 #define MAX_PIPE_SETS 2
 
 
-#define GAME_LOOP_INTERVAL_MS LV_VER_RES > 320 ? 10 : 30
+#define GAME_LOOP_INTERVAL_MS LV_VER_RES > 320 ? 10 : 25
 
 
 typedef enum {
