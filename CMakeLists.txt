@@ -77,6 +77,11 @@ if(DEFINED ENV{USE_ILI9341_2} AND "$ENV{USE_ILI9341_2}" STREQUAL "1")
     add_compile_definitions(USE_ILI9341_2=1)
 endif()
 
+add_compile_definitions(USE_ILI9341_2=1)
+add_compile_definitions(USE_TOUCHSCREEN=1)
+add_compile_definitions(HAS_GPS=1)
+add_compile_definitions(GPS_UART_TX_PIN=WHATEVERPINNUMBER)
+add_compile_definitions(GPS_UART_RX_PIN=WHATEVERPINNUMBER)
 
 # Other default configurations
 add_compile_definitions(HOLD_LIMIT=1000) # For joystick hold duration

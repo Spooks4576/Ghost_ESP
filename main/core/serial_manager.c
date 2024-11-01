@@ -81,7 +81,7 @@ void serial_task(void *pvParameter) {
         int gps_length = uart_read_bytes(UART_NUM_1, gps_data, 1024, 10 / portTICK_PERIOD_MS);
         if (gps_length > 0) {
             for (int i = 0; i < gps_length; i++) {
-                char incoming_char = (char)ghost_data[i];
+                char incoming_char = (char)gps_data[i];
 
                 gps_manager_process_char(&g_gpsManager, incoming_char);
             }
@@ -171,7 +171,7 @@ void serial_manager_init() {
 
     uart_param_config(UART_NUM_1, &gps_uart_config);
     uart_set_pin(UART_NUM_1, GPS_UART_TX_PIN, GPS_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(UART_NUM_1, GHOST_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
+    uart_driver_install(UART_NUM_1, 1024 * 2, 0, 0, NULL, 0);
     gps_manager_init(&g_gpsManager);
 #endif
 
