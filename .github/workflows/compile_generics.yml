@@ -32,6 +32,10 @@ jobs:
           - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128 }
           - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
 
+          # CYD (Cheap Yellow Display) with touch screen
+          - { name: "CYD2USB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.cheapyellowdisplayCYD2USB", zip_name: "CYD2USB.zip", screen_width: 240, screen_height: 320 }
+          - { name: "CYDMicroUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip", screen_width: 240, screen_height: 320 }
+
           # 7-inch boards
           - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
           - { name: "Crowtech_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, crowtech_lcd: true }
@@ -114,6 +118,7 @@ jobs:
       - name: Set up ESP-IDF and Target
         run: |
           . ~/esp-idf/export.sh
+          echo "FLAPPY_GHOST_WEB_HOOK=${{ secrets.FLAPPY_GHOST_WEB_HOOK }}" >> $GITHUB_ENV
           echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
           export IDF_TARGET=${{ matrix.target.idf_target }}
           echo "IDF_TARGET is set to $IDF_TARGET"

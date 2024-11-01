@@ -1,4 +1,4 @@
-name: Compile Marauder V6
+name: Compile 7 Inch Displays
 
 on:
   release:
@@ -28,13 +28,13 @@ jobs:
           # - { name: "ghostboard", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "ghostboard.zip", led_pin: 10, num_leds: 3, is_ghost_board: true }
 
           # Screen-supported builds
-          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320 }
+          #- { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320 }
           # - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128 }
           # - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
 
           # # 7-inch boards
-          # - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
-          # - { name: "Crowtech_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, crowtech_lcd: true }
+           - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
+           - { name: "Crowtech_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, crowtech_lcd: true }
 
     steps:
       - name: Checkout Repository

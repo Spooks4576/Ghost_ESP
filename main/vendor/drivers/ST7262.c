@@ -148,11 +148,17 @@ esp_err_t lcd_st7262_init(void)
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 
+#ifdef Crowtech_LCD
+    int ClockFrequency = 15;
+#else
+    int ClockFrequency = 25;
+#endif
+
     // Prepare RGB panel configuration with accurate timings
     esp_lcd_rgb_panel_config_t panel_config = {
         .clk_src = LCD_CLK_SRC_PLL160M,
         .timings = {
-            .pclk_hz = 25 * 1000 * 1000, // Pixel clock frequency based on the typical 25 MHz from datasheet
+            .pclk_hz = ClockFrequency * 1000 * 1000, // Pixel clock frequency based on the typical 25 MHz from datasheet
             .h_res = 800,
             .v_res = 480,
             .hsync_back_porch = 4,
