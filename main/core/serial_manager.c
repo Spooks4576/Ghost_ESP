@@ -172,7 +172,7 @@ void serial_manager_init() {
     uart_param_config(UART_NUM_1, &gps_uart_config);
     uart_set_pin(UART_NUM_1, GPS_UART_TX_PIN, GPS_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(UART_NUM_1, 1024 * 2, 0, 0, NULL, 0);
-    gps_manager_init(&g_gpsManager);+
+    gps_manager_init(&g_gpsManager);
 #endif
 
     commandQueue = xQueueCreate(10, sizeof(SerialCommand));
