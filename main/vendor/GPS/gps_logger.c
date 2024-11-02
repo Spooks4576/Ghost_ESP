@@ -6,28 +6,17 @@
 #include "driver/uart.h"
 #include <errno.h>
 #include <sys/stat.h>
+#include "vendor/GPS/gps_logger.h"
 
 static const char *CSV_TAG = "CSV";
 
-#define MAX_FILE_NAME_LENGTH 64
-#define BUFFER_SIZE 4096
-#define UART_NUM_0 0  // Placeholder, use correct UART definition
+
+#define UART_NUM_0 1
 #define CSV_BUFFER_SIZE 512
 
 static FILE *csv_file = NULL;
 static char csv_buffer[BUFFER_SIZE];
 static size_t buffer_offset = 0;
-
-
-typedef struct {
-    char ssid[32];
-    char bssid[18];
-    int rssi;
-    int channel;
-    double latitude;
-    double longitude;
-    char encryption_type[8];  // WPA2, WPA, WEP, or OPEN
-} wardriving_data_t;
 
 esp_err_t csv_write_header(FILE* f) {
     const char* header = "BSSID,SSID,Latitude,Longitude,RSSI,Channel,Encryption,Time\n";
