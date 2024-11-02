@@ -2663,9 +2663,9 @@ CONFIG_LV_I2C_TOUCH=y
 #
 # Touchpanel Configuration (GT911)
 #
-# CONFIG_LV_GT911_SWAPXY
-# CONFIG_LV_GT911_INVERT_X
-# CONFIG_LV_GT911_INVERT_Y
+# CONFIG_LV_GT911_SWAPXY is not set
+# CONFIG_LV_GT911_INVERT_X is not set
+# CONFIG_LV_GT911_INVERT_Y is not set
 # end of Touchpanel Configuration (GT911)
 
 CONFIG_LV_I2C_TOUCH_PORT_0=y
