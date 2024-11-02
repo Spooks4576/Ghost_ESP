@@ -10,6 +10,7 @@ void wifi_pwn_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wifi_probe_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wifi_raw_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wifi_eapol_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
+void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type);
 
 typedef enum {
     WPS_MODE_NONE = 0,   // No WPS support

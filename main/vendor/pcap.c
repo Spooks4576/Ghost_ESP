@@ -10,6 +10,7 @@
 #include "core/utils.h"
 #include <sys/stat.h>
 #include <arpa/inet.h>
+#include "managers/sd_card_manager.h"
 
 static const char *PCAP_TAG = "PCAP";
 
@@ -58,13 +59,12 @@ void get_next_pcap_file_name(char *file_name_buffer, const char* base_name) {
 
 esp_err_t pcap_file_open(const char* base_file_name) {
     char file_name[MAX_FILE_NAME_LENGTH];
-
     
-    get_next_pcap_file_name(file_name, base_file_name);
-
-
-    pcap_file = fopen(file_name, "wb");
-
+    if (sd_card_exists("/mnt/ghostesp/pcaps"))
+    {
+        get_next_pcap_file_name(file_name, base_file_name);
+        pcap_file = fopen(file_name, "wb");
+    }
     
     esp_err_t ret = pcap_write_global_header(pcap_file);
     if (ret != ESP_OK) {

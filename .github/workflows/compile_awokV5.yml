@@ -1,4 +1,4 @@
-name: Compile MarauderV6
+name: Compile Awok V5
 
 on:
   release:
