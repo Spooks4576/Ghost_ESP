@@ -3,6 +3,8 @@
 #include <esp_log.h>
 #include <string.h>
 #include "vendor/pcap.h"
+#include "vendor/GPS/gps_logger.h"
+#include "managers/gps_manager.h"
 
 #define WPS_OUI 0x0050f204 
 #define TAG "WIFI_MONITOR"
@@ -114,6 +116,90 @@ void wifi_raw_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
         ESP_LOGE(TAG, "Failed to write Raw packet to PCAP buffer.");
     }
 }
+
+void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
+    if (type != WIFI_PKT_MGMT) {
+        return;
+    }
+
+    const wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)pkt->payload;
+    const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
+
+    const uint8_t *payload = pkt->payload;
+    int len = pkt->rx_ctrl.sig_len;
+
+    
+    uint8_t frame_type = hdr->frame_ctrl & 0xFC;
+    if (frame_type != 0x80 && frame_type != 0x50) {
+        return;
+    }
+
+    int index = 36;
+    char ssid[33] = {0};
+    uint8_t bssid[6];
+    memcpy(bssid, hdr->addr3, 6);
+
+    int rssi = pkt->rx_ctrl.rssi;
+    int channel = pkt->rx_ctrl.channel;
+
+    bool network_found = false;
+    char encryption_type[8] = "OPEN";
+
+    
+    while (index + 1 < len) {
+        uint8_t id = payload[index];
+        uint8_t ie_len = payload[index + 1];
+
+        if (index + 2 + ie_len > len) {
+            break;
+        }
+
+        
+        if (id == 0 && ie_len <= 32) {
+            memcpy(ssid, &payload[index + 2], ie_len);
+            ssid[ie_len] = '\0';
+        }
+
+        
+        if (id == 48) {
+            strncpy(encryption_type, "WPA2", sizeof(encryption_type));
+        } else if (id == 221) {
+            uint32_t oui = (payload[index + 2] << 16) | (payload[index + 3] << 8) | payload[index + 4];
+            uint8_t oui_type = payload[index + 5];
+            if (oui == 0x0050f2 && oui_type == 0x01) {
+                strncpy(encryption_type, "WPA", sizeof(encryption_type));
+            } else if (oui == 0x0050f2 && oui_type == 0x02) {
+                strncpy(encryption_type, "WEP", sizeof(encryption_type));
+            }
+        }
+
+        index += (2 + ie_len);
+    }
+
+    
+    double latitude = (double)g_gpsManager.nmea.latitude / 1000000.0;
+    double longitude = (double)g_gpsManager.nmea.longitude / 1000000.0;
+
+    
+    wardriving_data_t wardriving_data;
+    strncpy(wardriving_data.ssid, ssid, sizeof(wardriving_data.ssid) - 1);
+    wardriving_data.ssid[sizeof(wardriving_data.ssid) - 1] = '\0';  // Null-terminate
+    snprintf(wardriving_data.bssid, sizeof(wardriving_data.bssid), "%02x:%02x:%02x:%02x:%02x:%02x",
+             bssid[0], bssid[1], bssid[2], bssid[3], bssid[4], bssid[5]);
+    wardriving_data.rssi = rssi;
+    wardriving_data.channel = channel;
+    wardriving_data.latitude = latitude;
+    wardriving_data.longitude = longitude;
+    strncpy(wardriving_data.encryption_type, encryption_type, sizeof(wardriving_data.encryption_type) - 1);
+    wardriving_data.encryption_type[sizeof(wardriving_data.encryption_type) - 1] = '\0';
+
+    esp_err_t err = csv_write_data_to_buffer(&wardriving_data);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to write data to buffer");
+    }
+}
+
 
 void wifi_eapol_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
 {

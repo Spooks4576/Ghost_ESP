@@ -15,6 +15,7 @@ typedef struct {
 void gps_manager_init(GPSManager* manager);
 void gps_manager_process_char(GPSManager* manager, char c);
 void gps_manager_log_values(GPSManager* manager);
+void gps_manager_deinit(GPSManager* manager);
 
 
 GPSManager g_gpsManager;

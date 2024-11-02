@@ -15,6 +15,7 @@
 #include "vendor/pcap.h"
 #include <sys/socket.h>
 #include <netdb.h>
+#include <managers/gps_manager.h>
 #include "vendor/printer.h"
 
 static Command *command_list_head = NULL;
@@ -630,6 +631,28 @@ void handle_reboot(int argc, char **argv)
     esp_restart();
 }
 
+void handle_startwd(int argc, char **argv) {
+    bool stop_flag = false;
+
+    
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-s") == 0) {
+            stop_flag = true;
+            break;
+        }
+    }
+
+    if (stop_flag) {
+        gps_manager_deinit(&g_gpsManager);
+        wifi_manager_stop_monitor_mode();
+        printf("Wardriving stopped.\n");
+    } else {
+        gps_manager_init(&g_gpsManager);
+        wifi_manager_start_monitor_mode(wardriving_scan_callback);
+        printf("Wardriving started.\n");
+    }
+}
+
 void print_art()
 {
     printf("@@@@@@@@@@@@@@@@@@@@@@#SSS#@@@@@@@@@@@@@@@@@@@@@@@\n");
@@ -800,6 +823,7 @@ void register_commands() {
     register_command("tplinktest", handle_tp_link_test);
     register_command("stop", handle_stop_flipper);
     register_command("reboot", handle_reboot);
+    register_command("startwd", handle_startwd);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif
