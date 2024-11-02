@@ -4,8 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define EXP10(b) ((b) ? 10 * EXP10((b)-1) : 1)
-
 // Struct definition for MicroNMEA
 typedef struct {
     char talkerID;

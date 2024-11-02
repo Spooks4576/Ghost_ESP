@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <math.h>
 #include <limits.h>
 
 // Initialize NMEA instance
@@ -51,17 +52,20 @@ long microNMEA_parseFloat(const char* s, uint8_t log10Multiplier, const char** e
     long r = 0, frac = 0;
     int neg = (*s == '-') ? -1 : 1;
     if (*s == '-' || *s == '+') s++;
-    while (isdigit(*s)) r = 10 * r + (*s++ - '0');
-    r *= EXP10(log10Multiplier);
+
+    
+    while (isdigit((unsigned char)*s)) r = 10 * r + (*s++ - '0');
+    r *= exp10(log10Multiplier);
 
     if (*s == '.') {
         s++;
-        while (isdigit(*s) && log10Multiplier) {
+        while (isdigit((unsigned char)*s) && log10Multiplier) {
             frac = 10 * frac + (*s++ - '0');
             log10Multiplier--;
         }
-        frac *= EXP10(log10Multiplier);
+        frac *= exp10(log10Multiplier);
     }
+
     r += frac;
     r *= neg;
     *eptr = microNMEA_skipField(s);
