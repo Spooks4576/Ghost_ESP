@@ -8,6 +8,7 @@
 typedef struct {
     MicroNMEA nmea;
     char nmeaBuffer[100];  // Buffer size for NMEA sentences
+    bool isinitilized;
 } GPSManager;
 
 // Function prototypes

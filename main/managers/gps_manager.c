@@ -5,13 +5,20 @@
 
 void gps_manager_init(GPSManager* manager) {
     microNMEA_init(&manager->nmea, manager->nmeaBuffer, sizeof(manager->nmeaBuffer));
+    manager->isinitilized = true;
 }
 
 
 void gps_manager_process_char(GPSManager* manager, char c) {
-    if (microNMEA_process(&manager->nmea, c)) {
-        gps_manager_log_values(manager);
+
+    if (manager->isinitilized)
+    {
+        if (microNMEA_process(&manager->nmea, c)) {
+
+            
+        }
     }
+
 }
 
 

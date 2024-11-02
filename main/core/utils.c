@@ -85,3 +85,30 @@ int get_next_pcap_file_index(const char* base_name) {
     closedir(dir);
     return max_index + 1;
 }
+
+
+int get_next_csv_file_index(const char* base_name) {
+    char path[128];
+    int max_index = -1;
+
+    DIR *dir = opendir("/mnt/ghostesp/wardriving");
+    if (!dir) {
+        ESP_LOGE(TAG, "Failed to open directory /mnt/ghostesp/wardriving");
+        return -1;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strncmp(entry->d_name, base_name, strlen(base_name)) == 0) {
+            int index;
+            if (sscanf(entry->d_name + strlen(base_name), "_%d.csv", &index) == 1) {
+                if (index > max_index) {
+                    max_index = index;
+                }
+            }
+        }
+    }
+
+    closedir(dir);
+    return max_index + 1;
+}

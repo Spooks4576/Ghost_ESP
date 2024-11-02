@@ -219,9 +219,42 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          payload='{
-            "content": "🎉 CYDs have been successfully compiled and is now available! Check the latest release for details."
-          }'
+          payload=$(cat <<EOF
+          {
+            "embeds": [
+              {
+                "title": "🎉 New Release for Ghost ESP!",
+                "description": "A new release for Ghost ESP has been successfully compiled and is now available! Check out the latest release for details.",
+                "url": "${{ github.server_url }}/${{ github.repository }}/releases/latest",
+                "color": 5814783,
+                "fields": [
+                  {
+                    "name": "Repository",
+                    "value": "${{ github.repository }}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Version",
+                    "value": "${{ github.event.release.tag_name }}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Commit",
+                    "value": "${{ github.sha }}",
+                    "inline": true
+                  }
+                ],
+                "footer": {
+                  "text": "GitHub Actions Bot",
+                  "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                },
+                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+              }
+            ]
+          }
+          EOF
+          )
+          
           curl -X POST \
             -H "Content-Type: application/json" \
             -d "$payload" \
