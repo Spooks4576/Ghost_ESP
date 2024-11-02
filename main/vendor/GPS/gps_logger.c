@@ -36,7 +36,7 @@ esp_err_t csv_write_header(FILE* f) {
 }
 
 void get_next_csv_file_name(char *file_name_buffer, const char* base_name) {
-    int next_index = get_next_pcap_file_index(base_name);  // Modify this to be CSV specific
+    int next_index = get_next_csv_file_index(base_name);  // Modify this to be CSV specific
     snprintf(file_name_buffer, MAX_FILE_NAME_LENGTH, "/mnt/ghostesp/logs/%s_%d.csv", base_name, next_index);
 }
 
@@ -63,7 +63,7 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
     gettimeofday(&tv, NULL);
 
     char data_line[CSV_BUFFER_SIZE];
-    int len = snprintf(data_line, CSV_BUFFER_SIZE, "%s,%s,%lf,%lf,%d,%d,%s,%ld\n",
+    int len = snprintf(data_line, CSV_BUFFER_SIZE, "%s,%s,%lf,%lf,%d,%d,%s,%lld\n",
                        data->bssid, data->ssid, data->latitude, data->longitude,
                        data->rssi, data->channel, data->encryption_type, tv.tv_sec);
 
