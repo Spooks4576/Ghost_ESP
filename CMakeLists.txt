@@ -67,6 +67,9 @@ endif()
 if(DEFINED ENV{Crowtech_LCD} AND "$ENV{Crowtech_LCD}" STREQUAL "1")
     add_compile_definitions(Crowtech_LCD=1)
 endif()
+if(DEFINED ENV{Sunton_LCD} AND "$ENV{Sunton_LCD}" STREQUAL "1")
+    add_compile_definitions(Sunton_LCD=1)
+endif()
 
 # Werid Display Module
 if(DEFINED ENV{USE_ILI9341_2} AND "$ENV{USE_ILI9341_2}" STREQUAL "1")
