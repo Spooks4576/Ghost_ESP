@@ -30,7 +30,7 @@ jobs:
           - { name: "ghostboard", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "ghostboard.zip", led_pin: 10, num_leds: 3, is_ghost_board: true, sd_spi_cs_pin: 23, sd_spi_clk_pin: 19, sd_spi_miso_pin: 20, sd_spi_mosi_pin: 18}
 
           # Screen-supported builds
-          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320 }
+          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320, sd_spi_cs_pin: 4, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23}
           - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128, gps_uart_rx_pin: 22, gps_uart_tx_pin: 21}
           - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
 

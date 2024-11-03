@@ -96,29 +96,45 @@ endif()
 if(DEFINED ENV{SD_SPI_CS_PIN})
     add_compile_definitions(SD_SPI_CS_PIN=$ENV{SD_SPI_CS_PIN})
 else()
-    add_compile_definitions(SD_SPI_CS_PIN=23)
+    add_compile_definitions(SD_SPI_CS_PIN=5)
 endif()
 
 if(DEFINED ENV{SD_SPI_CLK_PIN})
     add_compile_definitions(SD_SPI_CLK_PIN=$ENV{SD_SPI_CLK_PIN})
 else()
-    add_compile_definitions(SD_SPI_CLK_PIN=19)
+    add_compile_definitions(SD_SPI_CLK_PIN=18)
 endif()
 
 if(DEFINED ENV{SD_SPI_MISO_PIN})
     add_compile_definitions(SD_SPI_MISO_PIN=$ENV{SD_SPI_MISO_PIN})
 else()
-    add_compile_definitions(SD_SPI_MISO_PIN=20)
+    add_compile_definitions(SD_SPI_MISO_PIN=19)
 endif()
 
 if(DEFINED ENV{SD_SPI_MOSI_PIN})
     add_compile_definitions(SD_SPI_MOSI_PIN=$ENV{SD_SPI_MOSI_PIN})
 else()
-    add_compile_definitions(SD_SPI_MOSI_PIN=18)
+    add_compile_definitions(SD_SPI_MOSI_PIN=23)
 endif()
 
+if(DEFINED ENV{RED_RGB_PIN})
+    add_compile_definitions(RED_RGB_PIN=$ENV{RED_RGB_PIN})
+endif()
 
+if(DEFINED ENV{GREEN_RGB_PIN})
+    add_compile_definitions(GREEN_RGB_PIN=$ENV{GREEN_RGB_PIN})
+endif()
 
+if(DEFINED ENV{BLUE_RGB_PIN})
+    add_compile_definitions(BLUE_RGB_PIN=$ENV{BLUE_RGB_PIN})
+endif()
+
+add_compile_definitions(RED_RGB_PIN=4)
+add_compile_definitions(GREEN_RGB_PIN=16)
+add_compile_definitions(BLUE_RGB_PIN=17)
+add_compile_definitions(WITH_SCREEN=1)
+add_compile_definitions(USE_TOUCHSCREEN=1)
+add_compile_definitions(USING_SPI=1)
 
 # Other default configurations
 add_compile_definitions(HOLD_LIMIT=1000) # For joystick hold duration
