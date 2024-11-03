@@ -1485,7 +1485,7 @@ namespace m5gfx
           // This characteristic can be used to distinguish between the two models.
           board = (result == 0) ? board_t::board_M5Cardputer : board_t::board_M5VAMeter;
           bus_spi->release();
-          bus_cfg.spi_host = SPI3_HOST;
+          bus_cfg.spi_host = SPI2_HOST;
           bus_cfg.freq_write = 40000000;
           bus_cfg.freq_read  = 16000000;
           bus_spi->config(bus_cfg);

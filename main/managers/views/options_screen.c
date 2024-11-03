@@ -22,7 +22,7 @@ const char* options_menu_type_to_string(EOptionsMenuType menuType) {
         case OT_Wifi:
             return "Wi-Fi";
         case OT_Bluetooth:
-            return "Bluetooth";
+            return "BLE";
         case OT_GPS:
             return "GPS";
         case OT_Settings:

@@ -169,8 +169,14 @@ esp_err_t sd_card_init(void) {
     bus_config.mosi_io_num = sd_card_manager.spi_mosi_pin;
     bus_config.sclk_io_num = sd_card_manager.spi_clk_pin;
 
-    ret = spi_bus_initialize(SPI3_HOST, &bus_config, 2);
-    if (ret != ESP_OK) {
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+int dmabus = SPI_DMA_CH_AUTO;
+#else 
+int dmabus = 2;
+#endif
+
+    ret = spi_bus_initialize(SPI3_HOST, &bus_config, dmabus);
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
         ESP_LOGE(SD_TAG, "Failed to initialize SPI bus: %s", esp_err_to_name(ret));
         return ret;
     }

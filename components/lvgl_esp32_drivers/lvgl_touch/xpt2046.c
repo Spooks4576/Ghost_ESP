@@ -11,7 +11,9 @@
 #include "esp_log.h"
 #include "driver/gpio.h"
 #include "tp_spi.h"
+#include "xpt2046_bitbang.h"
 #include <stddef.h>
+
 
 /*********************
  *      DEFINES
@@ -73,6 +75,8 @@ void xpt2046_init(void)
     esp_err_t ret = gpio_config(&irq_config);
     assert(ret == ESP_OK);
 #endif
+
+    xpt2046_init_bitbang();
 }
 
 /**
@@ -97,9 +101,9 @@ bool xpt2046_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
         ESP_LOGV(TAG, "P(%d,%d)", x, y);
 
         /*Normalize Data back to 12-bits*/
-        x = x >> 4;
-        y = y >> 4;
-        ESP_LOGV(TAG, "P_norm(%d,%d)", x, y);
+        // x = x >> 4;
+        // y = y >> 4;
+        // ESP_LOGI(TAG, "P_norm(%d,%d)", x, y);
         
         xpt2046_corr(&x, &y);
         xpt2046_avg(&x, &y);
@@ -153,9 +157,7 @@ static xpt2046_touch_detect_t xpt2048_is_touch_detected()
 
 static int16_t xpt2046_cmd(uint8_t cmd)
 {
-    uint8_t data[2];
-    tp_spi_read_reg(cmd, data, 2);
-    int16_t val = (data[0] << 8) | data[1];
+    int16_t val = xpt2046_read_spi(cmd);
     return val;
 }
 

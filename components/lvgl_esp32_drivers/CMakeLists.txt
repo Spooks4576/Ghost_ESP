@@ -61,6 +61,7 @@ if(CONFIG_LV_TOUCH_CONTROLLER)
     # touch controller.
     if(CONFIG_LV_TOUCH_CONTROLLER_XPT2046)
         list(APPEND SOURCES "lvgl_touch/xpt2046.c")
+        list(APPEND SOURCES "lvgl_touch/xpt2046_bitbang.c")
     elseif(CONFIG_LV_TOUCH_CONTROLLER_FT6X06)
         list(APPEND SOURCES "lvgl_touch/ft6x36.c")
     elseif(CONFIG_LV_TOUCH_CONTROLLER_STMPE610)
