@@ -41,7 +41,7 @@ jobs:
           
 
           # # 7-inch boards
-          - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
+          - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true, sd_spi_cs_pin: 4, sd_spi_clk_pin: 12, sd_spi_miso_pin: 13, sd_spi_mosi_pin: 11}
           - { name: "Crowtech_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, crowtech_lcd: true }
 
     steps:
