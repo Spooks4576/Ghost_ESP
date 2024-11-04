@@ -352,8 +352,9 @@ esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t 
         }
         return led_strip_refresh(rgb_manager->strip);
     }
+#endif
 
-#elif CONFIG_IDF_TARGET_ESP32S2
+#ifdef RED_RGB_PIN && GREEN_RGB_PIN && BLUE_RGB_PIN
     scale_grb_by_brightness(&green, &red, &blue, -0.3);
 
     uint8_t ired = (uint8_t)(255 - red);

@@ -56,10 +56,10 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_DE_GPIO_NUM      GPIO_NUM_41
 #define LCD_PCLK_GPIO_NUM    GPIO_NUM_0
 #define LCD_DISP_GPIO_NUM    -1      // Not used
-#define LCD_BACKLIGHT_GPIO   2       // Not used
+#define LCD_BACKLIGHT_GPIO   GPIO_NUM_2  
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
 
-#else
+#elif Waveshare_LCD
 // Waveshare display
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_14, // D0 - B3
@@ -88,6 +88,37 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_DISP_GPIO_NUM    -1      // Not used
 #define LCD_BACKLIGHT_GPIO   -1      // Not used
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
+
+#elif Sunton_LCD
+
+static const int lcd_data_gpio_nums[] = {
+    GPIO_NUM_8,   // D0 - B0
+    GPIO_NUM_3,   // D1 - B1
+    GPIO_NUM_46,  // D2 - B2
+    GPIO_NUM_9,   // D3 - B3
+    GPIO_NUM_1,   // D4 - B4
+    GPIO_NUM_5,   // D5 - G0
+    GPIO_NUM_6,   // D6 - G1
+    GPIO_NUM_7,   // D7 - G2
+    GPIO_NUM_15,  // D8 - G3
+    GPIO_NUM_16,  // D9 - G4
+    GPIO_NUM_4,   // D10 - G5
+    GPIO_NUM_21,  // D11 - R3
+    GPIO_NUM_14,  // D12 - R4
+    GPIO_NUM_47,  // D13 - R2
+    GPIO_NUM_48,  // D14 - R1
+    GPIO_NUM_45   // D15 - R0
+};
+
+
+#define LCD_HSYNC_GPIO_NUM   GPIO_NUM_39
+#define LCD_VSYNC_GPIO_NUM   GPIO_NUM_41
+#define LCD_DE_GPIO_NUM      GPIO_NUM_40
+#define LCD_PCLK_GPIO_NUM    GPIO_NUM_42
+#define LCD_DISP_GPIO_NUM    GPIO_NUM_NC   // Not connected
+#define LCD_BACKLIGHT_GPIO   GPIO_NUM_2    // Backlight
+#define LCD_RESET_GPIO       GPIO_NUM_4    // Reset
+
 
 #endif
 
@@ -150,8 +181,12 @@ esp_err_t lcd_st7262_init(void)
 
 #ifdef Crowtech_LCD
     int ClockFrequency = 15;
-#else
+#elif Waveshare_LCD
     int ClockFrequency = 25;
+#elif Sunton_LCD
+    int ClockFrequency = 18;
+#else 
+    int ClockFrequency = 10;
 #endif
 
     // Prepare RGB panel configuration with accurate timings
@@ -213,12 +248,13 @@ esp_err_t lcd_st7262_init(void)
     // Turn on the display
     ret = esp_lcd_panel_disp_on_off(rgb_panel_handle, true);
 
-#ifdef Crowtech_LCD
-    esp_rom_gpio_pad_select_gpio(2);
-    gpio_set_direction(2, GPIO_MODE_OUTPUT);
+    if (LCD_BACKLIGHT_GPIO != -1)
+    {
+        esp_rom_gpio_pad_select_gpio(2);
+        gpio_set_direction(2, GPIO_MODE_OUTPUT);
 
-    gpio_set_level(2, 1);
-#endif
+        gpio_set_level(2, 1);
+    }
 
     ESP_LOGI(TAG, "ST7262 LCD panel initialized successfully");
     return ESP_OK;

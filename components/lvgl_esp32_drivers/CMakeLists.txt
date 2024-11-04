@@ -61,6 +61,7 @@ if(CONFIG_LV_TOUCH_CONTROLLER)
     # touch controller.
     if(CONFIG_LV_TOUCH_CONTROLLER_XPT2046)
         list(APPEND SOURCES "lvgl_touch/xpt2046.c")
+        list(APPEND SOURCES "lvgl_touch/xpt2046_bitbang.c")
     elseif(CONFIG_LV_TOUCH_CONTROLLER_FT6X06)
         list(APPEND SOURCES "lvgl_touch/ft6x36.c")
     elseif(CONFIG_LV_TOUCH_CONTROLLER_STMPE610)
@@ -89,6 +90,10 @@ idf_component_register(SRCS ${SOURCES}
                        REQUIRES lvgl driver)
 
 target_compile_definitions(${COMPONENT_LIB} PUBLIC "-DLV_LVGL_H_INCLUDE_SIMPLE")
+
+if(DEFINED ENV{USE_BIT_BANG_TOUCH})
+    add_compile_definitions(USE_BIT_BANG_TOUCH=$ENV{USE_BIT_BANG_TOUCH})
+endif()
 
 else()
     message(FATAL_ERROR "LVGL ESP32 drivers: ESP_PLATFORM is not defined. Try reinstalling ESP-IDF.")

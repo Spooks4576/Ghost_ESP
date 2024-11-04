@@ -16,7 +16,7 @@ jobs:
          #  sd_spi_cs_pin: 23, sd_spi_clk_pin: 19, sd_spi_miso_pin: 20, sd_spi_mosi_pin: 18, gps_uart_rx_pin: 15, gps_uart_tx_pin: 14
           # Generic configurations (no LED, no screen support)
           - { name: "esp32-generic", idf_target: "esp32", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32", zip_name: "esp32-generic.zip" }
-          - { name: "esp32s2-generic", idf_target: "esp32s2", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32s2-generic.zip" }
+          - { name: "esp32s2-generic", idf_target: "esp32s2", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32s2-generic.zip", red_rgb_pin: 4, green_rgb_pin: 5, blue_rgb_pin: 6 }
           - { name: "esp32s3-generic", idf_target: "esp32s3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "esp32s3-generic.zip" }
           - { name: "esp32c3-generic", idf_target: "esp32c3", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-generic.zip" }
           - { name: "esp32c6-generic", idf_target: "esp32c6", led: false, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
@@ -30,18 +30,18 @@ jobs:
           - { name: "ghostboard", idf_target: "esp32c6", led: true, screen_support: false, input_type: "none", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "ghostboard.zip", led_pin: 10, num_leds: 3, is_ghost_board: true, sd_spi_cs_pin: 23, sd_spi_clk_pin: 19, sd_spi_miso_pin: 20, sd_spi_mosi_pin: 18}
 
           # Screen-supported builds
-          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320 }
+          - { name: "MarauderV6&AwokDual", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip", screen_width: 240, screen_height: 320}
           - { name: "AwokMini", idf_target: "esp32", led: false, screen_support: true, input_type: "joystick", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip", screen_width: 128, screen_height: 128, gps_uart_rx_pin: 22, gps_uart_tx_pin: 21}
-          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135 }
+          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", led: false, screen_support: true, input_type: "cardputer", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "ESP32-S3-Cardputer.zip", screen_width: 240, screen_height: 135, sd_spi_cs_pin: 12, sd_spi_clk_pin: 40, sd_spi_miso_pin: 39, sd_spi_mosi_pin: 14}
 
           # CYD (Cheap Yellow Display) with touch screen
-          - { name: "CYD2USB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.cheapyellowdisplayCYD2USB", zip_name: "CYD2USB.zip", screen_width: 240, screen_height: 320 }
-          - { name: "CYDMicroUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip", screen_width: 240, screen_height: 320 }
-          - { name: "CYDDualUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip", screen_width: 240, screen_height: 320}
+          - { name: "CYD2USB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYD2USB", zip_name: "CYD2USB.zip", screen_width: 240, screen_height: 320, red_rgb_pin: 4, green_rgb_pin: 16, blue_rgb_pin: 17, sd_spi_cs_pin: 5, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23}
+          - { name: "CYDMicroUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip", screen_width: 240, screen_height: 320, red_rgb_pin: 4, green_rgb_pin: 16, blue_rgb_pin: 17, sd_spi_cs_pin: 5, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23, use_bitbang_touch: true}
+          - { name: "CYDDualUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip", screen_width: 240, screen_height: 320, red_rgb_pin: 4, green_rgb_pin: 16, blue_rgb_pin: 17, sd_spi_cs_pin: 5, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23, use_bitbang_touch: true}
           
 
           # 7-inch boards
-          - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true }
+          - { name: "Waveshare_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, waveshare_lcd: true, sd_spi_cs_pin: 4, sd_spi_clk_pin: 12, sd_spi_miso_pin: 13, sd_spi_mosi_pin: 11}
           - { name: "Crowtech_LCD", idf_target: "esp32s3", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip", screen_width: 800, screen_height: 480, use_7_incher: true, crowtech_lcd: true }
 
     steps:
@@ -86,6 +86,9 @@ jobs:
 
       - name: Set Environment Variables for Matrix Configuration
         run: |
+          if [ -n "${{ matrix.target.use_bitbang_touch }}" ]; then
+            echo "USE_BIT_BANG_TOUCH=1" >> $GITHUB_ENV
+          fi
           if [ "${{ matrix.target.led }}" = "true" ]; then
             echo "LED_DATA_PIN=${{ matrix.target.led_pin }}" >> $GITHUB_ENV
             echo "NUM_LEDS=${{ matrix.target.num_leds }}" >> $GITHUB_ENV
@@ -144,6 +147,17 @@ jobs:
           fi
           if [ -n "${{ matrix.target.sd_spi_mosi_pin }}" ]; then
             echo "SD_SPI_MOSI_PIN=${{ matrix.target.sd_spi_mosi_pin }}" >> $GITHUB_ENV
+          fi
+
+          # Set RGB LED pins if specified
+          if [ -n "${{ matrix.target.red_rgb_pin }}" ]; then
+            echo "RED_RGB_PIN=${{ matrix.target.red_rgb_pin }}" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ matrix.target.green_rgb_pin }}" ]; then
+            echo "GREEN_RGB_PIN=${{ matrix.target.green_rgb_pin }}" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ matrix.target.blue_rgb_pin }}" ]; then
+            echo "BLUE_RGB_PIN=${{ matrix.target.blue_rgb_pin }}" >> $GITHUB_ENV
           fi
 
       - name: Set up ESP-IDF and Target

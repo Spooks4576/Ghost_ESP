@@ -223,7 +223,7 @@ void main_menu_create(void) {
     select_menu_item(0);
 #endif
 
-    display_manager_add_status_bar(LV_VER_RES > 135 ? "Main Menu" : "Menu");
+    display_manager_add_status_bar(LV_VER_RES > 320 ? "Main Menu" : "Menu");
 }
 
 /**

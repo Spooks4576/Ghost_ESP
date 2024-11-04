@@ -84,6 +84,7 @@ void lvgl_driver_init(void)
 
 #if defined (SHARED_SPI_BUS)
 #ifndef USE_7_INCHER
+#ifndef USE_BIT_BANG_TOUCH
     ESP_LOGI(TAG, "Initializing shared SPI master");
 
     lvgl_spi_driver_init(TFT_SPI_HOST,
@@ -96,9 +97,9 @@ void lvgl_driver_init(void)
 
     disp_driver_init();
     touch_driver_init();
-#endif
-
     return;
+#endif
+#endif
 #endif
 
 /* Display controller initialization */
@@ -125,12 +126,16 @@ void lvgl_driver_init(void)
     #if defined (CONFIG_LV_TOUCH_DRIVER_PROTOCOL_SPI)
         ESP_LOGI(TAG, "Initializing SPI master for touch");
 
-        lvgl_spi_driver_init(TOUCH_SPI_HOST,
-            TP_SPI_MISO, TP_SPI_MOSI, TP_SPI_CLK,
-            0 /* Defaults to 4094 */, 2,
-            -1, -1);
+#ifndef USE_BIT_BANG_TOUCH
 
-        tp_spi_add_device(TOUCH_SPI_HOST);
+    lvgl_spi_driver_init(TOUCH_SPI_HOST,
+        TP_SPI_MISO, TP_SPI_MOSI, TP_SPI_CLK,
+        0 /* Defaults to 4094 */, 2,
+        -1, -1);
+
+    tp_spi_add_device(TOUCH_SPI_HOST);
+
+#endif
 
         touch_driver_init();
     #elif defined (CONFIG_LV_I2C_TOUCH)

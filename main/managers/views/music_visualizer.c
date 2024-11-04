@@ -125,7 +125,7 @@ void music_visualizer_view_create() {
         lv_obj_align(particles[i].obj, LV_ALIGN_TOP_LEFT, particles[i].x, particles[i].y);
     }
 
-    display_manager_add_status_bar(LV_VER_RES > 135 ? "Rave Mode" : "Rave");
+    display_manager_add_status_bar(LV_VER_RES > 320 ? "Rave Mode" : "Rave");
 
     amplitudeQueue = xQueueCreate(10, sizeof(AmplitudeData));
     animation_timer = lv_timer_create(animation_timer_callback, ANIMATION_INTERVAL_MS, NULL);

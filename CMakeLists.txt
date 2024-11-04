@@ -32,13 +32,13 @@ endif()
 if(DEFINED ENV{TFT_WIDTH})
     add_compile_definitions(TFT_WIDTH=$ENV{TFT_WIDTH})
 else()
-    add_compile_definitions(TFT_WIDTH=240)
+    add_compile_definitions(TFT_WIDTH=128)
 endif()
 
 if(DEFINED ENV{TFT_HEIGHT})
     add_compile_definitions(TFT_HEIGHT=$ENV{TFT_HEIGHT})
 else()
-    add_compile_definitions(TFT_HEIGHT=320)
+    add_compile_definitions(TFT_HEIGHT=128)
 endif()
 
 # Input type
@@ -66,6 +66,9 @@ if(DEFINED ENV{Waveshare_LCD} AND "$ENV{Waveshare_LCD}" STREQUAL "1")
 endif()
 if(DEFINED ENV{Crowtech_LCD} AND "$ENV{Crowtech_LCD}" STREQUAL "1")
     add_compile_definitions(Crowtech_LCD=1)
+endif()
+if(DEFINED ENV{Sunton_LCD} AND "$ENV{Sunton_LCD}" STREQUAL "1")
+    add_compile_definitions(Sunton_LCD=1)
 endif()
 
 # Werid Display Module
@@ -96,31 +99,41 @@ endif()
 if(DEFINED ENV{SD_SPI_CS_PIN})
     add_compile_definitions(SD_SPI_CS_PIN=$ENV{SD_SPI_CS_PIN})
 else()
-    add_compile_definitions(SD_SPI_CS_PIN=23)
+    add_compile_definitions(SD_SPI_CS_PIN=4)
 endif()
 
 if(DEFINED ENV{SD_SPI_CLK_PIN})
     add_compile_definitions(SD_SPI_CLK_PIN=$ENV{SD_SPI_CLK_PIN})
 else()
-    add_compile_definitions(SD_SPI_CLK_PIN=19)
+    add_compile_definitions(SD_SPI_CLK_PIN=18)
 endif()
 
 if(DEFINED ENV{SD_SPI_MISO_PIN})
     add_compile_definitions(SD_SPI_MISO_PIN=$ENV{SD_SPI_MISO_PIN})
 else()
-    add_compile_definitions(SD_SPI_MISO_PIN=20)
+    add_compile_definitions(SD_SPI_MISO_PIN=19)
 endif()
 
 if(DEFINED ENV{SD_SPI_MOSI_PIN})
     add_compile_definitions(SD_SPI_MOSI_PIN=$ENV{SD_SPI_MOSI_PIN})
 else()
-    add_compile_definitions(SD_SPI_MOSI_PIN=18)
+    add_compile_definitions(SD_SPI_MOSI_PIN=23)
 endif()
 
+if(DEFINED ENV{RED_RGB_PIN})
+    add_compile_definitions(RED_RGB_PIN=$ENV{RED_RGB_PIN})
+endif()
 
+if(DEFINED ENV{GREEN_RGB_PIN})
+    add_compile_definitions(GREEN_RGB_PIN=$ENV{GREEN_RGB_PIN})
+endif()
 
+if(DEFINED ENV{BLUE_RGB_PIN})
+    add_compile_definitions(BLUE_RGB_PIN=$ENV{BLUE_RGB_PIN})
+endif()
 
 # Other default configurations
+add_compile_definitions(SDSPIHOST=3)
 add_compile_definitions(HOLD_LIMIT=1000) # For joystick hold duration
 add_compile_definitions(LED_ORDER=0)     # 2 for RGB, 0 for GRB
 add_compile_definitions(DNS_SERVER_MAX_ITEMS=1)
