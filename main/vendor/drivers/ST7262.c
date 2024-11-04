@@ -91,27 +91,26 @@ static const int lcd_data_gpio_nums[] = {
 
 #elif Sunton_LCD
 
-// Data pins for Waveshare display
 static const int lcd_data_gpio_nums[] = {
-    GPIO_NUM_8,  // D0 - B3
-    GPIO_NUM_3,  // D1 - B4
-    GPIO_NUM_46, // D2 - B5
-    GPIO_NUM_9,  // D3 - B6
-    GPIO_NUM_1,  // D4 - B7
-    GPIO_NUM_5,  // D5 - G2
-    GPIO_NUM_6,  // D6 - G3
-    GPIO_NUM_7,  // D7 - G4
-    GPIO_NUM_15, // D8 - G5
-    GPIO_NUM_16, // D9 - G6
-    GPIO_NUM_4,  // D10 - G7
-    GPIO_NUM_45, // D11 - R3
-    GPIO_NUM_48, // D12 - R4
-    GPIO_NUM_47, // D13 - R5
-    GPIO_NUM_21, // D14 - R6
-    GPIO_NUM_14  // D15 - R7
+    GPIO_NUM_8,   // D0 - B0
+    GPIO_NUM_3,   // D1 - B1
+    GPIO_NUM_46,  // D2 - B2
+    GPIO_NUM_9,   // D3 - B3
+    GPIO_NUM_1,   // D4 - B4
+    GPIO_NUM_5,   // D5 - G0
+    GPIO_NUM_6,   // D6 - G1
+    GPIO_NUM_7,   // D7 - G2
+    GPIO_NUM_15,  // D8 - G3
+    GPIO_NUM_16,  // D9 - G4
+    GPIO_NUM_4,   // D10 - G5
+    GPIO_NUM_21,  // D11 - R3
+    GPIO_NUM_14,  // D12 - R4
+    GPIO_NUM_47,  // D13 - R2
+    GPIO_NUM_48,  // D14 - R1
+    GPIO_NUM_45   // D15 - R0
 };
 
-// Control signals for Waveshare display
+
 #define LCD_HSYNC_GPIO_NUM   GPIO_NUM_39
 #define LCD_VSYNC_GPIO_NUM   GPIO_NUM_41
 #define LCD_DE_GPIO_NUM      GPIO_NUM_40
@@ -249,12 +248,13 @@ esp_err_t lcd_st7262_init(void)
     // Turn on the display
     ret = esp_lcd_panel_disp_on_off(rgb_panel_handle, true);
 
-#ifdef Crowtech_LCD || Sunton_LCD
-    esp_rom_gpio_pad_select_gpio(2);
-    gpio_set_direction(2, GPIO_MODE_OUTPUT);
+    if (LCD_BACKLIGHT_GPIO != -1)
+    {
+        esp_rom_gpio_pad_select_gpio(2);
+        gpio_set_direction(2, GPIO_MODE_OUTPUT);
 
-    gpio_set_level(2, 1);
-#endif
+        gpio_set_level(2, 1);
+    }
 
     ESP_LOGI(TAG, "ST7262 LCD panel initialized successfully");
     return ESP_OK;
