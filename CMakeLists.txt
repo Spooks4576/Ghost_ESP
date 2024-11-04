@@ -132,8 +132,7 @@ if(DEFINED ENV{BLUE_RGB_PIN})
     add_compile_definitions(BLUE_RGB_PIN=$ENV{BLUE_RGB_PIN})
 endif()
 
-# Other default configurations
-add_compile_definitions(SDSPIHOST=3)
+
 add_compile_definitions(HOLD_LIMIT=1000) # For joystick hold duration
 add_compile_definitions(LED_ORDER=0)     # 2 for RGB, 0 for GRB
 add_compile_definitions(DNS_SERVER_MAX_ITEMS=1)
