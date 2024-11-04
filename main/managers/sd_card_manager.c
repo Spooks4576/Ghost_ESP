@@ -171,11 +171,13 @@ esp_err_t sd_card_init(void) {
 
 #ifdef CONFIG_IDF_TARGET_ESP32S3
 int dmabus = SPI_DMA_CH_AUTO;
-#else 
+#else
 int dmabus = 2;
 #endif
 
-    ret = spi_bus_initialize(SPI3_HOST, &bus_config, dmabus);
+#ifdef SDSPIHOST
+
+    ret = spi_bus_initialize(SDSPIHOST == 2 ? SPI2_HOST : SPI3_HOST, &bus_config, dmabus);
     if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
         ESP_LOGE(SD_TAG, "Failed to initialize SPI bus: %s", esp_err_to_name(ret));
         return ret;
@@ -189,7 +191,7 @@ int dmabus = 2;
 
     sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
     slot_config.gpio_cs = sd_card_manager.spi_cs_pin;
-    slot_config.host_id = SPI3_HOST;
+    slot_config.host_id = SDSPIHOST == 2 ? SPI2_HOST : SPI3_HOST;
 
     ret = esp_vfs_fat_sdspi_mount("/mnt", &host, &slot_config, &mount_config, &sd_card_manager.card);
     if (ret != ESP_OK) {
@@ -203,6 +205,10 @@ int dmabus = 2;
     ESP_LOGI(SD_TAG, "SD card initialized successfully in SPI mode.");
 
     sd_card_setup_directory_structure();
+
+#endif
+
+return ESP_OK;
 
 #endif
     return ESP_OK;

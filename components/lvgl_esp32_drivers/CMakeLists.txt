@@ -91,6 +91,10 @@ idf_component_register(SRCS ${SOURCES}
 
 target_compile_definitions(${COMPONENT_LIB} PUBLIC "-DLV_LVGL_H_INCLUDE_SIMPLE")
 
+if(DEFINED ENV{USE_BIT_BANG_TOUCH})
+    add_compile_definitions(USE_BIT_BANG_TOUCH=$ENV{USE_BIT_BANG_TOUCH})
+endif()
+
 else()
     message(FATAL_ERROR "LVGL ESP32 drivers: ESP_PLATFORM is not defined. Try reinstalling ESP-IDF.")
 endif()

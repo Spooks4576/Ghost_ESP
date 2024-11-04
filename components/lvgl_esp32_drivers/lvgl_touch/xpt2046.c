@@ -74,9 +74,16 @@ void xpt2046_init(void)
     
     esp_err_t ret = gpio_config(&irq_config);
     assert(ret == ESP_OK);
-#endif
+#elif USE_BIT_BANG_TOUCH
 
-    xpt2046_init_bitbang();
+    gpio_set_direction(CONFIG_LV_TOUCH_SPI_MOSI, GPIO_MODE_OUTPUT);
+    gpio_set_direction(CONFIG_LV_TOUCH_SPI_MISO, GPIO_MODE_INPUT);
+    gpio_set_direction(CONFIG_LV_TOUCH_SPI_CLK, GPIO_MODE_OUTPUT);
+    gpio_set_direction(CONFIG_LV_TOUCH_SPI_CS, GPIO_MODE_OUTPUT);
+
+    gpio_set_level(CONFIG_LV_TOUCH_SPI_CS, 1);
+    gpio_set_level(CONFIG_LV_TOUCH_SPI_CLK, 0);
+#endif
 }
 
 /**
@@ -100,10 +107,12 @@ bool xpt2046_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
         y = xpt2046_cmd(CMD_Y_READ);
         ESP_LOGV(TAG, "P(%d,%d)", x, y);
 
+#ifndef USE_BIT_BANG_TOUCH
         /*Normalize Data back to 12-bits*/
-        // x = x >> 4;
-        // y = y >> 4;
-        // ESP_LOGI(TAG, "P_norm(%d,%d)", x, y);
+        x = x >> 4;
+        y = y >> 4;
+        ESP_LOGV(TAG, "P_norm(%d,%d)", x, y);
+#endif
         
         xpt2046_corr(&x, &y);
         xpt2046_avg(&x, &y);
@@ -146,6 +155,7 @@ static xpt2046_touch_detect_t xpt2048_is_touch_detected()
     // be enough to detect real touches on the panel
     int16_t z = z1 + 4096 - z2;
 
+
     if (z < XPT2046_TOUCH_THRESHOLD)
     {
         return TOUCH_NOT_DETECTED;
@@ -157,8 +167,15 @@ static xpt2046_touch_detect_t xpt2048_is_touch_detected()
 
 static int16_t xpt2046_cmd(uint8_t cmd)
 {
+#ifdef USE_BIT_BANG_TOUCH
     int16_t val = xpt2046_read_spi(cmd);
     return val;
+#else 
+    uint8_t data[2];
+    tp_spi_read_reg(cmd, data, 2);
+    int16_t val = (data[0] << 8) | data[1];
+    return val;
+#endif
 }
 
 static void xpt2046_corr(int16_t * x, int16_t * y)

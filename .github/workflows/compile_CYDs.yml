@@ -36,8 +36,8 @@ jobs:
           
           # # CYD (Cheap Yellow Display) with touch screen
           - { name: "CYD2USB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYD2USB", zip_name: "CYD2USB.zip", screen_width: 240, screen_height: 320, red_rgb_pin: 4, green_rgb_pin: 16, blue_rgb_pin: 17, sd_spi_cs_pin: 5, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23}
-          - { name: "CYDMicroUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip", screen_width: 240, screen_height: 320, red_rgb_pin: 4, green_rgb_pin: 16, blue_rgb_pin: 17, sd_spi_cs_pin: 5, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23}
-          - { name: "CYDDualUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip", screen_width: 240, screen_height: 320, red_rgb_pin: 4, green_rgb_pin: 16, blue_rgb_pin: 17, sd_spi_cs_pin: 5, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23}
+          - { name: "CYDMicroUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip", screen_width: 240, screen_height: 320, red_rgb_pin: 4, green_rgb_pin: 16, blue_rgb_pin: 17, sd_spi_cs_pin: 5, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23, use_bitbang_touch: true}
+          - { name: "CYDDualUSB", idf_target: "esp32", led: false, screen_support: true, input_type: "touchscreen", sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip", screen_width: 240, screen_height: 320, red_rgb_pin: 4, green_rgb_pin: 16, blue_rgb_pin: 17, sd_spi_cs_pin: 5, sd_spi_clk_pin: 18, sd_spi_miso_pin: 19, sd_spi_mosi_pin: 23, use_bitbang_touch: true}
           
 
           # # 7-inch boards
@@ -86,6 +86,9 @@ jobs:
 
       - name: Set Environment Variables for Matrix Configuration
         run: |
+          if [ -n "${{ matrix.target.use_bitbang_touch }}" ]; then
+            echo "USE_BIT_BANG_TOUCH=1" >> $GITHUB_ENV
+          fi
           if [ "${{ matrix.target.led }}" = "true" ]; then
             echo "LED_DATA_PIN=${{ matrix.target.led_pin }}" >> $GITHUB_ENV
             echo "NUM_LEDS=${{ matrix.target.num_leds }}" >> $GITHUB_ENV

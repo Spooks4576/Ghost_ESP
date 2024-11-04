@@ -32,13 +32,13 @@ endif()
 if(DEFINED ENV{TFT_WIDTH})
     add_compile_definitions(TFT_WIDTH=$ENV{TFT_WIDTH})
 else()
-    add_compile_definitions(TFT_WIDTH=240)
+    add_compile_definitions(TFT_WIDTH=128)
 endif()
 
 if(DEFINED ENV{TFT_HEIGHT})
     add_compile_definitions(TFT_HEIGHT=$ENV{TFT_HEIGHT})
 else()
-    add_compile_definitions(TFT_HEIGHT=135)
+    add_compile_definitions(TFT_HEIGHT=128)
 endif()
 
 # Input type
@@ -99,25 +99,25 @@ endif()
 if(DEFINED ENV{SD_SPI_CS_PIN})
     add_compile_definitions(SD_SPI_CS_PIN=$ENV{SD_SPI_CS_PIN})
 else()
-    add_compile_definitions(SD_SPI_CS_PIN=12)
+    add_compile_definitions(SD_SPI_CS_PIN=4)
 endif()
 
 if(DEFINED ENV{SD_SPI_CLK_PIN})
     add_compile_definitions(SD_SPI_CLK_PIN=$ENV{SD_SPI_CLK_PIN})
 else()
-    add_compile_definitions(SD_SPI_CLK_PIN=40)
+    add_compile_definitions(SD_SPI_CLK_PIN=18)
 endif()
 
 if(DEFINED ENV{SD_SPI_MISO_PIN})
     add_compile_definitions(SD_SPI_MISO_PIN=$ENV{SD_SPI_MISO_PIN})
 else()
-    add_compile_definitions(SD_SPI_MISO_PIN=39)
+    add_compile_definitions(SD_SPI_MISO_PIN=19)
 endif()
 
 if(DEFINED ENV{SD_SPI_MOSI_PIN})
     add_compile_definitions(SD_SPI_MOSI_PIN=$ENV{SD_SPI_MOSI_PIN})
 else()
-    add_compile_definitions(SD_SPI_MOSI_PIN=14)
+    add_compile_definitions(SD_SPI_MOSI_PIN=23)
 endif()
 
 if(DEFINED ENV{RED_RGB_PIN})
@@ -133,6 +133,7 @@ if(DEFINED ENV{BLUE_RGB_PIN})
 endif()
 
 # Other default configurations
+add_compile_definitions(SDSPIHOST=3)
 add_compile_definitions(HOLD_LIMIT=1000) # For joystick hold duration
 add_compile_definitions(LED_ORDER=0)     # 2 for RGB, 0 for GRB
 add_compile_definitions(DNS_SERVER_MAX_ITEMS=1)
