@@ -177,27 +177,32 @@ menu "Ghost ESP Options"
         help
             Enable MMC support.
     
+    
     config SD_SPI_CS_PIN
         int "SD Card SPI CS Pin"
         default 4
+        depends on USING_SPI
         help
             Define the Chip Select (CS) pin for SD Card SPI.
     
     config SD_SPI_CLK_PIN
         int "SD Card SPI CLK Pin"
         default 18
+        depends on USING_SPI
         help
             Define the Clock (CLK) pin for SD Card SPI.
     
     config SD_SPI_MISO_PIN
         int "SD Card SPI MISO Pin"
         default 19
+        depends on USING_SPI
         help
             Define the MISO pin for SD Card SPI.
     
     config SD_SPI_MOSI_PIN
         int "SD Card SPI MOSI Pin"
         default 23
+        depends on USING_SPI
         help
             Define the MOSI pin for SD Card SPI.
     
