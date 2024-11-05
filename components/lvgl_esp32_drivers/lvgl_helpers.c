@@ -84,7 +84,7 @@ void lvgl_driver_init(void)
 
 #if defined (SHARED_SPI_BUS)
 #ifndef USE_7_INCHER
-#ifndef USE_BIT_BANG_TOUCH
+#ifndef CONFIG_USE_BIT_BANG_TOUCH
     ESP_LOGI(TAG, "Initializing shared SPI master");
 
     lvgl_spi_driver_init(TFT_SPI_HOST,
@@ -126,7 +126,7 @@ void lvgl_driver_init(void)
     #if defined (CONFIG_LV_TOUCH_DRIVER_PROTOCOL_SPI)
         ESP_LOGI(TAG, "Initializing SPI master for touch");
 
-#ifndef USE_BIT_BANG_TOUCH
+#ifndef CONFIG_USE_BIT_BANG_TOUCH
 
     lvgl_spi_driver_init(TOUCH_SPI_HOST,
         TP_SPI_MISO, TP_SPI_MOSI, TP_SPI_CLK,

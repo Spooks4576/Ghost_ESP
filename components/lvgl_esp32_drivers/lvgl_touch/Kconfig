@@ -165,6 +165,11 @@ menu "LVGL Touch controller"
             prompt "Invert Y coordinate value."
             default y
 
+        config USE_BIT_BANG_TOUCH
+            bool
+            prompt "Should Bit Bash Touch"
+            default n
+
         choice
             prompt "Select touch detection method."
             default LV_TOUCH_DETECT_IRQ

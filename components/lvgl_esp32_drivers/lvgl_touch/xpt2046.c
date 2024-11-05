@@ -74,7 +74,7 @@ void xpt2046_init(void)
     
     esp_err_t ret = gpio_config(&irq_config);
     assert(ret == ESP_OK);
-#elif USE_BIT_BANG_TOUCH
+#elif CONFIG_USE_BIT_BANG_TOUCH
 
     gpio_set_direction(CONFIG_LV_TOUCH_SPI_MOSI, GPIO_MODE_OUTPUT);
     gpio_set_direction(CONFIG_LV_TOUCH_SPI_MISO, GPIO_MODE_INPUT);
@@ -107,7 +107,7 @@ bool xpt2046_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
         y = xpt2046_cmd(CMD_Y_READ);
         ESP_LOGV(TAG, "P(%d,%d)", x, y);
 
-#ifndef USE_BIT_BANG_TOUCH
+#ifndef CONFIG_USE_BIT_BANG_TOUCH
         /*Normalize Data back to 12-bits*/
         x = x >> 4;
         y = y >> 4;
@@ -167,7 +167,7 @@ static xpt2046_touch_detect_t xpt2048_is_touch_detected()
 
 static int16_t xpt2046_cmd(uint8_t cmd)
 {
-#ifdef USE_BIT_BANG_TOUCH
+#ifdef CONFIG_USE_BIT_BANG_TOUCH
     int16_t val = xpt2046_read_spi(cmd);
     return val;
 #else 
