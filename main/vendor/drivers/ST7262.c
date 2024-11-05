@@ -3,6 +3,8 @@
 
 #ifdef CONFIG_USE_7_INCHER
 
+#pragma message("Compiling 7 Incher")
+
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "esp_lcd_panel_rgb.h"
@@ -194,6 +196,8 @@ esp_err_t lcd_st7262_init(void)
     int ClockFrequency = 10;
 #endif
 
+#ifdef CONFIG_USE_7_INCHER
+
     // Prepare RGB panel configuration with accurate timings
     esp_lcd_rgb_panel_config_t panel_config = {
         .clk_src = LCD_CLK_SRC_PLL160M,
@@ -260,8 +264,8 @@ esp_err_t lcd_st7262_init(void)
 
         gpio_set_level(2, 1);
     }
-
     ESP_LOGI(TAG, "ST7262 LCD panel initialized successfully");
+#endif
     return ESP_OK;
 }
 

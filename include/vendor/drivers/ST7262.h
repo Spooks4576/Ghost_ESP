@@ -7,10 +7,12 @@
 #ifndef LCD_ST7262_H
 #define LCD_ST7262_H
 
-#ifdef CONFIG_USE_7_INCHER
+
 
 #include "esp_err.h"
+#ifdef CONFIG_USE_7_INCHER
 #include "esp_lcd_types.h"
+#endif
 #include "lvgl.h"
 
 #ifdef __cplusplus
@@ -67,5 +69,3 @@ esp_err_t lcd_st7262_lvgl_init(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif // LCD_ST7262_H
