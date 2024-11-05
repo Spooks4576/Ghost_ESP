@@ -1,7 +1,7 @@
 #include "vendor/drivers/ST7262.h"
 
 
-#ifdef USE_7_INCHER
+#ifdef CONFIG_USE_7_INCHER
 
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
@@ -29,7 +29,7 @@ static SemaphoreHandle_t sem_vsync_end = NULL;
 static SemaphoreHandle_t sem_gui_ready = NULL;
 
 // Data lines D0 to D15
-#ifdef Crowtech_LCD
+#ifdef CONFIG_Crowtech_LCD
 // Crowtech display (formerly Sasquatch display)
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_15, // D0 - B0
@@ -59,7 +59,7 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_BACKLIGHT_GPIO   GPIO_NUM_2  
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
 
-#elif Waveshare_LCD
+#elif CONFIG_Waveshare_LCD
 // Waveshare display
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_14, // D0 - B3
@@ -89,7 +89,7 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_BACKLIGHT_GPIO   -1      // Not used
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
 
-#elif Sunton_LCD
+#elif CONFIG_Sunton_LCD
 
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_8,   // D0 - B0
@@ -179,11 +179,11 @@ esp_err_t lcd_st7262_init(void)
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 
-#ifdef Crowtech_LCD
+#ifdef CONFIG_Crowtech_LCD
     int ClockFrequency = 15;
-#elif Waveshare_LCD
+#elif CONFIG_Waveshare_LCD
     int ClockFrequency = 25;
-#elif Sunton_LCD
+#elif CONFIG_Sunton_LCD
     int ClockFrequency = 18;
 #else 
     int ClockFrequency = 10;

@@ -74,8 +74,9 @@ void xpt2046_init(void)
     
     esp_err_t ret = gpio_config(&irq_config);
     assert(ret == ESP_OK);
-#elif CONFIG_USE_BIT_BANG_TOUCH
+#endif
 
+#ifdef CONFIG_USE_BIT_BANG_TOUCH
     gpio_set_direction(CONFIG_LV_TOUCH_SPI_MOSI, GPIO_MODE_OUTPUT);
     gpio_set_direction(CONFIG_LV_TOUCH_SPI_MISO, GPIO_MODE_INPUT);
     gpio_set_direction(CONFIG_LV_TOUCH_SPI_CLK, GPIO_MODE_OUTPUT);
@@ -83,6 +84,7 @@ void xpt2046_init(void)
 
     gpio_set_level(CONFIG_LV_TOUCH_SPI_CS, 1);
     gpio_set_level(CONFIG_LV_TOUCH_SPI_CLK, 0);
+    printf("Initilized...");
 #endif
 }
 

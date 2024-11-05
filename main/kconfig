@@ -1,0 +1,206 @@
+menu "Ghost ESP Options"
+
+    menu "LED Options"
+    
+    config USE_NEOPIXEL
+        bool "Use Neopixel RGB LEDs"
+        default n
+        help
+            Enable Neopixel RGB LED support. When enabled, a single data pin will be used for RGB control.
+    
+    config LED_DATA_PIN
+        int "LED Data Pin"
+        default 0
+        depends on USE_NEOPIXEL
+        help
+            Set the data pin for Neopixel LEDs.
+    
+    config NUM_LEDS
+        int "Number of LEDs"
+        default 0
+        help
+            Set the number of LEDs connected.
+    
+    config RED_RGB_PIN
+        int "Red RGB Pin"
+        default 0
+        depends on !USE_NEOPIXEL
+        help
+            Define the pin for the red color of RGB LED when not using Neopixel.
+    
+    config GREEN_RGB_PIN
+        int "Green RGB Pin"
+        default 0
+        depends on !USE_NEOPIXEL
+        help
+            Define the pin for the green color of RGB LED when not using Neopixel.
+    
+    config BLUE_RGB_PIN
+        int "Blue RGB Pin"
+        default 0
+        depends on !USE_NEOPIXEL
+        help
+            Define the pin for the blue color of RGB LED when not using Neopixel.
+    
+    endmenu
+    
+    menu "Display Options"
+    
+    config WITH_SCREEN
+        bool "Enable Screen Support"
+        default n
+        help
+            Enable or disable screen support.
+    
+    config TFT_WIDTH
+        int "TFT Width"
+        default 240
+        depends on WITH_SCREEN
+        help
+            Set the width of the TFT display.
+    
+    config TFT_HEIGHT
+        int "TFT Height"
+        default 320
+        depends on WITH_SCREEN
+        help
+            Set the height of the TFT display.
+    
+    config USE_TOUCHSCREEN
+        bool "Enable Touchscreen"
+        default n
+        help
+            Enable touchscreen input.
+    
+    config USE_JOYSTICK
+        bool "Enable Joystick"
+        default n
+        help
+            Enable joystick input.
+    
+    config USE_CARDPUTER
+        bool "Enable Cardputer"
+        default n
+        help
+            Enable Cardputer input.
+    
+    config USE_7_INCHER
+        bool "Use 7-inch Display"
+        default n
+        help
+            Set to enable 7-inch display support.
+    
+    config Waveshare_LCD
+        bool "Enable Waveshare LCD"
+        default n
+        help
+            Enable support for Waveshare LCD.
+    
+    config Crowtech_LCD
+        bool "Enable Crowtech LCD"
+        default n
+        help
+            Enable support for Crowtech LCD.
+    
+    config Sunton_LCD
+        bool "Enable Sunton LCD"
+        default n
+        help
+            Enable support for Sunton LCD.
+    
+    config USE_ILI9341_2
+        bool "Use ILI9341 2nd Display Driver"
+        default n
+        help
+            Enable support for ILI9341 display module.
+    
+    endmenu
+
+    menu  "Ghost Board Config"
+        config IS_GHOST_BOARD
+            bool "Enable Ghost Board Configuration"
+            default n
+            help
+                Enable configuration for Ghost board.
+
+        config GHOST_GPS_MODE
+            bool "Enable GPS Mode for Ghost Board"
+            default n
+            depends on IS_GHOST_BOARD
+            help
+                Enable GPS Mode for Ghost Board.
+
+        config GHOST_MARAUDER_MODE
+            bool "Enable Marauder Controller Mode for Ghost Board"
+            default n
+            depends on IS_GHOST_BOARD
+            help
+                Enable Marauder Controller Mode for Ghost Board.
+
+    endmenu
+    
+    menu "GPS Configuration"
+    
+    config HAS_GPS
+        bool "Enable GPS"
+        default n
+        help
+            Enable GPS support.
+    
+    config GPS_UART_RX_PIN
+        int "GPS UART RX Pin"
+        default 16
+        depends on HAS_GPS
+        help
+            Define the UART RX pin for GPS.
+    
+    config GPS_UART_TX_PIN
+        int "GPS UART TX Pin"
+        default 17
+        depends on HAS_GPS
+        help
+            Define the UART TX pin for GPS.
+    
+    endmenu
+    
+    menu "SPI and MMC Configuration"
+    
+    config USING_SPI
+        bool "Enable SPI"
+        default n
+        help
+            Enable SPI communication.
+    
+    config USING_MMC
+        bool "Enable MMC"
+        default n
+        help
+            Enable MMC support.
+    
+    config SD_SPI_CS_PIN
+        int "SD Card SPI CS Pin"
+        default 4
+        help
+            Define the Chip Select (CS) pin for SD Card SPI.
+    
+    config SD_SPI_CLK_PIN
+        int "SD Card SPI CLK Pin"
+        default 18
+        help
+            Define the Clock (CLK) pin for SD Card SPI.
+    
+    config SD_SPI_MISO_PIN
+        int "SD Card SPI MISO Pin"
+        default 19
+        help
+            Define the MISO pin for SD Card SPI.
+    
+    config SD_SPI_MOSI_PIN
+        int "SD Card SPI MOSI Pin"
+        default 23
+        help
+            Define the MOSI pin for SD Card SPI.
+    
+    endmenu
+    
+    endmenu    

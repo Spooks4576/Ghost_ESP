@@ -1976,6 +1976,57 @@ CONFIG_WIFI_PROV_STA_ALL_CHANNEL_SCAN=y
 # end of Wi-Fi Provisioning Manager
 
 #
+# Ghost ESP Options
+#
+
+#
+# LED Options
+#
+# CONFIG_USE_NEOPIXEL is not set
+CONFIG_NUM_LEDS=0
+CONFIG_RED_RGB_PIN=0
+CONFIG_GREEN_RGB_PIN=0
+CONFIG_BLUE_RGB_PIN=0
+# end of LED Options
+
+#
+# Display Options
+#
+CONFIG_WITH_SCREEN=y
+CONFIG_TFT_WIDTH=128
+CONFIG_TFT_HEIGHT=128
+# CONFIG_USE_TOUCHSCREEN is not set
+CONFIG_USE_JOYSTICK=y
+# CONFIG_USE_CARDPUTER is not set
+# CONFIG_IS_GHOST_BOARD is not set
+# CONFIG_USE_7_INCHER is not set
+# CONFIG_Waveshare_LCD is not set
+# CONFIG_Crowtech_LCD is not set
+# CONFIG_Sunton_LCD is not set
+# CONFIG_USE_ILI9341_2 is not set
+# end of Display Options
+
+#
+# GPS Configuration
+#
+CONFIG_HAS_GPS=y
+CONFIG_GPS_UART_RX_PIN=22
+CONFIG_GPS_UART_TX_PIN=21
+# end of GPS Configuration
+
+#
+# SPI and MMC Configuration
+#
+# CONFIG_USING_SPI is not set
+# CONFIG_USING_MMC is not set
+CONFIG_SD_SPI_CS_PIN=4
+CONFIG_SD_SPI_CLK_PIN=18
+CONFIG_SD_SPI_MISO_PIN=19
+CONFIG_SD_SPI_MOSI_PIN=23
+# end of SPI and MMC Configuration
+# end of Ghost ESP Options
+
+#
 # LVGL configuration
 #
 CONFIG_LV_CONF_SKIP=y
