@@ -219,7 +219,7 @@ void main_menu_create(void) {
         lv_obj_set_user_data(menu_item, (void *)(uintptr_t)i);
     }
 
-#ifndef USE_TOUCHSCREEN
+#ifndef CONFIG_USE_TOUCHSCREEN
     select_menu_item(0);
 #endif
 
