@@ -56,7 +56,7 @@ static void ili9341_send_color(void * data, uint16_t length);
 
 void ili9341_init(void)
 {
-#ifdef USE_ILI9341_2
+#ifdef CONFIG_USE_ILI9341_2
 
 	lcd_init_cmd_t ili_init_cmds[] = {
 		{0xCF, {0x00, 0xC1, 0x30}, 3},
