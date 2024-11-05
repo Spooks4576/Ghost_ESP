@@ -17,6 +17,15 @@
 #include "vendor/drivers/ST7262.h"
 #endif
 
+#ifndef CONFIG_TFT_WIDTH
+#define CONFIG_TFT_WIDTH 240
+#endif
+
+#ifndef CONFIG_TFT_HEIGHT
+#define CONFIG_TFT_HEIGHT 320
+#endif
+
+
 #define LVGL_TASK_PERIOD_MS 5
 
 DisplayManager dm = { .current_view = NULL, .previous_view = NULL };
@@ -247,16 +256,16 @@ void display_manager_init(void) {
 #endif
 
 #ifndef CONFIG_USE_7_INCHER
-    static lv_color_t buf1[TFT_WIDTH * 20] __attribute__((aligned(4)));
-    static lv_color_t buf2[TFT_WIDTH * 20] __attribute__((aligned(4)));
+    static lv_color_t buf1[CONFIG_TFT_WIDTH * 20] __attribute__((aligned(4)));
+    static lv_color_t buf2[CONFIG_TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_disp_draw_buf_t disp_buf;
-    lv_disp_draw_buf_init(&disp_buf, buf1, buf2, TFT_WIDTH * 20);
+    lv_disp_draw_buf_init(&disp_buf, buf1, buf2, CONFIG_TFT_WIDTH * 20);
 
     /* Initialize the display */
     static lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
-    disp_drv.hor_res = TFT_WIDTH;
-    disp_drv.ver_res = TFT_HEIGHT;
+    disp_drv.hor_res = CONFIG_TFT_WIDTH;
+    disp_drv.ver_res = CONFIG_TFT_HEIGHT;
 
 #ifdef CONFIG_USE_CARDPUTER
     disp_drv.flush_cb = m5stack_lvgl_render_callback;
