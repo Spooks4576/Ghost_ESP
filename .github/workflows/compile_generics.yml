@@ -1,8 +1,6 @@
 name: Compile All
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -84,7 +82,6 @@ jobs:
       - name: Build Project
         run: |
           . ~/esp-idf/export.sh
-          idf.py fullclean
           idf.py build
 
       - name: Download Correct Bootloader
