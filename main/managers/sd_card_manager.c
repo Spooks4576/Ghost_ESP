@@ -26,10 +26,12 @@ sd_card_manager_t sd_card_manager = { // Change this based on board config
     .d1pin = 21,
     .d2pin = 22,
     .d3pin = 23,
+#ifdef CONFIG_USING_SPI
     .spi_cs_pin = CONFIG_SD_SPI_CS_PIN,
     .spi_clk_pin = CONFIG_SD_SPI_CLK_PIN,
     .spi_miso_pin = CONFIG_SD_SPI_MISO_PIN,
     .spi_mosi_pin = CONFIG_SD_SPI_MOSI_PIN
+#endif
 };
 
 static void get_next_pcap_file_name(char *file_name_buffer, const char* base_name) {
