@@ -170,23 +170,25 @@ esp_err_t sd_card_init(void) {
     bus_config.sclk_io_num = sd_card_manager.spi_clk_pin;
 
 #ifdef CONFIG_IDF_TARGET_ESP32
-int dmabus = 2;
+    int dmabus = 2;
+#elif CONFIG_IDF_TARGET_ESP32S3
+    int dmabus = SPI_DMA_CH_AUTO;
 #else
-int dmabus = SPI_DMA_CH_AUTO;
+    int dmabus = SPI_DMA_CH_AUTO;
 #endif
 
 
 
-#ifndef SPI3_HOST
-    ret = spi_bus_initialize(SPI2_HOST, &bus_config, dmabus);
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
+    ret = spi_bus_initialize(SPI3_HOST, &bus_config, dmabus);
     if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
-        ESP_LOGE(SD_TAG, "Failed to initialize SPI bus: %s", esp_err_to_name(ret));
+        ESP_LOGE(SD_TAG, "Failed to initialize SPI3 bus: %s", esp_err_to_name(ret));
         return ret;
     }
 #else
-    ret = spi_bus_initialize(SPI3_HOST, &bus_config, dmabus);
+    ret = spi_bus_initialize(SPI2_HOST, &bus_config, dmabus);
     if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
-        ESP_LOGE(SD_TAG, "Failed to initialize SPI bus: %s", esp_err_to_name(ret));
+        ESP_LOGE(SD_TAG, "Failed to initialize SPI2 bus: %s", esp_err_to_name(ret));
         return ret;
     }
 #endif
@@ -199,10 +201,10 @@ int dmabus = SPI_DMA_CH_AUTO;
 
     sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
     slot_config.gpio_cs = sd_card_manager.spi_cs_pin;
-#ifndef SPI3_HOST
-    slot_config.host_id = SPI2_HOST;
-#else 
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
     slot_config.host_id = SPI3_HOST;
+#else 
+    slot_config.host_id = SPI2_HOST;
 #endif
 
     ret = esp_vfs_fat_sdspi_mount("/mnt", &host, &slot_config, &mount_config, &sd_card_manager.card);
