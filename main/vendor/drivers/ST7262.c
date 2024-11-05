@@ -59,7 +59,10 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_BACKLIGHT_GPIO   GPIO_NUM_2  
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
 
-#elif CONFIG_Waveshare_LCD
+
+#endif
+
+#ifdef CONFIG_Waveshare_LCD
 // Waveshare display
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_14, // D0 - B3
@@ -89,7 +92,9 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_BACKLIGHT_GPIO   -1      // Not used
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
 
-#elif CONFIG_Sunton_LCD
+#endif
+
+#ifdef CONFIG_Sunton_LCD
 
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_8,   // D0 - B0

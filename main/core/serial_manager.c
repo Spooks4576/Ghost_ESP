@@ -159,7 +159,9 @@ void serial_manager_init() {
     uart_param_config(UART_NUM_1, &ghost_uart_config);
     uart_set_pin(UART_NUM_1, GHOST_UART_TX_PIN, GHOST_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(UART_NUM_1, GHOST_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
-#elif CONFIG_HAS_GPS
+#endif
+
+#ifdef CONFIG_HAS_GPS
 
     const uart_config_t gps_uart_config = {
         .baud_rate = 9600,                     // Most GPS modules use 9600 baud by default
@@ -170,7 +172,7 @@ void serial_manager_init() {
     };
 
     uart_param_config(UART_NUM_1, &gps_uart_config);
-    uart_set_pin(UART_NUM_1, GPS_UART_TX_PIN, GPS_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_set_pin(UART_NUM_1, CONFIG_GPS_UART_TX_PIN, CONFIG_GPS_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(UART_NUM_1, 1024 * 2, 0, 0, NULL, 0);
     gps_manager_init(&g_gpsManager);
 #endif
