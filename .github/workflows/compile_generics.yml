@@ -85,7 +85,7 @@ jobs:
 
       - name: Build Project with sdkconfig.defaults
         env:
-          SDKCONFIG_DEFAULTS: "$GITHUB_WORKSPACE/sdkconfig.defaults"
+          SDKCONFIG_DEFAULTS: "sdkconfig.defaults"
         run: |
           . ~/esp-idf/export.sh
           idf.py build
