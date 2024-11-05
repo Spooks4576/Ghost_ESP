@@ -23,6 +23,8 @@ add_compile_definitions(LED_ORDER=0)     # 2 for RGB, 0 for GRB
 add_compile_definitions(DNS_SERVER_MAX_ITEMS=1)
 add_compile_definitions(MAX_WPS_NETWORKS=15)
 
+idf_build_set_property(COMPILE_OPTIONS "-DKCONFIG_FILE=\"Kconfig\"" APPEND)
+
 # Include project settings
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(Ghost_ESP_IDF)
