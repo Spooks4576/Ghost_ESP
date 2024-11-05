@@ -7,10 +7,12 @@
 #ifndef LCD_ST7262_H
 #define LCD_ST7262_H
 
-#ifdef CONFIG_USE_7_INCHER
+
 
 #include "esp_err.h"
+#ifdef CONFIG_USE_7_INCHER
 #include "esp_lcd_types.h"
+#endif
 #include "lvgl.h"
 
 #ifdef __cplusplus
@@ -48,7 +50,9 @@ esp_err_t lcd_st7262_deinit(void);
  *      - esp_lcd_panel_handle_t on success
  *      - NULL on failure
  */
+#ifdef CONFIG_USE_7_INCHER
 esp_lcd_panel_handle_t lcd_st7262_get_panel_handle(void);
+#endif
 
 /**
  * @brief Initialize LVGL display driver for the ST7262 LCD panel.
@@ -67,5 +71,3 @@ esp_err_t lcd_st7262_lvgl_init(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif // LCD_ST7262_H

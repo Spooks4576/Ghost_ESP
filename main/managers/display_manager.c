@@ -244,7 +244,7 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     HasBluetooth = false;
 #endif
 
-    update_status_bar(true, HasBluetooth, sd_card_exists("/mnt/ghostesp"), 1000);
+    update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, 1000);
 }
 
 void display_manager_init(void) {

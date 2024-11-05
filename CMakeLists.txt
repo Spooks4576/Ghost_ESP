@@ -7,8 +7,6 @@ if(DEFINED ENV{IDF_TARGET})
 endif()
 
 # Partition table settings
-set(PARTITION_TABLE_CUSTOM_FILENAME "partitions/min_spiffs.csv")
-set(PARTITION_TABLE_CUSTOM_PARTITION_FILENAME "partitions/min_spiffs.csv")
 add_link_options("-Wl,-z,muldefs")
 
 if(DEFINED ENV{FLAPPY_GHOST_WEB_HOOK})
@@ -17,6 +15,7 @@ if(DEFINED ENV{FLAPPY_GHOST_WEB_HOOK})
 endif()
 
 
+set(SDKCONFIG_DEFAULTS "sdkconfig.defaults")
 add_compile_definitions(HOLD_LIMIT=1000) # For joystick hold duration
 add_compile_definitions(LED_ORDER=0)     # 2 for RGB, 0 for GRB
 add_compile_definitions(DNS_SERVER_MAX_ITEMS=1)

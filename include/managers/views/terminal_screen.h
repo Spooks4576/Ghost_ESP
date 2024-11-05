@@ -15,7 +15,7 @@ void terminal_view_create(void);
 void terminal_view_destroy(void);
 
 
-#ifdef WITH_SCREEN
+#ifdef CONFIG_WITH_SCREEN
     #define TERMINAL_VIEW_ADD_TEXT(fmt, ...) \
         do { \
             char buffer[256]; \

@@ -495,8 +495,6 @@ void ble_stop(void) {
     } else {
         ESP_LOGE(TAG_BLE, "Failed to stop BLE scanning; rc=%d", rc);
     }
-
-    ble_deinit();
 }
 
 void ble_start_blespam_detector(void)

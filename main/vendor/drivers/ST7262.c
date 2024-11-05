@@ -3,6 +3,8 @@
 
 #ifdef CONFIG_USE_7_INCHER
 
+#pragma message("Compiling 7 Incher")
+
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
 #include "esp_lcd_panel_rgb.h"
@@ -59,7 +61,10 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_BACKLIGHT_GPIO   GPIO_NUM_2  
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
 
-#elif CONFIG_Waveshare_LCD
+
+#endif
+
+#ifdef CONFIG_Waveshare_LCD
 // Waveshare display
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_14, // D0 - B3
@@ -89,7 +94,9 @@ static const int lcd_data_gpio_nums[] = {
 #define LCD_BACKLIGHT_GPIO   -1      // Not used
 #define LCD_RESET_GPIO       GPIO_NUM_4  // Corrected to GPIO4
 
-#elif CONFIG_Sunton_LCD
+#endif
+
+#ifdef CONFIG_Sunton_LCD
 
 static const int lcd_data_gpio_nums[] = {
     GPIO_NUM_8,   // D0 - B0
@@ -189,6 +196,8 @@ esp_err_t lcd_st7262_init(void)
     int ClockFrequency = 10;
 #endif
 
+#ifdef CONFIG_USE_7_INCHER
+
     // Prepare RGB panel configuration with accurate timings
     esp_lcd_rgb_panel_config_t panel_config = {
         .clk_src = LCD_CLK_SRC_PLL160M,
@@ -255,8 +264,8 @@ esp_err_t lcd_st7262_init(void)
 
         gpio_set_level(2, 1);
     }
-
     ESP_LOGI(TAG, "ST7262 LCD panel initialized successfully");
+#endif
     return ESP_OK;
 }
 

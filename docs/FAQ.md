@@ -75,6 +75,23 @@ We welcome contributions from the community! Here’s how you can help:
 3. **Submit Code:** If you’re familiar with ESP-IDF and open-source development, you can submit pull requests for new features or bug fixes.
 4. **Testing:** Testing the beta features and providing feedback is immensely helpful as we work toward full releases.
 
+
+## Why is My Touch Not Working Correctly? Selecting items is impossible?
+
+Currently How The Touch Is Designed is on the main menu you select your item by pressing the item directly 
+
+### However its a little different for the wifi and bluetooth scroll menus 
+
+for those menus the upper half of the screen is to move up a item.
+ 
+bottom half of the screen is to move down a item 
+
+and middle of the screen is to select a item 
+
+Any full screen menu with no navigation is simply click to go back 
+
+I Hope this Clears up the confusion
+
 ---
 
 If you have any other questions not covered here, feel free to reach out to the community on the [Ghost ESP GitHub page](https://github.com/Spooks4576/Ghost_ESP).
