@@ -8,12 +8,12 @@
 #include "managers/views/error_popup.h"
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
-#ifdef USE_CARDPUTER
+#ifdef CONFIG_USE_CARDPUTER
 #include "vendor/m5/m5gfx_wrapper.h"
 #include "vendor/keyboard_handler.h"
 #endif
 
-#ifdef USE_7_INCHER
+#ifdef CONFIG_USE_7_INCHER
 #include "vendor/drivers/ST7262.h"
 #endif
 
@@ -31,7 +31,7 @@ lv_obj_t *battery_label = NULL;
 
 #define FADE_DURATION_MS 10
 
-#ifdef USE_CARDPUTER
+#ifdef CONFIG_USE_CARDPUTER
 Keyboard_t gkeyboard;
 
 void m5stack_lvgl_render_callback(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p) {
@@ -240,13 +240,13 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
 
 void display_manager_init(void) {
     lv_init();
-#ifdef USE_CARDPUTER
+#ifdef CONFIG_USE_CARDPUTER
     init_m5gfx_display();
 #else 
     lvgl_driver_init();
 #endif
 
-#ifndef USE_7_INCHER
+#ifndef CONFIG_USE_7_INCHER
     static lv_color_t buf1[TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_color_t buf2[TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_disp_draw_buf_t disp_buf;
@@ -258,7 +258,7 @@ void display_manager_init(void) {
     disp_drv.hor_res = TFT_WIDTH;
     disp_drv.ver_res = TFT_HEIGHT;
 
-#ifdef USE_CARDPUTER
+#ifdef CONFIG_USE_CARDPUTER
     disp_drv.flush_cb = m5stack_lvgl_render_callback;
 #else 
     disp_drv.flush_cb = disp_driver_flush;
@@ -293,7 +293,7 @@ void display_manager_init(void) {
         return;
     }
 
-#ifdef USE_CARDPUTER
+#ifdef CONFIG_USE_CARDPUTER
     keyboard_init(&gkeyboard);
     keyboard_begin(&gkeyboard);
 #endif
@@ -384,7 +384,7 @@ void hardware_input_task(void *pvParameters) {
 
     
     while (1) {
-        #ifdef USE_CARDPUTER
+        #ifdef CONFIG_USE_CARDPUTER
             keyboard_update_key_list(&gkeyboard);
             keyboard_update_keys_state(&gkeyboard);
             if (gkeyboard.key_list_buffer_len > 0) {
@@ -437,7 +437,7 @@ void hardware_input_task(void *pvParameters) {
         #endif
 
 
-        #ifdef USE_JOYSTICK
+        #ifdef CONFIG_USE_JOYSTICK
             for (int i = 0; i < 5; i++) {
                 if (joysticks[i].pin >= 0) {
                     if (joystick_just_pressed(&joysticks[i])) {
@@ -453,7 +453,7 @@ void hardware_input_task(void *pvParameters) {
             }
         #endif
 
-        #ifdef USE_TOUCHSCREEN
+        #ifdef CONFIG_USE_TOUCHSCREEN
             touch_driver_read(&touch_driver, &touch_data);
 
             if (touch_data.state == LV_INDEV_STATE_PR && !touch_active) {

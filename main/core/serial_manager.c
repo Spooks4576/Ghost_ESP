@@ -28,7 +28,7 @@ char serial_buffer[SERIAL_BUFFER_SIZE];
 // Forward declaration of command handler
 int handle_serial_command(const char *command);
 
-#if IS_GHOST_BOARD
+#if CONFIG_IS_GHOST_BOARD
     #define UART_NUM_1 UART_NUM_1
     #define GHOST_UART_RX_PIN (2)
     #define GHOST_UART_TX_PIN (3)
@@ -39,10 +39,10 @@ void serial_task(void *pvParameter) {
     uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
     int index = 0;
 
-#if IS_GHOST_BOARD
+#if CONFIG_IS_GHOST_BOARD
     uint8_t *ghost_data = (uint8_t *)malloc(GHOST_UART_BUF_SIZE);
     int ghost_index = 0;
-#elif HAS_GPS
+#elif CONFIG_HAS_GPS
     uint8_t *gps_data = (uint8_t *)malloc(1024);
 #endif
 
@@ -77,7 +77,7 @@ void serial_task(void *pvParameter) {
             }
         }
 
-    #ifdef HAS_GPS
+    #ifdef CONFIG_HAS_GPS
         int gps_length = uart_read_bytes(UART_NUM_1, gps_data, 1024, 10 / portTICK_PERIOD_MS);
         if (gps_length > 0) {
             for (int i = 0; i < gps_length; i++) {
@@ -88,7 +88,7 @@ void serial_task(void *pvParameter) {
         }
     #endif
 
-#if IS_GHOST_BOARD
+#if CONFIG_IS_GHOST_BOARD
         int ghost_length = uart_read_bytes(UART_NUM_1, ghost_data, GHOST_UART_BUF_SIZE, 10 / portTICK_PERIOD_MS);
         if (ghost_length > 0) {
             for (int i = 0; i < ghost_length; i++) {
@@ -120,7 +120,7 @@ void serial_task(void *pvParameter) {
 
     free(data);
 
-#if IS_GHOST_BOARD
+#if CONFIG_IS_GHOST_BOARD
     free(ghost_data);
 #endif
 }
@@ -147,7 +147,7 @@ void serial_manager_init() {
     usb_serial_jtag_driver_install(&usb_serial_jtag_config);
 #endif
 
-#if IS_GHOST_BOARD
+#if CONFIG_IS_GHOST_BOARD
     const uart_config_t ghost_uart_config = {
         .baud_rate = 115200,
         .data_bits = UART_DATA_8_BITS,
@@ -159,7 +159,7 @@ void serial_manager_init() {
     uart_param_config(UART_NUM_1, &ghost_uart_config);
     uart_set_pin(UART_NUM_1, GHOST_UART_TX_PIN, GHOST_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(UART_NUM_1, GHOST_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
-#elif HAS_GPS
+#elif CONFIG_HAS_GPS
 
     const uart_config_t gps_uart_config = {
         .baud_rate = 9600,                     // Most GPS modules use 9600 baud by default

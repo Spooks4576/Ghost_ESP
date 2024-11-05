@@ -26,10 +26,10 @@ sd_card_manager_t sd_card_manager = { // Change this based on board config
     .d1pin = 21,
     .d2pin = 22,
     .d3pin = 23,
-    .spi_cs_pin = SD_SPI_CS_PIN,
-    .spi_clk_pin = SD_SPI_CLK_PIN,
-    .spi_miso_pin = SD_SPI_MISO_PIN,
-    .spi_mosi_pin = SD_SPI_MOSI_PIN
+    .spi_cs_pin = CONFIG_SD_SPI_CS_PIN,
+    .spi_clk_pin = CONFIG_SD_SPI_CLK_PIN,
+    .spi_miso_pin = CONFIG_SD_SPI_MISO_PIN,
+    .spi_mosi_pin = CONFIG_SD_SPI_MOSI_PIN
 };
 
 static void get_next_pcap_file_name(char *file_name_buffer, const char* base_name) {
@@ -99,7 +99,7 @@ static void sdmmc_card_print_info(const sdmmc_card_t* card) {
 
 esp_err_t sd_card_init(void) {
     esp_err_t ret;
-#if USING_MMC
+#if CONFIG_USING_MMC
 
     ESP_LOGI(SD_TAG, "Initializing SD card in SDMMC mode (4-bit)...");
 
@@ -154,7 +154,7 @@ esp_err_t sd_card_init(void) {
     ESP_LOGI(SD_TAG, "SD card initialized successfully");
 
     sd_card_setup_directory_structure();
-#elif USING_SPI
+#elif CONFIG_USING_SPI
 
     ESP_LOGI(SD_TAG, "Initializing SD card in SPI mode...");
 

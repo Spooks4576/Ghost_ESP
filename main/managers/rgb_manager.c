@@ -321,7 +321,7 @@ void pulse_once(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t b
 
 
 esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t red, uint8_t green, uint8_t blue, bool pulse) {
-#ifdef LED_DATA_PIN
+#ifdef CONFIG_LED_DATA_PIN
     if (!rgb_manager) return ESP_ERR_INVALID_ARG;
 
     
@@ -354,7 +354,7 @@ esp_err_t rgb_manager_set_color(RGBManager_t* rgb_manager, int led_idx, uint8_t 
     }
 #endif
 
-#ifdef RED_RGB_PIN && GREEN_RGB_PIN && BLUE_RGB_PIN
+#ifdef CONFIG_RED_RGB_PIN && CONFIG_GREEN_RGB_PIN && CONFIG_BLUE_RGB_PIN
     scale_grb_by_brightness(&green, &red, &blue, -0.3);
 
     uint8_t ired = (uint8_t)(255 - red);

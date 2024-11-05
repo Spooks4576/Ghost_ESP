@@ -7,7 +7,7 @@
 #ifndef LCD_ST7262_H
 #define LCD_ST7262_H
 
-#ifdef USE_7_INCHER
+#ifdef CONFIG_USE_7_INCHER
 
 #include "esp_err.h"
 #include "esp_lcd_types.h"

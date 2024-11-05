@@ -221,6 +221,7 @@ CONFIG_SOC_MEMSPI_SRC_FREQ_120M=y
 CONFIG_SOC_MEMSPI_SRC_FREQ_80M_SUPPORTED=y
 CONFIG_SOC_MEMSPI_SRC_FREQ_40M_SUPPORTED=y
 CONFIG_SOC_MEMSPI_SRC_FREQ_20M_SUPPORTED=y
+CONFIG_SOC_SPIRAM_SUPPORTED=y
 CONFIG_SOC_SPIRAM_XIP_SUPPORTED=y
 CONFIG_SOC_SYSTIMER_COUNTER_NUM=2
 CONFIG_SOC_SYSTIMER_ALARM_NUM=3
@@ -2196,6 +2197,53 @@ CONFIG_WIFI_PROV_BLE_SEC_CONN=y
 CONFIG_WIFI_PROV_STA_ALL_CHANNEL_SCAN=y
 # CONFIG_WIFI_PROV_STA_FAST_SCAN is not set
 # end of Wi-Fi Provisioning Manager
+
+#
+# Ghost ESP Options
+#
+
+#
+# LED Options
+#
+# CONFIG_USE_NEOPIXEL is not set
+CONFIG_NUM_LEDS=0
+CONFIG_RED_RGB_PIN=0
+CONFIG_GREEN_RGB_PIN=0
+CONFIG_BLUE_RGB_PIN=0
+# end of LED Options
+
+#
+# Display Options
+#
+# CONFIG_WITH_SCREEN is not set
+# CONFIG_USE_TOUCHSCREEN is not set
+# CONFIG_USE_JOYSTICK is not set
+# CONFIG_USE_CARDPUTER is not set
+# CONFIG_IS_GHOST_BOARD is not set
+# CONFIG_USE_7_INCHER is not set
+# CONFIG_Waveshare_LCD is not set
+# CONFIG_Crowtech_LCD is not set
+# CONFIG_Sunton_LCD is not set
+# CONFIG_USE_ILI9341_2 is not set
+# end of Display Options
+
+#
+# GPS Configuration
+#
+# CONFIG_HAS_GPS is not set
+# end of GPS Configuration
+
+#
+# SPI and MMC Configuration
+#
+# CONFIG_USING_SPI is not set
+# CONFIG_USING_MMC is not set
+CONFIG_SD_SPI_CS_PIN=4
+CONFIG_SD_SPI_CLK_PIN=18
+CONFIG_SD_SPI_MISO_PIN=19
+CONFIG_SD_SPI_MOSI_PIN=23
+# end of SPI and MMC Configuration
+# end of Ghost ESP Options
 
 #
 # LVGL configuration

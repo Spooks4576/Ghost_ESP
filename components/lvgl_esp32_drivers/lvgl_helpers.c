@@ -83,7 +83,7 @@ void lvgl_driver_init(void)
 #endif
 
 #if defined (SHARED_SPI_BUS)
-#ifndef USE_7_INCHER
+#ifndef CONFIG_USE_7_INCHER
 #ifndef CONFIG_USE_BIT_BANG_TOUCH
     ESP_LOGI(TAG, "Initializing shared SPI master");
 
@@ -105,7 +105,7 @@ void lvgl_driver_init(void)
 /* Display controller initialization */
 #if defined CONFIG_LV_TFT_DISPLAY_PROTOCOL_SPI
     ESP_LOGI(TAG, "Initializing SPI master for display");
-#ifndef USE_7_INCHER
+#ifndef CONFIG_USE_7_INCHER
     lvgl_spi_driver_init(TFT_SPI_HOST,
         DISP_SPI_MISO, DISP_SPI_MOSI, DISP_SPI_CLK,
         SPI_BUS_MAX_TRANSFER_SZ, 1,

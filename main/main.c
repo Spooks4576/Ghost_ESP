@@ -12,7 +12,7 @@
 #endif
 #include <esp_log.h>
 
-#ifdef WITH_SCREEN
+#ifdef CONFIG_WITH_SCREEN
 #include "managers/views/splash_screen.h"
 #endif
 
@@ -53,9 +53,9 @@ void app_main(void) {
 
   esp_err_t err = sd_card_init();
 
-#ifdef WITH_SCREEN
+#ifdef CONFIG_WITH_SCREEN
 
-#ifdef USE_JOYSTICK
+#ifdef CONFIG_USE_JOYSTICK
 
   #define L_BTN 13
   #define C_BTN 34
@@ -74,17 +74,16 @@ void app_main(void) {
   display_manager_switch_view(&splash_view);
 #endif
 
-#ifdef LED_DATA_PIN
+#ifdef CONFIG_LED_DATA_PIN
   rgb_manager_init(&rgb_manager, LED_DATA_PIN, NUM_LEDS, LED_ORDER, LED_MODEL_WS2812, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_NC);
-
-  xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
+  
   if (settings_get_rgb_mode(&G_Settings) == 1)
   {
-    //xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
+    xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
   }
 #endif
-#ifdef RED_RGB_PIN && GREEN_RGB_PIN && BLUE_RGB_PIN
-  rgb_manager_init(&rgb_manager, GPIO_NUM_NC, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812, RED_RGB_PIN, GREEN_RGB_PIN, BLUE_RGB_PIN);
+#ifdef CONFIG_RED_RGB_PIN && CONFIG_GREEN_RGB_PIN && CONFIG_BLUE_RGB_PIN
+  rgb_manager_init(&rgb_manager, GPIO_NUM_NC, 1, LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812, CONFIG_RED_RGB_PIN, CONFIG_GREEN_RGB_PIN, CONFIG_BLUE_RGB_PIN);
   if (settings_get_rgb_mode(&G_Settings) == 1)
   {
   xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
