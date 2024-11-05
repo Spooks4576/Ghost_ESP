@@ -2217,17 +2217,22 @@ CONFIG_BLUE_RGB_PIN=0
 #
 CONFIG_WITH_SCREEN=y
 CONFIG_TFT_WIDTH=240
-CONFIG_TFT_HEIGHT=320
+CONFIG_TFT_HEIGHT=135
 # CONFIG_USE_TOUCHSCREEN is not set
 # CONFIG_USE_JOYSTICK is not set
 CONFIG_USE_CARDPUTER=y
-# CONFIG_IS_GHOST_BOARD is not set
 # CONFIG_USE_7_INCHER is not set
 # CONFIG_Waveshare_LCD is not set
 # CONFIG_Crowtech_LCD is not set
 # CONFIG_Sunton_LCD is not set
 # CONFIG_USE_ILI9341_2 is not set
 # end of Display Options
+
+#
+# Ghost Board Config
+#
+# CONFIG_IS_GHOST_BOARD is not set
+# end of Ghost Board Config
 
 #
 # GPS Configuration

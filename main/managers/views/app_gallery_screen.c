@@ -24,7 +24,7 @@ static int current_page = 0;
 static int total_pages = 0;
 
 static lv_obj_t *back_button = NULL;
-#ifdef USE_TOUCHSCREEN
+#ifdef CONFIG_USE_TOUCHSCREEN
 static lv_obj_t *next_button = NULL;
 static lv_obj_t *prev_button = NULL;
 #endif
@@ -45,7 +45,7 @@ void apps_menu_create(void) {
         LV_GRID_FR(0.5), // Row 0: Back button
         LV_GRID_FR(1),   // Row 1: Apps row 1
         LV_GRID_FR(1),   // Row 2: Apps row 2
-    #ifdef USE_TOUCHSCREEN
+    #ifdef CONFIG_USE_TOUCHSCREEN
         LV_GRID_FR(0.5), // Row 3: Next/Prev buttons
     #endif
         LV_GRID_TEMPLATE_LAST
@@ -90,7 +90,7 @@ void apps_menu_create(void) {
 
     lv_obj_add_flag(back_button, LV_OBJ_FLAG_HIDDEN);
 
-#ifdef USE_TOUCHSCREEN
+#ifdef CONFIG_USE_TOUCHSCREEN
     // Create Next and Previous Buttons
     next_button = lv_btn_create(apps_container);
     lv_obj_set_size(next_button, button_width, button_height);
@@ -145,7 +145,7 @@ void apps_menu_create(void) {
     // Create App Items for Current Page
     refresh_apps_menu();
 
-#ifndef USE_TOUCHSCREEN
+#ifndef CONFIG_USE_TOUCHSCREEN
     select_app_item(current_page * apps_per_page);
 #endif
 
@@ -221,7 +221,7 @@ void refresh_apps_menu(void) {
         lv_obj_set_user_data(app_item, (void *)(intptr_t)i);
     }
 
-#ifdef USE_TOUCHSCREEN
+#ifdef CONFIG_USE_TOUCHSCREEN
     // Update navigation buttons' visibility
     if (current_page <= 0) {
         lv_obj_add_flag(prev_button, LV_OBJ_FLAG_HIDDEN);
@@ -236,7 +236,7 @@ void refresh_apps_menu(void) {
     }
 #endif
 
-#ifndef USE_TOUCHSCREEN
+#ifndef CONFIG_USE_TOUCHSCREEN
     // For devices without touchscreens, ensure selected_app_index is within the current page
     if (selected_app_index != -1 && (selected_app_index < start_index || selected_app_index >= end_index)) {
         selected_app_index = start_index;
@@ -290,7 +290,7 @@ void apps_menu_event_handler(InputEvent *event) {
                     display_manager_switch_view(&main_menu_view);
                     return;
                 }
-#ifdef USE_TOUCHSCREEN
+#ifdef CONFIG_USE_TOUCHSCREEN
                 else if (index == -2) { // Next button
                     if (current_page < total_pages - 1) {
                         current_page++;
