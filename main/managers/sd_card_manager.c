@@ -172,7 +172,7 @@ esp_err_t sd_card_init(void) {
 #ifdef CONFIG_IDF_TARGET_ESP32
     int dmabus = 2;
 #elif CONFIG_IDF_TARGET_ESP32S3
-    int dmabus = 2;
+    int dmabus = SPI_DMA_CH_AUTO;
 #else
     int dmabus = SPI_DMA_CH_AUTO;
 #endif
