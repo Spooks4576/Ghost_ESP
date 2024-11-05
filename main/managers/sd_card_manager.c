@@ -175,7 +175,7 @@ int dmabus = 2;
 int dmabus = SPI_DMA_CH_AUTO;
 #endif
 
-#ifdef SDSPIHOST
+
 
 #ifndef SPI3_HOST
     ret = spi_bus_initialize(SPI2_HOST, &bus_config, dmabus);
@@ -220,9 +220,6 @@ int dmabus = SPI_DMA_CH_AUTO;
 
 #endif
 
-return ESP_OK;
-
-#endif
     return ESP_OK;
 }
 
