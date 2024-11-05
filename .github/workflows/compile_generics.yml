@@ -79,6 +79,7 @@ jobs:
       - name: Build Project
         run: |
           . ~/esp-idf/export.sh
+          idf.py clean
           idf.py build
 
       - name: Verify SDK Config Options
