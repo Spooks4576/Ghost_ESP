@@ -23,6 +23,7 @@ void terminal_view_create(void) {
     terminal_view.root = lv_obj_create(lv_scr_act());
     lv_obj_set_size(terminal_view.root, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_bg_color(terminal_view.root, lv_color_black(), 0);
+    lv_obj_set_scrollbar_mode(terminal_view.root, LV_SCROLLBAR_MODE_OFF);
 
     
     terminal_textarea = lv_textarea_create(terminal_view.root);
@@ -75,7 +76,6 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
         handle_serial_command("stop");
         handle_serial_command("stopspam");
         handle_serial_command("stopdeauth");
-        handle_serial_command("blescan -s");
         handle_serial_command("capture -stop");
         display_manager_switch_view(&options_menu_view);
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
@@ -84,7 +84,6 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             handle_serial_command("stop");
             handle_serial_command("stopspam");
             handle_serial_command("stopdeauth");
-            handle_serial_command("blescan -s");
             handle_serial_command("capture -stop");
             display_manager_switch_view(&options_menu_view);
         }
