@@ -65,7 +65,6 @@ jobs:
           echo "Applying SDK Config: ${{ matrix.target.sdkconfig_file }} to $DEST_FILE"
           if [ -f "${{ matrix.target.sdkconfig_file }}" ]; then
             cp "${{ matrix.target.sdkconfig_file }}" "$DEST_FILE"
-            cat "$DEST_FILE"  # Print contents for debugging
           else
             echo "Error: Source config file ${{ matrix.target.sdkconfig_file }} does not exist."
             exit 1
@@ -81,6 +80,7 @@ jobs:
 
       - name: Verify SDK Config Options
         run: |
+          DEST_FILE="sdkconfig"
           echo "Checking for Display Options in $DEST_FILE"
           grep -E "CONFIG_WITH_SCREEN|CONFIG_TFT_WIDTH|CONFIG_TFT_HEIGHT|CONFIG_USE_TOUCHSCREEN|CONFIG_USE_JOYSTICK|CONFIG_USE_CARDPUTER|CONFIG_IS_GHOST_BOARD|CONFIG_USE_7_INCHER|CONFIG_Waveshare_LCD|CONFIG_Crowtech_LCD|CONFIG_Sunton_LCD|CONFIG_USE_ILI9341_2" "$DEST_FILE" || echo "One or more options not found in $DEST_FILE"
 
