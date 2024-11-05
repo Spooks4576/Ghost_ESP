@@ -53,18 +53,6 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Cache ESP-IDF and Tools
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.espressif
-            ~/.idf_tools
-            ~/.cache/pip
-          key: ${{ runner.os }}-esp-idf-${{ matrix.target.name }}-${{ matrix.led }}-${{ matrix.screen_support }}-${{ matrix.input_type }}
-          restore-keys: |
-            ${{ runner.os }}-esp-idf-${{ matrix.target.name }}-
-            ${{ runner.os }}-esp-idf-
-
       # Manual ESP-IDF Installation
       - name: Install ESP-IDF
         run: |
@@ -79,6 +67,7 @@ jobs:
           echo "Applying SDK Config: ${{ matrix.target.sdkconfig_file }} to $DEST_FILE"
           if [ -f "${{ matrix.target.sdkconfig_file }}" ]; then
             cp "${{ matrix.target.sdkconfig_file }}" "$DEST_FILE"
+            cat "$DEST_FILE"  # Print contents for debugging
           else
             echo "Error: Source config file ${{ matrix.target.sdkconfig_file }} does not exist."
             exit 1
@@ -95,6 +84,7 @@ jobs:
       - name: Build Project
         run: |
           . ~/esp-idf/export.sh
+          idf.py fullclean
           idf.py build
 
       - name: Download Correct Bootloader
