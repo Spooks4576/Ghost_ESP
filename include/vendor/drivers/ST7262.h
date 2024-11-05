@@ -50,7 +50,9 @@ esp_err_t lcd_st7262_deinit(void);
  *      - esp_lcd_panel_handle_t on success
  *      - NULL on failure
  */
+#ifdef CONFIG_USE_7_INCHER
 esp_lcd_panel_handle_t lcd_st7262_get_panel_handle(void);
+#endif
 
 /**
  * @brief Initialize LVGL display driver for the ST7262 LCD panel.
