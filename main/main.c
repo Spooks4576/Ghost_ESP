@@ -75,7 +75,7 @@ void app_main(void) {
 #endif
 
 #ifdef CONFIG_LED_DATA_PIN
-  rgb_manager_init(&rgb_manager, LED_DATA_PIN, NUM_LEDS, LED_ORDER, LED_MODEL_WS2812, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_NC);
+  rgb_manager_init(&rgb_manager, CONFIG_LED_DATA_PIN, CONFIG_NUM_LEDS, LED_ORDER, LED_MODEL_WS2812, GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_NC);
   
   if (settings_get_rgb_mode(&G_Settings) == 1)
   {
