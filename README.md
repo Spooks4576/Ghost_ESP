@@ -31,7 +31,7 @@ The following ESP32 models are compatible with Ghost ESP, though specific featur
 - **ESP32 S2**
 - **ESP32 C3**
 - **ESP32 S3**
-- **ESP32 C6** *(Partial support: BLE advertising not fully functional)*
+- **ESP32 C6**
 
 ### Important Compatibility Considerations
 
