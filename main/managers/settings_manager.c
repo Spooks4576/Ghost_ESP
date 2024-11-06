@@ -51,10 +51,10 @@ void settings_deinit(void) {
 void settings_set_defaults(FSettings* settings) {
     settings->rgb_mode = RGB_MODE_NORMAL;
     settings->channel_delay = 1.0f;
-    settings->broadcast_speed = 500;
+    settings->broadcast_speed = 5;
     strcpy(settings->ap_ssid, "GhostNet");
     strcpy(settings->ap_password, "GhostNet");
-    settings->rgb_speed = 50;
+    settings->rgb_speed = 15;
 
     // Evil Portal defaults
     strcpy(settings->portal_url, "/default/path");
