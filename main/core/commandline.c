@@ -213,7 +213,7 @@ void discover_task(void *pvParameter) {
         
         dial_client_deinit(&client);
     } else {
-        ESP_LOGE("AppMain", "Failed to initialize DIAL client.");
+        printf("Failed to initialize DIAL client.\n");
     }
 
     vTaskDelete(NULL);
@@ -234,7 +234,7 @@ void handle_dial_command(int argc, char** argv)
 
 void handle_wifi_connection(int argc, char** argv) {
     if (argc < 3) {
-        ESP_LOGE("Command Line", "Usage: %s <SSID> <PASSWORD>", argv[0]);
+        printf("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
         return;
     }
 
@@ -242,11 +242,11 @@ void handle_wifi_connection(int argc, char** argv) {
     const char* password = argv[2];
 
     if (strlen(ssid) == 0 || strlen(password) == 0) {
-        ESP_LOGE("Command Line", "SSID and password cannot be empty");
+        printf("SSID and password cannot be empty");
         return;
     }
 
-    ESP_LOGI("Command Line", "Connecting to SSID: %s", ssid);
+    printf("Connecting to SSID: %s\n", ssid);
     
     wifi_manager_connect_wifi(ssid, password);
 
@@ -411,7 +411,7 @@ void decrypt_tp_link_response(const uint8_t *input, char *output, size_t len)
 void handle_tp_link_test(int argc, char **argv)
 {
     if (argc != 2) {
-        ESP_LOGE("TPLINK", "Usage: tp_link_test <on|off|loop>");
+        printf("Usage: tp_link_test <on|off|loop>\n");
         return;
     }
 
@@ -421,7 +421,7 @@ void handle_tp_link_test(int argc, char **argv)
     if (strcmp(argv[1], "loop") == 0) {
         isloop = true;
     } else if (strcmp(argv[1], "on") != 0 && strcmp(argv[1], "off") != 0) {
-        ESP_LOGE("TPLINK", "Invalid argument. Use 'on', 'off', or 'loop'.");
+        printf("Invalid argument. Use 'on', 'off', or 'loop'.\n");
         return;
     }
 
@@ -454,7 +454,7 @@ void handle_tp_link_test(int argc, char **argv)
 
         size_t command_len = strlen(command);
         if (command_len >= sizeof(encrypted_command)) {
-            ESP_LOGE("TPLINK", "Command too large to encrypt");
+            printf("Command too large to encrypt\n");
             return;
         }
 
@@ -463,7 +463,7 @@ void handle_tp_link_test(int argc, char **argv)
         
         int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
         if (sock < 0) {
-            ESP_LOGE("TPLINK", "Failed to create socket: errno %d", errno);
+            printf("Failed to create socket: errno %d\n", errno);
             return;
         }
 
@@ -475,12 +475,12 @@ void handle_tp_link_test(int argc, char **argv)
         int err = sendto(sock, encrypted_command, command_len, 0,
                          (struct sockaddr *)&dest_addr, sizeof(dest_addr));
         if (err < 0) {
-            ESP_LOGE("TPLINK", "Error occurred during sending: errno %d", errno);
+            printf("Error occurred during sending: errno %d\n", errno);
             close(sock);
             return;
         }
 
-        ESP_LOGI("TPLINK", "Broadcast message sent: %s", command);
+        printf("Broadcast message sent: %s\n", command);
 
         
         struct timeval timeout = {2, 0};
@@ -492,16 +492,16 @@ void handle_tp_link_test(int argc, char **argv)
                            (struct sockaddr *)&dest_addr, &addr_len);
         if (len < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                ESP_LOGW("TPLINK", "No response from any device");
+                printf("No response from any device\n");
             } else {
-                ESP_LOGE("TPLINK", "Error receiving response: errno %d", errno);
+                printf("Error receiving response: errno %d\n", errno);
             }
         } else {
             recv_buf[len] = 0;
             char decrypted_response[128];
             decrypt_tp_link_response(recv_buf, decrypted_response, len);
             decrypted_response[len] = 0;
-            ESP_LOGI("TPLINK", "Response: %s", decrypted_response);
+            printf("Response: %s\n", decrypted_response);
         }
 
 
@@ -653,36 +653,6 @@ void handle_startwd(int argc, char **argv) {
     }
 }
 
-void print_art()
-{
-    printf("@@@@@@@@@@@@@@@@@@@@@@#SSS#@@@@@@@@@@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@@@@@#&?*+;:*?**?&S#@@@@@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@@@S*+::+;:,;??****??&#@@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@S+;:;:+:,,,????***+**+?@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@?;::+;::,,,,*&&??***+?*,+@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@*::,;:,,,,,,,,*S&??***+;,,+@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@S::,,::,,,,,,,,*#&&&&;,,,,,,&@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@+::,,,::,,,,,,:?;:,;+,,,,,:,;@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@+::,,,:;:,,,,:;,,,,,,,,,,,::;@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@+:,,;&*;::::;:,,,,,,:;*&:,,,+@@@@@@@@@@@\n");
-    printf("@@@@@@#@@@&::,*@@&S?*+::,:,:+&S@@@*,,,&@@@#@@@@@@@\n");
-    printf("@@@@@@&#@@@+:,+@&;*+&#S+,+S#??+S@@+,:+@@@S&@@@@@@@\n");
-    printf("@@@@@@&?&S##+;:*&S&+S@#;,;#@&??&@*:;+@#S&??@@@@@@@\n");
-    printf("@@@@@@S**+?S+;+;;*&&&?++*;+&&S&*;++;+S?++*S@@@@@@@\n");
-    printf("@@@@@@@S?+;?*;;*:,,,,:+&&&;:,,,,:*;;*?++?S@@@@@@@@\n");
-    printf("@@@@@@@@@#&&#&+;:,,,,:?&&&?:,,,::++&#&&#@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@@@;,:,,,,::;::,,,,::+@@@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@@@+;*+*;;;+;+;;;**?;*@@@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@@&++&&S*?&&*&&??SSS+**?@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@#?;:*+++++;;;;;?++??**?;:+#@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@#*;,,:*;;;:,:::::+..,++++:::S@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@S+::,,++;;;;++++++....,,+*;:#@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@&*:,,,::;;:;::;:,;;,,,:+:;@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@#?++&??*+++;+;+++***&+++?@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@@@@#?+;::,,,,,::;+?@@@@@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@@@@@@@#S&?*?*?&S#@@@@@@@@@@@@@@@@@@@@\n");
-    printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
-}
 
 void handle_crash(int argc, char **argv)
 {
@@ -692,8 +662,6 @@ void handle_crash(int argc, char **argv)
 
 void handle_help(int argc, char **argv) {
     printf("\n Ghost ESP Commands:\n\n");
-
-    //print_art();
     
     printf("help\n");
     printf("    Description: Display this help message.\n");
@@ -830,4 +798,5 @@ void register_commands() {
 #ifndef CONFIG_IDF_TARGET_ESP32S2
     register_command("blescan", handle_ble_scan_cmd);
 #endif
+    printf("Registered Commands\n");
 }

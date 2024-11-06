@@ -38,9 +38,9 @@ void settings_init(FSettings* settings) {
     err = nvs_open("storage", NVS_READWRITE, &nvsHandle);
     if (err == ESP_OK) {
         settings_load(settings);
-        ESP_LOGI(S_TAG, "Settings loaded successfully.");
+        printf("Settings loaded successfully.\n");
     } else {
-        ESP_LOGE(S_TAG, "Failed to open NVS handle: %s", esp_err_to_name(err));
+        printf("Failed to open NVS handle: %s\n", esp_err_to_name(err));
     }
 }
 
@@ -90,7 +90,7 @@ void settings_load(FSettings* settings) {
     if (err == ESP_OK) {
         settings->channel_delay = value_float;
     } else {
-        ESP_LOGE(S_TAG, "Failed to load Channel Delay: %s", esp_err_to_name(err));
+        printf("Failed to load Channel Delay: %s\n", esp_err_to_name(err));
     }
 
     // Load Broadcast Speed
@@ -103,14 +103,14 @@ void settings_load(FSettings* settings) {
     str_size = sizeof(settings->ap_ssid);
     err = nvs_get_str(nvsHandle, NVS_AP_SSID_KEY, settings->ap_ssid, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load AP SSID");
+        printf("Failed to load AP SSID\n");
     }
 
     // Load AP Password
     str_size = sizeof(settings->ap_password);
     err = nvs_get_str(nvsHandle, NVS_AP_PASSWORD_KEY, settings->ap_password, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load AP Password");
+        printf("Failed to load AP Password\n");
     }
 
     // Load RGB Speed
@@ -123,31 +123,31 @@ void settings_load(FSettings* settings) {
     str_size = sizeof(settings->portal_url);
     err = nvs_get_str(nvsHandle, NVS_PORTAL_URL_KEY, settings->portal_url, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load Portal URL");
+        printf("Failed to load Portal URL\n");
     }
 
     str_size = sizeof(settings->portal_ssid);
     err = nvs_get_str(nvsHandle, NVS_PORTAL_SSID_KEY, settings->portal_ssid, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load Portal SSID");
+        printf("Failed to load Portal SSID\n");
     }
 
     str_size = sizeof(settings->portal_password);
     err = nvs_get_str(nvsHandle, NVS_PORTAL_PASSWORD_KEY, settings->portal_password, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load Portal Password");
+        printf("Failed to load Portal Password\n");
     }
 
     str_size = sizeof(settings->portal_ap_ssid);
     err = nvs_get_str(nvsHandle, NVS_PORTAL_AP_SSID_KEY, settings->portal_ap_ssid, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load Portal AP SSID");
+        printf("Failed to load Portal AP SSID\n");
     }
 
     str_size = sizeof(settings->portal_domain);
     err = nvs_get_str(nvsHandle, NVS_PORTAL_DOMAIN_KEY, settings->portal_domain, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load Portal Domain");
+        printf("Failed to load Portal Domain\n");
     }
 
     err = nvs_get_u8(nvsHandle, NVS_PORTAL_OFFLINE_KEY, &value_u8);
@@ -159,13 +159,13 @@ void settings_load(FSettings* settings) {
     str_size = sizeof(settings->printer_ip);
     err = nvs_get_str(nvsHandle, NVS_PRINTER_IP_KEY, settings->printer_ip, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load Printer IP");
+        printf("Failed to load Printer IP\n");
     }
 
     str_size = sizeof(settings->printer_text);
     err = nvs_get_str(nvsHandle, NVS_PRINTER_TEXT_KEY, settings->printer_text, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load Printer Text");
+        printf("Failed to load Printer Text\n");
     }
 
     err = nvs_get_u8(nvsHandle, NVS_PRINTER_FONT_SIZE_KEY, &value_u8);
@@ -181,10 +181,10 @@ void settings_load(FSettings* settings) {
     str_size = sizeof(settings->flappy_ghost_name);
     err = nvs_get_str(nvsHandle, NVS_FLAPPY_GHOST_NAME, settings->flappy_ghost_name, &str_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to load Flappy Ghost Name");
+        printf("Failed to load Flappy Ghost Name\n");
     }
 
-    ESP_LOGI(S_TAG, "Settings loaded from NVS.");
+    printf("Settings loaded from NVS.\n");
 }
 
 void settings_save(const FSettings* settings) {
@@ -193,97 +193,95 @@ void settings_save(const FSettings* settings) {
     // Save RGB Mode
     err = nvs_set_u8(nvsHandle, NVS_RGB_MODE_KEY, (uint8_t)settings->rgb_mode);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save RGB Mode");
+        printf("Failed to save RGB Mode\n");
     }
 
     // Save Channel Delay
     err = nvs_set_blob(nvsHandle, NVS_CHANNEL_DELAY_KEY, &settings->channel_delay, sizeof(settings->channel_delay));
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Channel Delay");
+        printf("Failed to save Channel Delay\n");
     }
 
     // Save Broadcast Speed
     err = nvs_set_u16(nvsHandle, NVS_BROADCAST_SPEED_KEY, settings->broadcast_speed);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Broadcast Speed");
+        printf("Failed to save Broadcast Speed\n");
     }
 
     // Save AP SSID
     err = nvs_set_str(nvsHandle, NVS_AP_SSID_KEY, settings->ap_ssid);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save AP SSID");
+        printf("Failed to save AP SSID\n");
     }
 
     // Save AP Password
     err = nvs_set_str(nvsHandle, NVS_AP_PASSWORD_KEY, settings->ap_password);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save AP Password");
+        printf("Failed to save AP Password\n");
     }
 
     // Save RGB Speed
     err = nvs_set_u8(nvsHandle, NVS_RGB_SPEED_KEY, settings->rgb_speed);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save RGB Speed");
+        printf("Failed to save RGB Speed\n");
     }
 
     // Save Evil Portal settings
     err = nvs_set_str(nvsHandle, NVS_PORTAL_URL_KEY, settings->portal_url);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Portal URL");
+        printf("Failed to save Portal URL\n");
     }
 
     err = nvs_set_str(nvsHandle, NVS_PORTAL_SSID_KEY, settings->portal_ssid);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Portal SSID");
+        printf("Failed to save Portal SSID\n");
     }
 
     err = nvs_set_str(nvsHandle, NVS_PORTAL_PASSWORD_KEY, settings->portal_password);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Portal Password");
+        printf("Failed to save Portal Password\n");
     }
 
     err = nvs_set_str(nvsHandle, NVS_PORTAL_AP_SSID_KEY, settings->portal_ap_ssid);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Portal AP SSID");
+        printf("Failed to save Portal AP SSID\n");
     }
 
     err = nvs_set_str(nvsHandle, NVS_PORTAL_DOMAIN_KEY, settings->portal_domain);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Portal Domain");
+        printf("Failed to save Portal Domain\n");
     }
 
     err = nvs_set_u8(nvsHandle, NVS_PORTAL_OFFLINE_KEY, settings->portal_offline_mode);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Portal Offline Mode");
+        printf("Failed to save Portal Offline Mode\n");
     }
 
     // Save Power Printer settings
     err = nvs_set_str(nvsHandle, NVS_PRINTER_IP_KEY, settings->printer_ip);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Printer IP");
+        printf("Failed to save Printer IP\n");
     }
 
     err = nvs_set_str(nvsHandle, NVS_PRINTER_TEXT_KEY, settings->printer_text);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Printer Text");
+        printf("Failed to save Printer Text\n");
     }
 
     err = nvs_set_u8(nvsHandle, NVS_PRINTER_FONT_SIZE_KEY, settings->printer_font_size);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Printer Font Size");
+        printf("Failed to save Printer Font Size\n");
     }
 
     err = nvs_set_u8(nvsHandle, NVS_PRINTER_ALIGNMENT_KEY, (uint8_t)settings->printer_alignment);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Printer Alignment");
+        printf("Failed to save Printer Alignment\n");
     }
 
     err = nvs_set_str(nvsHandle, NVS_FLAPPY_GHOST_NAME, settings->flappy_ghost_name);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to save Flappy Ghost Name");
+        printf("Failed to save Flappy Ghost Name\n");
     }
-
-    printf(" RGB MODE INDEX = %i\n", (int)settings_get_rgb_mode(&G_Settings));
 
     if (settings_get_rgb_mode(&G_Settings) == 0)
     {
@@ -305,9 +303,9 @@ void settings_save(const FSettings* settings) {
     // Commit all changes
     err = nvs_commit(nvsHandle);
     if (err != ESP_OK) {
-        ESP_LOGE(S_TAG, "Failed to commit NVS changes");
+        printf("Failed to commit NVS changes\n");
     } else {
-        ESP_LOGI(S_TAG, "Settings saved to NVS.");
+        printf("Settings saved to NVS.\n");
     }
 }
 

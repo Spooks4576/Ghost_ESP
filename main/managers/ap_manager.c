@@ -44,12 +44,12 @@ esp_err_t ap_manager_init(void) {
 
     ret = esp_wifi_get_mode(&mode);
     if (ret == ESP_ERR_WIFI_NOT_INIT) {
-        ESP_LOGI(TAG, "Wi-Fi not initialized, initializing as Access Point...");
+        printf("Wi-Fi not initialized, initializing as Access Point...\n");
 
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
         ret = esp_wifi_init(&cfg);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "esp_wifi_init failed: %s", esp_err_to_name(ret));
+            printf("esp_wifi_init failed: %s\n", esp_err_to_name(ret));
             return ret;
         }
 
@@ -58,21 +58,21 @@ esp_err_t ap_manager_init(void) {
         if (!netif) {
             netif = esp_netif_create_default_wifi_ap();
             if (netif == NULL) {
-                ESP_LOGE(TAG, "Failed to create default Wi-Fi AP");
+                printf("Failed to create default Wi-Fi AP\n");
                 return ESP_FAIL;
             }
         }
     } else if (ret == ESP_OK) {
-        ESP_LOGI(TAG, "Wi-Fi already initialized, skipping Wi-Fi init.");
+        printf("Wi-Fi already initialized, skipping Wi-Fi init.\n");
     } else {
-        ESP_LOGE(TAG, "esp_wifi_get_mode failed: %s", esp_err_to_name(ret));
+        printf("esp_wifi_get_mode failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
     
     ret = esp_wifi_set_mode(WIFI_MODE_AP);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "esp_wifi_set_mode failed: %s", esp_err_to_name(ret));
+        printf("esp_wifi_set_mode failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
@@ -103,13 +103,13 @@ esp_err_t ap_manager_init(void) {
 
     ret = esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "esp_wifi_set_config failed: %s", esp_err_to_name(ret));
+        printf("esp_wifi_set_config failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
     esp_netif_t* ap_netif = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
     if (ap_netif == NULL) {
-        ESP_LOGE(TAG, "Failed to get the AP network interface");
+        printf("Failed to get the AP network interface\n");
     } else {
         // Stop DHCP server before configuring
         esp_netif_dhcps_stop(ap_netif);
@@ -123,16 +123,16 @@ esp_err_t ap_manager_init(void) {
 
 
         esp_netif_dhcps_start(ap_netif);
-        ESP_LOGI(TAG, "DHCP server configured successfully.");
+        printf("DHCP server configured successfully.\n");
     }
 
     ret = esp_wifi_start();
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "esp_wifi_start failed: %s", esp_err_to_name(ret));
+        printf("esp_wifi_start failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
-    ESP_LOGI(TAG, "Wi-Fi Access Point started with SSID: %s", ssid);
+    printf("Wi-Fi Access Point started with SSID: %s\n", ssid);
 
     // Register event handlers for Wi-Fi events if not registered already
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
@@ -142,7 +142,7 @@ esp_err_t ap_manager_init(void) {
     // Initialize mDNS
     ret = mdns_init();
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "mdns_init failed: %s", esp_err_to_name(ret));
+        printf("mdns_init failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
@@ -153,16 +153,16 @@ esp_err_t ap_manager_init(void) {
 
     ret = mdns_hostname_set("ghostesp");
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "mdns_hostname_set failed: %s", esp_err_to_name(ret));
+        printf("mdns_hostname_set failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
     
-    ESP_LOGI(TAG, "mDNS hostname set to %s.local", "ghostesp");
+    printf("mDNS hostname set to ghostesp.local\n");
 
     ret = mdns_service_add(NULL, "_http", "_http", 80, NULL, 0);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "mDNS service add failed: %s", esp_err_to_name(ret));
+        printf("mDNS service add failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
@@ -174,7 +174,7 @@ esp_err_t ap_manager_init(void) {
 
     ret = httpd_start(&server, &config);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error starting HTTP server!");
+        printf("Error starting HTTP server!\n");
         return ret;
     }
 
@@ -217,41 +217,41 @@ esp_err_t ap_manager_init(void) {
 
     ret = httpd_register_uri_handler(server, &uri_post_logs);
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI\n");
     }
 
      ret = httpd_register_uri_handler(server, &uri_get_settings);
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI\n");
     }
 
 
     ret = httpd_register_uri_handler(server, &uri_post_settings);
 
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI\n");
     }
     ret = httpd_register_uri_handler(server, &uri_get);
 
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI\n");
     }
 
     ret = httpd_register_uri_handler(server, &uri_post_command);
 
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI\n");
     }
 
-    ESP_LOGI(TAG, "HTTP server started");
+    printf("HTTP server started\n");
 
     esp_wifi_set_ps(WIFI_PS_NONE);
 
     esp_netif_ip_info_t ip_info;
     if (esp_netif_get_ip_info(ap_netif, &ip_info) == ESP_OK) {
-        ESP_LOGI(TAG, "ESP32 AP IP Address: " IPSTR, IP2STR(&ip_info.ip));
+        printf("ESP32 AP IP Address: \n" IPSTR, IP2STR(&ip_info.ip));
     } else {
-        ESP_LOGE(TAG, "Failed to get IP address");
+        printf("Failed to get IP address\n");
     }
 
     return ESP_OK;
@@ -270,7 +270,7 @@ void ap_manager_deinit(void) {
         netif = NULL;
     }
     mdns_free();
-    ESP_LOGI(TAG, "AP Manager deinitialized");
+    printf("AP Manager deinitialized\n");
 }
 
 
@@ -280,7 +280,7 @@ void ap_manager_add_log(const char* log_message) {
         strcpy(&log_buffer[log_buffer_index], log_message);
         log_buffer_index += message_length;
     } else {
-        ESP_LOGW(TAG, "Log buffer full, clearing buffer and adding new log");
+        printf("Log buffer full, clearing buffer and adding new log\n");
 
         memset(log_buffer, 0, MAX_LOG_BUFFER_SIZE);
         log_buffer_index = 0;
@@ -299,27 +299,27 @@ esp_err_t ap_manager_start_services() {
     // Set Wi-Fi mode to AP
     ret = esp_wifi_set_mode(WIFI_MODE_AP);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "esp_wifi_set_mode failed: %s", esp_err_to_name(ret));
+        printf("esp_wifi_set_mode failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
     // Start Wi-Fi
     ret = esp_wifi_start();
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "esp_wifi_start failed: %s", esp_err_to_name(ret));
+        printf("esp_wifi_start failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
     // Start mDNS
     ret = mdns_init();
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "mdns_init failed: %s", esp_err_to_name(ret));
+        printf("mdns_init failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
     ret = mdns_hostname_set("ghostesp");
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "mdns_hostname_set failed: %s", esp_err_to_name(ret));
+        printf("mdns_hostname_set failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
@@ -329,7 +329,7 @@ esp_err_t ap_manager_start_services() {
 
     ret = httpd_start(&server, &config);
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error starting HTTP server!");
+        printf("Error starting HTTP server!\n");
         return ret;
     }
 
@@ -371,40 +371,40 @@ esp_err_t ap_manager_start_services() {
 
     ret = httpd_register_uri_handler(server, &uri_post_logs);
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI \n");
     }
 
     ret = httpd_register_uri_handler(server, &uri_get_settings);
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI \n");
     }
 
     ret = httpd_register_uri_handler(server, &uri_post_settings);
 
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI \n");
     }
     ret = httpd_register_uri_handler(server, &uri_get);
 
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+        printf("Error registering URI \n");
     }
 
     ret = httpd_register_uri_handler(server, &uri_post_command);
 
         if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Error registering URI /");
+         printf("Error registering URI \n");
     }
 
-    ESP_LOGI(TAG, "HTTP server started");
+    printf("HTTP server started\n");
 
     esp_netif_t* ap_netif = esp_netif_get_handle_from_ifkey("WIFI_AP_DEF");
     
     esp_netif_ip_info_t ip_info;
     if (esp_netif_get_ip_info(ap_netif, &ip_info) == ESP_OK) {
-        ESP_LOGI(TAG, "ESP32 AP IP Address: " IPSTR, IP2STR(&ip_info.ip));
+        printf("ESP32 AP IP Address: \n" IPSTR, IP2STR(&ip_info.ip));
     } else {
-        ESP_LOGE(TAG, "Failed to get IP address");
+        printf("Failed to get IP address\n");
     }
 
     return ESP_OK;
@@ -420,11 +420,11 @@ void ap_manager_stop_services() {
 
     if (err == ESP_OK) {
         if (wifi_mode == WIFI_MODE_AP || wifi_mode == WIFI_MODE_STA || wifi_mode == WIFI_MODE_APSTA) {
-            ESP_LOGI(TAG, "Stopping Wi-Fi...");
+            printf("Stopping Wi-Fi...\n");
             ESP_ERROR_CHECK(esp_wifi_stop());
         }
     } else {
-        ESP_LOGE(TAG, "Failed to get Wi-Fi mode, error: %d", err);
+        printf("Failed to get Wi-Fi mode, error: %d\n", err);
     }
 
 
@@ -445,7 +445,7 @@ void ap_manager_stop_services() {
 
 // Handler for GET requests (serves the HTML page)
 static esp_err_t http_get_handler(httpd_req_t* req) {
-    ESP_LOGI(TAG, "Received HTTP GET request: %s", req->uri);
+    printf("Received HTTP GET request: %s\n", req->uri);
     httpd_resp_set_type(req, "text/html");
      return httpd_resp_send(req, (const char*)ghost_site_html, ghost_site_html_size);
 }
@@ -545,7 +545,7 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     int received = 0;
     char* buf = malloc(total_len + 1);
     if (!buf) {
-        ESP_LOGE(TAG, "Failed to allocate memory for JSON payload");
+        printf("Failed to allocate memory for JSON payload\n");
         return ESP_FAIL;
     }
 
@@ -553,7 +553,7 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         received = httpd_req_recv(req, buf + cur_len, total_len - cur_len);
         if (received <= 0) {
             free(buf);
-            ESP_LOGE(TAG, "Failed to receive JSON payload");
+            printf("Failed to receive JSON payload\n");
             return ESP_FAIL;
         }
         cur_len += received;
@@ -564,7 +564,7 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     cJSON* root = cJSON_Parse(buf);
     free(buf);
     if (!root) {
-        ESP_LOGE(TAG, "Failed to parse JSON");
+        printf("Failed to parse JSON\n");
         return ESP_FAIL;
     }
 
@@ -681,7 +681,7 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
 
     cJSON* root = cJSON_CreateObject();
     if (!root) {
-        ESP_LOGE(TAG, "Failed to create JSON object");
+        printf("Failed to create JSON object\n");
         return ESP_FAIL;
     }
 
@@ -722,7 +722,7 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     const char* json_response = cJSON_Print(root);
     if (!json_response) {
         cJSON_Delete(root);
-        ESP_LOGE(TAG, "Failed to print JSON object");
+        printf("Failed to print JSON object\n");
         return ESP_FAIL;
     }
 
@@ -744,23 +744,23 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT) {
         switch (event_id) {
             case WIFI_EVENT_AP_START:
-                ESP_LOGI(TAG, "AP started");
+                printf("AP started\n");
                 break;
             case WIFI_EVENT_AP_STOP:
-                ESP_LOGI(TAG, "AP stopped");
+                printf("AP stopped\n");
                 break;
             case WIFI_EVENT_AP_STACONNECTED:
-                ESP_LOGI(TAG, "Station connected to AP");
+                printf("Station connected to AP\n");
                 break;
             case WIFI_EVENT_AP_STADISCONNECTED:
-                ESP_LOGI(TAG, "Station disconnected from AP");
+                printf("Station disconnected from AP\n");
                 break;
             case WIFI_EVENT_STA_START:
-                ESP_LOGI(TAG, "STA started");
+                printf("STA started\n");
                 esp_wifi_connect();
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
-                ESP_LOGI(TAG, "Disconnected from Wi-Fi");
+                printf("Disconnected from Wi-Fi\n");
                 break;
             default:
                 break;
@@ -770,7 +770,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             case IP_EVENT_STA_GOT_IP:
                 break;
             case IP_EVENT_AP_STAIPASSIGNED:
-                ESP_LOGI(TAG, "Assigned IP to STA");
+                printf("Assigned IP to STA\n");
                 break;
             default:
                 break;
