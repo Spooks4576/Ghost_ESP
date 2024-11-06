@@ -58,35 +58,6 @@
   **Arguments:**  
     - `-a`: AP selection index (must be a valid number)
 
-## Settings Commands
-
-- **`setsetting`**  
-  **Description:** Set various device settings.  
-  **Usage:** `setsetting <index> <value>`  
-  **Arguments:**  
-    - `<index>`: Setting index (1: RGB mode, 2: Channel switch delay, 3: Channel hopping, 4: Random BLE MAC)  
-    - `<value>`: Value corresponding to the setting (varies by setting index)
-
-### RGB Mode Values
-- `1`: Stealth Mode  
-- `2`: Normal Mode  
-- `3`: Rainbow Mode
-
-### Channel Switch Delay Values
-- `1`: 0.5s  
-- `2`: 1s  
-- `3`: 2s  
-- `4`: 3s  
-- `5`: 4s
-
-### Channel Hopping Values
-- `1`: Disabled  
-- `2`: Enabled
-
-### Random BLE MAC Values
-- `1`: Disabled  
-- `2`: Enabled
-
 ## Evil Portal Commands
 
 - **`startportal`**  
