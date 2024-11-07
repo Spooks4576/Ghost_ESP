@@ -43,7 +43,7 @@ Due to the **alpha** status, users should expect potential limitations, feature 
 
 To install and configure Ghost ESP, follow our [Flashing Guide](https://github.com/Spooks4576/Ghost_ESP/blob/main/docs/HOWTOFLASH.md) for step-by-step instructions. Be sure to check for any known limitations specific to your ESP32 model before proceeding.
 
-[![Flashing Tutorial](https://img.shields.io/badge/Tutorial-Flashing-blue)](https://github.com/Spooks4576/Ghost_ESP/blob/main/docs/HOWTOFLASH.md)
+[![Flashing Tutorial](https://img.shields.io/badge/Tutorial-Flashing-blue)](https://github.com/Spooks4576/Ghost_ESP/wiki)
 
 ## Special Acknowledgments
 
