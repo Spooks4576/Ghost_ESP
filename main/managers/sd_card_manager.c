@@ -4,7 +4,7 @@
 #include <sys/unistd.h>
 #include "esp_log.h"
 #include "esp_vfs_fat.h"
-#include <sys/dirent.h>
+#include <dirent.h>
 #include "driver/sdmmc_host.h"
 #include "driver/sdmmc_defs.h"
 #include "driver/sdmmc_types.h"
@@ -370,6 +370,19 @@ esp_err_t sd_card_setup_directory_structure() {
     const char* pcaps_dir = "/mnt/ghostesp/pcaps";
     const char* scans_dir = "/mnt/ghostesp/scans";
     const char* gps_dir = "/mnt/ghostesp/gps";
+    const char* games_dir = "/mnt/ghostesp/games";
+
+    if (!sd_card_exists(games_dir)) {
+        printf("Creating directory: %s\n", games_dir);
+        esp_err_t ret = sd_card_create_directory(games_dir);
+        if (ret != ESP_OK) {
+            printf("Failed to create directory %s: %s\n", games_dir, esp_err_to_name(ret));
+            return ret;
+        }
+    } else {
+        printf("Directory %s already exists\n", games_dir);
+    }
+
 
     if (!sd_card_exists(gps_dir)) {
         printf("Creating directory: %s\n", gps_dir);
@@ -379,7 +392,7 @@ esp_err_t sd_card_setup_directory_structure() {
             return ret;
         }
     } else {
-        printf("Directory %s already exists\n", root_dir);
+        printf("Directory %s already exists\n", gps_dir);
     }
 
     if (!sd_card_exists(root_dir)) {
