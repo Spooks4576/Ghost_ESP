@@ -369,7 +369,18 @@ esp_err_t sd_card_setup_directory_structure() {
     const char* debug_dir = "/mnt/ghostesp/debug";
     const char* pcaps_dir = "/mnt/ghostesp/pcaps";
     const char* scans_dir = "/mnt/ghostesp/scans";
+    const char* gps_dir = "/mnt/ghostesp/gps";
 
+    if (!sd_card_exists(gps_dir)) {
+        printf("Creating directory: %s\n", gps_dir);
+        esp_err_t ret = sd_card_create_directory(gps_dir);
+        if (ret != ESP_OK) {
+            printf("Failed to create directory %s: %s\n", gps_dir, esp_err_to_name(ret));
+            return ret;
+        }
+    } else {
+        printf("Directory %s already exists\n", root_dir);
+    }
 
     if (!sd_card_exists(root_dir)) {
         printf("Creating directory: %s\n", root_dir);

@@ -37,14 +37,18 @@ esp_err_t csv_write_header(FILE* f) {
 
 void get_next_csv_file_name(char *file_name_buffer, const char* base_name) {
     int next_index = get_next_csv_file_index(base_name);  // Modify this to be CSV specific
-    snprintf(file_name_buffer, MAX_FILE_NAME_LENGTH, "/mnt/ghostesp/logs/%s_%d.csv", base_name, next_index);
+    snprintf(file_name_buffer, MAX_FILE_NAME_LENGTH, "/mnt/ghostesp/gps/%s_%d.csv", base_name, next_index);
 }
 
 esp_err_t csv_file_open(const char* base_file_name) {
     char file_name[MAX_FILE_NAME_LENGTH];
-    get_next_csv_file_name(file_name, base_file_name);
 
-    csv_file = fopen(file_name, "w");
+
+    if (sd_card_exists("/mnt/ghostesp/gps"))
+    {
+        get_next_csv_file_name(file_name, base_file_name);
+        csv_file = fopen(file_name, "w");
+    }
 
     esp_err_t ret = csv_write_header(csv_file);
     if (ret != ESP_OK) {
