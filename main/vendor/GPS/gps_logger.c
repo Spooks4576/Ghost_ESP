@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "vendor/GPS/gps_logger.h"
+#include "managers/sd_card_manager.h"
 
 static const char *CSV_TAG = "CSV";
 
