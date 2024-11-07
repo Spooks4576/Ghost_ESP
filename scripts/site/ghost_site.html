@@ -227,6 +227,19 @@
             font-size: 14px;
         }
 
+        .console {
+            background-color: #110800;
+            color: #ff5500;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ff5500;
+        }
+
         /* Tooltip styling */
         .tooltip {
             position: relative;
@@ -295,7 +308,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP v1.3.5</h1>
+        <h1>Ghost ESP vA1.3.7</h1>
         <!-- Tab navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
@@ -309,9 +322,9 @@
                     <h2>WiFi/BLE Settings</h2>
                     <div class="input-group">
                         <label>Broadcast Speed (ms) <span class="tooltip">?
-                            <span class="tooltiptext">Set the speed at which broadcasts are sent, in milliseconds (20 - 1000 ms).</span>
+                            <span class="tooltiptext">Set the speed at which broadcasts are sent, in milliseconds (5 - 1000 ms).</span>
                         </span></label>
-                        <input type="number" id="broadcast_speed" min="20" max="1000" placeholder="20 - 1000 ms">
+                        <input type="number" id="broadcast_speed" min="5" max="1000" step="1" placeholder="5 - 1000 ms" required>
                     </div>
                     <div class="input-group">
                         <label>Ghost ESP SSID <span class="tooltip">?
@@ -413,7 +426,7 @@
                         <label>Printer Font Size <span class="tooltip">?
                             <span class="tooltiptext">Set the font size for the printed text (1 - 72).</span>
                         </span></label>
-                        <input type="number" id="printer_font_size" min="1" max="72" placeholder="1 - 72">
+                        <input type="number" id="printer_font_size" min="10" max="72" step="1" placeholder="10 - 72" required>
                     </div>
                     <div class="input-group">
                         <label>Printer Alignment <span class="tooltip">?
@@ -446,9 +459,9 @@
                     </div>
                     <div class="input-group">
                         <label>RGB Speed <span class="tooltip">?
-                            <span class="tooltiptext">Set the speed of the RGB color change (1 - 100).</span>
+                            <span class="tooltiptext">Set the speed of the RGB color change (15 - 50).</span>
                         </span></label>
-                        <input type="number" id="rgb_speed" min="1" max="100" placeholder="1 - 100">
+                        <input type="number" id="rgb_speed" min="15" max="50" step="1" placeholder="15 - 50" required>
                     </div>
                 </div>
 
@@ -463,16 +476,6 @@
                 </div>
             </div>
             <button onclick="saveSettings()">Save Settings</button>
-        </div>
-        <!-- Console Tab Content -->
-        <div id="Console" class="tabcontent">
-            <h2>Live Logs</h2>
-            <div id="console"></div>
-            <div class="section">
-                <h2>Send Command</h2>
-                <textarea id="commandInput" placeholder="Type your command here..."></textarea>
-                <button onclick="sendCommand()">Send Command</button>
-            </div>
         </div>
         <!-- Help Tab Content -->
         <div id="Help" class="tabcontent">
@@ -670,6 +673,12 @@
                 flappy_ghost_name: document.getElementById('flappy_name_text').value.trim(),
             };
 
+            const validationErrors = validateSettings(settings);
+            if (validationErrors.length > 0) {
+                alert('Please correct the following errors:\n' + validationErrors.join('\n'));
+                return;
+            }
+
             fetch('/api/settings', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -772,28 +781,54 @@
             .catch(error => console.error('Error Sending Evil Portal Command...', error));
         }
 
+        function validateSettings(settings) {
+            let errors = [];
+
+            // Broadcast Speed: 5 - 1000 ms
+            if (!(settings.broadcast_speed >= 5 && settings.broadcast_speed <= 1000)) {
+                errors.push('Broadcast Speed must be between 5 and 1000 ms.');
+            }
+
+            // RGB Speed: 1 - 100
+            if (!(settings.rgb_speed >= 15 && settings.rgb_speed <= 50)) {
+                errors.push('RGB Speed must be between 15 and 50.');
+            }
+
+            // Printer Font Size: 1 - 72
+            if (!(settings.printer_font_size >= 10 && settings.printer_font_size <= 72)) {
+                errors.push('Printer Font Size must be between 10 and 72.');
+            }
+
+            // Add more validations as needed for other integer fields
+
+            return errors;
+        }
+
 
         function sendtoprinter() {
-            const printerip = document.getElementById('printer_ip').value;
-            const printertext = document.getElementById('printer_text').value;
-            const fontsize = document.getElementById('printer_font_size').value;
+            const printerip = document.getElementById('printer_ip').value.trim();
+            const printertext = document.getElementById('printer_text').value.trim();
+            const fontsize = parseInt(document.getElementById('printer_font_size').value);
             let finalprintertext = printertext;
 
             // Validate inputs
+            let errors = [];
+
             if (printerip === '') {
-                alert('Please enter a Printer IP.');
-                return;
+                errors.push('Please enter a Printer IP.');
             }
             if (printertext === '') {
-                alert('Please enter a Text to Send to Printer');
+                errors.push('Please enter text to send to the printer.');
+            }
+            if (isNaN(fontsize) || fontsize < 1 || fontsize > 72) {
+                errors.push('Printer Font Size must be between 1 and 72.');
+            }
+
+            if (errors.length > 0) {
+                alert('Please correct the following errors:\n' + errors.join('\n'));
                 return;
             }
 
-            if (fontsize === '') {
-                alert('Please enter a Valid Font Size');
-                return;
-            }
-            
             if (printertext.includes(' ')) {
                 finalprintertext = `"${printertext}"`;
             }
@@ -821,18 +856,23 @@
 
         
         function connectToWiFi() {
-            const ssid = document.getElementById('wifi_ssid').value;
-            const password = document.getElementById('wifi_password').value;
+            const ssid = document.getElementById('wifi_ssid').value.trim();
+            const password = document.getElementById('wifi_password').value.trim();
             let finalssid = ssid;
             let finalpassword = password;
 
             // Validate inputs
+            let errors = [];
+
             if (ssid === '') {
-                alert('Please enter a WiFi SSID.');
-                return;
+                errors.push('Please enter a WiFi SSID.');
             }
             if (password === '') {
-                alert('Please enter a WiFi password.');
+                errors.push('Please enter a WiFi password.');
+            }
+
+            if (errors.length > 0) {
+                alert('Please correct the following errors:\n' + errors.join('\n'));
                 return;
             }
 
@@ -844,10 +884,8 @@
                 finalpassword = `"${password}"`;
             }
 
-            
             const command = `connect ${finalssid} ${finalpassword}`;
 
-            
             fetch('/api/command', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

@@ -20,18 +20,8 @@ int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3){
   return 0;
 }
 
-int custom_vprintf(const char *fmt, va_list args)
-{
-  char buffer[256];
-  int len = vsnprintf(buffer, sizeof(buffer), fmt, args);
-
-  ap_manager_add_log(buffer);
-
-  return len;
-}
 
 void app_main(void) {
-  system_manager_init();
   serial_manager_init();
   wifi_manager_init();
 #ifndef CONFIG_IDF_TARGET_ESP32S2
@@ -68,6 +58,8 @@ void app_main(void) {
   joystick_init(&joysticks[2], U_BTN, HOLD_LIMIT, true);
   joystick_init(&joysticks[3], R_BTN, HOLD_LIMIT, true);
   joystick_init(&joysticks[4], D_BTN, HOLD_LIMIT, true);
+
+  printf("Joystick GPIO Setup Successfully...\n");
 #endif
 
   display_manager_init();
@@ -89,4 +81,6 @@ void app_main(void) {
   xTaskCreate(rainbow_task, "Rainbow Task", 8192, &rgb_manager, 1, &rgb_effect_task_handle);
   }
 #endif
+
+  printf("Ghost ESP Ready ;)\n");
 }

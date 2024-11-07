@@ -42,7 +42,7 @@ static void get_next_pcap_file_name(char *file_name_buffer, const char* base_nam
 void list_files_recursive(const char *dirname, int level) {
     DIR *dir = opendir(dirname);
     if (!dir) {
-        ESP_LOGE("File List", "Failed to open directory: %s", dirname);
+        printf("Failed to open directory: %s\n", dirname);
         return;
     }
 
@@ -55,7 +55,7 @@ void list_files_recursive(const char *dirname, int level) {
         int written = snprintf(path, sizeof(path), "%s/%s", dirname, entry->d_name);
 
         if (written < 0 || written >= sizeof(path)) {
-            ESP_LOGW(SD_TAG, "Path was truncated: %s/%s", dirname, entry->d_name);
+            printf("Path was truncated: %s/%s\n", dirname, entry->d_name);
             continue;
         }
 
@@ -79,23 +79,23 @@ void list_files_recursive(const char *dirname, int level) {
 
 static void sdmmc_card_print_info(const sdmmc_card_t* card) {
     if (card == NULL) {
-        ESP_LOGE(SD_TAG, "Card is NULL");
+        printf("Card is NULL\n");
         return;
     }
 
-    ESP_LOGI(SD_TAG, "Name: %s", card->cid.name);
-    ESP_LOGI(SD_TAG, "Type: %s", (card->ocr & SD_OCR_SDHC_CAP) ? "SDHC/SDXC" : "SDSC");
-    ESP_LOGI(SD_TAG, "Capacity: %lluMB", ((uint64_t)card->csd.capacity) * card->csd.sector_size / (1024 * 1024));
-    ESP_LOGI(SD_TAG, "Sector size: %dB", card->csd.sector_size);
-    ESP_LOGI(SD_TAG, "Speed: %s", (card->csd.tr_speed > 25000000) ? "high speed" : "default speed");
+    printf("Name: %s\n", card->cid.name);
+    printf("Type: %s\n", (card->ocr & SD_OCR_SDHC_CAP) ? "SDHC/SDXC" : "SDSC");
+    printf("Capacity: %lluMB\n", ((uint64_t)card->csd.capacity) * card->csd.sector_size / (1024 * 1024));
+    printf("Sector size: %dB\n", card->csd.sector_size);
+    printf("Speed: %s\n", (card->csd.tr_speed > 25000000) ? "high speed" : "default speed");
     
     if (card->is_mem) {
-        ESP_LOGI(SD_TAG, "Card is memory card");
-        ESP_LOGI(SD_TAG, "CSD version: %d", card->csd.csd_ver);
-        ESP_LOGI(SD_TAG, "Manufacture ID: %02x", card->cid.mfg_id);
-        ESP_LOGI(SD_TAG, "Serial number: %08x", card->cid.serial);
+        printf("Card is memory card\n");
+        printf("CSD version: %d\n", card->csd.csd_ver);
+        printf("Manufacture ID: %02x\n", card->cid.mfg_id);
+        printf("Serial number: %08x\n", card->cid.serial);
     } else {
-        ESP_LOGI(SD_TAG, "Card is not a memory card");
+        printf("Card is not a memory card\n");
     }
 }
 
@@ -103,7 +103,7 @@ esp_err_t sd_card_init(void) {
     esp_err_t ret;
 #if CONFIG_USING_MMC
 
-    ESP_LOGI(SD_TAG, "Initializing SD card in SDMMC mode (4-bit)...");
+    printf("Initializing SD card in SDMMC mode (4-bit)...\n");
 
     
     sdmmc_host_t host = SDMMC_HOST_DEFAULT();
@@ -141,11 +141,9 @@ esp_err_t sd_card_init(void) {
     ret = esp_vfs_fat_sdmmc_mount("/mnt", &host, &slot_config, &mount_config, &sd_card_manager.card);
     if (ret != ESP_OK) {
         if (ret == ESP_FAIL) {
-            ESP_LOGE(SD_TAG, "Failed to mount filesystem. "
-                          "If you want the card to be formatted, set format_if_mount_failed = true.");
+            printf("Failed to mount filesystem. If you want the card to be formatted, set format_if_mount_failed = true.\n");
         } else {
-            ESP_LOGE(SD_TAG, "Failed to initialize the card (%s). "
-                          "Make sure SD card lines have pull-up resistors in place.", esp_err_to_name(ret));
+            printf("Failed to initialize the card (%s). Make sure SD card lines have pull-up resistors in place.\n", esp_err_to_name(ret));
         }
         return ret;
     }
@@ -153,12 +151,12 @@ esp_err_t sd_card_init(void) {
     
     sd_card_manager.is_initialized = true;
     sdmmc_card_print_info(sd_card_manager.card);
-    ESP_LOGI(SD_TAG, "SD card initialized successfully");
+    printf("SD card initialized successfully\n");
 
     sd_card_setup_directory_structure();
 #elif CONFIG_USING_SPI
 
-    ESP_LOGI(SD_TAG, "Initializing SD card in SPI mode...");
+    printf("Initializing SD card in SPI mode...\n");
 
 
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
@@ -184,13 +182,13 @@ esp_err_t sd_card_init(void) {
 #if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
     ret = spi_bus_initialize(SPI3_HOST, &bus_config, dmabus);
     if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
-        ESP_LOGE(SD_TAG, "Failed to initialize SPI3 bus: %s", esp_err_to_name(ret));
+        printf("Failed to initialize SPI3 bus: %s\n", esp_err_to_name(ret));
         return ret;
     }
 #else
     ret = spi_bus_initialize(SPI2_HOST, &bus_config, dmabus);
     if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
-        ESP_LOGE(SD_TAG, "Failed to initialize SPI2 bus: %s", esp_err_to_name(ret));
+        printf("Failed to initialize SPI2 bus: %s\n", esp_err_to_name(ret));
         return ret;
     }
 #endif
@@ -211,14 +209,14 @@ esp_err_t sd_card_init(void) {
 
     ret = esp_vfs_fat_sdspi_mount("/mnt", &host, &slot_config, &mount_config, &sd_card_manager.card);
     if (ret != ESP_OK) {
-        ESP_LOGE(SD_TAG, "Failed to mount filesystem: %s", esp_err_to_name(ret));
+        printf("Failed to mount filesystem: %s\n", esp_err_to_name(ret));
         spi_bus_free(host.slot);
         return ret;
     }
 
     sd_card_manager.is_initialized = true;
     sdmmc_card_print_info(sd_card_manager.card);
-    ESP_LOGI(SD_TAG, "SD card initialized successfully in SPI mode.");
+    printf("SD card initialized successfully in SPI mode.\n");
 
     sd_card_setup_directory_structure();
 
@@ -232,62 +230,62 @@ void sd_card_unmount(void) {
 #if SOC_SDMMC_HOST_SUPPORTED && SOC_SDMMC_USE_GPIO_MATRIX
     if (sd_card_manager.is_initialized) {
         esp_vfs_fat_sdmmc_unmount();
-        ESP_LOGI(SD_TAG, "SD card unmounted");
+        printf("SD card unmounted\n");
         sd_card_manager.is_initialized = false;
     }
 #else
     if (sd_card_manager.is_initialized) {
         esp_vfs_fat_sdcard_unmount("/mnt", sd_card_manager.card);
         spi_bus_free(SPI2_HOST);
-        ESP_LOGI(SD_TAG, "SD card unmounted");
+        printf("SD card unmounted\n");
     }
 #endif
 }
 
 esp_err_t sd_card_append_file(const char* path, const void* data, size_t size) {
     if (!sd_card_manager.is_initialized) {
-        ESP_LOGE(SD_TAG, "SD card is not initialized. Cannot append to file.");
+        printf("SD card is not initialized. Cannot append to file.\n");
         return ESP_FAIL;
     }
 
     FILE* f = fopen(path, "ab");
     if (f == NULL) {
-        ESP_LOGE(SD_TAG, "Failed to open file for appending");
+        printf("Failed to open file for appending\n");
         return ESP_FAIL;
     }
     fwrite(data, 1, size, f);
     fclose(f);
-    ESP_LOGI(SD_TAG, "Data appended to file: %s", path);
+    printf("Data appended to file: %s\n", path);
     return ESP_OK;
 }
 
 esp_err_t sd_card_write_file(const char* path, const void* data, size_t size) {
     if (!sd_card_manager.is_initialized) {
-        ESP_LOGE(SD_TAG, "SD card is not initialized. Cannot write to file.");
+        printf("SD card is not initialized. Cannot write to file.\n");
         return ESP_FAIL;
     }
 
     FILE* f = fopen(path, "wb");
     if (f == NULL) {
-        ESP_LOGE(SD_TAG, "Failed to open file for writing");
+        printf("Failed to open file for writing\n");
         return ESP_FAIL;
     }
     fwrite(data, 1, size, f);
     fclose(f);
-    ESP_LOGI(SD_TAG, "File written: %s", path);
+    printf("File written: %s\n", path);
     return ESP_OK;
 }
 
 
 esp_err_t sd_card_read_file(const char* path) {
     if (!sd_card_manager.is_initialized) {
-        ESP_LOGE(SD_TAG, "SD card is not initialized. Cannot read from file.");
+        printf("SD card is not initialized. Cannot read from file.\n");
         return ESP_FAIL;
     }
 
     FILE* f = fopen(path, "r");
     if (f == NULL) {
-        ESP_LOGE(SD_TAG, "Failed to open file for reading");
+        printf("Failed to open file for reading\n");
         return ESP_FAIL;
     }
     char line[64];
@@ -295,7 +293,7 @@ esp_err_t sd_card_read_file(const char* path) {
         printf("%s", line);
     }
     fclose(f);
-    ESP_LOGI(SD_TAG, "File read: %s", path);
+    printf("File read: %s\n", path);
     return ESP_OK;
 }
 
@@ -313,33 +311,33 @@ static bool has_full_permissions(const char* path) {
 
 esp_err_t sd_card_create_directory(const char* path) {
     if (!sd_card_manager.is_initialized) {
-        ESP_LOGE(SD_TAG, "SD card is not initialized. Cannot create directory.");
+        printf("SD card is not initialized. Cannot create directory.\n");
         return ESP_FAIL;
     }
 
     if (sd_card_exists(path)) {
-        ESP_LOGW(SD_TAG, "Directory already exists: %s", path);
+        printf("Directory already exists: %s\n", path);
 
 
         if (!has_full_permissions(path)) {
-            ESP_LOGW(SD_TAG, "Directory %s does not have full permissions. Deleting and recreating.", path);
+            printf("Directory %s does not have full permissions. Deleting and recreating.\n", path);
 
             
             if (rmdir(path) != 0) {
-                ESP_LOGE(SD_TAG, "Failed to remove directory: %s", path);
+                printf("Failed to remove directory: %s\n", path);
                 return ESP_FAIL;
             }
 
             int res = mkdir(path, 0777);
             if (res != 0) {
-                ESP_LOGE(SD_TAG, "Failed to create directory: %s", path);
+                printf("Failed to create directory: %s\n", path);
                 return ESP_FAIL;
             }
 
-            ESP_LOGI(SD_TAG, "Directory created: %s", path);
+            printf("Directory created: %s\n", path);
 
         } else {
-            ESP_LOGI(SD_TAG, "Directory %s has correct permissions.", path);
+            printf("Directory %s has correct permissions.\n", path);
             return ESP_OK;
         }
         return ESP_OK;
@@ -347,11 +345,11 @@ esp_err_t sd_card_create_directory(const char* path) {
 
     int res = mkdir(path, 0777);
     if (res != 0) {
-        ESP_LOGE(SD_TAG, "Failed to create directory: %s", path);
+        printf("Failed to create directory: %s\n", path);
         return ESP_FAIL;
     }
 
-    ESP_LOGI(SD_TAG, "Directory created: %s", path);
+    printf("Directory created: %s\n", path);
     return ESP_OK;
 }
 
@@ -371,55 +369,66 @@ esp_err_t sd_card_setup_directory_structure() {
     const char* debug_dir = "/mnt/ghostesp/debug";
     const char* pcaps_dir = "/mnt/ghostesp/pcaps";
     const char* scans_dir = "/mnt/ghostesp/scans";
+    const char* gps_dir = "/mnt/ghostesp/gps";
 
-
-    if (!sd_card_exists(root_dir)) {
-        ESP_LOGI(SD_TAG, "Creating directory: %s", root_dir);
-        esp_err_t ret = sd_card_create_directory(root_dir);
+    if (!sd_card_exists(gps_dir)) {
+        printf("Creating directory: %s\n", gps_dir);
+        esp_err_t ret = sd_card_create_directory(gps_dir);
         if (ret != ESP_OK) {
-            ESP_LOGE(SD_TAG, "Failed to create directory %s: %s", root_dir, esp_err_to_name(ret));
+            printf("Failed to create directory %s: %s\n", gps_dir, esp_err_to_name(ret));
             return ret;
         }
     } else {
-        ESP_LOGI(SD_TAG, "Directory %s already exists", root_dir);
+        printf("Directory %s already exists\n", root_dir);
+    }
+
+    if (!sd_card_exists(root_dir)) {
+        printf("Creating directory: %s\n", root_dir);
+        esp_err_t ret = sd_card_create_directory(root_dir);
+        if (ret != ESP_OK) {
+            printf("Failed to create directory %s: %s\n", root_dir, esp_err_to_name(ret));
+            return ret;
+        }
+    } else {
+        printf("Directory %s already exists\n", root_dir);
     }
 
     
     if (!sd_card_exists(debug_dir)) {
-        ESP_LOGI(SD_TAG, "Creating directory: %s", debug_dir);
+        printf("Creating directory: %s\n", debug_dir);
         esp_err_t ret = sd_card_create_directory(debug_dir);
         if (ret != ESP_OK) {
-            ESP_LOGE(SD_TAG, "Failed to create directory %s: %s", debug_dir, esp_err_to_name(ret));
+            printf("Failed to create directory %s: %s\n", debug_dir, esp_err_to_name(ret));
             return ret;
         }
     } else {
-        ESP_LOGI(SD_TAG, "Directory %s already exists", debug_dir);
+        printf("Directory %s already exists\n", debug_dir);
     }
 
     
     if (!sd_card_exists(pcaps_dir)) {
-        ESP_LOGI(SD_TAG, "Creating directory: %s", pcaps_dir);
+        printf("Creating directory: %s\n", pcaps_dir);
         esp_err_t ret = sd_card_create_directory(pcaps_dir);
         if (ret != ESP_OK) {
-            ESP_LOGE(SD_TAG, "Failed to create directory %s: %s", pcaps_dir, esp_err_to_name(ret));
+            printf("Failed to create directory %s: %s\n", pcaps_dir, esp_err_to_name(ret));
             return ret;
         }
     } else {
-        ESP_LOGI(SD_TAG, "Directory %s already exists", pcaps_dir);
+        printf("Directory %s already exists\n", pcaps_dir);
     }
 
     
     if (!sd_card_exists(scans_dir)) {
-        ESP_LOGI(SD_TAG, "Creating directory: %s", scans_dir);
+        printf("Creating directory: %s\n", scans_dir);
         esp_err_t ret = sd_card_create_directory(scans_dir);
         if (ret != ESP_OK) {
-            ESP_LOGE(SD_TAG, "Failed to create directory %s: %s", scans_dir, esp_err_to_name(ret));
+            printf("Failed to create directory %s: %s\n", scans_dir, esp_err_to_name(ret));
             return ret;
         }
     } else {
-        ESP_LOGI(SD_TAG, "Directory %s already exists", scans_dir);
+        printf("Directory %s already exists\n", scans_dir);
     }
 
-    ESP_LOGI(SD_TAG, "Directory structure successfully set up.");
+    printf("Directory structure successfully set up.\n");
     return ESP_OK;
 }

