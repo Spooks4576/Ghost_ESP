@@ -12,7 +12,7 @@
 static const char *CSV_TAG = "CSV";
 
 
-#define UART_NUM_0 1
+
 #define CSV_BUFFER_SIZE 512
 
 static FILE *csv_file = NULL;
