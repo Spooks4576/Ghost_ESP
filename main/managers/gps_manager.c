@@ -44,22 +44,18 @@ void gps_manager_deinit(GPSManager* manager) {
 
 esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     if (!data) {
-        printf("Error: Null wardriving data pointer.\n");
         return ESP_ERR_INVALID_ARG;
     }
 
     if (!gps) {
-        printf("Error: Null GPS pointer.\n");
         return ESP_ERR_INVALID_ARG;
     }
 
     if (!gps->valid) {
-        printf("Error: GPS data is not valid.\n");
         return ESP_ERR_INVALID_ARG;
     }
 
     if (strlen(data->ssid) <= 2) {
-        printf("Warning: SSID is too short to be meaningful.\n");
         return ESP_OK;
     }
 
@@ -67,37 +63,47 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     if (gps->date.year < 2000 || gps->date.year > 2100 || 
         gps->date.month < 1 || gps->date.month > 12 || 
         gps->date.day < 1 || gps->date.day > 31) {
-        printf("Warning: GPS date is out of range: %04d-%02d-%02d\n",
+        if (rand() % 20 == 0) {
+            printf("Warning: GPS date is out of range: %04d-%02d-%02d\n",
                gps->date.year, gps->date.month, gps->date.day);
+        }
         return ESP_OK;
     }
 
     
     if (gps->tim.hour > 23 || gps->tim.minute > 59 || gps->tim.second > 59) {
+        if (rand() % 20 == 0) {
         printf("Warning: GPS time is invalid: %02d:%02d:%02d\n",
                gps->tim.hour, gps->tim.minute, gps->tim.second);
+        }
         return ESP_OK;
     }
 
     
     if (gps->latitude < -90.0 || gps->latitude > 90.0 || 
         gps->longitude < -180.0 || gps->longitude > 180.0) {
-        printf("Warning: GPS coordinates are out of range: Lat: %f, Lon: %f\n",
-               gps->latitude, gps->longitude);
+        if (rand() % 20 == 0) {
+            printf("Warning: GPS coordinates are out of range: Lat: %f, Lon: %f\n",
+                gps->latitude, gps->longitude);
+        }
         return ESP_OK;
     }
 
     
     if (gps->speed < 0.0 || gps->speed > 340.0) {
-        printf("Warning: GPS speed is out of range: %f m/s\n", gps->speed);
+        if (rand() % 20 == 0) {
+            printf("Warning: GPS speed is out of range: %f m/s\n", gps->speed);
+        }
         return ESP_OK;
     }
 
     
     if (gps->dop_h < 0.0 || gps->dop_p < 0.0 || gps->dop_v < 0.0 || 
         gps->dop_h > 50.0 || gps->dop_p > 50.0 || gps->dop_v > 50.0) {
-        printf("Warning: GPS DOP values are out of range: HDOP: %f, PDOP: %f, VDOP: %f\n",
-               gps->dop_h, gps->dop_p, gps->dop_v);
+        if (rand() % 20 == 0) {
+            printf("Warning: GPS DOP values are out of range: HDOP: %f, PDOP: %f, VDOP: %f\n",
+                gps->dop_h, gps->dop_p, gps->dop_v);
+        }
         return ESP_OK;
     }
 

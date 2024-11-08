@@ -217,9 +217,6 @@ void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     wardriving_data.encryption_type[sizeof(wardriving_data.encryption_type) - 1] = '\0';
 
     esp_err_t err = gps_manager_log_wardriving_data(&wardriving_data);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to write data to buffer");
-    }
 }
 
 
@@ -230,7 +227,7 @@ void wifi_eapol_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
     {
         esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to write EAPOL packet to PCAP buffer.");
+            printf("Failed to write EAPOL packet to PCAP buffer.");
         }
     }
 }
@@ -240,11 +237,11 @@ void wifi_probe_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
     
     if (is_probe_request(pkt) || is_probe_response(pkt)) {
-        ESP_LOGI(TAG, "Probe packet detected, length: %d", pkt->rx_ctrl.sig_len);
+        printf("Probe packet detected, length: %d", pkt->rx_ctrl.sig_len);
         
         esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to write Probe packet to PCAP buffer.");
+            printf("Failed to write Probe packet to PCAP buffer.");
         }
     }
 }
@@ -255,12 +252,12 @@ void wifi_beacon_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
     
     if (is_beacon_packet(pkt)) {
-        ESP_LOGI(TAG, "Beacon packet detected, length: %d", pkt->rx_ctrl.sig_len);
+        printf("Beacon packet detected, length: %d", pkt->rx_ctrl.sig_len);
 
         
         esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to write beacon packet to PCAP buffer.");
+            printf("Failed to write beacon packet to PCAP buffer.");
         }
     }
 }
@@ -271,12 +268,12 @@ void wifi_pwn_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
     
     if (is_pwn_response(pkt)) {
-        ESP_LOGI(TAG, "Pwn packet detected, length: %d", pkt->rx_ctrl.sig_len);
+        printf("Pwn packet detected, length: %d", pkt->rx_ctrl.sig_len);
 
         
         esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to write pwn packet to PCAP buffer.");
+            printf("Failed to write pwn packet to PCAP buffer.");
         }
     }
 }
@@ -287,11 +284,11 @@ void wifi_deauth_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
     
     if (is_deauth_packet(pkt)) {
-        ESP_LOGI(TAG, "Deauth packet detected, length: %d", pkt->rx_ctrl.sig_len);
+        printf("Deauth packet detected, length: %d", pkt->rx_ctrl.sig_len);
         
         esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to write deauth packet to PCAP buffer.");
+            printf("Failed to write deauth packet to PCAP buffer.");
         }
     }
 }
@@ -369,15 +366,15 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         uint16_t config_methods = (payload[attr_index + 4] << 8) | payload[attr_index + 5];
 
                        
-                        ESP_LOGI(TAG, "Configuration Methods found: 0x%04x", config_methods);
+                        printf("Configuration Methods found: 0x%04x", config_methods);
 
                         
                         if (config_methods & WPS_CONF_METHODS_PBC) {
-                            ESP_LOGI(TAG, "WPS Push Button detected for network: %s", ssid);
+                            printf("WPS Push Button detected for network: %s", ssid);
                         } else if (config_methods & (WPS_CONF_METHODS_PIN_DISPLAY | WPS_CONF_METHODS_PIN_KEYPAD)) {
-                            ESP_LOGI(TAG, "WPS PIN detected for network: %s", ssid);
+                            printf("WPS PIN detected for network: %s", ssid);
                         } else {
-                            ESP_LOGI(TAG, "WPS mode not detected (unknown config method) for network: %s", ssid);
+                            printf("WPS mode not detected (unknown config method) for network: %s", ssid);
                         }
 
 
@@ -398,7 +395,7 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         }
                         
                         if (detected_network_count >= MAX_WPS_NETWORKS) {
-                            ESP_LOGI(TAG, "Maximum number of WPS networks detected. Stopping monitor mode.");
+                            printf("Maximum number of WPS networks detected. Stopping monitor mode.");
                             wifi_manager_stop_monitor_mode();
                         }     
 
