@@ -7,6 +7,7 @@
 #include <esp_types.h>
 
 extern nmea_parser_handle_t nmea_hdl;
+extern gps_date_t cacheddate;
 
 // Struct definition for GPSManager
 typedef struct {
