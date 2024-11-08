@@ -14,6 +14,8 @@ static const char *GPS_TAG = "GPS";
 
 nmea_parser_handle_t nmea_hdl;
 
+gps_date_t cacheddate = {0};
+
 void gps_manager_init(GPSManager* manager) {
     
     nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
@@ -59,15 +61,22 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
         return ESP_OK;
     }
 
-    
-    if (gps->date.year < 2000 || gps->date.year > 2100 || 
-        gps->date.month < 1 || gps->date.month > 12 || 
-        gps->date.day < 1 || gps->date.day > 31) {
-        if (rand() % 20 == 0) {
-            printf("Warning: GPS date is out of range: %04d-%02d-%02d\n",
-               gps->date.year, gps->date.month, gps->date.day);
+    if (cacheddate.year <= 0)
+    {
+        if (gps->date.year > 100 ||
+            gps->date.month < 1 || gps->date.month > 12 || 
+            gps->date.day < 1 || gps->date.day > 31) {
+            if (rand() % 20 == 0) {
+                printf("Warning: GPS date is out of range: %04d-%02d-%02d\n",
+                    2000 + gps->date.year, gps->date.month, gps->date.day);
+            }
+            return ESP_OK;
         }
-        return ESP_OK;
+    }
+
+    if (cacheddate.year <= 0)
+    {
+        cacheddate = gps->date;     // if we pass this check cache the year to avoid missing data
     }
 
     

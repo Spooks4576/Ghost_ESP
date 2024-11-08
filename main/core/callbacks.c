@@ -29,9 +29,6 @@ void gps_event_handler(void *event_handler_arg, esp_event_base_t event_base, int
     case GPS_UPDATE:
         gps = (gps_t *)event_data;
         break;
-    case GPS_UNKNOWN:
-        printf("Unknown statement:%s", (char *)event_data);
-        break;
     default:
         break;
     }
