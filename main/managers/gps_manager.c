@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "managers/gps_manager.h"
 #include "esp_log.h"
 #include "sys/time.h"
@@ -38,14 +39,32 @@ void gps_manager_process_char(GPSManager* manager, char c) {
 
 esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     if (!data) {
-        ESP_LOGE(GPS_TAG, "Invalid data pointer.");
+        printf("Invalid data pointer.");
         return ESP_ERR_INVALID_ARG;
     }
 
-    // Log data to CSV buffer
+    if (strlen(data->ssid) <= 2)
+    {
+        return ESP_OK;
+    }
+
+    if (data->latitude == 999 || data->longitude == 999)
+    {
+        if (rand() % 20 == 0)
+        {
+            printf("No GPS Signal\n");
+        }
+        return ESP_OK;
+    }
+    
     esp_err_t ret = csv_write_data_to_buffer(data);
     if (ret != ESP_OK) {
-        ESP_LOGE(GPS_TAG, "Failed to write wardriving data to CSV buffer.");
+        printf("Failed to write wardriving data to CSV buffer.");
+    }
+
+    if (rand() % 20 == 0)
+    {
+        printf("Wrote to the buffer with %u Satellites \n", g_gpsManager.nmea.numSat);
     }
 
     return ret;

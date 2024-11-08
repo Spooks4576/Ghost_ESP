@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <time.h>
 
 // Struct definition for MicroNMEA
 typedef struct {
@@ -39,5 +40,5 @@ const char* microNMEA_parseTime(MicroNMEA* nmea, const char* s);
 const char* microNMEA_parseDate(MicroNMEA* nmea, const char* s);
 bool microNMEA_processGGA(MicroNMEA* nmea, const char* s);
 bool microNMEA_processRMC(MicroNMEA* nmea, const char* s);
-
+time_t calculate_timestamp(const MicroNMEA* nmea);
 #endif // MICRONMEA_H

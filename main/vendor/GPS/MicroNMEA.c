@@ -7,6 +7,21 @@
 #include <math.h>
 #include <limits.h>
 
+time_t calculate_timestamp(const MicroNMEA* nmea) {
+    struct tm timeinfo;
+
+    // Fill in the time structure
+    timeinfo.tm_year = nmea->year - 1900;
+    timeinfo.tm_mon = nmea->month - 1;
+    timeinfo.tm_mday = nmea->day;
+    timeinfo.tm_hour = nmea->hour;
+    timeinfo.tm_min = nmea->minute;
+    timeinfo.tm_sec = nmea->second;
+    timeinfo.tm_isdst = -1;
+
+    return mktime(&timeinfo);
+}
+
 // Initialize NMEA instance
 void microNMEA_init(MicroNMEA* nmea, char* buf, uint8_t len) {
     nmea->talkerID = '\0';

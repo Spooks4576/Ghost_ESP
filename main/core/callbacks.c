@@ -194,7 +194,7 @@ void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     strncpy(wardriving_data.encryption_type, encryption_type, sizeof(wardriving_data.encryption_type) - 1);
     wardriving_data.encryption_type[sizeof(wardriving_data.encryption_type) - 1] = '\0';
 
-    esp_err_t err = csv_write_data_to_buffer(&wardriving_data);
+    esp_err_t err = gps_manager_log_wardriving_data(&wardriving_data);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to write data to buffer");
     }
