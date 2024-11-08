@@ -176,7 +176,7 @@ jobs:
           R2_BUCKET: "spooksapi"
           R2_PATH: "GhostESPBins"
         run: |
-          rclone copy packaged_artifacts "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress
+          rclone copy "packaged_artifacts/${{ matrix.target.zip_name }}" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress
 
       - name: Notify Discord of Successful Release
         if: success()
