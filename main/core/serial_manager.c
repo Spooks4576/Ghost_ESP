@@ -28,21 +28,9 @@ char serial_buffer[SERIAL_BUFFER_SIZE];
 // Forward declaration of command handler
 int handle_serial_command(const char *command);
 
-#if CONFIG_IS_GHOST_BOARD
-    #define UART_NUM_1 UART_NUM_1
-    #define GHOST_UART_RX_PIN (2)
-    #define GHOST_UART_TX_PIN (3)
-    #define GHOST_UART_BUF_SIZE (1024)
-#endif
-
 void serial_task(void *pvParameter) {
     uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
     int index = 0;
-
-#if CONFIG_IS_GHOST_BOARD
-    uint8_t *ghost_data = (uint8_t *)malloc(GHOST_UART_BUF_SIZE);
-    int ghost_index = 0;
-#endif
 
     while (1) {
         int length = 0;
@@ -75,27 +63,6 @@ void serial_task(void *pvParameter) {
             }
         }
 
-#if CONFIG_IS_GHOST_BOARD
-        int ghost_length = uart_read_bytes(UART_NUM_1, ghost_data, GHOST_UART_BUF_SIZE, 10 / portTICK_PERIOD_MS);
-        if (ghost_length > 0) {
-            for (int i = 0; i < ghost_length; i++) {
-                char incoming_char = (char)ghost_data[i];
-
-                if (incoming_char == '\n' || incoming_char == '\r') {
-                    serial_buffer[ghost_index] = '\0';
-                    if (ghost_index > 0) {
-                        printf(serial_buffer);
-                        ghost_index = 0;
-                    }
-                } else if (ghost_index < SERIAL_BUFFER_SIZE - 1) {
-                    serial_buffer[ghost_index++] = incoming_char;
-                } else {
-                    ghost_index = 0;
-                }
-            }
-        }
-#endif
-
         // Check command queue for simulated commands
         SerialCommand command;
         if (xQueueReceive(commandQueue, &command, 0) == pdTRUE) {
@@ -106,10 +73,6 @@ void serial_task(void *pvParameter) {
     }
 
     free(data);
-
-#if CONFIG_IS_GHOST_BOARD
-    free(ghost_data);
-#endif
 }
 
 // Initialize the SerialManager
@@ -132,20 +95,6 @@ void serial_manager_init() {
         .tx_buffer_size = BUF_SIZE,
     };
     usb_serial_jtag_driver_install(&usb_serial_jtag_config);
-#endif
-
-#if CONFIG_IS_GHOST_BOARD
-    const uart_config_t ghost_uart_config = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-    };
-
-    uart_param_config(UART_NUM_1, &ghost_uart_config);
-    uart_set_pin(UART_NUM_1, GHOST_UART_TX_PIN, GHOST_UART_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(UART_NUM_1, GHOST_UART_BUF_SIZE * 2, 0, 0, NULL, 0);
 #endif
 
     commandQueue = xQueueCreate(10, sizeof(SerialCommand));

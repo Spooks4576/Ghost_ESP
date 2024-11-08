@@ -19,6 +19,10 @@ gps_date_t cacheddate = {0};
 void gps_manager_init(GPSManager* manager) {
     
     nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
+        
+#ifdef CONFIG_IS_GHOST_BOARD
+    config.uart.rx_pin = 2;
+#endif
 
     nmea_hdl = nmea_parser_init(&config);
 
