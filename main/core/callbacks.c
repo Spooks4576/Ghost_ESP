@@ -21,6 +21,22 @@ wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 int detected_network_count = 0;
 esp_timer_handle_t stop_timer;
 int should_store_wps = 1;
+gps_t *gps = NULL;
+
+void gps_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+{
+    switch (event_id) {
+    case GPS_UPDATE:
+        gps = (gps_t *)event_data;
+        break;
+    case GPS_UNKNOWN:
+        printf("Unknown statement:%s", (char *)event_data);
+        break;
+    default:
+        break;
+    }
+}
+
 
 bool compare_bssid(const uint8_t *bssid1, const uint8_t *bssid2) {
     for (int i = 0; i < 6; i++) {
@@ -177,9 +193,15 @@ void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
         index += (2 + ie_len);
     }
 
+    double latitude = 0;
+    double longitude = 0;
+
+    if (gps != NULL)
+    {
+        latitude = gps->latitude;
+        longitude = gps->longitude;
+    }
     
-    double latitude = (double)g_gpsManager.nmea.latitude / 1000000.0;
-    double longitude = (double)g_gpsManager.nmea.longitude / 1000000.0;
 
     
     wardriving_data_t wardriving_data;

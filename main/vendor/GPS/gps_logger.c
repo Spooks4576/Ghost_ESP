@@ -10,6 +10,7 @@
 #include "managers/gps_manager.h"
 #include "managers/sd_card_manager.h"
 #include "vendor/GPS/MicroNMEA.h"
+#include "core/callbacks.h"
 
 static const char *CSV_TAG = "CSV";
 
@@ -66,13 +67,19 @@ esp_err_t csv_file_open(const char* base_file_name) {
 }
 
 esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
+    char timestamp[35];
+    
 
-    time_t tv = calculate_timestamp(&g_gpsManager.nmea);
+    snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
+             gps->date.year, gps->date.month, gps->date.day,
+             gps->tim.hour, gps->tim.minute, gps->tim.second, gps->tim.thousand);
+
 
     char data_line[CSV_BUFFER_SIZE];
-    int len = snprintf(data_line, CSV_BUFFER_SIZE, "%s,%s,%lf,%lf,%d,%d,%s,%lld\n",
+    int len = snprintf(data_line, CSV_BUFFER_SIZE, "%s,%s,%lf,%lf,%d,%d,%s,%s\n",
                        data->bssid, data->ssid, data->latitude, data->longitude,
-                       data->rssi, data->channel, data->encryption_type, tv);
+                       data->rssi, data->channel, data->encryption_type, timestamp);
+
 
     if (buffer_offset + len > BUFFER_SIZE) {
         printf("Buffer full, flushing to file.\n");
@@ -81,6 +88,7 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
             return ret;
         }
     }
+
 
     memcpy(csv_buffer + buffer_offset, data_line, len);
     buffer_offset += len;
