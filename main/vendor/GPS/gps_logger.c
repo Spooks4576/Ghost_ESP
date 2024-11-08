@@ -7,7 +7,10 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "vendor/GPS/gps_logger.h"
+#include "managers/gps_manager.h"
 #include "managers/sd_card_manager.h"
+#include "vendor/GPS/MicroNMEA.h"
+#include "core/callbacks.h"
 
 static const char *CSV_TAG = "CSV";
 
@@ -53,32 +56,39 @@ esp_err_t csv_file_open(const char* base_file_name) {
 
     esp_err_t ret = csv_write_header(csv_file);
     if (ret != ESP_OK) {
-        ESP_LOGE(CSV_TAG, "Failed to write CSV header.");
+        printf("Failed to write CSV header.");
         fclose(csv_file);
         csv_file = NULL;
         return ret;
     }
 
-    ESP_LOGI(CSV_TAG, "CSV file %s opened and header written.", file_name);
+    printf("CSV file %s opened and header written.", file_name);
     return ESP_OK;
 }
 
 esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+    char timestamp[35];
+    
+
+    snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
+             gps->date.year, gps->date.month, gps->date.day,
+             gps->tim.hour, gps->tim.minute, gps->tim.second, gps->tim.thousand);
+
 
     char data_line[CSV_BUFFER_SIZE];
-    int len = snprintf(data_line, CSV_BUFFER_SIZE, "%s,%s,%lf,%lf,%d,%d,%s,%lld\n",
+    int len = snprintf(data_line, CSV_BUFFER_SIZE, "%s,%s,%lf,%lf,%d,%d,%s,%s\n",
                        data->bssid, data->ssid, data->latitude, data->longitude,
-                       data->rssi, data->channel, data->encryption_type, tv.tv_sec);
+                       data->rssi, data->channel, data->encryption_type, timestamp);
+
 
     if (buffer_offset + len > BUFFER_SIZE) {
-        ESP_LOGI(CSV_TAG, "Buffer full, flushing to file.");
+        printf("Buffer full, flushing to file.\n");
         esp_err_t ret = csv_flush_buffer_to_file();
         if (ret != ESP_OK) {
             return ret;
         }
     }
+
 
     memcpy(csv_buffer + buffer_offset, data_line, len);
     buffer_offset += len;
@@ -88,7 +98,7 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
 
 esp_err_t csv_flush_buffer_to_file() {
     if (csv_file == NULL) {
-        ESP_LOGE(CSV_TAG, "CSV file is not open. Flushing to Serial...");
+        printf("CSV file is not open. Flushing to Serial...");
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
 
@@ -103,11 +113,11 @@ esp_err_t csv_flush_buffer_to_file() {
 
     size_t written = fwrite(csv_buffer, 1, buffer_offset, csv_file);
     if (written != buffer_offset) {
-        ESP_LOGE(CSV_TAG, "Failed to write buffer to file.");
+        printf("Failed to write buffer to file.\n");
         return ESP_FAIL;
     }
 
-    ESP_LOGI(CSV_TAG, "Flushed %zu bytes to CSV file.", buffer_offset);
+    printf("Flushed %zu bytes to CSV file.\n", buffer_offset);
     buffer_offset = 0;
 
     return ESP_OK;
@@ -116,11 +126,11 @@ esp_err_t csv_flush_buffer_to_file() {
 void csv_file_close() {
     if (csv_file != NULL) {
         if (buffer_offset > 0) {
-            ESP_LOGI(CSV_TAG, "Flushing remaining buffer before closing file.");
+            printf("Flushing remaining buffer before closing file.\n");
             csv_flush_buffer_to_file();
         }
         fclose(csv_file);
         csv_file = NULL;
-        ESP_LOGI(CSV_TAG, "CSV file closed.");
+        printf("CSV file closed.\n");
     }
 }

@@ -642,6 +642,8 @@ void handle_startwd(int argc, char **argv) {
         }
     }
 
+#ifdef CONFIG_HAS_GPS
+
     if (stop_flag) {
         gps_manager_deinit(&g_gpsManager);
         wifi_manager_stop_monitor_mode();
@@ -651,6 +653,9 @@ void handle_startwd(int argc, char **argv) {
         wifi_manager_start_monitor_mode(wardriving_scan_callback);
         printf("Wardriving started.\n");
     }
+#else 
+    printf("Your ESP / Build Does not Support GPS\n");
+#endif
 }
 
 
