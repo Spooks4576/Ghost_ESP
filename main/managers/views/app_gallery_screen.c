@@ -1,24 +1,28 @@
 #include "managers/views/app_gallery_screen.h"
 #include "managers/views/main_menu_screen.h"
-#include "managers/views/flappy_ghost_screen.h"
+#include "managers/views/scripting/script_interpreter.h"
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 lv_obj_t *apps_container;
-static int selected_app_index = 0;
+int selected_app_index = 0;
+
+#define MAX_GAMES 50
 
 typedef struct {
     const char *name;
-    const lv_img_dsc_t *icon;
     lv_color_t border_color;
+    lv_img_dsc_t *icon;
+    const char *script_path;
+    const char *icon_path;
 } app_item_t;
 
-static app_item_t app_items[] = {
-    {"Flap", &GESPFlappyghost},
-    {"HLSL", NULL}
-};
+app_item_t game_items[MAX_GAMES];
+int num_games = 0;
 
-static int num_apps = sizeof(app_items) / sizeof(app_items[0]);
+
 static int apps_per_page = 6; // 3 columns * 2 rows
 static int current_page = 0;
 static int total_pages = 0;
@@ -31,14 +35,92 @@ static lv_obj_t *prev_button = NULL;
 
 void refresh_apps_menu(void); // Forward declaration
 
+
+bool load_games_from_directory(const char *directory) {
+    printf("Starting to load games from directory: %s\n", directory);
+
+    DIR *dir = opendir(directory);
+    if (!dir) {
+        printf("Failed to open directory: %s\n", directory);
+        return false;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        printf("Checking entry: %s\n", entry->d_name);
+
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            printf("Directory found: %s\n", entry->d_name);
+
+            // Allocate memory for paths dynamically
+            size_t icon_path_len = strlen(directory) + strlen(entry->d_name) * 2 + strlen(".png") + 3;
+            size_t script_path_len = strlen(directory) + strlen(entry->d_name) * 2 + strlen(".gscript") + 3;
+            
+            char *icon_path = (char *)malloc(icon_path_len);
+            char *script_path = (char *)malloc(script_path_len);
+
+            if (!icon_path || !script_path) {
+                printf("Memory allocation failed for paths for entry: %s\n", entry->d_name);
+                free(icon_path);
+                free(script_path);
+                closedir(dir);
+                return false;
+            }
+
+            // Construct icon and script paths
+            snprintf(icon_path, icon_path_len, "%s/%s/%s.png", directory, entry->d_name, entry->d_name);
+            snprintf(script_path, script_path_len, "%s/%s/%s.gscript", directory, entry->d_name, entry->d_name);
+            printf("Constructed paths for '%s':\n  Icon Path: %s\n  Script Path: %s\n", entry->d_name, icon_path, script_path);
+
+            // Check if both files exist
+            struct stat icon_stat, script_stat;
+            if (stat(icon_path, &icon_stat) == 0 && stat(script_path, &script_stat) == 0) {
+                printf("Both icon and script files exist for game '%s'\n", entry->d_name);
+
+                // Add the game to the game_items array if there's space
+                if (num_games < MAX_GAMES) {
+                    printf("Adding game '%s' to game_items array.\n", entry->d_name);
+
+                    game_items[num_games].name = strdup(entry->d_name);
+                    game_items[num_games].icon_path = icon_path;  // Store dynamically allocated path
+                    game_items[num_games].script_path = script_path;  // Store dynamically allocated path
+                    game_items[num_games].border_color = lv_color_hex(0xFFFFFF);
+                    game_items[num_games].icon = NULL;
+                    num_games++;
+                } else {
+                    printf("Max games limit reached. Could not add game '%s'.\n", entry->d_name);
+                    free(icon_path);
+                    free(script_path);
+                    break;
+                }
+            } else {
+                // Log missing files if either icon or script is not found
+                if (stat(icon_path, &icon_stat) != 0) {
+                    printf("Icon file not found for game '%s': %s\n", entry->d_name, icon_path);
+                }
+                if (stat(script_path, &script_stat) != 0) {
+                    printf("Script file not found for game '%s': %s\n", entry->d_name, script_path);
+                }
+                // Free paths if the required files are not found
+                free(icon_path);
+                free(script_path);
+            }
+        } else {
+            printf("Skipping non-directory or special entry: %s\n", entry->d_name);
+        }
+    }
+
+    closedir(dir);
+    printf("Finished loading games from directory: %s\n", directory);
+    return true;
+}
+
 void apps_menu_create(void) {
+
     display_manager_fill_screen(lv_color_black());
 
-    // Set border colors for apps
-    app_items[0].border_color = lv_color_make(255, 215, 0);
-
     // Calculate total pages
-    total_pages = (num_apps + apps_per_page - 1) / apps_per_page;
+    total_pages = (num_games + apps_per_page - 1) / apps_per_page;
 
     static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
     static lv_coord_t row_dsc[] = {
@@ -142,6 +224,8 @@ void apps_menu_create(void) {
     }
 #endif // USE_TOUCHSCREEN
 
+    load_games_from_directory("/mnt/ghostesp/games");
+
     // Create App Items for Current Page
     refresh_apps_menu();
 
@@ -153,20 +237,22 @@ void apps_menu_create(void) {
 }
 
 void refresh_apps_menu(void) {
-    // Delete existing app items except the back button and next/prev buttons (if touchscreen)
+    // Delete existing app items except the back button and navigation buttons
     uint32_t child_count = lv_obj_get_child_cnt(apps_container);
-    for (int32_t i = child_count - 1; i >= 0; i--) { // Iterate in reverse order
+    for (int32_t i = child_count - 1; i >= 0; i--) {
         lv_obj_t *child = lv_obj_get_child(apps_container, i);
         int index = (int)(uintptr_t)lv_obj_get_user_data(child);
-        if (index >= 0) { // Delete app items
+        if (index >= 0) {
             lv_obj_del(child);
         }
     }
 
+    // Calculate display range for pagination
     int start_index = current_page * apps_per_page;
     int end_index = start_index + apps_per_page;
-    if (end_index > num_apps) end_index = num_apps;
+    if (end_index > num_games) end_index = num_games;
 
+    // Screen resolution
     lv_disp_t *disp = lv_disp_get_default();
     int hor_res = lv_disp_get_hor_res(disp);
     int ver_res = lv_disp_get_ver_res(disp);
@@ -174,48 +260,37 @@ void refresh_apps_menu(void) {
     int button_width = hor_res / 4;
     int button_height = ver_res / 4;
 
-    int icon_width = 50;
-    int icon_height = 50;
+    const lv_font_t *font = (ver_res <= 128) ? &lv_font_montserrat_10 :
+                            (ver_res <= 240) ? &lv_font_montserrat_16 : &lv_font_montserrat_18;
 
-    const lv_font_t *font;
-    if (ver_res <= 128) {
-        font = &lv_font_montserrat_10;
-    } else if (ver_res <= 240) {
-        font = &lv_font_montserrat_16;
-    } else {
-        font = &lv_font_montserrat_18;
-    }
-
+    // Add game items to menu
     for (int i = start_index; i < end_index; i++) {
         int display_index = i - start_index;
 
         lv_obj_t *app_item = lv_btn_create(apps_container);
         lv_obj_set_size(app_item, button_width, button_height);
         lv_obj_set_style_bg_color(app_item, lv_color_black(), 0);
-        lv_obj_set_style_border_color(app_item, app_items[i].border_color, 0);
+        lv_obj_set_style_border_color(app_item, game_items[i].border_color, 0);
         lv_obj_set_style_border_width(app_item, 2, 0);
         lv_obj_set_style_radius(app_item, 10, 0);
         lv_obj_set_scrollbar_mode(app_item, LV_SCROLLBAR_MODE_OFF);
         lv_obj_set_style_pad_all(app_item, 5, 0);
 
-        if (ver_res >= 240 && app_items[i].icon) {
+        // Load the icon dynamically
+        if (ver_res >= 240 && game_items[i].icon_path) {
             lv_obj_t *icon = lv_img_create(app_item);
-            lv_img_set_src(icon, app_items[i].icon);
-            lv_obj_set_size(icon, icon_width, icon_height);
+            lv_img_set_src(icon, game_items[i].icon_path);  // Load from path
+            lv_obj_set_size(icon, 50, 50);
             lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 10);
         }
 
-        if (ver_res <= 135)
-        {
-            lv_obj_t *label = lv_label_create(app_item);
-            lv_label_set_text(label, app_items[i].name);
-            lv_obj_set_style_text_font(label, font, 0);
-            lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-            lv_obj_set_style_text_color(label, lv_color_white(), 0);
-        }
-       
+        lv_obj_t *label = lv_label_create(app_item);
+        lv_label_set_text(label, game_items[i].name);
+        lv_obj_set_style_text_font(label, font, 0);
+        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        lv_obj_set_style_text_color(label, lv_color_white(), 0);
 
-        int row_idx = 1 + (display_index / 3); // Rows 1 and 2 for apps
+        int row_idx = 1 + (display_index / 3);  // Rows 1 and 2 for apps
         lv_obj_set_grid_cell(app_item, LV_GRID_ALIGN_CENTER, display_index % 3, 1, LV_GRID_ALIGN_START, row_idx, 1);
 
         lv_obj_set_user_data(app_item, (void *)(intptr_t)i);
@@ -237,7 +312,6 @@ void refresh_apps_menu(void) {
 #endif
 
 #ifndef CONFIG_USE_TOUCHSCREEN
-    // For devices without touchscreens, ensure selected_app_index is within the current page
     if (selected_app_index != -1 && (selected_app_index < start_index || selected_app_index >= end_index)) {
         selected_app_index = start_index;
     }
@@ -256,12 +330,10 @@ void handle_apps_button_press(int ButtonPressed) {
             display_manager_switch_view(&main_menu_view);
         } else {
             printf("Launching app via joystick: %d\n", selected_app_index);
-            if (selected_app_index == 0) {
-                display_manager_switch_view(&flappy_bird_view);
-            }
-            else if (selected_app_index == 1)
-            {
-
+            if (game_items[selected_app_index].icon_path != NULL) {
+                SelectedScriptPath = game_items[selected_app_index].script_path;
+                display_manager_switch_view(&script_view);
+                return;
             }
         }
     }
@@ -314,8 +386,10 @@ void apps_menu_event_handler(InputEvent *event) {
 
         if (touched_app_index >= 0) {
             printf("Touch input detected on app item: %d\n", touched_app_index);
-            if (touched_app_index == 0) {
-                display_manager_switch_view(&flappy_bird_view);
+            if (game_items[touched_app_index].icon_path != NULL) {
+                SelectedScriptPath = game_items[touched_app_index].script_path;
+                display_manager_switch_view(&script_view);
+                return;
             }
             else if (touched_app_index == 1)
             {
@@ -345,15 +419,15 @@ void update_app_item_styles(void) {
             lv_obj_set_style_border_color(app_item, lv_color_make(255, 255, 0), 0);
             lv_obj_set_style_border_width(app_item, 4, 0);
         } else {
-            lv_obj_set_style_border_color(app_item, app_items[index].border_color, 0);
+            lv_obj_set_style_border_color(app_item, game_items[index].border_color, 0);
             lv_obj_set_style_border_width(app_item, 2, 0);
         }
     }
 }
 
 void select_app_item(int index) {
-    if (index < -1) index = num_apps - 1;
-    if (index > num_apps - 1) index = -1;
+    if (index < -1) index = num_games - 1;
+    if (index > num_games - 1) index = -1;
 
     selected_app_index = index;
 
@@ -374,10 +448,12 @@ void select_app_item(int index) {
 }
 
 void apps_menu_destroy(void) {
-    if (apps_container) {
-        lv_obj_clean(apps_container);
-        lv_obj_del(apps_container);
-        apps_container = NULL;
+    if (apps_menu_view.root) {
+        lv_obj_clean(apps_menu_view.root);
+        lv_obj_del(apps_menu_view.root);
+        apps_menu_view.root = NULL;
+        num_games = 0;
+        memset(game_items, 0, sizeof(game_items));
     }
 }
 
