@@ -141,6 +141,9 @@ typedef void *nmea_parser_handle_t;
  * @brief Default configuration for NMEA Parser
  *
  */
+
+#ifdef CONFIG_GPS_UART_RX_PIN
+
 #define NMEA_PARSER_CONFIG_DEFAULT()              \
     {                                             \
         .uart = {                                 \
@@ -153,7 +156,20 @@ typedef void *nmea_parser_handle_t;
             .event_queue_size = 16                \
         }                                         \
     }
-
+#else
+    #define NMEA_PARSER_CONFIG_DEFAULT()              \
+    {                                             \
+        .uart = {                                 \
+            .uart_port = UART_NUM_1,              \
+            .rx_pin = 1,\
+            .baud_rate = 9600,                    \
+            .data_bits = UART_DATA_8_BITS,        \
+            .parity = UART_PARITY_DISABLE,        \
+            .stop_bits = UART_STOP_BITS_1,        \
+            .event_queue_size = 16                \
+        }                                         \
+    }
+#endif
 /**
  * @brief NMEA Parser Event ID
  *
