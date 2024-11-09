@@ -41,12 +41,16 @@ Due to the **alpha** status, users should expect potential limitations, feature 
 
 ## Getting Started
 
-To install and configure Ghost ESP, follow our [Flashing Guide](https://github.com/Spooks4576/Ghost_ESP/blob/main/docs/HOWTOFLASH.md) for step-by-step instructions. Be sure to check for any known limitations specific to your ESP32 model before proceeding.
+To install and configure Ghost ESP, follow our [Flashing Guide](https://github.com/Spooks4576/Ghost_ESP/wiki) for step-by-step instructions. Be sure to check for any known limitations specific to your ESP32 model before proceeding.
 
 Make sure to check out our discord [Discord](https://discord.gg/PkdjxqYKe4)
 
+## What Makes this different than ESP32 Marauder 
+This table should explain the key differences between ghost esp and ESP32 Marauder
 
-[![Flashing Tutorial](https://img.shields.io/badge/Tutorial-Flashing-blue)](https://github.com/Spooks4576/Ghost_ESP/wiki)
+![Ghost_VS_Marauder](https://cdn.spookytools.com/assets/GhostESP_vs_Marauder_Comparison_Dark_Theme.png)
+
+
 
 ## Special Acknowledgments
 
