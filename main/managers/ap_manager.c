@@ -18,6 +18,8 @@
 #include <sys/stat.h>
 
 #define MAX_LOG_BUFFER_SIZE 4096 // Adjust as needed
+#define MAX_FILE_SIZE (5 * 1024 * 1024) // 5 MB
+#define BUFFER_SIZE (1024) // 1 KB buffer size for reading chunks
 #define MIN_(a,b) ((a) < (b) ? (a) : (b))
 static char log_buffer[MAX_LOG_BUFFER_SIZE];
 static size_t log_buffer_index = 0;
@@ -239,6 +241,86 @@ static esp_err_t api_sd_card_post_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+static esp_err_t api_sd_card_upload_handler(httpd_req_t *req) {
+    ESP_LOGI(TAG, "Received file upload request.");
+
+    // Buffer for file name extraction
+    char file_name[128] = {0};
+    char *boundary = strstr(req->uri, "?filename="); // Example: /api/sdcard/upload?filename=example.txt
+    if (boundary) {
+        snprintf(file_name, sizeof(file_name), "/mnt/%s", boundary + 10);
+    } else {
+        ESP_LOGE(TAG, "Invalid filename in request.");
+        httpd_resp_set_status(req, "400 Bad Request");
+        httpd_resp_sendstr(req, "{\"error\": \"Filename is required in query string.\"}");
+        return ESP_FAIL;
+    }
+
+    // Open file for writing
+    FILE *file = fopen(file_name, "wb");
+    if (!file) {
+        ESP_LOGE(TAG, "Failed to open file for writing: %s", file_name);
+        httpd_resp_set_status(req, "500 Internal Server Error");
+        httpd_resp_sendstr(req, "{\"error\": \"Failed to create file.\"}");
+        return ESP_FAIL;
+    }
+
+    // Allocate memory for the buffer on the heap
+    char *buf = malloc(BUFFER_SIZE);
+    if (!buf) {
+        ESP_LOGE(TAG, "Failed to allocate memory for file buffer.");
+        fclose(file);
+        httpd_resp_set_status(req, "500 Internal Server Error");
+        httpd_resp_sendstr(req, "{\"error\": \"Failed to allocate memory.\"}");
+        return ESP_FAIL;
+    }
+
+    // Receive and write data in chunks
+    int received;
+    size_t total_received = 0;
+
+    while ((received = httpd_req_recv(req, buf, BUFFER_SIZE)) > 0) {
+        if (total_received + received > MAX_FILE_SIZE) {
+            ESP_LOGE(TAG, "File exceeds maximum allowed size.");
+            free(buf);
+            fclose(file);
+            httpd_resp_set_status(req, "413 Payload Too Large");
+            httpd_resp_sendstr(req, "{\"error\": \"File size exceeds the limit.\"}");
+            return ESP_FAIL;
+        }
+
+        if (fwrite(buf, 1, received, file) != received) {
+            ESP_LOGE(TAG, "Failed to write data to file.");
+            free(buf);
+            fclose(file);
+            httpd_resp_set_status(req, "500 Internal Server Error");
+            httpd_resp_sendstr(req, "{\"error\": \"Failed to write to file.\"}");
+            return ESP_FAIL;
+        }
+
+        total_received += received;
+    }
+
+    // Check for errors during reception
+    if (received < 0) {
+        ESP_LOGE(TAG, "Error receiving file data.");
+        free(buf);
+        fclose(file);
+        httpd_resp_set_status(req, "500 Internal Server Error");
+        httpd_resp_sendstr(req, "{\"error\": \"Failed to receive file data.\"}");
+        return ESP_FAIL;
+    }
+
+    // Clean up
+    free(buf);
+    fclose(file);
+
+    ESP_LOGI(TAG, "File uploaded successfully: %s, size: %d bytes", file_name, total_received);
+    httpd_resp_set_status(req, "200 OK");
+    httpd_resp_sendstr(req, "{\"message\": \"File uploaded successfully.\"}");
+    return ESP_OK;
+}
+
 
 esp_err_t ap_manager_init(void) {
     esp_err_t ret;
@@ -420,9 +502,16 @@ esp_err_t ap_manager_init(void) {
     };
 
     httpd_uri_t uri_sd_card_post = {
-        .uri       = "/api/sdcard",
+        .uri       = "/api/sdcard/download",
         .method    = HTTP_POST,
         .handler   = api_sd_card_post_handler,
+        .user_ctx  = NULL
+    };
+
+    httpd_uri_t uri_sd_card_post_upload = {
+        .uri       = "/api/sdcard/upload",
+        .method    = HTTP_POST,
+        .handler   = api_sd_card_upload_handler,
         .user_ctx  = NULL
     };
 
@@ -433,6 +522,11 @@ esp_err_t ap_manager_init(void) {
         .handler   = api_command_handler,
         .user_ctx  = NULL
     };
+
+    ret = httpd_register_uri_handler(server, &uri_sd_card_post_upload);
+        if (ret != ESP_OK) {
+        printf("Error registering URI\n");
+    }
 
     ret = httpd_register_uri_handler(server, &uri_sd_card_post);
         if (ret != ESP_OK) {
