@@ -8,11 +8,13 @@
 #include "driver/sdmmc_host.h"
 #include "driver/sdmmc_defs.h"
 #include "driver/sdmmc_types.h"
+#include "driver/i2c.h"
 #include "managers/sd_card_manager.h"
 #include "driver/gpio.h"
 #include "esp_heap_trace.h"
 #include "core/utils.h"
 #include "vendor/pcap.h"
+#include "vendor/drivers/CH422G.h"
 
 static const char *SD_TAG = "SD_Card_Manager";
 
@@ -157,6 +159,86 @@ esp_err_t sd_card_init(void) {
 #elif CONFIG_USING_SPI
 
     printf("Initializing SD card in SPI mode...\n");
+
+
+#ifdef CONFIG_Waveshare_LCD
+    #define I2C_NUM         I2C_NUM_0 // Replace with your I2C port number
+    #define I2C_ADDRESS     0x24      // Replace with the CH422G's I2C address
+    #define EXIO4_BIT       (1 << 4)  // EXIO4 corresponds to the 4th bit in the output register
+    #define EXIO1_BIT       (1 << 1)
+
+    esp_io_expander_ch422g_t *ch422g_dev = NULL;
+    esp_err_t err;
+
+    // Initialize CH422G device
+    err = ch422g_new_device(I2C_NUM, I2C_ADDRESS, &ch422g_dev);
+    if (err != ESP_OK) {
+        printf("Failed to initialize CH422G: %s\n", esp_err_to_name(err));
+        return err;
+    }
+
+    // Read and print initial register values
+    uint32_t direction, output_value;
+
+    err = ch422g_read_direction_reg(ch422g_dev, &direction);
+    if (err != ESP_OK) {
+        printf("Failed to read direction register: %s\n", esp_err_to_name(err));
+        cleanup_resources(ch422g_dev, I2C_NUM);
+        return err;
+    }
+    printf("Initial direction register: 0x%03lX\n", direction);
+
+    err = ch422g_read_output_reg(ch422g_dev, &output_value);
+    if (err != ESP_OK) {
+        printf("Failed to read output register: %s\n", esp_err_to_name(err));
+        cleanup_resources(ch422g_dev, I2C_NUM);
+        return err;
+    }
+    printf("Initial output register: 0x%03lX\n", output_value);
+
+    // Step 1: Configure EXIO1 (TP_RST) for touch controller
+    direction &= ~EXIO1_BIT;    // Set EXIO1 as output
+    output_value |= EXIO1_BIT;  // Drive EXIO1 high (default state)
+
+    err = ch422g_write_direction_reg(ch422g_dev, direction);
+    if (err != ESP_OK) {
+        printf("Failed to write direction register for EXIO1: %s\n", esp_err_to_name(err));
+        cleanup_resources(ch422g_dev, I2C_NUM);
+        return err;
+    }
+    err = ch422g_write_output_reg(ch422g_dev, output_value);
+    if (err != ESP_OK) {
+        printf("Failed to write output register for EXIO1: %s\n", esp_err_to_name(err));
+        cleanup_resources(ch422g_dev, I2C_NUM);
+        return err;
+    }
+
+    // Step 2: Configure EXIO4 (SD_CS) for SD card
+    direction &= ~EXIO4_BIT;    // Set EXIO4 as output
+    output_value &= ~EXIO4_BIT; // Set EXIO4 low (default state for SD_CS)
+
+    err = ch422g_write_direction_reg(ch422g_dev, direction);
+    if (err != ESP_OK) {
+        printf("Failed to write direction register for EXIO4: %s\n", esp_err_to_name(err));
+        cleanup_resources(ch422g_dev, I2C_NUM);
+        return err;
+    }
+    err = ch422g_write_output_reg(ch422g_dev, output_value);
+    if (err != ESP_OK) {
+        printf("Failed to write output register for EXIO4: %s\n", esp_err_to_name(err));
+        cleanup_resources(ch422g_dev, I2C_NUM);
+        return err;
+    }
+
+    // Debugging: Print final register states
+    printf("Final direction register: 0x%03lX\n", direction);
+    printf("Final output register: 0x%03lX\n", output_value);
+
+    // Clean up resources
+    cleanup_resources(ch422g_dev, I2C_NUM);
+#endif
+
+
 
 
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
