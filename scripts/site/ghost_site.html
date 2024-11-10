@@ -308,11 +308,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP vA1.3.7</h1>
+        <h1>Ghost ESP vA1.4.1</h1>
         <!-- Tab navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
             <button class="tablinks" onclick="openTab(event, 'Help')">Help</button>
+            <button class="tablinks" onclick="openTab(event, 'SDCard')">SD Card</button>
         </div>
         <!-- Settings Tab Content -->
         <div id="Settings" class="tabcontent show">
@@ -585,10 +586,98 @@
                     <strong>Alignment options:</strong> CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left
                 </li>
             </ul>
-        </div>        
+        </div>     
+        <div id="SDCard" class="tabcontent">
+            <h2>SD Card File Explorer</h2>
+            <div id="sdcard-status">
+                Loading SD card data...
+            </div>
+            <div id="sdcard-structure">
+            </div>
+        </div>   
     </div>
     <!-- JavaScript for interactivity -->
     <script>
+
+
+        async function fetchSDCardStructure() {
+            const statusElement = document.getElementById("sdcard-status");
+            const structureElement = document.getElementById("sdcard-structure");
+
+            try {
+                const response = await fetch("/api/sdcard");
+                const data = await response.json();
+
+                if (response.ok) {
+                    renderSDCardStructure(data, structureElement);
+                    statusElement.textContent = "SD card data loaded successfully.";
+                } else {
+                    throw new Error(data.message || "SD card not supported or error occurred.");
+                }
+            } catch (error) {
+                statusElement.textContent = error.message || "Failed to load SD card data.";
+                structureElement.innerHTML = "";
+            }
+        }
+
+
+        function renderSDCardStructure(data, container) {
+            container.innerHTML = "";
+
+            const createTree = (items, parentElement) => {
+                const ul = document.createElement("ul");
+
+                items.forEach(item => {
+                    const li = document.createElement("li");
+                    li.textContent = item.name;
+
+                    if (item.type === "file") {
+                        const downloadButton = document.createElement("button");
+                        downloadButton.textContent = "Download";
+                        downloadButton.onclick = () => downloadFile(item.path);
+                        li.appendChild(downloadButton);
+                    }
+
+                    if (item.type === "folder") {
+                        createTree(item.children, li);
+                    }
+
+                    ul.appendChild(li);
+                });
+
+                parentElement.appendChild(ul);
+            };
+
+            createTree(data, container);
+        }
+
+
+        async function downloadFile(filePath) {
+            try {
+                const response = await fetch("/api/sdcard", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ path: filePath })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = filePath.split("/").pop(); // Use the file name from the path
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.message || "Failed to download the file.");
+                }
+            } catch (error) {
+                alert("An error occurred while trying to download the file.");
+            }
+        }
+
+
         // Function to handle tab switching
         function openTab(evt, tabName) {
             var i, tabcontent, tablinks;
@@ -602,6 +691,11 @@
             }
             document.getElementById(tabName).classList.add("show");
             evt.currentTarget.classList.add("active");
+
+            if (tabName === "SDCard")
+            {
+                fetchSDCardStructure();
+            }
         }
         // Set the default tab to open on page load
         document.getElementById("defaultTab").click();
@@ -931,10 +1025,6 @@
                 }
             }
         }
-
-
-        // Example: Toggling a section (uncomment to use)
-        // toggleSection('connect-wifi-section', true); // Disable
         toggleSection('connect-wifi-section', false); // Enable
     </script>
 </body>
