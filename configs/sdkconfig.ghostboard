@@ -542,6 +542,77 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# Ghost ESP Options
+#
+
+#
+# LED Options
+#
+CONFIG_USE_NEOPIXEL=y
+CONFIG_LED_DATA_PIN=10
+CONFIG_NUM_LEDS=3
+# end of LED Options
+
+#
+# Display Options
+#
+# CONFIG_WITH_SCREEN is not set
+# CONFIG_USE_TOUCHSCREEN is not set
+# CONFIG_USE_JOYSTICK is not set
+# CONFIG_USE_CARDPUTER is not set
+# CONFIG_USE_7_INCHER is not set
+# CONFIG_Waveshare_LCD is not set
+# CONFIG_Crowtech_LCD is not set
+# CONFIG_Sunton_LCD is not set
+# CONFIG_USE_ILI9341_2 is not set
+# end of Display Options
+
+#
+# Ghost Board Config
+#
+CONFIG_IS_GHOST_BOARD=y
+# CONFIG_GHOST_GPS_MODE is not set
+# CONFIG_GHOST_MARAUDER_MODE is not set
+# end of Ghost Board Config
+
+#
+# GPS Configuration
+#
+CONFIG_HAS_GPS=y
+CONFIG_GPS_UART_RX_PIN=2
+CONFIG_NMEA_PARSER_RING_BUFFER_SIZE=1024
+CONFIG_NMEA_PARSER_TASK_STACK_SIZE=3072
+CONFIG_NMEA_PARSER_TASK_PRIORITY=2
+
+#
+# NMEA Statement Support
+#
+
+#
+# At least one statement must be selected
+#
+CONFIG_NMEA_STATEMENT_GGA=y
+CONFIG_NMEA_STATEMENT_GSA=y
+CONFIG_NMEA_STATEMENT_GSV=y
+CONFIG_NMEA_STATEMENT_RMC=y
+CONFIG_NMEA_STATEMENT_GLL=y
+CONFIG_NMEA_STATEMENT_VTG=y
+# end of NMEA Statement Support
+# end of GPS Configuration
+
+#
+# SPI and MMC Configuration
+#
+CONFIG_USING_SPI=y
+# CONFIG_USING_MMC is not set
+CONFIG_SD_SPI_CS_PIN=23
+CONFIG_SD_SPI_CLK_PIN=19
+CONFIG_SD_SPI_MISO_PIN=20
+CONFIG_SD_SPI_MOSI_PIN=18
+# end of SPI and MMC Configuration
+# end of Ghost ESP Options
+
+#
 # Compiler options
 #
 # CONFIG_COMPILER_OPTIMIZATION_DEBUG is not set
@@ -1567,6 +1638,7 @@ CONFIG_LOG_DEFAULT_LEVEL_WARN=y
 # CONFIG_LOG_DEFAULT_LEVEL_VERBOSE is not set
 CONFIG_LOG_DEFAULT_LEVEL=2
 CONFIG_LOG_MAXIMUM_EQUALS_DEFAULT=y
+# CONFIG_LOG_MAXIMUM_LEVEL_INFO is not set
 # CONFIG_LOG_MAXIMUM_LEVEL_DEBUG is not set
 # CONFIG_LOG_MAXIMUM_LEVEL_VERBOSE is not set
 CONFIG_LOG_MAXIMUM_LEVEL=2
@@ -2144,58 +2216,6 @@ CONFIG_WIFI_PROV_STA_ALL_CHANNEL_SCAN=y
 # end of Wi-Fi Provisioning Manager
 
 #
-# Ghost ESP Options
-#
-
-#
-# LED Options
-#
-CONFIG_USE_NEOPIXEL=y
-CONFIG_LED_DATA_PIN=10
-CONFIG_NUM_LEDS=3
-# end of LED Options
-
-#
-# Display Options
-#
-# CONFIG_WITH_SCREEN is not set
-# CONFIG_USE_TOUCHSCREEN is not set
-# CONFIG_USE_JOYSTICK is not set
-# CONFIG_USE_CARDPUTER is not set
-# CONFIG_USE_7_INCHER is not set
-# CONFIG_Waveshare_LCD is not set
-# CONFIG_Crowtech_LCD is not set
-# CONFIG_Sunton_LCD is not set
-# CONFIG_USE_ILI9341_2 is not set
-# end of Display Options
-
-#
-# Ghost Board Config
-#
-CONFIG_IS_GHOST_BOARD=y
-# CONFIG_GHOST_GPS_MODE is not set
-# CONFIG_GHOST_MARAUDER_MODE is not set
-# end of Ghost Board Config
-
-#
-# GPS Configuration
-#
-# CONFIG_HAS_GPS is not set
-# end of GPS Configuration
-
-#
-# SPI and MMC Configuration
-#
-CONFIG_USING_SPI=y
-# CONFIG_USING_MMC is not set
-CONFIG_SD_SPI_CS_PIN=23
-CONFIG_SD_SPI_CLK_PIN=19
-CONFIG_SD_SPI_MISO_PIN=20
-CONFIG_SD_SPI_MOSI_PIN=18
-# end of SPI and MMC Configuration
-# end of Ghost ESP Options
-
-#
 # LVGL configuration
 #
 CONFIG_LV_CONF_SKIP=y
@@ -2641,8 +2661,8 @@ CONFIG_MDNS_PREDEF_NETIF_ETH=y
 # CONFIG_NO_BLOBS is not set
 # CONFIG_LOG_BOOTLOADER_LEVEL_NONE is not set
 # CONFIG_LOG_BOOTLOADER_LEVEL_ERROR is not set
-# CONFIG_LOG_BOOTLOADER_LEVEL_WARN is not set
-CONFIG_LOG_BOOTLOADER_LEVEL_INFO=y
+CONFIG_LOG_BOOTLOADER_LEVEL_WARN=y
+# CONFIG_LOG_BOOTLOADER_LEVEL_INFO is not set
 # CONFIG_LOG_BOOTLOADER_LEVEL_DEBUG is not set
 # CONFIG_LOG_BOOTLOADER_LEVEL_VERBOSE is not set
 CONFIG_LOG_BOOTLOADER_LEVEL=2
