@@ -10,7 +10,7 @@
             --background-color: #000000;
             --primary-color: #ff5500;
             --secondary-color: #110800;
-            --accent-color: #331e00;
+            --accent-color: rgba(255, 85, 0, 0.3);
             --text-color: #ff5500;
             --border-color: #ff5500;
             --tooltip-bg: #331e00;
@@ -20,6 +20,13 @@
             --input-bg: #110800;
             --input-border: #ff5500;
             --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
         }
 
         /* Global Styles */
@@ -40,28 +47,41 @@
         h1, h2, h3 {
             text-align: center;
             color: var(--primary-color);
-            margin-top: 0;
-            margin-bottom: 20px;
+            margin-top: 56px;
+            margin-bottom: 24px;
         }
 
         /* Tabs Styling */
         .tab {
             display: flex;
             justify-content: space-around;
-            border-bottom: 2px solid var(--primary-color);
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
             margin-bottom: 30px;
+            padding: 4px;
         }
 
         .tab button {
+            max-width: none;
             flex: 1;
             background: none;
             border: none;
+            border-radius: 6px;
             outline: none;
             cursor: pointer;
             padding: 15px 0;
+            margin: 0 2px;
             font-size: 18px;
             color: var(--primary-color);
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        .tab button:first-child {
+            margin-left: 0;
+        }
+
+        .tab button:last-child {
+            margin-right: 0;
         }
 
         .tab button:hover,
@@ -85,158 +105,6 @@
             to {opacity: 1;}
         }
 
-        .breadcrumb {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.breadcrumb-item {
-    color: var(--primary-color);
-    cursor: pointer;
-    margin-right: 8px;
-    position: relative;
-    padding: 4px 0;
-    transition: color 0.3s;
-}
-
-.breadcrumb-item:hover {
-    color: #ffffff;
-}
-
-.breadcrumb-item::after {
-    content: '/';
-    margin-left: 8px;
-    color: var(--primary-color);
-}
-
-.breadcrumb-item:last-child::after {
-    content: '';
-}
-
-.breadcrumb-item:last-child {
-    font-weight: bold;
-    cursor: default;
-    color: #ffffff;
-}
-
-/* File Explorer Styling */
-.file-explorer {
-    list-style-type: none;
-    padding: 0;
-}
-
-.file-explorer li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 15px;
-    background-color: var(--secondary-color);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    margin-bottom: 10px;
-    transition: background-color 0.3s;
-}
-
-.file-explorer li:hover {
-    background-color: var(--accent-color);
-}
-
-.file-explorer .file-name {
-    display: flex;
-    align-items: center;
-    cursor: default;
-}
-
-.file-explorer .file-name.folder {
-    cursor: pointer;
-    color: var(--primary-color);
-}
-
-.file-explorer .file-name.folder::before {
-    content: '📁';
-    margin-right: 10px;
-}
-
-.file-explorer .file-name.file::before {
-    content: '📄';
-    margin-right: 10px;
-}
-
-.file-explorer .download-button {
-    background-color: var(--button-bg);
-    color: var(--primary-color);
-    border: 2px solid var(--border-color);
-    border-radius: 6px;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-    font-size: 14px;
-}
-
-.file-explorer .download-button:hover {
-    background-color: var(--button-hover-bg);
-    color: #ffffff;
-}
-
-/* Upload Section Styling */
-.upload-section {
-    margin-top: 30px;
-    padding: 20px;
-    background-color: var(--secondary-color);
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
-}
-
-.upload-section h3 {
-    text-align: center;
-    color: var(--primary-color);
-    margin-bottom: 20px;
-}
-
-.upload-section .input-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.upload-section input[type="file"] {
-    padding: 10px;
-    font-size: 16px;
-    background-color: var(--input-bg);
-    border: 2px solid var(--input-border);
-    color: var(--text-color);
-    border-radius: 6px;
-    transition: border-color 0.3s, background-color 0.3s;
-}
-
-.upload-section input[type="file"]:focus {
-    border-color: var(--primary-color);
-    background-color: #1a0d00;
-    outline: none;
-}
-
-.upload-section button {
-    width: 150px;
-}
-
-/* Responsive Enhancements for Breadcrumb and File Explorer */
-@media (max-width: 600px) {
-    .breadcrumb {
-        font-size: 14px;
-    }
-    
-    .file-explorer li {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .file-explorer .download-button {
-        margin-top: 10px;
-    }
-        }
         .breadcrumb {
             display: flex;
             flex-wrap: wrap;
@@ -394,7 +262,7 @@
         .settings-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 20px;
+            gap: 28px;
         }
 
         .settings-section {
@@ -402,8 +270,16 @@
             background-color: var(--secondary-color);
             border: 2px solid var(--border-color);
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             position: relative;
+        }
+
+        .settings-section > :first-child {
+            margin-top: 0;
+        }
+
+        .settings-section > :last-child {
+            margin-bottom: 0;
         }
 
         @media (max-width: 768px) {
@@ -414,13 +290,18 @@
 
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             font-size: 16px;
         }
 
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             text-align: left;
+        }
+
+        .input-group:has(.toggle-switch), .input-group:has(.select-wrapper) {
+            display: flex;
+            justify-content: space-between;
         }
 
         input[type="number"],
@@ -430,12 +311,13 @@
         textarea {
             width: 100%;
             padding: 10px 15px;
+            font-family: inherit;
             font-size: 16px;
             background-color: var(--input-bg);
             border: 2px solid var(--input-border);
             color: var(--text-color);
             border-radius: 6px;
-            margin-top: 5px;
+            margin-top: 4px;
             box-sizing: border-box;
             transition: border-color 0.3s, background-color 0.3s;
         }
@@ -454,8 +336,8 @@
         .toggle-switch {
             position: relative;
             width: 60px;
-            height: 34px;
-            margin: 0 auto;
+            height: 30px;
+            margin: 0;
         }
 
         .toggle-switch input {
@@ -479,13 +361,13 @@
         .slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
+            width: 22px;
             background-color: var(--primary-color);
             border-radius: 50%;
             left: 4px;
             bottom: 4px;
-            transition: transform 0.4s;
+            aspect-ratio: 1 / 1;
+            transition: transform 0.4s, background-color 0.4s;
         }
 
         input:checked + .slider {
@@ -493,19 +375,21 @@
         }
 
         input:checked + .slider:before {
-            transform: translateX(26px);
+            background-color: var(--background-color);
+            transform: translateX(28px);
         }
 
         /* Buttons */
         button {
             background-color: var(--button-bg);
             color: var(--primary-color);
-            padding: 14px 25px;
+            padding: 12px 25px;
             border: 2px solid var(--border-color);
             border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
-            margin: 20px auto;
+            font-weight: 600;
+            margin: 32px auto 20px;
             display: block;
             transition: background-color 0.3s, color 0.3s;
             max-width: 220px;
@@ -542,8 +426,8 @@
         .select-wrapper {
             position: relative;
             width: 100%;
-            max-width: 400px;
-            margin: 0 auto;
+            max-width: 300px;
+            margin: 0;
         }
 
         .select-wrapper select {
@@ -571,11 +455,11 @@
             content: '\25BC'; /* Down arrow */
             position: absolute;
             right: 15px;
-            top: 50%;
+            top: 54%;
             transform: translateY(-50%);
             pointer-events: none;
             color: var(--primary-color);
-            font-size: 16px;
+            font-size: 14px;
         }
 
         /* Tooltip Styling */
@@ -612,7 +496,7 @@
             transform: translateX(-50%);
             border-width: 5px;
             border-style: solid;
-            border-color: var(--tooltip-bg) transparent transparent transparent;
+            border-color: var(--primary-color) transparent transparent transparent;
         }
 
         .tooltip:hover .tooltiptext {
@@ -626,49 +510,6 @@
             pointer-events: none;
             position: relative;
         }
-
-        /* Upload Section Styling */
-        .upload-section {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: var(--secondary-color);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-        }
-
-        .upload-section h3 {
-            text-align: center;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-        }
-
-        .upload-section .input-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .upload-section input[type="file"] {
-            padding: 10px;
-            font-size: 16px;
-            background-color: var(--input-bg);
-            border: 2px solid var(--input-border);
-            color: var(--text-color);
-            border-radius: 6px;
-            transition: border-color 0.3s, background-color 0.3s;
-        }
-
-        .upload-section input[type="file"]:focus {
-            border-color: var(--primary-color);
-            background-color: #1a0d00;
-            outline: none;
-        }
-
-        .upload-section button {
-            width: 150px;
-        }
-
 
         .disabled-overlay {
             position: absolute;
@@ -712,8 +553,8 @@
         .help-list li {
             background-color: var(--secondary-color);
             border: 2px solid var(--border-color);
-            border-radius: 6px;
-            padding: 15px;
+            border-radius: 12px;
+            padding: 16px 20px;
             margin-bottom: 15px;
         }
 
@@ -1106,28 +947,30 @@
             }
 
             const formData = new FormData();
-            formData.append('file', file);
 
-            // Determine the upload path based on the navigation stack
+            
             const currentFolder = getCurrentFolder();
             let uploadPath = '/mnt';
             if (navigationStack.length > 1) {
                 const pathParts = navigationStack.slice(1).map(folder => folder.name);
-                uploadPath = path.join(uploadPath, ...pathParts);
+                uploadPath = `${uploadPath}/${pathParts.join('/')}`;
             }
 
-            formData.append('path', uploadPath);
+            
+            formData.append('file', file);
 
             try {
-                // Show uploading status
                 const statusElement = document.getElementById('sdcard-status');
                 statusElement.textContent = 'Uploading file...';
 
-                const response = await fetch('/api/sdcard/upload', {
+                
+                const uploadUrl = `/api/sdcard/upload?path=${encodeURIComponent(uploadPath)}`;
+
+                
+                const response = await fetch(uploadUrl, {
                     method: 'POST',
                     body: formData
                 });
-
                 const result = await response.json();
 
                 if (response.ok) {
@@ -1136,7 +979,7 @@
                     statusElement.textContent = 'File uploaded successfully.';
                     fileInput.value = '';
                 } else {
-                    throw new Error(result.message || 'Failed to upload the file.');
+                    throw new Error(result.error || result.message || 'Failed to upload the file.');
                 }
             } catch (error) {
                 console.error('Error uploading file:', error);

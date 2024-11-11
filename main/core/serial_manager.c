@@ -109,33 +109,32 @@ int handle_serial_command(const char *input) {
     int argc = 0;
     char *p = input_copy;
 
-    while (isspace((unsigned char)*p)) {
+    // Replace all '*' with spaces and trim leading spaces
+    while (*p != '\0') {
+        if (*p == '*') {
+            *p = ' ';
+        }
         p++;
     }
 
+    p = input_copy; // Reset pointer to start of modified string
+
+    // Tokenize the input using spaces
     while (*p != '\0' && argc < 10) {
-        if (*p == '"') {
-            p++;
-            argv[argc++] = p;
-            while (*p != '\0' && *p != '"') {
-                p++;
-            }
-            if (*p == '"') {
-                *p = '\0';
-                p++;
-            }
-        } else {
-            argv[argc++] = p;
-            while (*p != '\0' && !isspace((unsigned char)*p)) {
-                p++;
-            }
-            if (*p != '\0') {
-                *p = '\0';
-                p++;
-            }
+        while (isspace((unsigned char)*p)) {
+            p++; // Skip spaces
         }
 
-        while (isspace((unsigned char)*p)) {
+        if (*p != '\0') {
+            argv[argc++] = p; // Store argument
+        }
+
+        while (*p != '\0' && !isspace((unsigned char)*p)) {
+            p++; // Move to end of the argument
+        }
+
+        if (*p != '\0') {
+            *p = '\0'; // Null-terminate the argument
             p++;
         }
     }
@@ -148,13 +147,13 @@ int handle_serial_command(const char *input) {
     CommandFunction cmd_func = find_command(argv[0]);
     if (cmd_func != NULL) {
         cmd_func(argc, argv);
+        free(input_copy);
         return ESP_OK;
     } else {
         printf("Unknown command: %s\n", argv[0]);
+        free(input_copy);
         return ESP_ERR_INVALID_ARG;
     }
-
-    free(input_copy);
 }
 
 void simulateCommand(const char *commandString) {
