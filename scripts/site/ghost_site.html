@@ -10,16 +10,17 @@
             --background-color: #000000;
             --primary-color: #ff5500;
             --secondary-color: #110800;
+            --primary-color-faded: rgba(255, 85, 0, 0.7);
             --accent-color: rgba(255, 85, 0, 0.3);
+            --accent-tone: rgba(255, 85, 0, 0.2);
             --text-color: #ff5500;
             --border-color: #ff5500;
-            --tooltip-bg: #331e00;
+            --tooltip-bg: #401805;
             --tooltip-text: #ff5500;
-            --button-bg: #331d00;
-            --button-hover-bg: #442700;
             --input-bg: #110800;
             --input-border: #ff5500;
             --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --foreground-opacity: 1;
         }
 
         input::-webkit-outer-spin-button,
@@ -73,6 +74,7 @@
             margin: 0 2px;
             font-size: 18px;
             color: var(--primary-color);
+            background-color: var(--secondary-color);
             transition: background-color 0.3s, color 0.3s;
         }
 
@@ -86,7 +88,7 @@
 
         .tab button:hover,
         .tab button.active {
-            background-color: var(--accent-color);
+            background-color: var(--accent-tone);
             color: #ffffff;
         }
 
@@ -113,22 +115,23 @@
         }
 
         .breadcrumb-item {
-            color: var(--primary-color);
+            color: var(--primary-color-faded);
             cursor: pointer;
             margin-right: 8px;
             position: relative;
             padding: 4px 0;
+            font-weight: bold;
             transition: color 0.3s;
         }
 
         .breadcrumb-item:hover {
-            color: #ffffff;
+            color: var(--primary-color);
         }
 
         .breadcrumb-item::after {
             content: '/';
             margin-left: 8px;
-            color: var(--primary-color);
+            color: #ffffff7f;
         }
 
         .breadcrumb-item:last-child::after {
@@ -136,7 +139,6 @@
         }
 
         .breadcrumb-item:last-child {
-            font-weight: bold;
             cursor: default;
             color: #ffffff;
         }
@@ -148,19 +150,55 @@
         }
 
         .file-explorer li {
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 10px 15px;
+            position: relative;
             background-color: var(--secondary-color);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            margin-bottom: 10px;
+            border-left: 2px solid var(--border-color);
+            border-right: 2px solid var(--border-color);
+            border-top: 0.5px solid var(--accent-color);
+            border-bottom: 0.5px solid var(--accent-color);
+            border-radius: var(--li-br-top) var(--li-br-top) var(--li-br-bottom) var(--li-br-bottom);
             transition: background-color 0.3s;
+            --li-br-top: 0;
+            --li-br-bottom: 0;
         }
 
-        .file-explorer li:hover {
-            background-color: var(--accent-color);
+        .file-explorer li:hover:has(.file-name.folder) {
+            background-color: var(--accent-tone);
+            cursor: pointer;
+        }
+
+        .file-explorer li:first-child {
+            border-top: 2px solid var(--border-color);
+            --li-br-top: 8px;
+        }
+
+        .file-explorer li:last-child {
+            border-bottom: 2px solid var(--border-color);
+            --li-br-bottom: 8px;
+        }
+
+        .file-explorer li:before {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 54%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .file-explorer li:has(.file-name.folder):before {
+            content: '\25B6';
+        }
+
+        .file-explorer li button {
+            margin: 0;
         }
 
         .file-explorer .file-name {
@@ -184,20 +222,9 @@
             margin-right: 10px;
         }
 
-        .file-explorer .download-button {
-            background-color: var(--button-bg);
-            color: var(--primary-color);
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
-            padding: 6px 12px;
-            cursor: pointer;
-            transition: background-color 0.3s, color 0.3s;
-            font-size: 14px;
-        }
-
-        .file-explorer .download-button:hover {
-            background-color: var(--button-hover-bg);
-            color: #ffffff;
+        .file-explorer .file-actions {
+            display: flex;
+            gap: 15px;
         }
 
         /* Upload Section Styling */
@@ -209,16 +236,17 @@
             border-radius: 8px;
         }
 
+        .upload-section > :first-child {
+            margin-top: 0;
+        }
+
+        .upload-section > :last-child {
+            margin-bottom: 0;
+        }
+
         .upload-section h3 {
             text-align: center;
             color: var(--primary-color);
-            margin-bottom: 20px;
-        }
-
-        .upload-section .input-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             margin-bottom: 20px;
         }
 
@@ -240,22 +268,6 @@
 
         .upload-section button {
             width: 150px;
-        }
-
-        /* Responsive Enhancements for Breadcrumb and File Explorer */
-        @media (max-width: 600px) {
-            .breadcrumb {
-                font-size: 14px;
-            }
-            
-            .file-explorer li {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .file-explorer .download-button {
-                margin-top: 10px;
-            }
         }
 
         /* Settings Grid */
@@ -299,7 +311,7 @@
             text-align: left;
         }
 
-        .input-group:has(.toggle-switch), .input-group:has(.select-wrapper) {
+        .input-group:has(input[type="file"]), .input-group:has(.toggle-switch), .input-group:has(.select-wrapper) {
             display: flex;
             justify-content: space-between;
         }
@@ -381,7 +393,7 @@
 
         /* Buttons */
         button {
-            background-color: var(--button-bg);
+            background-color: var(--secondary-color);
             color: var(--primary-color);
             padding: 12px 25px;
             border: 2px solid var(--border-color);
@@ -397,8 +409,14 @@
         }
 
         button:hover {
-            background-color: var(--button-hover-bg);
+            background-color: var(--accent-color);
             color: #ffffff;
+        }
+
+        button.small {
+            padding: 6px 25px;
+            width: auto;
+            font-size: 14px;
         }
 
         /* Textarea */
@@ -439,6 +457,7 @@
             color: var(--text-color);
             border-radius: 6px;
             appearance: none;
+            cursor: pointer;
             -webkit-appearance: none;
             -moz-appearance: none;
             background-image: none;
@@ -462,6 +481,24 @@
             font-size: 14px;
         }
 
+        .file-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .file-wrapper button {
+            margin: 0 0 0 20px;
+        }
+
+        .file-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-wrapper span {
+            color: #ffffff7f;
+            max-width: 200px;
+        }
+
         /* Tooltip Styling */
         .tooltip {
             position: relative;
@@ -477,7 +514,8 @@
             color: var(--tooltip-text);
             text-align: center;
             border-radius: 6px;
-            border: 1px solid var(--primary-color);
+            border: 2px solid var(--primary-color);
+            filter: drop-shadow(0 0 13px rgb(0 0 0 / 0.3)) drop-shadow(0 0 5px rgb(0 0 0 / 0.8));
             padding: 8px;
             position: absolute;
             z-index: 1;
@@ -897,6 +935,7 @@
                 </li>
             </ul>
         </div>
+
         <!-- SD Card Tab Content -->
         <div id="SDCard" class="tabcontent">
             <h2>SD Card File Explorer</h2>
@@ -918,18 +957,23 @@
             
             <!-- Upload File Section -->
             <div class="upload-section">
-                <h3>Upload File</h3>
+                <h2>Upload File</h2>
                 <div class="input-group">
                     <label for="sdcard-upload">Choose File 
                         <span class="tooltip">?
                             <span class="tooltiptext">Select a file to upload to the current folder on the SD Card.</span>
                         </span>
                     </label>
-                    <input type="file" id="sdcard-upload" accept="*/*">
+                    <div class="file-wrapper">
+                        <span id="upload-file-name">No files selected</span>
+                        <button class="small" onclick="document.getElementById('sdcard-upload').click()">Upload</button>
+                        <input type="file" id="sdcard-upload" accept="*/*" onchange="document.getElementById('upload-file-name').innerText = this.files[0].name">
+                    </div>
                 </div>
                 <button onclick="uploadFile()">Upload</button>
             </div>
-        </div>        
+        </div>
+        
     </div>
     <!-- JavaScript for Interactivity -->
     <script>
@@ -947,30 +991,28 @@
             }
 
             const formData = new FormData();
+            formData.append('file', file);
 
-            
+            // Determine the upload path based on the navigation stack
             const currentFolder = getCurrentFolder();
             let uploadPath = '/mnt';
             if (navigationStack.length > 1) {
                 const pathParts = navigationStack.slice(1).map(folder => folder.name);
-                uploadPath = `${uploadPath}/${pathParts.join('/')}`;
+                uploadPath = path.join(uploadPath, ...pathParts);
             }
 
-            
-            formData.append('file', file);
+            formData.append('path', uploadPath);
 
             try {
+                // Show uploading status
                 const statusElement = document.getElementById('sdcard-status');
                 statusElement.textContent = 'Uploading file...';
 
-                
-                const uploadUrl = `/api/sdcard/upload?path=${encodeURIComponent(uploadPath)}`;
-
-                
-                const response = await fetch(uploadUrl, {
+                const response = await fetch('/api/sdcard/upload', {
                     method: 'POST',
                     body: formData
                 });
+
                 const result = await response.json();
 
                 if (response.ok) {
@@ -979,7 +1021,7 @@
                     statusElement.textContent = 'File uploaded successfully.';
                     fileInput.value = '';
                 } else {
-                    throw new Error(result.error || result.message || 'Failed to upload the file.');
+                    throw new Error(result.message || 'Failed to upload the file.');
                 }
             } catch (error) {
                 console.error('Error uploading file:', error);
@@ -1046,11 +1088,24 @@
                 li.appendChild(fileName);
 
                 if (item.type === "file") {
+                    const actionContainer = document.createElement("div");
+                    actionContainer.classList.add("file-actions");
+
                     const downloadBtn = document.createElement("button");
                     downloadBtn.textContent = "Download";
+                    downloadBtn.classList.add("small");
                     downloadBtn.classList.add("download-button");
                     downloadBtn.onclick = () => downloadFile(item.path);
-                    li.appendChild(downloadBtn);
+                    actionContainer.appendChild(downloadBtn);
+
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.textContent = "Delete";
+                    deleteBtn.classList.add("small");
+                    deleteBtn.classList.add("delete-button");
+                    deleteBtn.onclick = () => deleteFile(item.name, item.path);
+                    actionContainer.appendChild(deleteBtn);
+
+                    li.appendChild(actionContainer);
                 }
 
                 ul.appendChild(li);
@@ -1079,12 +1134,6 @@
                 }
 
                 breadcrumb.appendChild(crumb);
-
-                if (index < navigationStack.length - 1) {
-                    const separator = document.createElement("span");
-                    separator.textContent = '/';
-                    breadcrumb.appendChild(separator);
-                }
             });
         }
 
@@ -1122,6 +1171,23 @@
                 const errorData = await response.json();
                 alert(errorData.message || "Failed to download the file.");
             }
+        }
+
+        async function deleteFile(fileName, filePath) {
+            const confirmDelete = confirm("Are you sure you want to delete " + fileName + "?");
+            if (!confirmDelete) return;
+
+            const response = await fetch("/api/sdcard?path=" + encodeURI(filePath), {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(errorData.message || "Failed to delete the file.");
+            }
+            else
+                fetchSDCardData();
         }
 
         // Function to handle tab switching
