@@ -411,16 +411,16 @@ void hardware_input_task(void *pvParameters) {
 
 
                         switch (key_value) {
-                            case 52:
+                            case 180:
                                 event.data.joystick_index = 1;
                                 break;
                             case 39:
                                 event.data.joystick_index = 0;
                                 break;
-                            case 30:
+                            case 158:
                                 event.data.joystick_index = 2;
                                 break;
-                            case 32:
+                            case 30:
                                 event.data.joystick_index = 3;
                                 break;
                             case 56:

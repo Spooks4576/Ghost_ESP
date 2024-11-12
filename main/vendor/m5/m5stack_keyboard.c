@@ -230,5 +230,5 @@ static uint8_t get_key_value(const Point2D_t* keyCoor, bool shift, bool ctrl, bo
     }
 
 
-    return base_value & ~SHIFT;
+    return base_value;
 }
