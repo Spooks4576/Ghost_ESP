@@ -17,6 +17,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <errno.h>
 
 #define MAX_LOG_BUFFER_SIZE 4096 // Adjust as needed
 #define MAX_FILE_SIZE (5 * 1024 * 1024) // 5 MB
@@ -273,6 +274,45 @@ esp_err_t get_query_param(httpd_req_t *req, const char *key, char *value, size_t
     }
 
     return ESP_ERR_NOT_FOUND;
+}
+
+
+esp_err_t api_sd_card_delete_file_handler(httpd_req_t *req) {
+    char filepath[256 + 1];
+
+    size_t query_len = httpd_req_get_url_query_len(req) + 1;
+    if (query_len > 1) {
+        char query[query_len];
+        httpd_req_get_url_query_str(req, query, query_len);
+
+        
+        char path[256];
+        if (httpd_query_key_value(query, "path", path, sizeof(path)) == ESP_OK) {
+            snprintf(filepath, sizeof(filepath), "%s", path);
+            ESP_LOGI(TAG, "Deleting file: %s", filepath);
+
+            
+            struct _reent r;
+            memset(&r, 0, sizeof(struct _reent));
+            int res = _unlink_r(&r, filepath);
+            if (res == 0) {
+                ESP_LOGI(TAG, "File deleted successfully");
+                httpd_resp_set_status(req, "200 OK");
+                httpd_resp_send(req, "File deleted successfully", HTTPD_RESP_USE_STRLEN);
+                return ESP_OK;
+            } else {
+                ESP_LOGE(TAG, "Failed to delete file: %s, errno: %d", filepath, errno);
+                httpd_resp_set_status(req, "500 Internal Server Error");
+                httpd_resp_send(req, "Failed to delete the file", HTTPD_RESP_USE_STRLEN);
+                return ESP_FAIL;
+            }
+        }
+    }
+
+    ESP_LOGE(TAG, "Invalid query parameters");
+    httpd_resp_set_status(req, "400 Bad Request");
+    httpd_resp_send(req, "Missing or invalid 'path' parameter", HTTPD_RESP_USE_STRLEN);
+    return ESP_FAIL;
 }
 
 // Handler for uploading files to SD card
@@ -658,6 +698,18 @@ esp_err_t ap_manager_init(void) {
         .user_ctx  = NULL
     };
 
+    httpd_uri_t uri_delete_command = {
+        .uri       = "/api/sdcard",
+        .method    = HTTP_DELETE,
+        .handler   = api_sd_card_delete_file_handler,
+        .user_ctx  = NULL
+    };
+
+    ret = httpd_register_uri_handler(server, &uri_delete_command);
+        if (ret != ESP_OK) {
+        printf("Error registering URI\n");
+    }
+
     ret = httpd_register_uri_handler(server, &uri_sd_card_post_upload);
         if (ret != ESP_OK) {
         printf("Error registering URI\n");
@@ -841,6 +893,13 @@ esp_err_t ap_manager_start_services() {
         .user_ctx  = NULL
     };
 
+    httpd_uri_t uri_delete_command = {
+        .uri       = "/api/sdcard",
+        .method    = HTTP_DELETE,
+        .handler   = api_sd_card_delete_file_handler,
+        .user_ctx  = NULL
+    };
+
 
     httpd_uri_t uri_post_command = {
         .uri       = "/api/command",
@@ -848,6 +907,11 @@ esp_err_t ap_manager_start_services() {
         .handler   = api_command_handler,
         .user_ctx  = NULL
     };
+
+    ret = httpd_register_uri_handler(server, &uri_delete_command);
+        if (ret != ESP_OK) {
+        printf("Error registering URI\n");
+    }
 
     ret = httpd_register_uri_handler(server, &uri_sd_card_post_upload);
         if (ret != ESP_OK) {
