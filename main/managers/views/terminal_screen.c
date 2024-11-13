@@ -56,28 +56,36 @@ void terminal_view_destroy(void) {
 void terminal_view_add_text(const char *text) {
     if (terminal_textarea == NULL) return;
 
-    // Append new text to the buffer
-    strcat(text_buffer, text);
-    strcat(text_buffer, "\n");
+    
+    lv_textarea_add_text(terminal_textarea, text);
+    lv_textarea_add_text(terminal_textarea, "\n");
 
-    // Get the current tick count
-    TickType_t now = xTaskGetTickCount();
-    if ((now - last_update) * portTICK_PERIOD_MS > 100) {
-        lv_textarea_set_text(terminal_textarea, text_buffer);
-        lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
-        last_update = now;
+    
+    lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
 
-        text_buffer[0] = '\0';
-    }
+    
+    lv_task_handler();
 }
 
 void terminal_view_hardwareinput_callback(InputEvent *event) {
     if (event->type == INPUT_TYPE_TOUCH) {
-        handle_serial_command("stop");
-        handle_serial_command("stopspam");
-        handle_serial_command("stopdeauth");
-        handle_serial_command("capture -stop");
-        display_manager_switch_view(&options_menu_view);
+        int touch_y = event->data.touch_data.point.y;
+
+        if (touch_y < LV_VER_RES / 3) {
+            for (int i = 0; i < 5; i++) {
+                lv_textarea_cursor_up(terminal_textarea);
+            }
+        } else if (touch_y > (LV_VER_RES * 2) / 3) {
+            for (int i = 0; i < 5; i++) {
+                lv_textarea_cursor_down(terminal_textarea);
+            }
+        } else {
+            handle_serial_command("stop");
+            handle_serial_command("stopspam");
+            handle_serial_command("stopdeauth");
+            handle_serial_command("capture -stop");
+            display_manager_switch_view(&options_menu_view);
+        }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
         if (button == 1) {
@@ -86,6 +94,21 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             handle_serial_command("stopdeauth");
             handle_serial_command("capture -stop");
             display_manager_switch_view(&options_menu_view);
+            return;
+        }
+
+        if (button == 2)
+        {
+            for (int i = 0; i < 5; i++) {
+                lv_textarea_cursor_up(terminal_textarea);
+            }
+        }
+
+        if (button == 4)
+        {
+            for (int i = 0; i < 5; i++) {
+                lv_textarea_cursor_down(terminal_textarea);
+            }
         }
     }
 }
