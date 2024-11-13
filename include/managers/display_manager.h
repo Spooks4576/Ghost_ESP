@@ -83,6 +83,8 @@ void hardware_input_task(void *pvParameters);
 
 void display_manager_fill_screen(lv_color_t color);
 
+lv_color_t hex_to_lv_color(const char *hex_str);
+
 // Status Bar Functions
 
 void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage);

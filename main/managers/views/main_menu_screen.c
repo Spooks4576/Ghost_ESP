@@ -2,6 +2,7 @@
 #include "managers/views/music_visualizer.h"
 #include "managers/views/flappy_ghost_screen.h"
 #include "managers/views/app_gallery_screen.h"
+#include "managers/settings_manager.h"
 #include "esp_wifi_types.h"
 #include "esp_wifi.h"
 #include <time.h>
@@ -54,7 +55,7 @@ void update_time_label(lv_timer_t *timer) {
     if (wifi_is_connected() && !time_synced) {
         printf("Internet connection detected. Syncing time...");
 
-        setenv("TZ", "MST7MDT,M3.2.0,M11.1.0", 1);
+        setenv("TZ", settings_get_timezone_str(&G_Settings), 1);
         tzset();
 
         time_t now;
@@ -319,7 +320,7 @@ void main_menu_create(void) {
 #ifdef CONFIG_HAS_RTC_CLOCK
     time_label = lv_label_create(lv_scr_act());
     lv_label_set_text(time_label, "00:00:00");
-    lv_obj_set_style_text_color(time_label, lv_color_make(255, 182, 193), 0);
+    lv_obj_set_style_text_color(time_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
     lv_obj_set_style_text_font(time_label, &lv_font_montserrat_24, 0);
     lv_obj_set_pos(time_label, 70, 33);
 

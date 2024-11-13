@@ -823,6 +823,37 @@
                         <textarea id="flappy_name_text" placeholder="Enter Name"></textarea>
                     </div>
                 </div>
+                <div class="settings-section" id="miscellaneous_section">
+                    <h2>Miscellaneous Settings</h2>
+                
+                    <!-- Timezone Selection -->
+                    <div class="input-group">
+                        <label for="timezone_select">Timezone 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Select your timezone. This will be used to adjust the device clock.</span>
+                            </span>
+                        </label>
+                        <select id="timezone_select">
+                            <option value="UTC0">UTC</option>
+                            <option value="MST7MDT,M3.2.0,M11.1.0">Mountain Time (MST/MDT)</option>
+                            <option value="EST5EDT,M3.2.0,M11.1.0">Eastern Time (EST/EDT)</option>
+                            <option value="PST8PDT,M3.2.0,M11.1.0">Pacific Time (PST/PDT)</option>
+                            <option value="CST6CDT,M3.2.0,M11.1.0">Central Time (CST/CDT)</option>
+                            <option value="IST-5:30">India Standard Time (IST)</option>
+                            <option value="GMT0BST,M3.5.0/1,M10.5.0/2">British Summer Time (GMT/BST)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="accent_color_picker">Accent Color 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Pick a custom accent color for the firmware. Use the color picker to select your preferred color.</span>
+                            </span>
+                        </label>
+                        <input type="color" id="accent_color_picker" value="#ffffff">
+                        <span id="accent_color_hex" style="margin-left: 10px;">#ffffff</span>
+                    </div>
+                </div>
             </div>
             <button onclick="saveSettings()">Save Settings</button>
         </div>
@@ -1030,6 +1061,11 @@
                 statusElement.textContent = `Error: ${error.message}`;
             }
         }
+
+        document.getElementById('accent_color_picker').addEventListener('input', function (event) {
+            const hexColor = event.target.value;
+            document.getElementById('accent_color_hex').textContent = hexColor;
+        });
 
 
         async function fetchSDCardData() {
@@ -1239,8 +1275,12 @@
                     document.getElementById('printer_font_size').value = data.printer_font_size;
                     document.getElementById('printer_alignment').value = data.printer_alignment;
 
+
                     // Flappy Ghost Settings
                     document.getElementById('flappy_name_text').value = data.flappy_ghost_name || '';
+
+                    document.getElementById('accent_color_hex').textContent = data.hex_accent_color;
+                    document.getElementById('timezone_select').value = data.timezone_str;
 
                     if (data.station_ip) {
                         document.getElementById('station_ip').value = data.station_ip;
@@ -1256,29 +1296,31 @@
             const settings = {
                 // WiFi/BLE Settings
                 broadcast_speed: parseInt(document.getElementById('broadcast_speed').value),
-                ap_ssid: document.getElementById('ap_ssid').value.trim(),
-                ap_password: document.getElementById('ap_password').value.trim(),
+                ap_ssid: document.getElementById('ap_ssid').value,
+                ap_password: document.getElementById('ap_password').value,
 
                 // RGB Settings
                 rainbow_mode: document.getElementById('rainbow_mode').checked,
                 rgb_speed: parseInt(document.getElementById('rgb_speed').value),
 
                 // Evil Portal Settings
-                portal_url: document.getElementById('portal_url').value.trim(),
-                portal_ssid: document.getElementById('portal_ssid').value.trim(),
-                portal_password: document.getElementById('portal_password').value.trim(),
-                portal_ap_ssid: document.getElementById('portal_ap_ssid').value.trim(),
-                portal_domain: document.getElementById('portal_domain').value.trim(),
+                portal_url: document.getElementById('portal_url').value,
+                portal_ssid: document.getElementById('portal_ssid').value,
+                portal_password: document.getElementById('portal_password').value,
+                portal_ap_ssid: document.getElementById('portal_ap_ssid').value,
+                portal_domain: document.getElementById('portal_domain').value,
                 portal_offline_mode: document.getElementById('portal_offline_mode').checked,
 
                 // Power Printer Settings
-                printer_ip: document.getElementById('printer_ip').value.trim(),
-                printer_text: document.getElementById('printer_text').value.trim(),
+                printer_ip: document.getElementById('printer_ip').value,
+                printer_text: document.getElementById('printer_text').value,
                 printer_font_size: parseInt(document.getElementById('printer_font_size').value),
                 printer_alignment: parseInt(document.getElementById('printer_alignment').value),
 
                 // Flappy Ghost Settings
-                flappy_ghost_name: document.getElementById('flappy_name_text').value.trim(),
+                flappy_ghost_name: document.getElementById('flappy_name_text').value,
+                hex_accent_color: document.getElementById('accent_color_hex').textContent,
+                timezone_str: document.getElementById('timezone_select').value,
             };
 
             const validationErrors = validateSettings(settings);
@@ -1304,11 +1346,11 @@
 
         // Function to send Evil Portal command to the ESP32
         function startevilportal() {
-            const PortalURL = document.getElementById('portal_url').value.trim();
-            let PortalSSID = document.getElementById('portal_ssid').value.trim();
-            let PortalPassword = document.getElementById('portal_password').value.trim();
-            let PortalAPSSID = document.getElementById('portal_ap_ssid').value.trim();
-            let PortalDomain = document.getElementById('portal_domain').value.trim();
+            const PortalURL = document.getElementById('portal_url').value;
+            let PortalSSID = document.getElementById('portal_ssid').value;
+            let PortalPassword = document.getElementById('portal_password').value;
+            let PortalAPSSID = document.getElementById('portal_ap_ssid').value;
+            let PortalDomain = document.getElementById('portal_domain').value;
 
             // Validate inputs
             const errors = [];
