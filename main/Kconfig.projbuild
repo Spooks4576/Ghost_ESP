@@ -113,6 +113,12 @@ menu "Ghost ESP Options"
         default n
         help
             Enable support for ILI9341 display module.
+
+    config HAS_BATTERY
+        bool "Enable power saving"
+        default n
+        help
+            Enable power saving features if you have a battery.
     
     endmenu
 

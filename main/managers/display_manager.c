@@ -8,9 +8,14 @@
 #include "managers/views/error_popup.h"
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
+#include "driver/gpio.h"
 #ifdef CONFIG_USE_CARDPUTER
 #include "vendor/m5/m5gfx_wrapper.h"
 #include "vendor/keyboard_handler.h"
+#endif
+
+#ifdef CONFIG_HAS_BATTERY
+#include "vendor/drivers/axp2101.h"
 #endif
 
 #ifdef CONFIG_USE_7_INCHER
@@ -244,7 +249,14 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     HasBluetooth = false;
 #endif
 
+#ifdef CONFIG_HAS_BATTERY
+    uint8_t power_level;
+    axp2101_get_power_level(&power_level);
+    bool is_charging = axp202_is_charging();
+    update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, is_charging ? 1000 : power_level);
+#else
     update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, 1000);
+#endif
 }
 
 void display_manager_init(void) {
@@ -305,6 +317,10 @@ void display_manager_init(void) {
 #ifdef CONFIG_USE_CARDPUTER
     keyboard_init(&gkeyboard);
     keyboard_begin(&gkeyboard);
+#endif
+
+#ifdef CONFIG_HAS_BATTERY
+    axp2101_init();
 #endif
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
@@ -381,6 +397,15 @@ void display_manager_fill_screen(lv_color_t color)
     lv_obj_add_style(lv_scr_act(), &style, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void set_backlight_brightness(uint8_t percentage) {
+    
+    if (percentage > 1) {
+        percentage = 1;
+    }
+
+    gpio_set_level(CONFIG_LV_DISP_PIN_BCKL, percentage);
+}
+
 void hardware_input_task(void *pvParameters) {
     const TickType_t tick_interval = pdMS_TO_TICKS(10);
 
@@ -390,6 +415,8 @@ void hardware_input_task(void *pvParameters) {
     bool touch_active = false;
     int screen_width = LV_HOR_RES;
     int screen_height = LV_VER_RES;
+    TickType_t last_touch_time = 0;
+    bool is_backlight_dimmed = false;
 
     
     while (1) {
@@ -468,6 +495,14 @@ void hardware_input_task(void *pvParameters) {
             if (touch_data.state == LV_INDEV_STATE_PR && !touch_active) {
                 touch_active = true;
 
+        #ifdef CONFIG_HAS_BATTERY
+                last_touch_time = xTaskGetTickCount();
+                if (is_backlight_dimmed) {
+                    set_backlight_brightness(1);
+                    is_backlight_dimmed = false;
+                }
+        #endif
+
                 InputEvent event;
                 event.type = INPUT_TYPE_TOUCH;
                 event.data.touch_data.point.x = touch_data.point.x;
@@ -481,6 +516,16 @@ void hardware_input_task(void *pvParameters) {
             else if (touch_data.state == LV_INDEV_STATE_REL && touch_active) {
                 touch_active = false;
             }
+
+            #ifdef CONFIG_HAS_BATTERY
+                if ((xTaskGetTickCount() - last_touch_time > pdMS_TO_TICKS(10000) && touch_data.state == LV_INDEV_STATE_REL)) {
+                    if (!is_backlight_dimmed) {
+                        set_backlight_brightness(0);
+                        is_backlight_dimmed = true;
+                    }
+                }
+            #endif
+
         #endif
 
         vTaskDelay(tick_interval);
