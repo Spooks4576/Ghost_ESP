@@ -19,7 +19,7 @@ bool axp202_is_battery_connected(void) {
     uint8_t reg = 0;
     uint8_t reg_addr = AXP202_MODE_CHGSTATUS;
 
-    // Write the register address
+    
     esp_err_t err = i2c_master_write_to_device(
         I2C_MASTER_NUM, AXP2101_I2C_ADDR, &reg_addr, 1, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {
@@ -28,7 +28,7 @@ bool axp202_is_battery_connected(void) {
         return false;
     }
 
-    // Read the register value
+    
     err = i2c_master_read_from_device(
         I2C_MASTER_NUM, AXP2101_I2C_ADDR, &reg, 1, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {
@@ -37,7 +37,7 @@ bool axp202_is_battery_connected(void) {
         return false;
     }
 
-    // Check if bit 5 is set (battery connected)
+    
     bool battery_connected = IS_BIT_SET(reg, 5);
     printf("INFO [%s]: Battery connection status: %s\n", __func__,
            battery_connected ? "Connected" : "Not Connected");
@@ -53,7 +53,7 @@ bool axp202_is_charging(void) {
     uint8_t reg = 0;
     uint8_t reg_addr = AXP202_MODE_CHGSTATUS;
 
-    // Write the register address
+   
     esp_err_t err = i2c_master_write_to_device(
         I2C_MASTER_NUM, AXP2101_I2C_ADDR, &reg_addr, 1, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {
@@ -62,7 +62,7 @@ bool axp202_is_charging(void) {
         return false;
     }
 
-    // Read the register value
+    
     err = i2c_master_read_from_device(
         I2C_MASTER_NUM, AXP2101_I2C_ADDR, &reg, 1, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {
@@ -84,7 +84,7 @@ esp_err_t axp2101_init(void) {
         return ESP_OK;
     }
 
-    // Configure I2C
+    
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = I2C_MASTER_SDA_IO,
@@ -146,7 +146,7 @@ esp_err_t axp2101_get_power_level(uint8_t* power_level) {
     uint8_t reg_addr = AXP2101_REG_POWER_LEVEL;
     uint8_t data = 0;
 
-    // Write register address
+   
     esp_err_t err = i2c_master_write_to_device(
         I2C_MASTER_NUM, AXP2101_I2C_ADDR, &reg_addr, 1, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {
@@ -155,7 +155,7 @@ esp_err_t axp2101_get_power_level(uint8_t* power_level) {
         return err;
     }
 
-    // Read power level
+    
     err = i2c_master_read_from_device(
         I2C_MASTER_NUM, AXP2101_I2C_ADDR, &data, 1, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {

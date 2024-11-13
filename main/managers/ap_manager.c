@@ -630,6 +630,7 @@ esp_err_t ap_manager_init(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
     config.ctrl_port = 32768; // Control port (use default)
+    config.max_uri_handlers = 30;
 
 
     ret = httpd_start(&server, &config);
@@ -836,6 +837,7 @@ esp_err_t ap_manager_start_services() {
     // Start HTTPD server
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
+    config.max_uri_handlers = 30;
 
     ret = httpd_start(&server, &config);
     if (ret != ESP_OK) {
