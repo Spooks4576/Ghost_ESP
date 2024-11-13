@@ -26,8 +26,7 @@ typedef struct {
 static menu_item_t menu_items[] = {
     {"BLE", &bluetooth},
     {"WiFi", &wifi},
-    {"Rave", &rave},
-    {"Flap", &GESPFlappyghost},
+    {"GPS", &Map},
     {"Apps", &GESPAppGallery}
 };
 
@@ -173,14 +172,11 @@ static void handle_menu_item_selection(int item_index) {
             display_manager_switch_view(&options_menu_view);
             break;
         case 2:
-            printf("Rave selected\n");
-            display_manager_switch_view(&music_visualizer_view);
+            printf("GPS selected\n");
+            SelectedMenuType = OT_GPS;
+            display_manager_switch_view(&options_menu_view);
             break;
         case 3:
-            printf("FlappyGhost selected\n");
-            display_manager_switch_view(&flappy_bird_view);
-            break;
-        case 4:
             printf("Apps View Selected\n");
             display_manager_switch_view(&apps_menu_view);
             break;
@@ -236,11 +232,10 @@ static void select_menu_item(int index) {
  * @brief Creates the main menu screen view.
  */
 void main_menu_create(void) {  
-    menu_items[0].border_color = lv_color_make(0, 0, 255);  
+    menu_items[0].border_color = lv_color_make(0, 0, 255);
     menu_items[1].border_color = lv_color_make(0, 255, 0);
-    menu_items[2].border_color = lv_color_make(147, 112, 219);
-    menu_items[3].border_color = lv_color_make(255, 215, 0);
-    menu_items[4].border_color = lv_color_make(128, 128, 128);
+    menu_items[2].border_color = lv_color_make(255, 0, 0);
+    menu_items[3].border_color = lv_color_make(128, 128, 128);
 
     display_manager_fill_screen(lv_color_black());
 
