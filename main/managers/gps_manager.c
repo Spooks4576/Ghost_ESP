@@ -8,6 +8,7 @@
 #include "core/callbacks.h"
 #include "vendor/GPS/MicroNMEA.h"
 #include "vendor/GPS/gps_logger.h"
+#include <managers/views/terminal_screen.h>
 
 
 static const char *GPS_TAG = "GPS";
@@ -126,8 +127,9 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
         return ret;
     }
 
-    if (rand() % 20 == 0) {
+    if (rand() % 2 == 0) {
         printf("Wrote to the buffer with %u Satellites\n", gps->sats_in_view);
+        TERMINAL_VIEW_ADD_TEXT("Wrote to the buffer with %u Satellites\n", gps->sats_in_view);
     }
 
     return ret;

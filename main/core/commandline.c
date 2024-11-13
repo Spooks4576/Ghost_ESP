@@ -16,6 +16,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <managers/gps_manager.h>
+#include <managers/views/terminal_screen.h>
 #include "vendor/printer.h"
 #include "esp_sntp.h"
 
@@ -656,13 +657,16 @@ void handle_startwd(int argc, char **argv) {
         gps_manager_deinit(&g_gpsManager);
         wifi_manager_stop_monitor_mode();
         printf("Wardriving stopped.\n");
+        TERMINAL_VIEW_ADD_TEXT("Wardriving stopped.\n");
     } else {
         gps_manager_init(&g_gpsManager);
         wifi_manager_start_monitor_mode(wardriving_scan_callback);
         printf("Wardriving started.\n");
+        TERMINAL_VIEW_ADD_TEXT("Wardriving started.\n");
     }
 #else 
     printf("Your ESP / Build Does not Support GPS\n");
+    TERMINAL_VIEW_ADD_TEXT("Your ESP / Build Does not Support GPS\n");
 #endif
 }
 
