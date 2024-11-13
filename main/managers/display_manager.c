@@ -213,10 +213,16 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
         battery_symbol = LV_SYMBOL_BATTERY_FULL;
     }
 
-    if (batteryPercentage == 1000) { // Marker to signal charging / No Battery
+#ifdef CONFIG_HAS_BATTERY
+    if (axp202_is_charging()) {
         battery_symbol = LV_SYMBOL_CHARGE;
-        batteryPercentage = 100;
     }
+#else
+    battery_symbol = LV_SYMBOL_CHARGE;
+    batteryPercentage = 100;
+#endif
+
+    
 
 
     if (battery_label == NULL) {
@@ -278,7 +284,7 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     uint8_t power_level;
     axp2101_get_power_level(&power_level);
     bool is_charging = axp202_is_charging();
-    update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, is_charging ? 1000 : power_level);
+    update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, is_charging ? power_level : power_level);
 #else
     update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, 1000);
 #endif
