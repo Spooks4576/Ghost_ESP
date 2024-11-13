@@ -10,19 +10,9 @@
 // Terminal text area object
 lv_obj_t *terminal_textarea = NULL;
 
-// Maximum length for the text area content
-#define MAX_TEXT_LENGTH 4096
-
-// Momentum scrolling parameters
-#define MIN_VELOCITY_THRESHOLD 1
-#define FRICTION_FACTOR 0.9
-#define MOMENTUM_INTERVAL 16 // Approximately 60 FPS
-
 // Variables for touch handling
 static bool touch_active = false;
 static lv_point_t last_touch_point;
-static int16_t scroll_velocity = 0;
-static lv_timer_t *momentum_timer = NULL;
 
 // Custom log function declaration
 int custom_log_vprintf(const char *fmt, va_list args);
@@ -52,7 +42,7 @@ void terminal_view_create(void) {
     lv_obj_set_style_text_color(terminal_textarea, lv_color_hex(0x00FF00), 0); // Set text color to green
     lv_obj_set_style_text_font(terminal_textarea, &lv_font_montserrat_10, 0); // Set font size
     lv_obj_set_style_border_width(terminal_textarea, 0, 0); // Remove border
-    lv_textarea_set_max_length(terminal_textarea, MAX_TEXT_LENGTH); // Set maximum text length
+    // Removed maximum text length setting
 
     // Add a status bar to the terminal view
     display_manager_add_status_bar("Terminal");
@@ -78,25 +68,7 @@ void terminal_view_add_text(const char *text) {
     lv_textarea_add_text(terminal_textarea, text);
     lv_textarea_add_text(terminal_textarea, "\n");
 
-    // Scroll to the bottom to show the new text
-    lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
-    lv_textarea_scroll_to_cursor(terminal_textarea);
-}
-
-// Momentum scrolling timer callback
-void momentum_timer_cb(lv_timer_t *timer) {
-    // Apply friction to reduce the scroll velocity
-    scroll_velocity = (int16_t)(scroll_velocity * FRICTION_FACTOR);
-
-    // Scroll the text area by the current velocity
-    lv_obj_scroll_by(terminal_textarea, 0, -scroll_velocity, LV_ANIM_OFF);
-
-    // Stop the timer if the velocity is below the threshold
-    if (abs(scroll_velocity) < MIN_VELOCITY_THRESHOLD) {
-        lv_timer_del(momentum_timer);
-        momentum_timer = NULL;
-        scroll_velocity = 0;
-    }
+    // Removed cursor set to bottom calls
 }
 
 // Handle touch input for scrolling
@@ -112,20 +84,10 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             // Touch started
             touch_active = true;
             last_touch_point = current_touch_point;
-
-            // Stop any ongoing momentum scrolling
-            if (momentum_timer != NULL) {
-                lv_timer_del(momentum_timer);
-                momentum_timer = NULL;
-                scroll_velocity = 0;
-            }
         } else if (touch_state == LV_INDEV_STATE_PR && touch_active) {
             // Touch moved
             int16_t delta_x = current_touch_point.x - last_touch_point.x;
             int16_t delta_y = current_touch_point.y - last_touch_point.y;
-
-            // Update the scroll velocity
-            scroll_velocity = delta_y;
 
             // Scroll the text area based on the touch movement
             // Negate delta_y because moving finger up should scroll down
@@ -136,11 +98,7 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
         } else if (touch_state == LV_INDEV_STATE_REL && touch_active) {
             // Touch ended
             touch_active = false;
-
-            // Start momentum scrolling if the velocity is significant
-            if (abs(scroll_velocity) > MIN_VELOCITY_THRESHOLD) {
-                momentum_timer = lv_timer_create(momentum_timer_cb, MOMENTUM_INTERVAL, NULL);
-            }
+            // No momentum scrolling
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
