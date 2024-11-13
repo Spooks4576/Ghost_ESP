@@ -11,20 +11,21 @@
 // Terminal text area object
 lv_obj_t *terminal_textarea = NULL;
 
-// Buffer for storing text before updating the textarea
-char text_buffer[1024] = "";
-uint32_t last_update = 0;
-#define MAX_TEXT_LENGTH 4096
-
 // Custom log function declaration
 int custom_log_vprintf(const char *fmt, va_list args);
 static int (*default_log_vprintf)(const char *, va_list) = NULL;
+
+// Variable to store the previous view
+static View *previous_view = NULL;
 
 // Create the terminal view
 void terminal_view_create(void) {
     if (terminal_view.root != NULL) {
         return;
     }
+
+    // Store the current view as the previous view
+    previous_view = display_manager_get_current_view();
 
     terminal_view.root = lv_obj_create(lv_scr_act());
     lv_obj_set_size(terminal_view.root, LV_HOR_RES, LV_VER_RES);
@@ -60,28 +61,19 @@ void terminal_view_destroy(void) {
         terminal_view.root = NULL;
         terminal_textarea = NULL;
     }
+    // Reset the previous view pointer
+    previous_view = NULL;
 }
 
 // Add text to the terminal view
 void terminal_view_add_text(const char *text) {
     if (terminal_textarea == NULL) return;
 
-    // Append new text to the buffer
-    strcat(text_buffer, text);
-    strcat(text_buffer, "\n");
+    // Append new text directly to the textarea
+    lv_textarea_add_text(terminal_textarea, text);
+    lv_textarea_add_text(terminal_textarea, "\n");
 
-    // Update the textarea periodically to prevent performance issues
-    TickType_t now = xTaskGetTickCount();
-    if ((now - last_update) * portTICK_PERIOD_MS > 100) {
-        lv_textarea_set_text(terminal_textarea, text_buffer);
-
-        // Scroll to the bottom to show the new text
-        lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
-        lv_textarea_scroll_to_cursor(terminal_textarea);
-
-        last_update = now;
-        text_buffer[0] = '\0';
-    }
+    // Removed scroll to cursor calls
 }
 
 // Handle touch input for scrolling and exiting
@@ -107,8 +99,14 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
                 handle_serial_command("stopspam");
                 handle_serial_command("stopdeauth");
                 handle_serial_command("capture -stop");
-                // Switch back to options menu view
-                display_manager_switch_view(&options_menu_view);
+
+                // Switch back to the previous view
+                if (previous_view != NULL) {
+                    display_manager_switch_view(previous_view);
+                } else {
+                    // If no previous view is stored, default to main menu
+                    display_manager_switch_view(&main_menu_view);
+                }
             }
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
@@ -118,8 +116,14 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             handle_serial_command("stopspam");
             handle_serial_command("stopdeauth");
             handle_serial_command("capture -stop");
-            // Switch back to options menu view
-            display_manager_switch_view(&options_menu_view);
+
+            // Switch back to the previous view
+            if (previous_view != NULL) {
+                display_manager_switch_view(previous_view);
+            } else {
+                // If no previous view is stored, default to main menu
+                display_manager_switch_view(&main_menu_view);
+            }
         }
     }
 }
