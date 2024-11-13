@@ -8,9 +8,19 @@
 #include "managers/views/error_popup.h"
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
+#include "managers/settings_manager.h"
+#include "driver/gpio.h"
 #ifdef CONFIG_USE_CARDPUTER
 #include "vendor/m5/m5gfx_wrapper.h"
 #include "vendor/keyboard_handler.h"
+#endif
+
+#ifdef CONFIG_HAS_BATTERY
+#include "vendor/drivers/axp2101.h"
+#endif
+
+#ifdef CONFIG_HAS_RTC_CLOCK
+#include "vendor/drivers/pcf8563.h"
 #endif
 
 #ifdef CONFIG_USE_7_INCHER
@@ -115,7 +125,27 @@ void fade_out_ready_cb(lv_anim_t *anim) {
     }
 }
 
+lv_color_t hex_to_lv_color(const char *hex_str) {
+    if (hex_str[0] == '#') {
+        hex_str++;
+    }
 
+    if (strlen(hex_str) != 6) {
+        printf("Invalid hex color format. Expected 6 characters.\n");
+        return lv_color_white();
+    }
+
+    // Parse the hex string into RGB values
+    char r_str[3] = {hex_str[0], hex_str[1], '\0'};
+    char g_str[3] = {hex_str[2], hex_str[3], '\0'};
+    char b_str[3] = {hex_str[4], hex_str[5], '\0'};
+
+    uint8_t r = (uint8_t)strtol(r_str, NULL, 16);
+    uint8_t g = (uint8_t)strtol(g_str, NULL, 16);
+    uint8_t b = (uint8_t)strtol(b_str, NULL, 16);
+
+    return lv_color_make(r, g, b);
+}
 
 void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage) {
     lv_disp_t *disp = lv_disp_get_default();
@@ -136,7 +166,7 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
             wifi_label = lv_label_create(status_bar);
             lv_label_set_text(wifi_label, LV_SYMBOL_WIFI);
             lv_obj_align(wifi_label, LV_ALIGN_LEFT_MID, wifi_pos_x + -5, 0);
-            lv_obj_set_style_text_color(wifi_label, lv_color_white(), 0);
+            lv_obj_set_style_text_color(wifi_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
         }
     } else if (wifi_label != NULL) {
         lv_obj_del(wifi_label);
@@ -149,7 +179,7 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
             bt_label = lv_label_create(status_bar);
             lv_label_set_text(bt_label, LV_SYMBOL_BLUETOOTH);
             lv_obj_align(bt_label, LV_ALIGN_LEFT_MID, bt_pos_x, 0);
-            lv_obj_set_style_text_color(bt_label, lv_color_white(), 0);
+            lv_obj_set_style_text_color(bt_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
         }
     } else if (bt_label != NULL) {
         lv_obj_del(bt_label);
@@ -162,7 +192,7 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
             sd_label = lv_label_create(status_bar);
             lv_label_set_text(sd_label, LV_SYMBOL_SD_CARD);
             lv_obj_align(sd_label, LV_ALIGN_LEFT_MID, sd_pos_x, 0);
-            lv_obj_set_style_text_color(sd_label, lv_color_white(), 0);
+            lv_obj_set_style_text_color(sd_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
         }
     } else if (sd_label != NULL) {
         lv_obj_del(sd_label);
@@ -183,16 +213,22 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
         battery_symbol = LV_SYMBOL_BATTERY_FULL;
     }
 
-    if (batteryPercentage == 1000) { // Marker to signal charging / No Battery
+#ifdef CONFIG_HAS_BATTERY
+    if (axp202_is_charging()) {
         battery_symbol = LV_SYMBOL_CHARGE;
-        batteryPercentage = 100;
     }
+#else
+    battery_symbol = LV_SYMBOL_CHARGE;
+    batteryPercentage = 100;
+#endif
+
+    
 
 
     if (battery_label == NULL) {
         battery_label = lv_label_create(status_bar);
         lv_obj_align(battery_label, LV_ALIGN_RIGHT_MID, -5, 0); 
-        lv_obj_set_style_text_color(battery_label, lv_color_white(), 0);
+        lv_obj_set_style_text_color(battery_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
         lv_obj_set_style_text_font(battery_label, render_icons ? &lv_font_montserrat_16 : &lv_font_montserrat_10, 0);
     }
     else 
@@ -200,7 +236,7 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
         lv_obj_del(battery_label); // Fix Battery Not Showing up on other menus
         battery_label = lv_label_create(status_bar);
         lv_obj_align(battery_label, LV_ALIGN_RIGHT_MID, -5, 0); 
-        lv_obj_set_style_text_color(battery_label, lv_color_white(), 0);
+        lv_obj_set_style_text_color(battery_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
         lv_obj_set_style_text_font(battery_label, render_icons ? &lv_font_montserrat_16 : &lv_font_montserrat_10, 0);
     }
 
@@ -224,7 +260,7 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_border_side(status_bar, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
     lv_obj_set_style_border_width(status_bar, 2, LV_PART_MAIN);
-    lv_obj_set_style_border_color(status_bar, lv_color_white(), LV_PART_MAIN); // Previous color lv_color_hex(0x393939)
+    lv_obj_set_style_border_color(status_bar, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), LV_PART_MAIN); // Previous color lv_color_hex(0x393939)
     lv_obj_clear_flag(status_bar, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_disp_t *disp = lv_disp_get_default();
@@ -233,7 +269,7 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     lv_obj_t* mainlabel = lv_label_create(status_bar);
     lv_label_set_text(mainlabel, CurrentMenuName);
     lv_obj_align(mainlabel, hor_res > 128 ? LV_ALIGN_CENTER : LV_ALIGN_LEFT_MID, hor_res > 128 ? -15 : -5, 0);
-    lv_obj_set_style_text_color(mainlabel, lv_color_white(), 0);
+    lv_obj_set_style_text_color(mainlabel, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
     lv_obj_set_style_text_font(mainlabel, hor_res > 128 ? &lv_font_montserrat_16 : &lv_font_montserrat_10, 0);
 
     bool HasBluetooth;
@@ -244,7 +280,14 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
     HasBluetooth = false;
 #endif
 
+#ifdef CONFIG_HAS_BATTERY
+    uint8_t power_level;
+    axp2101_get_power_level(&power_level);
+    bool is_charging = axp202_is_charging();
+    update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, is_charging ? power_level : power_level);
+#else
     update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, 1000);
+#endif
 }
 
 void display_manager_init(void) {
@@ -305,6 +348,13 @@ void display_manager_init(void) {
 #ifdef CONFIG_USE_CARDPUTER
     keyboard_init(&gkeyboard);
     keyboard_begin(&gkeyboard);
+#endif
+
+#ifdef CONFIG_HAS_BATTERY
+    axp2101_init();
+#ifdef CONFIG_HAS_RTC_CLOCK
+    pcf8563_init(I2C_NUM_1, 0x51);
+#endif
 #endif
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
@@ -381,6 +431,15 @@ void display_manager_fill_screen(lv_color_t color)
     lv_obj_add_style(lv_scr_act(), &style, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void set_backlight_brightness(uint8_t percentage) {
+    
+    if (percentage > 1) {
+        percentage = 1;
+    }
+
+    gpio_set_level(CONFIG_LV_DISP_PIN_BCKL, percentage);
+}
+
 void hardware_input_task(void *pvParameters) {
     const TickType_t tick_interval = pdMS_TO_TICKS(10);
 
@@ -390,6 +449,8 @@ void hardware_input_task(void *pvParameters) {
     bool touch_active = false;
     int screen_width = LV_HOR_RES;
     int screen_height = LV_VER_RES;
+    TickType_t last_touch_time = 0;
+    bool is_backlight_dimmed = false;
 
     
     while (1) {
@@ -468,6 +529,14 @@ void hardware_input_task(void *pvParameters) {
             if (touch_data.state == LV_INDEV_STATE_PR && !touch_active) {
                 touch_active = true;
 
+        #ifdef CONFIG_HAS_BATTERY
+                last_touch_time = xTaskGetTickCount();
+                if (is_backlight_dimmed) {
+                    set_backlight_brightness(1);
+                    is_backlight_dimmed = false;
+                }
+        #endif
+
                 InputEvent event;
                 event.type = INPUT_TYPE_TOUCH;
                 event.data.touch_data.point.x = touch_data.point.x;
@@ -481,6 +550,16 @@ void hardware_input_task(void *pvParameters) {
             else if (touch_data.state == LV_INDEV_STATE_REL && touch_active) {
                 touch_active = false;
             }
+
+            #ifdef CONFIG_HAS_BATTERY
+                if ((xTaskGetTickCount() - last_touch_time > pdMS_TO_TICKS(10000) && touch_data.state == LV_INDEV_STATE_REL)) {
+                    if (!is_backlight_dimmed) {
+                        set_backlight_brightness(0);
+                        is_backlight_dimmed = true;
+                    }
+                }
+            #endif
+
         #endif
 
         vTaskDelay(tick_interval);

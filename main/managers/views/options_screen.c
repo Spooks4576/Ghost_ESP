@@ -48,6 +48,7 @@ static const char *wifi_options[] = {
     "TV Cast (Dial Connect)",
     "Power Printer",
     "Go Back",
+    "    ",
     NULL
 };
 

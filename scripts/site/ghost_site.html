@@ -1,266 +1,527 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <meta charset="UTF-8">
     <title>Ghost ESP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        /* CSS Variables for Colors and Fonts */
+        :root {
+            --background-color: #000000;
+            --primary-color: #ff5500;
+            --secondary-color: #110800;
+            --primary-color-faded: rgba(255, 85, 0, 0.7);
+            --accent-color: rgba(255, 85, 0, 0.3);
+            --accent-tone: rgba(255, 85, 0, 0.2);
+            --text-color: #ff5500;
+            --border-color: #ff5500;
+            --tooltip-bg: #401805;
+            --tooltip-text: #ff5500;
+            --input-bg: #110800;
+            --input-border: #ff5500;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --foreground-opacity: 1;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+
         /* Global Styles */
         body {
             margin: 0;
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #000000;
-            color: #ff5500;
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
         }
+
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
         }
-        .dropzone {
-            border: 2px dashed #ff5500;
-            padding: 20px;
-            text-align: center;
-            color: #ff5500;
-            background-color: #110800;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .dropzone.dragover {
-            background-color: #442700;
-        }
+
         h1, h2, h3 {
             text-align: center;
-            color: #ff5500;
-            margin-top: 0;
+            color: var(--primary-color);
+            margin-top: 56px;
+            margin-bottom: 24px;
         }
+
         /* Tabs Styling */
         .tab {
             display: flex;
             justify-content: space-around;
-            border-bottom: 1px solid #ff5500;
-            margin-bottom: 20px;
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            padding: 4px;
         }
+
         .tab button {
+            max-width: none;
             flex: 1;
-            background-color: inherit;
+            background: none;
             border: none;
+            border-radius: 6px;
             outline: none;
             cursor: pointer;
-            padding: 14px 0;
-            font-size: 16px;
-            color: #ff5500;
+            padding: 15px 0;
+            margin: 0 2px;
+            font-size: 18px;
+            color: var(--primary-color);
+            background-color: var(--secondary-color);
             transition: background-color 0.3s, color 0.3s;
         }
 
-        .tab button:hover, .tab button.active {
-            background-color: #331e00;
+        .tab button:first-child {
+            margin-left: 0;
         }
+
+        .tab button:last-child {
+            margin-right: 0;
+        }
+
+        .tab button:hover,
+        .tab button.active {
+            background-color: var(--accent-tone);
+            color: #ffffff;
+        }
+
         /* Tab Content */
         .tabcontent {
             display: none;
             animation: fadeEffect 0.5s;
         }
+
         .tabcontent.show {
             display: block;
         }
+
         @keyframes fadeEffect {
             from {opacity: 0;}
             to {opacity: 1;}
         }
+
+        .breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb-item {
+            color: var(--primary-color-faded);
+            cursor: pointer;
+            margin-right: 8px;
+            position: relative;
+            padding: 4px 0;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-item::after {
+            content: '/';
+            margin-left: 8px;
+            color: #ffffff7f;
+        }
+
+        .breadcrumb-item:last-child::after {
+            content: '';
+        }
+
+        .breadcrumb-item:last-child {
+            cursor: default;
+            color: #ffffff;
+        }
+
+        /* File Explorer Styling */
+        .file-explorer {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .file-explorer li {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            position: relative;
+            background-color: var(--secondary-color);
+            border-left: 2px solid var(--border-color);
+            border-right: 2px solid var(--border-color);
+            border-top: 0.5px solid var(--accent-color);
+            border-bottom: 0.5px solid var(--accent-color);
+            border-radius: var(--li-br-top) var(--li-br-top) var(--li-br-bottom) var(--li-br-bottom);
+            transition: background-color 0.3s;
+            --li-br-top: 0;
+            --li-br-bottom: 0;
+        }
+
+        .file-explorer li:hover:has(.file-name.folder) {
+            background-color: var(--accent-tone);
+            cursor: pointer;
+        }
+
+        .file-explorer li:first-child {
+            border-top: 2px solid var(--border-color);
+            --li-br-top: 8px;
+        }
+
+        .file-explorer li:last-child {
+            border-bottom: 2px solid var(--border-color);
+            --li-br-bottom: 8px;
+        }
+
+        .file-explorer li:before {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 54%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .file-explorer li:has(.file-name.folder):before {
+            content: '\25B6';
+        }
+
+        .file-explorer li button {
+            margin: 0;
+        }
+
+        .file-explorer .file-name {
+            display: flex;
+            align-items: center;
+            cursor: default;
+        }
+
+        .file-explorer .file-name.folder {
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+
+        .file-explorer .file-name.folder::before {
+            content: '📁';
+            margin-right: 10px;
+        }
+
+        .file-explorer .file-name.file::before {
+            content: '📄';
+            margin-right: 10px;
+        }
+
+        .file-explorer .file-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* Upload Section Styling */
+        .upload-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--secondary-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .upload-section > :first-child {
+            margin-top: 0;
+        }
+
+        .upload-section > :last-child {
+            margin-bottom: 0;
+        }
+
+        .upload-section h3 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .upload-section input[type="file"] {
+            padding: 10px;
+            font-size: 16px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            color: var(--text-color);
+            border-radius: 6px;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .upload-section input[type="file"]:focus {
+            border-color: var(--primary-color);
+            background-color: #1a0d00;
+            outline: none;
+        }
+
+        .upload-section button {
+            width: 150px;
+        }
+
         /* Settings Grid */
         .settings-grid {
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-between;
+            gap: 28px;
         }
+
         .settings-section {
-            flex: 1 1 calc(50% - 10px);
-            margin-bottom: 20px;
-            border: 1px solid #ff5500;
-            padding: 10px;
-            box-sizing: border-box;
+            flex: 1 1 calc(50% - 20px);
+            background-color: var(--secondary-color);
+            border: 2px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
             position: relative;
         }
-        @media (max-width: 600px) {
+
+        .settings-section > :first-child {
+            margin-top: 0;
+        }
+
+        .settings-section > :last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
             .settings-section {
                 flex: 1 1 100%;
             }
         }
+
         label {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             font-size: 16px;
         }
+
         .input-group {
-            margin-bottom: 15px;
-            text-align: center;
+            margin-bottom: 24px;
+            text-align: left;
         }
-        .input-group label {
-            margin-bottom: 5px;
+
+        .input-group:has(input[type="file"]), .input-group:has(.toggle-switch), .input-group:has(.select-wrapper) {
+            display: flex;
+            justify-content: space-between;
         }
-        input[type="number"], input[type="text"], input[type="color"] {
+
+        input[type="number"],
+        input[type="text"],
+        input[type="color"],
+        select,
+        textarea {
             width: 100%;
-            max-width: 300px;
-            padding: 10px;
+            padding: 10px 15px;
+            font-family: inherit;
             font-size: 16px;
-            margin: 5px auto;
-            display: block;
-            background-color: #110800;
-            border: 1px solid #ff5500;
-            color: #ff5500;
-            border-radius: 4px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            color: var(--text-color);
+            border-radius: 6px;
+            margin-top: 4px;
+            box-sizing: border-box;
+            transition: border-color 0.3s, background-color 0.3s;
         }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        input[type="color"]:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary-color);
+            background-color: #1a0d00;
+            outline: none;
+        }
+
         /* Toggle Switch */
         .toggle-switch {
             position: relative;
-            width: 50px;
-            height: 24px;
-            margin: 0 auto;
+            width: 60px;
+            height: 30px;
+            margin: 0;
         }
+
         .toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
+
         .slider {
             position: absolute;
             cursor: pointer;
-            background-color: #331f00;
-            border-radius: 24px;
+            background-color: var(--accent-color);
+            border-radius: 34px;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            transition: 0.4s;
+            transition: background-color 0.4s;
         }
+
         .slider:before {
             position: absolute;
             content: "";
-            height: 18px;
-            width: 18px;
-            background-color: #ff5500;
+            width: 22px;
+            background-color: var(--primary-color);
             border-radius: 50%;
-            left: 3px;
-            bottom: 3px;
-            transition: 0.4s;
-        }
-        input:checked + .slider {
-            background-color: #ff5500;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-        button {
-            background-color: #331d00;
-            color: #ff5500;
-            padding: 14px 20px;
-            border: 1px solid #ff5500;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 20px auto;
-            display: block;
-            width: 100%;
-            max-width: 200px;
-            transition: background-color 0.3s;
+            left: 4px;
+            bottom: 4px;
+            aspect-ratio: 1 / 1;
+            transition: transform 0.4s, background-color 0.4s;
         }
 
-        textarea {
-            width: 90%;
-            padding: 10px;
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            background-color: var(--background-color);
+            transform: translateX(28px);
+        }
+
+        /* Buttons */
+        button {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 12px 25px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
             font-size: 16px;
-            background-color: #110a00;
-            border: 1px solid #ff5500;
-            color: #ff5500;
-            border-radius: 4px;
-            resize: none;
-            height: 80px;
+            font-weight: 600;
+            margin: 32px auto 20px;
+            display: block;
+            transition: background-color 0.3s, color 0.3s;
+            max-width: 220px;
+            width: 100%;
         }
 
         button:hover {
-            background-color: #442700;
+            background-color: var(--accent-color);
+            color: #ffffff;
         }
-        #console {
-            background-color: #110800;
-            color: #ff5500;
-            padding: 15px;
+
+        button.small {
+            padding: 6px 25px;
+            width: auto;
+            font-size: 14px;
+        }
+
+        /* Textarea */
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* SD Card Explorer */
+        #console,
+        .console {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 20px;
             height: 300px;
             overflow-y: auto;
             font-family: 'Courier New', Courier, monospace;
             white-space: pre-wrap;
-            border-radius: 5px;
+            border-radius: 8px;
             margin-bottom: 20px;
-            border: 1px solid #ff5500;
+            border: 2px solid var(--border-color);
         }
 
-        /* Custom select styling */
+        /* Select Wrapper */
         .select-wrapper {
             position: relative;
             width: 100%;
             max-width: 300px;
-            margin: 5px auto;
+            margin: 0;
         }
 
         .select-wrapper select {
             width: 100%;
-            padding: 10px;
+            padding: 10px 15px;
             font-size: 16px;
-            background-color: #110800;
-            border: 1px solid #ff5500;
-            color: #ff5500;
-            border-radius: 4px;
+            background-color: var(--input-bg);
+            border: 2px solid var(--input-border);
+            color: var(--text-color);
+            border-radius: 6px;
             appearance: none;
+            cursor: pointer;
             -webkit-appearance: none;
             -moz-appearance: none;
             background-image: none;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .select-wrapper select:focus {
+            border-color: var(--primary-color);
+            background-color: #1a0d00;
+            outline: none;
         }
 
         .select-wrapper::after {
-            content: '\25BC'; /* Unicode character for down arrow */
+            content: '\25BC'; /* Down arrow */
             position: absolute;
             right: 15px;
-            top: calc(50% - 7px);
+            top: 54%;
+            transform: translateY(-50%);
             pointer-events: none;
-            color: #ff5500;
+            color: var(--primary-color);
             font-size: 14px;
         }
 
-        .console {
-            background-color: #110800;
-            color: #ff5500;
-            padding: 15px;
-            height: 300px;
-            overflow-y: auto;
-            font-family: 'Courier New', Courier, monospace;
-            white-space: pre-wrap;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid #ff5500;
+        .file-wrapper {
+            display: flex;
+            align-items: center;
         }
 
-        /* Tooltip styling */
+        .file-wrapper button {
+            margin: 0 0 0 20px;
+        }
+
+        .file-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-wrapper span {
+            color: #ffffff7f;
+            max-width: 200px;
+        }
+
+        /* Tooltip Styling */
         .tooltip {
             position: relative;
             display: inline-block;
             cursor: help;
+            margin-left: 5px;
         }
 
         .tooltip .tooltiptext {
             visibility: hidden;
             width: 220px;
-            background-color: #331e00;
-            color: #ff5500;
+            background-color: var(--tooltip-bg);
+            color: var(--tooltip-text);
             text-align: center;
             border-radius: 6px;
-            border: 1px solid #ff5500;
-            padding: 5px;
+            border: 2px solid var(--primary-color);
+            filter: drop-shadow(0 0 13px rgb(0 0 0 / 0.3)) drop-shadow(0 0 5px rgb(0 0 0 / 0.8));
+            padding: 8px;
             position: absolute;
             z-index: 1;
-            bottom: 125%; /* Position above the element */
+            bottom: 125%; /* Position above */
             left: 50%;
-            margin-left: -110px;
+            transform: translateX(-50%);
             opacity: 0;
             transition: opacity 0.3s;
         }
@@ -268,12 +529,12 @@
         .tooltip .tooltiptext::after {
             content: "";
             position: absolute;
-            top: 100%; /* At the bottom of the tooltip */
+            top: 100%; /* Bottom of tooltip */
             left: 50%;
-            margin-left: -5px;
+            transform: translateX(-50%);
             border-width: 5px;
             border-style: solid;
-            border-color: #331e00 transparent transparent transparent;
+            border-color: var(--primary-color) transparent transparent transparent;
         }
 
         .tooltip:hover .tooltiptext {
@@ -283,7 +544,7 @@
 
         /* Disabled Section Styling */
         .disabled-section {
-            opacity: 0.5;
+            opacity: 0.6;
             pointer-events: none;
             position: relative;
         }
@@ -294,144 +555,227 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            border-radius: 4px;
-            text-align: center;
-            color: #ff5500;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            color: var(--primary-color);
+            font-size: 20px;
             pointer-events: none;
+        }
+
+        /* Dropzone Styling */
+        .dropzone {
+            border: 3px dashed var(--primary-color);
+            padding: 30px;
+            text-align: center;
+            color: var(--primary-color);
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .dropzone.dragover {
+            background-color: var(--accent-color);
+            border-color: #ffffff;
+        }
+
+        /* Help List Styling */
+        .help-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .help-list li {
+            background-color: var(--secondary-color);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 15px;
+        }
+
+        .help-list code {
+            background-color: #1a0d00;
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: #ffffff;
+        }
+
+        /* Responsive Enhancements */
+        @media (max-width: 600px) {
+            .tab button {
+                font-size: 16px;
+                padding: 12px 0;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .select-wrapper::after {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP vA1.3.7</h1>
-        <!-- Tab navigation -->
+        <h1>Ghost ESP vA1.4.1</h1>
+        <!-- Tab Navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
             <button class="tablinks" onclick="openTab(event, 'Help')">Help</button>
+            <button class="tablinks" onclick="openTab(event, 'SDCard')">SD Card</button>
         </div>
         <!-- Settings Tab Content -->
         <div id="Settings" class="tabcontent show">
             <div class="settings-grid">
                 <!-- WiFi/BLE Section -->
-                <div class="section settings-section" id="wifi-ble-section">
+                <div class="settings-section" id="wifi-ble-section">
                     <h2>WiFi/BLE Settings</h2>
                     <div class="input-group">
-                        <label>Broadcast Speed (ms) <span class="tooltip">?
-                            <span class="tooltiptext">Set the speed at which broadcasts are sent, in milliseconds (5 - 1000 ms).</span>
-                        </span></label>
+                        <label for="broadcast_speed">Broadcast Speed (ms) 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Set the speed at which broadcasts are sent, in milliseconds (5 - 1000 ms).</span>
+                            </span>
+                        </label>
                         <input type="number" id="broadcast_speed" min="5" max="1000" step="1" placeholder="5 - 1000 ms" required>
                     </div>
                     <div class="input-group">
-                        <label>Ghost ESP SSID <span class="tooltip">?
-                            <span class="tooltiptext">Enter the SSID you would like the ESP to Use when starting up this default network you are connected to</span>
-                        </span></label>
+                        <label for="ap_ssid">Ghost ESP SSID 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the SSID you would like the ESP to use when starting up this default network you are connected to.</span>
+                            </span>
+                        </label>
                         <input type="text" id="ap_ssid" placeholder="Enter SSID">
                     </div>
                     <div class="input-group">
-                        <label>Ghost ESP Password <span class="tooltip">?
-                            <span class="tooltiptext">Enter the password you would like the ESP to Use when starting up this default network you are connected to</span>
-                        </span></label>
+                        <label for="ap_password">Ghost ESP Password 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the password you would like the ESP to use when starting up this default network you are connected to.</span>
+                            </span>
+                        </label>
                         <input type="text" id="ap_password" placeholder="Enter Password">
                     </div>
                 </div>
                 <!-- Connect to WiFi Section (Disabled) -->
-                <div class="section settings-section disabled-section" id="connect-wifi-section">
+                <div class="settings-section" id="connect-wifi-section">
                     <h2>WiFi Status</h2>
                     <div class="input-group">
-                        <label>ESP32 Station IP:</label>
+                        <label for="station_ip">ESP32 Station IP:</label>
                         <input type="text" id="station_ip" placeholder="Not connected" readonly>
                     </div>
-                    <br>
                     <h2>Connect to WiFi Network</h2>
                     <div class="input-group">
-                        <label>WiFi SSID <span class="tooltip">?
-                            <span class="tooltiptext">Enter the SSID of the WiFi network you want to connect to.</span>
-                        </span></label>
+                        <label for="wifi_ssid">WiFi SSID 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the SSID of the WiFi network you want to connect to.</span>
+                            </span>
+                        </label>
                         <input type="text" id="wifi_ssid" placeholder="Enter WiFi SSID">
                     </div>
                     <div class="input-group">
-                        <label>WiFi Password <span class="tooltip">?
-                            <span class="tooltiptext">Enter the password of the WiFi network you want to connect to.</span>
-                        </span></label>
+                        <label for="wifi_password">WiFi Password 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the password of the WiFi network you want to connect to.</span>
+                            </span>
+                        </label>
                         <input type="text" id="wifi_password" placeholder="Enter WiFi Password">
                     </div>
                     <button onclick="connectToWiFi()">Connect</button>
-                    <div class="disabled-overlay">Feature Under Maintenance</div>
                 </div>
                 <!-- Evil Portal Section -->
-                <div class="section settings-section" id="evil-portal-section">
+                <div class="settings-section" id="evil-portal-section">
                     <h2>Evil Portal Settings</h2>
                     <div class="input-group">
-                        <label>Offline Mode <span class="tooltip">?
-                            <span class="tooltiptext">Toggle offline mode for the Evil Portal.</span>
-                        </span></label>
+                        <label for="portal_offline_mode">Offline Mode 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Toggle offline mode for the Evil Portal.</span>
+                            </span>
+                        </label>
                         <label class="toggle-switch">
                             <input type="checkbox" id="portal_offline_mode">
                             <span class="slider"></span>
                         </label>
                     </div>
                     <div class="input-group">
-                        <label>Website URL or File Path <span class="tooltip">?
-                            <span class="tooltiptext">Enter the URL or file path for the Evil Portal.</span>
-                        </span></label>
+                        <label for="portal_url">Website URL or File Path 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the URL or file path for the Evil Portal.</span>
+                            </span>
+                        </label>
                         <input type="text" id="portal_url" placeholder="Enter URL">
                     </div>
                     <div class="input-group">
-                        <label>WiFi SSID <span class="tooltip">?
-                            <span class="tooltiptext">Enter the SSID for the WiFi network used by the Evil Portal.</span>
-                        </span></label>
+                        <label for="portal_ssid">WiFi SSID 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the SSID for the WiFi network used by the Evil Portal.</span>
+                            </span>
+                        </label>
                         <input type="text" id="portal_ssid" placeholder="Enter WiFi SSID">
                     </div>
                     <div class="input-group">
-                        <label>WiFi Password <span class="tooltip">?
-                            <span class="tooltiptext">Enter the password for the WiFi network used by the Evil Portal.</span>
-                        </span></label>
+                        <label for="portal_password">WiFi Password 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the password for the WiFi network used by the Evil Portal.</span>
+                            </span>
+                        </label>
                         <input type="text" id="portal_password" placeholder="Enter WiFi Password">
                     </div>
                     <div class="input-group">
-                        <label>Evil Portal AP SSID <span class="tooltip">?
-                            <span class="tooltiptext">Enter the SSID for the Access Point of the Evil Portal.</span>
-                        </span></label>
+                        <label for="portal_ap_ssid">Evil Portal AP SSID 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the SSID for the Access Point of the Evil Portal.</span>
+                            </span>
+                        </label>
                         <input type="text" id="portal_ap_ssid" placeholder="Enter Evil Portal AP SSID">
                     </div>
                     <div class="input-group">
-                        <label>Portal Domain <span class="tooltip">?
-                            <span class="tooltiptext">Enter the domain name for the Evil Portal.</span>
-                        </span></label>
+                        <label for="portal_domain">Portal Domain 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the domain name for the Evil Portal.</span>
+                            </span>
+                        </label>
                         <input type="text" id="portal_domain" placeholder="Enter Domain">
                     </div>
                     <button onclick="startevilportal()">Start Evil Portal</button>
                 </div>
                 <!-- Power Printer Section -->
-                <div class="section settings-section" id="power-printer-section">
+                <div class="settings-section" id="power-printer-section">
                     <h2>Power Printer Settings</h2>
                     <div class="input-group">
-                        <label>Printer IP <span class="tooltip">?
-                            <span class="tooltiptext">Enter the IP address of the printer.</span>
-                        </span></label>
+                        <label for="printer_ip">Printer IP 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the IP address of the printer.</span>
+                            </span>
+                        </label>
                         <input type="text" id="printer_ip" placeholder="Enter Printer IP">
                     </div>
                     <div class="input-group">
-                        <label>Printer Text <span class="tooltip">?
-                            <span class="tooltiptext">Enter the text to print on the printer.</span>
-                        </span></label>
+                        <label for="printer_text">Printer Text 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the text to print on the printer.</span>
+                            </span>
+                        </label>
                         <textarea id="printer_text" placeholder="Enter Text to Print"></textarea>
                     </div>
                     <div class="input-group">
-                        <label>Printer Font Size <span class="tooltip">?
-                            <span class="tooltiptext">Set the font size for the printed text (1 - 72).</span>
-                        </span></label>
+                        <label for="printer_font_size">Printer Font Size 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Set the font size for the printed text (10 - 72).</span>
+                            </span>
+                        </label>
                         <input type="number" id="printer_font_size" min="10" max="72" step="1" placeholder="10 - 72" required>
                     </div>
                     <div class="input-group">
-                        <label>Printer Alignment <span class="tooltip">?
-                            <span class="tooltiptext">Select the alignment for the printed text.</span>
-                        </span></label>
+                        <label for="printer_alignment">Printer Alignment 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Select the alignment for the printed text.</span>
+                            </span>
+                        </label>
                         <div class="select-wrapper">
                             <select id="printer_alignment">
                                 <option value="0">Center Middle</option>
@@ -442,36 +786,72 @@
                             </select>
                         </div>
                     </div>
-                    <br>
                     <button onclick="sendtoprinter()">Send to Printer</button>
                 </div>
                 <!-- RGB Section -->
-                <div class="section settings-section" id="rgb-section">
+                <div class="settings-section" id="rgb-section">
                     <h2>RGB Settings</h2>
                     <div class="input-group">
-                        <label>Rainbow Mode <span class="tooltip">?
-                            <span class="tooltiptext">Toggle the rainbow color mode for the RGB LEDs.</span>
-                        </span></label>
+                        <label for="rainbow_mode">Rainbow Mode 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Toggle the rainbow color mode for the RGB LEDs.</span>
+                            </span>
+                        </label>
                         <label class="toggle-switch">
                             <input type="checkbox" id="rainbow_mode">
                             <span class="slider"></span>
                         </label>
                     </div>
                     <div class="input-group">
-                        <label>RGB Speed <span class="tooltip">?
-                            <span class="tooltiptext">Set the speed of the RGB color change (15 - 50).</span>
-                        </span></label>
+                        <label for="rgb_speed">RGB Speed 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Set the speed of the RGB color change (15 - 50).</span>
+                            </span>
+                        </label>
                         <input type="number" id="rgb_speed" min="15" max="50" step="1" placeholder="15 - 50" required>
                     </div>
                 </div>
-
-                <div class="section settings-section" id="flappy_ghost_section">
+                <!-- Flappy Ghost Section -->
+                <div class="settings-section" id="flappy_ghost_section">
                     <h2>Flappy Ghost Settings</h2>
                     <div class="input-group">
-                        <label>Name <span class="tooltip">?
-                            <span class="tooltiptext">Enter the Name you want to have on the flappy ghost leadboards.</span>
-                        </span></label>
+                        <label for="flappy_name_text">Name 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the Name you want to have on the Flappy Ghost leaderboards.</span>
+                            </span>
+                        </label>
                         <textarea id="flappy_name_text" placeholder="Enter Name"></textarea>
+                    </div>
+                </div>
+                <div class="settings-section" id="miscellaneous_section">
+                    <h2>Miscellaneous Settings</h2>
+                
+                    <!-- Timezone Selection -->
+                    <div class="input-group">
+                        <label for="timezone_select">Timezone 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Select your timezone. This will be used to adjust the device clock.</span>
+                            </span>
+                        </label>
+                        <select id="timezone_select">
+                            <option value="UTC0">UTC</option>
+                            <option value="MST7MDT,M3.2.0,M11.1.0">Mountain Time (MST/MDT)</option>
+                            <option value="EST5EDT,M3.2.0,M11.1.0">Eastern Time (EST/EDT)</option>
+                            <option value="PST8PDT,M3.2.0,M11.1.0">Pacific Time (PST/PDT)</option>
+                            <option value="CST6CDT,M3.2.0,M11.1.0">Central Time (CST/CDT)</option>
+                            <option value="IST-5:30">India Standard Time (IST)</option>
+                            <option value="GMT0BST,M3.5.0/1,M10.5.0/2">British Summer Time (GMT/BST)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="accent_color_picker">Accent Color 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Pick a custom accent color for the firmware. Use the color picker to select your preferred color.</span>
+                            </span>
+                        </label>
+                        <input type="color" id="accent_color_picker" value="#ffffff">
+                        <span id="accent_color_hex" style="margin-left: 10px;">#ffffff</span>
                     </div>
                 </div>
             </div>
@@ -585,92 +965,362 @@
                     <strong>Alignment options:</strong> CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left
                 </li>
             </ul>
-        </div>        
+        </div>
+
+        <!-- SD Card Tab Content -->
+        <div id="SDCard" class="tabcontent">
+            <h2>SD Card File Explorer</h2>
+            
+            <!-- Breadcrumb Navigation -->
+            <nav class="breadcrumb" id="breadcrumb">
+                <span class="breadcrumb-item" onclick="navigateToBreadcrumb(0)">Root</span>
+            </nav>
+            
+            <!-- SD Card Status -->
+            <div id="sdcard-status">
+                Loading SD card data...
+            </div>
+            
+            <!-- SD Card Structure -->
+            <div id="sdcard-structure">
+                <!-- SD Card Structure will be rendered here -->
+            </div>
+            
+            <!-- Upload File Section -->
+            <div class="upload-section">
+                <h2>Upload File</h2>
+                <div class="input-group">
+                    <label for="sdcard-upload">Choose File 
+                        <span class="tooltip">?
+                            <span class="tooltiptext">Select a file to upload to the current folder on the SD Card.</span>
+                        </span>
+                    </label>
+                    <div class="file-wrapper">
+                        <span id="upload-file-name">No files selected</span>
+                        <button class="small" onclick="document.getElementById('sdcard-upload').click()">Upload</button>
+                        <input type="file" id="sdcard-upload" accept="*/*" onchange="document.getElementById('upload-file-name').innerText = this.files[0].name">
+                    </div>
+                </div>
+                <button onclick="uploadFile()">Upload</button>
+            </div>
+        </div>
+        
     </div>
-    <!-- JavaScript for interactivity -->
+    <!-- JavaScript for Interactivity -->
     <script>
+
+        let sdCardData = [];          // Stores the entire SD Card structure
+        let navigationStack = [];     // Keeps track of the navigation path
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('sdcard-upload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Determine the upload path based on the navigation stack
+            const currentFolder = getCurrentFolder();
+            let uploadPath = '/mnt';
+            if (navigationStack.length > 1) {
+                const pathParts = navigationStack.slice(1).map(folder => folder.name);
+                uploadPath = path.join(uploadPath, ...pathParts);
+            }
+
+            formData.append('path', uploadPath);
+
+            try {
+                // Show uploading status
+                const statusElement = document.getElementById('sdcard-status');
+                statusElement.textContent = 'Uploading file...';
+
+                const response = await fetch('/api/sdcard/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('File uploaded successfully!');
+                    fetchSDCardData();
+                    statusElement.textContent = 'File uploaded successfully.';
+                    fileInput.value = '';
+                } else {
+                    throw new Error(result.message || 'Failed to upload the file.');
+                }
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert(`Error uploading file: ${error.message}`);
+                const statusElement = document.getElementById('sdcard-status');
+                statusElement.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        document.getElementById('accent_color_picker').addEventListener('input', function (event) {
+            const hexColor = event.target.value;
+            document.getElementById('accent_color_hex').textContent = hexColor;
+        });
+
+
+        async function fetchSDCardData() {
+            const statusElement = document.getElementById("sdcard-status");
+            try {
+                const response = await fetch("/api/sdcard");
+                const data = await response.json();
+                
+                if (response.ok) {
+                    sdCardData = data; // Store the entire structure
+                    navigationStack = [ { name: "Root", type: "folder", children: sdCardData } ]; // Initialize stack with root
+                    renderCurrentFolder();
+                    statusElement.textContent = "SD card data loaded successfully.";
+                } else {
+                    throw new Error(data.message || "Failed to fetch SD card data.");
+                }
+            } catch (error) {
+                statusElement.textContent = error.message || "Failed to load SD card data.";
+                console.error("Error fetching SD Card data:", error);
+            }
+        }
+
+
+
+        function getCurrentFolder() {
+            return navigationStack[navigationStack.length - 1];
+        }
+
+        function renderCurrentFolder() {
+            const currentFolder = getCurrentFolder();
+            const structureElement = document.getElementById("sdcard-structure");
+            structureElement.innerHTML = ""; // Clear existing contents
+
+            if (!currentFolder.children || currentFolder.children.length === 0) {
+                structureElement.textContent = "This folder is empty.";
+                return;
+            }
+
+            const ul = document.createElement("ul");
+            ul.classList.add("file-explorer");
+
+            currentFolder.children.forEach(item => {
+                const li = document.createElement("li");
+
+                const fileName = document.createElement("span");
+                fileName.classList.add("file-name");
+                fileName.textContent = item.name;
+
+                if (item.type === "folder") {
+                    fileName.classList.add("folder");
+                    fileName.onclick = () => navigateIntoFolder(item);
+                } else {
+                    fileName.classList.add("file");
+                }
+
+                li.appendChild(fileName);
+
+                if (item.type === "file") {
+                    const actionContainer = document.createElement("div");
+                    actionContainer.classList.add("file-actions");
+
+                    const downloadBtn = document.createElement("button");
+                    downloadBtn.textContent = "Download";
+                    downloadBtn.classList.add("small");
+                    downloadBtn.classList.add("download-button");
+                    downloadBtn.onclick = () => downloadFile(item.path);
+                    actionContainer.appendChild(downloadBtn);
+
+                    const deleteBtn = document.createElement("button");
+                    deleteBtn.textContent = "Delete";
+                    deleteBtn.classList.add("small");
+                    deleteBtn.classList.add("delete-button");
+                    deleteBtn.onclick = () => deleteFile(item.name, item.path);
+                    actionContainer.appendChild(deleteBtn);
+
+                    li.appendChild(actionContainer);
+                }
+
+                ul.appendChild(li);
+            });
+
+            structureElement.appendChild(ul);
+            updateBreadcrumb();
+        }
+
+
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById("breadcrumb");
+            breadcrumb.innerHTML = ""; // Clear existing breadcrumbs
+
+            navigationStack.forEach((folder, index) => {
+                const crumb = document.createElement("span");
+                crumb.classList.add("breadcrumb-item");
+                crumb.textContent = folder.name;
+
+                if (index < navigationStack.length - 1) {
+                    crumb.onclick = () => navigateToBreadcrumb(index);
+                } else {
+                    // Current folder - not clickable
+                    crumb.style.cursor = 'default';
+                    crumb.style.color = '#ffffff';
+                }
+
+                breadcrumb.appendChild(crumb);
+            });
+        }
+
+        function navigateIntoFolder(folder) {
+            navigationStack.push(folder);
+            renderCurrentFolder();
+        }
+
+        function navigateToBreadcrumb(index) {
+            // Remove folders from the stack after the selected breadcrumb
+            navigationStack = navigationStack.slice(0, index + 1);
+            renderCurrentFolder();
+        }
+
+        function basename(path) {
+            return path.split('/').reverse()[0];
+        }
+
+        async function downloadFile(filePath) {
+            const response = await fetch("/api/sdcard/download", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ path: filePath })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = basename(filePath); // Use the file name from the path
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } else {
+                const errorData = await response.json();
+                alert(errorData.message || "Failed to download the file.");
+            }
+        }
+
+        async function deleteFile(fileName, filePath) {
+            const confirmDelete = confirm("Are you sure you want to delete " + fileName + "?");
+            if (!confirmDelete) return;
+
+            const response = await fetch("/api/sdcard?path=" + encodeURI(filePath), {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(errorData.message || "Failed to delete the file.");
+            }
+            else
+                fetchSDCardData();
+        }
+
         // Function to handle tab switching
         function openTab(evt, tabName) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
                 tabcontent[i].classList.remove("show");
             }
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
                 tablinks[i].classList.remove("active");
             }
             document.getElementById(tabName).classList.add("show");
             evt.currentTarget.classList.add("active");
+
+            if (tabName === "SDCard") {
+                fetchSDCardData();
+            }
         }
+
         // Set the default tab to open on page load
         document.getElementById("defaultTab").click();
 
         // Function to load current settings from the ESP32
         function loadSettings() {
             fetch('/api/settings')
-            .then(response => response.json())
-            .then(data => {
-                // WiFi/BLE Settings
-                document.getElementById('broadcast_speed').value = data.broadcast_speed;
-                document.getElementById('ap_ssid').value = data.ap_ssid;
-                document.getElementById('ap_password').value = data.ap_password;
+                .then(response => response.json())
+                .then(data => {
+                    // WiFi/BLE Settings
+                    document.getElementById('broadcast_speed').value = data.broadcast_speed;
+                    document.getElementById('ap_ssid').value = data.ap_ssid;
+                    document.getElementById('ap_password').value = data.ap_password;
 
-                // RGB Settings
-                document.getElementById('rainbow_mode').checked = data.rainbow_mode;
-                document.getElementById('rgb_speed').value = data.rgb_speed;
+                    // RGB Settings
+                    document.getElementById('rainbow_mode').checked = data.rainbow_mode;
+                    document.getElementById('rgb_speed').value = data.rgb_speed;
 
-                // Evil Portal Settings
-                document.getElementById('portal_url').value = data.portal_url;
-                document.getElementById('portal_ssid').value = data.portal_ssid;
-                document.getElementById('portal_password').value = data.portal_password;
-                document.getElementById('portal_ap_ssid').value = data.portal_ap_ssid;
-                document.getElementById('portal_domain').value = data.portal_domain;
-                document.getElementById('portal_offline_mode').checked = data.portal_offline_mode;
+                    // Evil Portal Settings
+                    document.getElementById('portal_url').value = data.portal_url;
+                    document.getElementById('portal_ssid').value = data.portal_ssid;
+                    document.getElementById('portal_password').value = data.portal_password;
+                    document.getElementById('portal_ap_ssid').value = data.portal_ap_ssid;
+                    document.getElementById('portal_domain').value = data.portal_domain;
+                    document.getElementById('portal_offline_mode').checked = data.portal_offline_mode;
 
-                // Power Printer Settings
-                document.getElementById('printer_ip').value = data.printer_ip;
-                document.getElementById('printer_text').value = data.printer_text;
-                document.getElementById('printer_font_size').value = data.printer_font_size;
-                document.getElementById('printer_alignment').value = data.printer_alignment;
+                    // Power Printer Settings
+                    document.getElementById('printer_ip').value = data.printer_ip;
+                    document.getElementById('printer_text').value = data.printer_text;
+                    document.getElementById('printer_font_size').value = data.printer_font_size;
+                    document.getElementById('printer_alignment').value = data.printer_alignment;
 
-                
-                if (data.station_ip) {
-                    document.getElementById('station_ip').value = data.station_ip;
-                } else {
-                    document.getElementById('station_ip').value = 'Not connected';
-                }
 
-            })
-            .catch(error => console.error('Error fetching settings:', error));
+                    // Flappy Ghost Settings
+                    document.getElementById('flappy_name_text').value = data.flappy_ghost_name || '';
+
+                    document.getElementById('accent_color_hex').textContent = data.hex_accent_color;
+                    document.getElementById('timezone_select').value = data.timezone_str;
+
+                    if (data.station_ip) {
+                        document.getElementById('station_ip').value = data.station_ip;
+                    } else {
+                        document.getElementById('station_ip').value = 'Not connected';
+                    }
+                })
+                .catch(error => console.error('Error fetching settings:', error));
         }
 
         // Function to save settings to the ESP32
         function saveSettings() {
-            let settings = {
+            const settings = {
                 // WiFi/BLE Settings
                 broadcast_speed: parseInt(document.getElementById('broadcast_speed').value),
-                ap_ssid: document.getElementById('ap_ssid').value.trim(),
-                ap_password: document.getElementById('ap_password').value.trim(),
+                ap_ssid: document.getElementById('ap_ssid').value,
+                ap_password: document.getElementById('ap_password').value,
 
                 // RGB Settings
                 rainbow_mode: document.getElementById('rainbow_mode').checked,
                 rgb_speed: parseInt(document.getElementById('rgb_speed').value),
 
                 // Evil Portal Settings
-                portal_url: document.getElementById('portal_url').value.trim(),
-                portal_ssid: document.getElementById('portal_ssid').value.trim(),
-                portal_password: document.getElementById('portal_password').value.trim(),
-                portal_ap_ssid: document.getElementById('portal_ap_ssid').value.trim(),
-                portal_domain: document.getElementById('portal_domain').value.trim(),
+                portal_url: document.getElementById('portal_url').value,
+                portal_ssid: document.getElementById('portal_ssid').value,
+                portal_password: document.getElementById('portal_password').value,
+                portal_ap_ssid: document.getElementById('portal_ap_ssid').value,
+                portal_domain: document.getElementById('portal_domain').value,
                 portal_offline_mode: document.getElementById('portal_offline_mode').checked,
 
                 // Power Printer Settings
-                printer_ip: document.getElementById('printer_ip').value.trim(),
-                printer_text: document.getElementById('printer_text').value.trim(),
+                printer_ip: document.getElementById('printer_ip').value,
+                printer_text: document.getElementById('printer_text').value,
                 printer_font_size: parseInt(document.getElementById('printer_font_size').value),
                 printer_alignment: parseInt(document.getElementById('printer_alignment').value),
-                flappy_ghost_name: document.getElementById('flappy_name_text').value.trim(),
+
+                // Flappy Ghost Settings
+                flappy_ghost_name: document.getElementById('flappy_name_text').value,
+                hex_accent_color: document.getElementById('accent_color_hex').textContent,
+                timezone_str: document.getElementById('timezone_select').value,
             };
 
             const validationErrors = validateSettings(settings);
@@ -694,30 +1344,7 @@
             .catch(error => console.error('Error saving settings:', error));
         }
 
-        // Function to send command to the ESP32
-        function sendCommand() {
-            let command = document.getElementById('commandInput').value.trim();
-            if (command === '') {
-                alert('Please enter a command.');
-                return;
-            }
-            fetch('/api/command', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ command: command })
-            })
-            .then(response => {
-                if (response.ok) {
-                    document.getElementById('commandInput').value = '';
-                    alert('Command sent successfully!');
-                } else {
-                    alert('Error sending command.');
-                }
-            })
-            .catch(error => console.error('Error sending command:', error));
-        }
-
-
+        // Function to send Evil Portal command to the ESP32
         function startevilportal() {
             const PortalURL = document.getElementById('portal_url').value;
             let PortalSSID = document.getElementById('portal_ssid').value;
@@ -726,43 +1353,23 @@
             let PortalDomain = document.getElementById('portal_domain').value;
 
             // Validate inputs
-            if (PortalURL === '') {
-                alert('Please enter a Portal URL or File Path.');
-                return;
-            }
-            if (PortalSSID === '') {
-                alert('Please enter a Portal SSID');
-                return;
-            }
+            const errors = [];
+            if (PortalURL === '') errors.push('Please enter a Portal URL or File Path.');
+            if (PortalSSID === '') errors.push('Please enter a Portal SSID.');
+            if (PortalPassword === '') errors.push('Please enter a Portal Password.');
+            if (PortalAPSSID === '') errors.push('Please enter a Portal AP SSID.');
+            if (PortalDomain === '') errors.push('Please enter a Portal Domain.');
 
-            if (PortalPassword === '') {
-                alert('Please enter a Valid Portal Password');
-                return;
-            }
-
-            if (PortalAPSSID === '') {
-                alert('Please enter a Valid Portal AP SSID');
-                return;
-            }
-
-            if (PortalDomain === '') {
-                alert('Please enter a Valid Portal Domain');
+            if (errors.length > 0) {
+                alert('Please correct the following errors:\n' + errors.join('\n'));
                 return;
             }
 
             // Wrap parameters in double quotes if they contain spaces
-            if (PortalSSID.includes(' ')) {
-                PortalSSID = `"${PortalSSID}"`;
-            }
-            if (PortalPassword.includes(' ')) {
-                PortalPassword = `"${PortalPassword}"`;
-            }
-            if (PortalAPSSID.includes(' ')) {
-                PortalAPSSID = `"${PortalAPSSID}"`;
-            }
-            if (PortalDomain.includes(' ')) {
-                PortalDomain = `"${PortalDomain}"`;
-            }
+            PortalSSID = wrapInQuotesIfNeeded(PortalSSID);
+            PortalPassword = wrapInQuotesIfNeeded(PortalPassword);
+            PortalAPSSID = wrapInQuotesIfNeeded(PortalAPSSID);
+            PortalDomain = wrapInQuotesIfNeeded(PortalDomain);
 
             const command = `startportal ${PortalURL} ${PortalSSID} ${PortalPassword} ${PortalAPSSID} ${PortalDomain}`;
 
@@ -781,59 +1388,55 @@
             .catch(error => console.error('Error Sending Evil Portal Command...', error));
         }
 
+        // Helper function to wrap strings in quotes if they contain spaces
+        function wrapInQuotesIfNeeded(str) {
+            return str.includes(' ') ? `"${str}"` : str;
+        }
+
+        // Function to validate settings before saving
         function validateSettings(settings) {
-            let errors = [];
+            const errors = [];
 
             // Broadcast Speed: 5 - 1000 ms
             if (!(settings.broadcast_speed >= 5 && settings.broadcast_speed <= 1000)) {
                 errors.push('Broadcast Speed must be between 5 and 1000 ms.');
             }
 
-            // RGB Speed: 1 - 100
+            // RGB Speed: 15 - 50
             if (!(settings.rgb_speed >= 15 && settings.rgb_speed <= 50)) {
                 errors.push('RGB Speed must be between 15 and 50.');
             }
 
-            // Printer Font Size: 1 - 72
+            // Printer Font Size: 10 - 72
             if (!(settings.printer_font_size >= 10 && settings.printer_font_size <= 72)) {
                 errors.push('Printer Font Size must be between 10 and 72.');
             }
 
-            // Add more validations as needed for other integer fields
+            // Additional validations can be added here
 
             return errors;
         }
 
-
+        // Function to send text to the printer
         function sendtoprinter() {
             const printerip = document.getElementById('printer_ip').value.trim();
             const printertext = document.getElementById('printer_text').value.trim();
             const fontsize = parseInt(document.getElementById('printer_font_size').value);
-            let finalprintertext = printertext;
+            const alignment = getPrinterAlignment();
 
-            // Validate inputs
-            let errors = [];
+            const errors = [];
 
-            if (printerip === '') {
-                errors.push('Please enter a Printer IP.');
-            }
-            if (printertext === '') {
-                errors.push('Please enter text to send to the printer.');
-            }
-            if (isNaN(fontsize) || fontsize < 1 || fontsize > 72) {
-                errors.push('Printer Font Size must be between 1 and 72.');
-            }
+            if (printerip === '') errors.push('Please enter a Printer IP.');
+            if (printertext === '') errors.push('Please enter text to send to the printer.');
+            if (isNaN(fontsize) || fontsize < 10 || fontsize > 72) errors.push('Printer Font Size must be between 10 and 72.');
 
             if (errors.length > 0) {
                 alert('Please correct the following errors:\n' + errors.join('\n'));
                 return;
             }
 
-            if (printertext.includes(' ')) {
-                finalprintertext = `"${printertext}"`;
-            }
-
-            const command = `powerprinter ${printerip} ${finalprintertext} ${fontsize} CM`;
+            const finalprintertext = wrapInQuotesIfNeeded(printertext);
+            const command = `powerprinter ${printerip} ${finalprintertext} ${fontsize} ${alignment}`;
 
             fetch('/api/command', {
                 method: 'POST',
@@ -843,10 +1446,7 @@
             .then(response => {
                 if (response.ok) {
                     alert('Printer connection command sent successfully!');
-                    
-                    setTimeout(function() {
-                        loadSettings();
-                    }, 3000);
+                    setTimeout(loadSettings, 3000);
                 } else {
                     alert('Error sending Printer connection command.');
                 }
@@ -854,36 +1454,35 @@
             .catch(error => console.error('Error sending Printer connection command:', error));
         }
 
-        
+        // Helper function to get printer alignment based on selected value
+        function getPrinterAlignment() {
+            const alignmentMap = {
+                "0": "CM",
+                "1": "TL",
+                "2": "TR",
+                "3": "BR",
+                "4": "BL"
+            };
+            const value = document.getElementById('printer_alignment').value;
+            return alignmentMap[value] || "CM";
+        }
+
+        // Function to connect to WiFi
         function connectToWiFi() {
             const ssid = document.getElementById('wifi_ssid').value.trim();
             const password = document.getElementById('wifi_password').value.trim();
-            let finalssid = ssid;
-            let finalpassword = password;
 
-            // Validate inputs
-            let errors = [];
-
-            if (ssid === '') {
-                errors.push('Please enter a WiFi SSID.');
-            }
-            if (password === '') {
-                errors.push('Please enter a WiFi password.');
-            }
+            const errors = [];
+            if (ssid === '') errors.push('Please enter a WiFi SSID.');
+            if (password === '') errors.push('Please enter a WiFi password.');
 
             if (errors.length > 0) {
                 alert('Please correct the following errors:\n' + errors.join('\n'));
                 return;
             }
 
-            if (ssid.includes(' ')) {
-                finalssid = `"${ssid}"`;
-            }
-
-            if (password.includes(' ')) {
-                finalpassword = `"${password}"`;
-            }
-
+            const finalssid = wrapInQuotesIfNeeded(ssid);
+            const finalpassword = wrapInQuotesIfNeeded(password);
             const command = `connect ${finalssid} ${finalpassword}`;
 
             fetch('/api/command', {
@@ -894,10 +1493,7 @@
             .then(response => {
                 if (response.ok) {
                     alert('WiFi connection command sent successfully!');
-                    
-                    setTimeout(function() {
-                        loadSettings();
-                    }, 3000);
+                    setTimeout(loadSettings, 3000);
                 } else {
                     alert('Error sending WiFi connection command.');
                 }
@@ -905,37 +1501,10 @@
             .catch(error => console.error('Error sending WiFi connection command:', error));
         }
 
-       
+        // Load settings on window load
         window.onload = function() {
             loadSettings();
         };
-
-        
-        function toggleSection(sectionId, disabled) {
-            const section = document.getElementById(sectionId);
-            if (disabled) {
-                section.classList.add('disabled-section');
-                
-                if (!section.querySelector('.disabled-overlay')) {
-                    const overlay = document.createElement('div');
-                    overlay.className = 'disabled-overlay';
-                    overlay.textContent = 'Feature Under Maintenance';
-                    section.appendChild(overlay);
-                }
-            } else {
-                section.classList.remove('disabled-section');
-                
-                const overlay = section.querySelector('.disabled-overlay');
-                if (overlay) {
-                    overlay.remove();
-                }
-            }
-        }
-
-
-        // Example: Toggling a section (uncomment to use)
-        // toggleSection('connect-wifi-section', true); // Disable
-        toggleSection('connect-wifi-section', false); // Enable
     </script>
 </body>
 </html>
