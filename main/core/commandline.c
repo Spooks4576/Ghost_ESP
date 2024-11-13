@@ -17,6 +17,7 @@
 #include <netdb.h>
 #include <managers/gps_manager.h>
 #include "vendor/printer.h"
+#include "esp_sntp.h"
 
 static Command *command_list_head = NULL;
 
@@ -258,6 +259,13 @@ void handle_wifi_connection(int argc, char** argv) {
     xTaskCreate(animate_led_based_on_amplitude, "udp_server", 4096, NULL, 5, &VisualizerHandle);
 #endif
     }
+
+#ifdef CONFIG_HAS_RTC_CLOCK
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
+#endif
+
 }
 
 

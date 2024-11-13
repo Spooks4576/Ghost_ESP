@@ -18,6 +18,10 @@
 #include "vendor/drivers/axp2101.h"
 #endif
 
+#ifdef CONFIG_HAS_RTC_CLOCK
+#include "vendor/drivers/pcf8563.h"
+#endif
+
 #ifdef CONFIG_USE_7_INCHER
 #include "vendor/drivers/ST7262.h"
 #endif
@@ -321,6 +325,9 @@ void display_manager_init(void) {
 
 #ifdef CONFIG_HAS_BATTERY
     axp2101_init();
+#ifdef CONFIG_HAS_RTC_CLOCK
+    pcf8563_init(I2C_NUM_1, 0x51);
+#endif
 #endif
 
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);

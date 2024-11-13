@@ -119,6 +119,12 @@ menu "Ghost ESP Options"
         default n
         help
             Enable power saving features if you have a battery.
+
+    config HAS_RTC_CLOCK
+        bool "Enable RTC Clock"
+        default n
+        help
+            Enable RTC Clock.
     
     endmenu
 

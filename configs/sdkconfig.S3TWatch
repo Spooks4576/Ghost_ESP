@@ -557,6 +557,7 @@ CONFIG_USE_TOUCHSCREEN=y
 # CONFIG_Sunton_LCD is not set
 # CONFIG_USE_ILI9341_2 is not set
 CONFIG_HAS_BATTERY=y
+CONFIG_HAS_RTC_CLOCK=y
 # end of Display Options
 
 #

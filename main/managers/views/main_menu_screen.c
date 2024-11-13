@@ -2,6 +2,14 @@
 #include "managers/views/music_visualizer.h"
 #include "managers/views/flappy_ghost_screen.h"
 #include "managers/views/app_gallery_screen.h"
+#include "esp_wifi_types.h"
+#include "esp_wifi.h"
+#include <time.h>
+#include "esp_log.h"
+#ifdef CONFIG_HAS_RTC_CLOCK
+#include "esp_sntp.h"
+#include "vendor/drivers/pcf8563.h"
+#endif
 #include <stdio.h>
 
 
@@ -23,6 +31,88 @@ static menu_item_t menu_items[] = {
 };
 
 static int num_items = sizeof(menu_items) / sizeof(menu_items[0]);
+
+lv_obj_t *time_label;
+lv_timer_t *time_update_timer;
+#ifdef CONFIG_HAS_RTC_CLOCK
+RTC_Date current_time;
+#endif
+
+#ifdef CONFIG_HAS_RTC_CLOCK
+
+bool wifi_is_connected() {
+    wifi_ap_record_t ap_info;
+    if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+        return true;
+    }
+    return false;
+}
+
+void update_time_label(lv_timer_t *timer) {
+    static bool time_synced = false;
+
+    if (wifi_is_connected() && !time_synced) {
+        printf("Internet connection detected. Syncing time...");
+
+        setenv("TZ", "MST7MDT,M3.2.0,M11.1.0", 1);
+        tzset();
+
+        time_t now;
+        struct tm timeinfo;
+        time(&now);
+        localtime_r(&now, &timeinfo);
+
+        if (timeinfo.tm_year >= (2020 - 1900)) {
+            printf("SNTP time synchronized: %s", asctime(&timeinfo));
+
+            // Sync RTC with SNTP time
+            RTC_Date rtc_time = {
+                .year = timeinfo.tm_year + 1900,
+                .month = timeinfo.tm_mon + 1,
+                .day = timeinfo.tm_mday,
+                .hour = timeinfo.tm_hour,
+                .minute = timeinfo.tm_min,
+                .second = timeinfo.tm_sec,
+            };
+
+            if (pcf8563_set_datetime(&rtc_time) == ESP_OK) {
+                printf("RTC successfully synchronized with SNTP\n");
+                time_synced = true; // Mark synchronization as completed
+            } else {
+                printf("Failed to sync RTC with SNTP\n");
+            }
+        } else {
+            printf("Failed to synchronize time using SNTP\n");
+        }
+    }
+
+
+    if (pcf8563_get_datetime(&current_time) == ESP_OK) {
+        char time_str[16];
+        int hour = current_time.hour;
+        const char *period = "AM";
+
+        
+        if (hour >= 12) {
+            period = "PM";
+            if (hour > 12) {
+                hour -= 12;
+            }
+        } else if (hour == 0) {
+            hour = 12;
+        }
+
+
+        snprintf(time_str, sizeof(time_str), "%02d:%02d %s",
+                hour, current_time.minute, period);
+
+        
+        lv_label_set_text(time_label, time_str);
+        lv_obj_set_pos(time_label, 70, 33);
+    }
+}
+#endif
+
 
 /**
  * @brief Combined handler for menu item events using either touchscreen or joystick input.
@@ -225,6 +315,20 @@ void main_menu_create(void) {
         lv_obj_set_user_data(menu_item, (void *)(uintptr_t)i);
     }
 
+
+#ifdef CONFIG_HAS_RTC_CLOCK
+    time_label = lv_label_create(lv_scr_act());
+    lv_label_set_text(time_label, "00:00:00");
+    lv_obj_set_style_text_color(time_label, lv_color_make(255, 182, 193), 0);
+    lv_obj_set_style_text_font(time_label, &lv_font_montserrat_24, 0);
+    lv_obj_set_pos(time_label, 70, 33);
+
+    // Create a timer to update the time label every second
+    time_update_timer = lv_timer_create(update_time_label, 100, NULL);
+    lv_timer_ready(time_update_timer);
+#endif
+
+
 #ifndef CONFIG_USE_TOUCHSCREEN
     select_menu_item(0);
 #endif
@@ -240,6 +344,12 @@ void main_menu_destroy(void) {
         lv_obj_clean(menu_container);
         lv_obj_del(menu_container);
         menu_container = NULL;
+    }
+
+    if (time_update_timer) {
+        lv_timer_del(time_update_timer);
+        lv_obj_del(time_label);
+        time_update_timer = NULL;
     }
 }
 
