@@ -102,6 +102,19 @@ jobs:
         with:
           path: all_artifacts
 
+      - name: Verify and Flatten Artifacts
+        run: |
+          echo "Checking and flattening artifacts..."
+          mkdir -p flat_artifacts
+          if [ -d "all_artifacts" ] && [ "$(ls -A all_artifacts)" ]; then
+            find all_artifacts -type f -exec cp {} flat_artifacts/ \;
+            echo "Flattened artifacts:"
+            ls -lh flat_artifacts
+          else
+            echo "No artifacts found or directory is empty."
+            exit 1
+          fi
+
       - name: Install rclone
         run: |
           curl -fsSL https://rclone.org/install.sh | sudo bash
@@ -112,25 +125,27 @@ jobs:
           R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
         run: |
           mkdir -p ~/.config/rclone
-          echo "[cloudflare_r2]" > ~/.config/rclone/rclone.conf
-          echo "type = s3" >> ~/.config/rclone/rclone.conf
-          echo "provider = Cloudflare" >> ~/.config/rclone/rclone.conf
-          echo "access_key_id = $R2_ACCESS_KEY" >> ~/.config/rclone/rclone.conf
-          echo "secret_access_key = $R2_SECRET_KEY" >> ~/.config/rclone/rclone.conf
-          echo "endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com" >> ~/.config/rclone/rclone.conf
+          cat <<EOF > ~/.config/rclone/rclone.conf
+          [cloudflare_r2]
+          type = s3
+          provider = Cloudflare
+          access_key_id = $R2_ACCESS_KEY
+          secret_access_key = $R2_SECRET_KEY
+          endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com
+          EOF
 
       - name: Upload All Artifacts to Cloudflare R2
         env:
           R2_BUCKET: "spooksapi"
           R2_PATH: "GhostESPBins"
         run: |
-          echo "Uploading all artifacts to Cloudflare R2..."
-          for file in all_artifacts/*; do
+          echo "Uploading artifacts to Cloudflare R2..."
+          for file in flat_artifacts/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file..."
               rclone copy "$file" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress
             else
-              echo "Skipped $file as it is not a valid file."
+              echo "Skipping $file as it is not a valid file."
             fi
           done
           echo "All artifacts uploaded successfully."
@@ -152,7 +167,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for file in all_artifacts/*; do
+          for file in flat_artifacts/*; do
             if [ -f "$file" ] && [ -s "$file" ]; then
               echo "Uploading $file to GitHub Release..."
               curl -X POST \
@@ -161,7 +176,7 @@ jobs:
                 --data-binary @"$file" \
                 "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=$(basename $file)"
             else
-              echo "Skipped $file as it is either empty or not a valid file."
+              echo "Skipping $file as it is either empty or not a valid file."
             fi
           done
 
