@@ -1,0 +1,156 @@
+name: Compile All
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build for ${{ matrix.target.name }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        target:
+          - { name: "esp32-generic", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.default.esp32", zip_name: "esp32-generic.zip" }
+          - { name: "esp32s2-generic", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32s2-generic.zip"}
+          - { name: "esp32s3-generic", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "esp32s3-generic.zip" }
+          - { name: "esp32c3-generic", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-generic.zip" }
+          - { name: "esp32c6-generic", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
+          - { name: "Awok V5", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip"}
+
+          # Dev Kit configurations (LED on, no screen support)
+          - { name: "esp32c3-devkit", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.devkit.esp32c3", zip_name: "esp32c3-devkit.zip"}
+          - { name: "esp32c6-devkit", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.devkit.esp32c6", zip_name: "esp32c6-devkit.zip"}
+
+          # Ghost board (LED on, special pin and LED count)
+          - { name: "ghostboard", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.ghostboard", zip_name: "ghostboard.zip"}
+
+          # Screen-supported builds
+          - { name: "MarauderV4_FlipperHub", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv4", zip_name: "MarauderV4_FlipperHub.zip"}
+          - { name: "MarauderV6&AwokDual", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip"}
+          - { name: "AwokMini", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip"}
+          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer", zip_name: "ESP32-S3-Cardputer.zip"}
+          - { name: "LillyGoTWatch_S3", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.S3TWatch", zip_name: "lillygos3watch.zip"}
+
+
+          # CYD (Cheap Yellow Display) with touch screen
+          - { name: "CYD2USB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB", zip_name: "CYD2USB.zip"}
+          - { name: "CYDMicroUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip"}
+          - { name: "CYDDualUSB", idf_target: "esp32",  sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip"}
+          - { name: "CYD2USB2.4_Inch", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch", zip_name: "CYD2USB2.4Inch.zip"}
+
+
+          # 7-inch boards
+          - { name: "Waveshare_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip"}
+          - { name: "Crowtech_LCD", idf_target: "esp32s3",  sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip"}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install ESP-IDF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget git flex bison gperf python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util
+          git clone -b v5.3.1 --depth 1 https://github.com/espressif/esp-idf.git ~/esp-idf
+          ~/esp-idf/install.sh
+
+      - name: Apply Custom SDK Config
+        run: |
+          cp "${{ matrix.target.sdkconfig_file }}" sdkconfig.defaults
+
+      - name: Set up ESP-IDF and Target
+        run: |
+          . ~/esp-idf/export.sh
+          export IDF_TARGET=${{ matrix.target.idf_target }}
+          echo "IDF_TARGET=${{ matrix.target.idf_target }}" >> $GITHUB_ENV
+
+      - name: Clean and Build Project
+        env:
+          SDKCONFIG_DEFAULTS: "sdkconfig.defaults"
+        run: |
+          . ~/esp-idf/export.sh
+          idf.py clean
+          idf.py build
+
+      - name: Package Build Artifacts
+        run: |
+          mkdir -p packaged_artifacts
+          cp build/partition_table/partition-table.bin packaged_artifacts/
+          cp build/*.bin packaged_artifacts/
+          zip "packaged_artifacts/${{ matrix.target.zip_name }}" packaged_artifacts/*
+
+      - name: Upload Build Artifacts to GitHub
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target.zip_name }}
+          path: packaged_artifacts/${{ matrix.target.zip_name }}
+
+  upload_all:
+    name: Upload All to Cloudflare R2
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: all_artifacts
+
+      - name: Install rclone
+        run: |
+          curl -fsSL https://rclone.org/install.sh | sudo bash
+
+      - name: Configure rclone for Cloudflare R2
+        env:
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "[cloudflare_r2]" > ~/.config/rclone/rclone.conf
+          echo "type = s3" >> ~/.config/rclone/rclone.conf
+          echo "provider = Cloudflare" >> ~/.config/rclone/rclone.conf
+          echo "access_key_id = $R2_ACCESS_KEY" >> ~/.config/rclone/rclone.conf
+          echo "secret_access_key = $R2_SECRET_KEY" >> ~/.config/rclone/rclone.conf
+          echo "endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com" >> ~/.config/rclone/rclone.conf
+
+      - name: Upload All Artifacts to Cloudflare R2
+        env:
+          R2_BUCKET: "spooksapi"
+          R2_PATH: "GhostESPBins"
+        run: |
+          echo "Uploading all artifacts to Cloudflare R2..."
+          rclone copy all_artifacts cloudflare_r2:${R2_BUCKET}/${R2_PATH} --progress
+          if [ $? -ne 0 ]; then
+            echo "Upload failed. Exiting..."
+            exit 1
+          fi
+          echo "All artifacts uploaded successfully."
+
+      - name: Notify Discord of Successful Upload
+        if: success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          payload=$(cat <<EOF
+          {
+            "embeds": [
+              {
+                "title": "🎉 New Build Artifacts Uploaded!",
+                "description": "All build artifacts have been successfully uploaded to Cloudflare R2.",
+                "color": 5814783,
+                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+              }
+            ]
+          }
+          EOF
+          )
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_WEBHOOK_URL"
