@@ -132,6 +132,32 @@ jobs:
           fi
           echo "All artifacts uploaded successfully."
 
+      - name: Get the Latest Release ID (Including Pre-releases)
+        id: get_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          latest_release=$(curl -s \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases" | jq '[.[] | select(.draft == false)] | .[0]')
+          release_id=$(echo "$latest_release" | jq -r '.id')
+          echo "Latest release ID (including pre-releases) is $release_id"
+          echo "::set-output name=release_id::$release_id"
+
+      - name: Upload Artifacts to Latest Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for file in all_artifacts/*; do
+            echo "Uploading $file to GitHub Release..."
+            curl -X POST \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: application/zip" \
+              --data-binary @"$file" \
+              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=$(basename $file)"
+          done
+
       - name: Notify Discord of Successful Upload
         if: success()
         env:
