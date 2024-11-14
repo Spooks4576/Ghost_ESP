@@ -132,6 +132,7 @@ jobs:
           access_key_id = $R2_ACCESS_KEY
           secret_access_key = $R2_SECRET_KEY
           endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com
+          no_create_bucket = true
           EOF
 
       - name: Upload All Artifacts to Cloudflare R2
