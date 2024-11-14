@@ -132,6 +132,12 @@ jobs:
           fi
           echo "All artifacts uploaded successfully."
 
+      
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: all_artifacts
+
       - name: Get the Latest Release ID (Including Pre-releases)
         id: get_release
         env:
