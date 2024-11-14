@@ -176,10 +176,11 @@ jobs:
           echo "endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com" >> ~/.config/rclone/rclone.conf
           
       - name: Acquire Mutex Lock
-        uses: crazy-max/ghaction-mutex@v1
+        uses: softprops/turnstyle@v1
         with:
-          mutex: cloudflare-upload-lock
-          timeout: 3000
+          poll-interval-seconds: 10
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Artifacts to Cloudflare R2
         env:
@@ -193,12 +194,6 @@ jobs:
             exit 1
           fi
           echo "Upload of ${{ matrix.target.zip_name }} to Cloudflare R2 completed successfully."
-
-      - name: Release Mutex Lock
-        uses: crazy-max/ghaction-mutex@v1
-        with:
-          mutex: cloudflare-upload-lock
-          release: true
 
       
       - name: Notify Discord of Successful Release
