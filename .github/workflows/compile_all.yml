@@ -132,7 +132,6 @@ jobs:
           access_key_id = $R2_ACCESS_KEY
           secret_access_key = $R2_SECRET_KEY
           endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com
-          no_create_bucket = true
           EOF
 
       - name: Upload All Artifacts to Cloudflare R2
@@ -144,7 +143,7 @@ jobs:
           for file in flat_artifacts/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file..."
-              rclone copy "$file" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress
+              rclone copy "$file" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress --s3-no-check-bucket
             else
               echo "Skipping $file as it is not a valid file."
             fi
