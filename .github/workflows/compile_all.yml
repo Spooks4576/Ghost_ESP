@@ -78,18 +78,33 @@ jobs:
           idf.py clean
           idf.py build
 
-      - name: Package Build Artifacts
+      - name: Download Bootloader
+        run: |
+          BOOTLOADER_URL="https://cdn.spookytools.com/bootloaders/${{ matrix.target.idf_target }}.bin"
+          BOOTLOADER_PATH="build/bootloader.bin"
+          echo "Downloading bootloader from $BOOTLOADER_URL..."
+          curl -L -o "$BOOTLOADER_PATH" "$BOOTLOADER_URL"
+          if [ ! -f "$BOOTLOADER_PATH" ]; then
+            echo "Error: Bootloader could not be downloaded."
+            exit 1
+          else
+            echo "Bootloader downloaded successfully."
+          fi
+
+      - name: Package Artifacts
         run: |
           mkdir -p packaged_artifacts
           cp build/partition_table/partition-table.bin packaged_artifacts/
           cp build/*.bin packaged_artifacts/
-          zip "packaged_artifacts/${{ matrix.target.zip_name }}" packaged_artifacts/*
+          cp build/bootloader.bin packaged_artifacts/
+          echo "Packaging artifacts:"
+          ls -lh packaged_artifacts/
 
       - name: Upload Build Artifacts to GitHub
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.target.zip_name }}
-          path: packaged_artifacts/${{ matrix.target.zip_name }}
+          path: packaged_artifacts
 
   upload_all:
     name: Upload All to Cloudflare R2 and GitHub Release
