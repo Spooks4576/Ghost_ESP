@@ -91,20 +91,25 @@ jobs:
             echo "Bootloader downloaded successfully."
           fi
 
-      - name: Package Artifacts
+      - name: Package Artifacts into ZIP
         run: |
-          mkdir -p packaged_artifacts
-          cp build/partition_table/partition-table.bin packaged_artifacts/
-          cp build/*.bin packaged_artifacts/
-          cp build/bootloader.bin packaged_artifacts/
-          echo "Packaging artifacts:"
-          ls -lh packaged_artifacts/
+          ARTIFACT_DIR="packaged_artifacts"
+          ZIP_FILE="${{ matrix.target.zip_name }}"
+          mkdir -p "$ARTIFACT_DIR"
+          cp build/partition_table/partition-table.bin "$ARTIFACT_DIR/"
+          cp build/*.bin "$ARTIFACT_DIR/"
+          echo "Packaging into zip: $ZIP_FILE"
+          cd "$ARTIFACT_DIR"
+          zip "../$ZIP_FILE" ./*
+          cd ..
+          echo "Zip file $ZIP_FILE created."
+          ls -lh "$ZIP_FILE"
 
       - name: Upload Build Artifacts to GitHub
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.target.zip_name }}
-          path: packaged_artifacts
+          path: ${{ matrix.target.zip_name }}
 
   upload_all:
     name: Upload All to Cloudflare R2 and GitHub Release
