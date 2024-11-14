@@ -92,7 +92,7 @@ jobs:
           path: packaged_artifacts/${{ matrix.target.zip_name }}
 
   upload_all:
-    name: Upload All to Cloudflare R2
+    name: Upload All to Cloudflare R2 and GitHub Release
     needs: build
     runs-on: ubuntu-latest
 
@@ -125,18 +125,15 @@ jobs:
           R2_PATH: "GhostESPBins"
         run: |
           echo "Uploading all artifacts to Cloudflare R2..."
-          rclone copy all_artifacts cloudflare_r2:${R2_BUCKET}/${R2_PATH} --progress
-          if [ $? -ne 0 ]; then
-            echo "Upload failed. Exiting..."
-            exit 1
-          fi
+          for file in all_artifacts/*; do
+            if [ -f "$file" ]; then
+              echo "Uploading $file..."
+              rclone copy "$file" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress
+            else
+              echo "Skipped $file as it is not a valid file."
+            fi
+          done
           echo "All artifacts uploaded successfully."
-
-      
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: all_artifacts
 
       - name: Get the Latest Release ID (Including Pre-releases)
         id: get_release
@@ -156,12 +153,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for file in all_artifacts/*; do
-            echo "Uploading $file to GitHub Release..."
-            curl -X POST \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              -H "Content-Type: application/zip" \
-              --data-binary @"$file" \
-              "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=$(basename $file)"
+            if [ -f "$file" ] && [ -s "$file" ]; then
+              echo "Uploading $file to GitHub Release..."
+              curl -X POST \
+                -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Content-Type: application/zip" \
+                --data-binary @"$file" \
+                "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=$(basename $file)"
+            else
+              echo "Skipped $file as it is either empty or not a valid file."
+            fi
           done
 
       - name: Notify Discord of Successful Upload
@@ -174,7 +175,7 @@ jobs:
             "embeds": [
               {
                 "title": "🎉 New Build Artifacts Uploaded!",
-                "description": "All build artifacts have been successfully uploaded to Cloudflare R2.",
+                "description": "All build artifacts have been successfully uploaded to Cloudflare R2 and GitHub Release.",
                 "color": 5814783,
                 "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
               }
