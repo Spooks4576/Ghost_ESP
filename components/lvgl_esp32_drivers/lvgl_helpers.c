@@ -195,7 +195,7 @@ bool lvgl_spi_driver_init(int host,
 #else
     esp_err_t ret = spi_bus_initialize(host, &buscfg, (spi_dma_chan_t)dma_channel);
 #endif
-    assert(ret == ESP_OK);
+    //assert(ret == ESP_OK);
 
     return ESP_OK != ret;
 }

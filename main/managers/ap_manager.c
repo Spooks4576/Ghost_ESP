@@ -630,6 +630,7 @@ esp_err_t ap_manager_init(void) {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
     config.ctrl_port = 32768; // Control port (use default)
+    config.max_uri_handlers = 30;
 
 
     ret = httpd_start(&server, &config);
@@ -730,8 +731,8 @@ esp_err_t ap_manager_init(void) {
         printf("Error registering URI\n");
     }
 
-     ret = httpd_register_uri_handler(server, &uri_get_settings);
-        if (ret != ESP_OK) {
+    ret = httpd_register_uri_handler(server, &uri_get_settings);
+    if (ret != ESP_OK) {
         printf("Error registering URI\n");
     }
 
@@ -836,6 +837,7 @@ esp_err_t ap_manager_start_services() {
     // Start HTTPD server
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.server_port = 80;
+    config.max_uri_handlers = 30;
 
     ret = httpd_start(&server, &config);
     if (ret != ESP_OK) {
@@ -1224,6 +1226,16 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_flappy_ghost_name(settings, flappy_ghost_name->valuestring);
     }
 
+    cJSON* time_zone_str_name = cJSON_GetObjectItem(root, "timezone_str");
+    if (time_zone_str_name) {
+        settings_set_timezone_str(settings, time_zone_str_name->valuestring);
+    }
+
+    cJSON* hex_accent_color_str = cJSON_GetObjectItem(root, "hex_accent_color");
+    if (hex_accent_color_str) {
+        settings_set_accent_color_str(settings, hex_accent_color_str->valuestring);
+    }
+
     settings_save(settings);
 
     httpd_resp_set_type(req, "application/json");
@@ -1265,6 +1277,8 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     cJSON_AddStringToObject(root, "printer_text", settings_get_printer_text(settings));
     cJSON_AddNumberToObject(root, "printer_font_size", settings_get_printer_font_size(settings));
     cJSON_AddNumberToObject(root, "printer_alignment", settings_get_printer_alignment(settings));
+    cJSON_AddStringToObject(root, "hex_accent_color", settings_get_accent_color_str(settings));
+    cJSON_AddStringToObject(root, "timezone_str", settings_get_timezone_str(settings));
 
     
     esp_netif_ip_info_t ip_info;

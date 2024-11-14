@@ -16,7 +16,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <managers/gps_manager.h>
+#include <managers/views/terminal_screen.h>
 #include "vendor/printer.h"
+#include "esp_sntp.h"
 
 static Command *command_list_head = NULL;
 
@@ -258,6 +260,13 @@ void handle_wifi_connection(int argc, char** argv) {
     xTaskCreate(animate_led_based_on_amplitude, "udp_server", 4096, NULL, 5, &VisualizerHandle);
 #endif
     }
+
+#ifdef CONFIG_HAS_RTC_CLOCK
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
+#endif
+
 }
 
 
@@ -648,13 +657,16 @@ void handle_startwd(int argc, char **argv) {
         gps_manager_deinit(&g_gpsManager);
         wifi_manager_stop_monitor_mode();
         printf("Wardriving stopped.\n");
+        TERMINAL_VIEW_ADD_TEXT("Wardriving stopped.\n");
     } else {
         gps_manager_init(&g_gpsManager);
         wifi_manager_start_monitor_mode(wardriving_scan_callback);
         printf("Wardriving started.\n");
+        TERMINAL_VIEW_ADD_TEXT("Wardriving started.\n");
     }
 #else 
     printf("Your ESP / Build Does not Support GPS\n");
+    TERMINAL_VIEW_ADD_TEXT("Your ESP / Build Does not Support GPS\n");
 #endif
 }
 

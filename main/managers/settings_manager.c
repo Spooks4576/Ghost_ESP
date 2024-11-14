@@ -25,7 +25,9 @@ static const char* NVS_PRINTER_ALIGNMENT_KEY = "printer_alignment";
 static const char* NVS_PRINTER_CONNECTED_KEY = "printer_connected";
 static const char* NVS_BOARD_TYPE_KEY = "board_type";
 static const char* NVS_CUSTOM_PIN_CONFIG_KEY = "custom_pin_config";
-static const char* NVS_FLAPPY_GHOST_NAME = "flappy_ghost_name";
+static const char* NVS_FLAPPY_GHOST_NAME = "flap_name";
+static const char* NVS_TIMEZONE_NAME = "sel_tz";
+static const char* NVS_ACCENT_COLOR = "sel_ac";
 
 void settings_init(FSettings* settings) {
     settings_set_defaults(settings);
@@ -70,6 +72,8 @@ void settings_set_defaults(FSettings* settings) {
     settings->printer_font_size = 12;
     settings->printer_alignment = ALIGNMENT_CM;
     strcpy(settings->flappy_ghost_name, "Bob");
+    strcpy(settings->selected_hex_accent_color, "#ffffff");
+    strcpy(settings->selected_timezone, "MST7MDT,M3.2.0,M11.1.0");
 }
 
 void settings_load(FSettings* settings) {
@@ -184,6 +188,21 @@ void settings_load(FSettings* settings) {
         printf("Failed to load Flappy Ghost Name\n");
     }
 
+#ifdef CONFIG_HAS_RTC_CLOCK
+    str_size = sizeof(settings->selected_timezone);
+    err = nvs_get_str(nvsHandle, NVS_TIMEZONE_NAME, settings->selected_timezone, &str_size);
+    if (err != ESP_OK) {
+        printf("Failed to load Timezone String\n");
+    }
+#endif
+    
+    str_size = sizeof(settings->selected_hex_accent_color);
+    err = nvs_get_str(nvsHandle, NVS_ACCENT_COLOR, settings->selected_hex_accent_color, &str_size);
+    if (err != ESP_OK) {
+        printf("Failed to load Hex Accent Color String\n");
+    }
+
+
     printf("Settings loaded from NVS.\n");
 }
 
@@ -283,6 +302,16 @@ void settings_save(const FSettings* settings) {
         printf("Failed to save Flappy Ghost Name\n");
     }
 
+    err = nvs_set_str(nvsHandle, NVS_TIMEZONE_NAME, settings->selected_timezone);
+    if (err != ESP_OK) {
+        printf("Failed to Save Timezone String %s\n", esp_err_to_name(err));
+    }
+
+    err = nvs_set_str(nvsHandle, NVS_ACCENT_COLOR, settings->selected_hex_accent_color);
+    if (err != ESP_OK) {
+        printf("Failed to Save Hex Accent Color %s", esp_err_to_name(err));
+    }
+
     if (settings_get_rgb_mode(&G_Settings) == 0)
     {
         if (rgb_effect_task_handle != NULL)
@@ -343,6 +372,28 @@ void settings_set_flappy_ghost_name(FSettings *settings, const char *Name)
 const char *settings_get_flappy_ghost_name(const FSettings *settings)
 {
     return settings->flappy_ghost_name;
+}
+
+void settings_set_timezone_str(FSettings *settings, const char *Name)
+{
+    strncpy(settings->selected_timezone, Name, sizeof(settings->selected_timezone) - 1);
+    settings->selected_timezone[sizeof(settings->selected_timezone) - 1] = '\0';
+}
+
+const char *settings_get_timezone_str(const FSettings *settings)
+{
+    return settings->selected_timezone;
+}
+
+void settings_set_accent_color_str(FSettings *settings, const char *Name)
+{
+    strncpy(settings->selected_hex_accent_color, Name, sizeof(settings->selected_hex_accent_color) - 1);
+    settings->selected_hex_accent_color[sizeof(settings->selected_hex_accent_color) - 1] = '\0';
+}
+
+const char *settings_get_accent_color_str(const FSettings *settings)
+{
+    return settings->selected_hex_accent_color;
 }
 
 void settings_set_ap_ssid(FSettings *settings, const char *ssid)

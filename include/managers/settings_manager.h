@@ -69,6 +69,8 @@ typedef struct {
     uint8_t printer_font_size;    // Font size for printing
     PrinterAlignment printer_alignment; // Text alignment
     char flappy_ghost_name[65];
+    char selected_timezone[25];
+    char selected_hex_accent_color[25];
 } FSettings;
 
 // Function declarations
@@ -90,6 +92,12 @@ uint16_t settings_get_broadcast_speed(const FSettings* settings);
 
 void settings_set_flappy_ghost_name(FSettings* settings, const char* Name);
 const char* settings_get_flappy_ghost_name(const FSettings* settings);
+
+void settings_set_timezone_str(FSettings* settings, const char* Name);
+const char* settings_get_timezone_str(const FSettings* settings);
+
+void settings_set_accent_color_str(FSettings *settings, const char *Name);
+const char *settings_get_accent_color_str(const FSettings *settings);
 
 void settings_set_ap_ssid(FSettings* settings, const char* ssid);
 const char* settings_get_ap_ssid(const FSettings* settings);

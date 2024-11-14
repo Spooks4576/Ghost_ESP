@@ -60,9 +60,8 @@ static const char *bluetooth_options[] = {
 };
 
 static const char *gps_options[] = {
-    "Start GPS Tracking",
-    "Stop GPS Tracking",
-    "Show GPS Info",
+    "Start Wardriving",
+    "Stop Wardriving",
     "Go Back",
     NULL
 };
@@ -348,6 +347,20 @@ void option_event_cb(const char* Selected_Option) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("startportal");
+    }
+
+    if (strcmp(Selected_Option, "Start Wardriving") == 0)
+    {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("startwd");
+    }
+
+    if (strcmp(Selected_Option, "Stop Wardriving") == 0)
+    {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("startwd -s");
     }
 
 if (strcmp(Selected_Option, "Start AirTag Scanner") == 0) {
