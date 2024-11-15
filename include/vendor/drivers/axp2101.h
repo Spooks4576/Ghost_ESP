@@ -5,10 +5,10 @@
 #include <stdbool.h>
 
 // I2C configuration
-#ifdef I2C_NUM_1
-#define I2C_MASTER_NUM        I2C_NUM_1        // I2C port number
-#else 
-#define I2C_MASTER_NUM        I2C_NUM_0        // I2C port number
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+#define I2C_MASTER_NUM        (I2C_NUM_1)        // I2C port number
+#else
+#define I2C_MASTER_NUM        (I2C_NUM_0)        // I2C port number
 #endif
 #define I2C_MASTER_SDA_IO     10                // SDA pin
 #define I2C_MASTER_SCL_IO     11                // SCL pin
