@@ -379,11 +379,6 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
             TERMINAL_VIEW_ADD_TEXT("Tag: %d\n", airTagCount);
             TERMINAL_VIEW_ADD_TEXT("MAC Address: %s\n", macAddress);
             TERMINAL_VIEW_ADD_TEXT("RSSI: %d dBm\n", rssi);
-
-            TERMINAL_VIEW_ADD_TEXT("Payload Data: ");
-            for (size_t i = 0; i < payloadLength; i++) {
-                TERMINAL_VIEW_ADD_TEXT("%02X ", payload[i]);
-            }
             TERMINAL_VIEW_ADD_TEXT("\n\n");
         }
     }
