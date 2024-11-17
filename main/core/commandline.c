@@ -235,15 +235,20 @@ void handle_dial_command(int argc, char** argv)
 }
 
 void handle_wifi_connection(int argc, char** argv) {
-    if (argc < 3) {
+    if (argc < 2) {
         printf("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
         return;
     }
 
     const char* ssid = argv[1];
-    const char* password = argv[2];
+    const char* password = "";
 
-    if (strlen(ssid) == 0 || strlen(password) == 0) {
+    if (argc == 3 && strlen(argv[2]) > 8)
+    {
+        password = argv[2];
+    }
+
+    if (strlen(ssid) == 0) {
         printf("SSID and password cannot be empty");
         return;
     }
