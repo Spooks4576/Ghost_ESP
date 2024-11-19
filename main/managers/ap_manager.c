@@ -1236,6 +1236,11 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_accent_color_str(settings, hex_accent_color_str->valuestring);
     }
 
+    cJSON* gps_rx_pin = cJSON_GetObjectItem(root, "gps_rx_pin");
+    if (rgb_speed) {
+        settings_set_gps_rx_pin(settings, gps_rx_pin->valueint);
+    }
+
     settings_save(settings);
 
     httpd_resp_set_type(req, "application/json");
