@@ -8,6 +8,7 @@
 #include "core/callbacks.h"
 #include "vendor/GPS/MicroNMEA.h"
 #include "vendor/GPS/gps_logger.h"
+#include "managers/settings_manager.h"
 #include <managers/views/terminal_screen.h>
 
 
@@ -20,6 +21,13 @@ gps_date_t cacheddate = {0};
 void gps_manager_init(GPSManager* manager) {
     
     nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
+
+    uint8_t current_rx_pin = settings_get_gps_rx_pin(&G_Settings);
+
+    if (current_rx_pin != 0)
+    {   
+        config.uart.rx_pin = current_rx_pin;
+    }
         
 #ifdef CONFIG_IS_GHOST_BOARD
     config.uart.rx_pin = 2;

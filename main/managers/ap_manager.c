@@ -1279,6 +1279,7 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     cJSON_AddNumberToObject(root, "printer_alignment", settings_get_printer_alignment(settings));
     cJSON_AddStringToObject(root, "hex_accent_color", settings_get_accent_color_str(settings));
     cJSON_AddStringToObject(root, "timezone_str", settings_get_timezone_str(settings));
+    cJSON_AddNumberToObject(root, "gps_rx_pin", settings_get_gps_rx_pin(settings));
 
     
     esp_netif_ip_info_t ip_info;
