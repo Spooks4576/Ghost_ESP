@@ -12,6 +12,10 @@
 #endif
 #include <esp_log.h>
 
+#ifdef CONFIG_WITH_ETHERNET
+
+#endif
+
 #ifdef CONFIG_WITH_SCREEN
 #include "managers/views/splash_screen.h"
 #endif
@@ -31,6 +35,10 @@ void app_main(void) {
 #ifdef USB_MODULE
   wifi_manager_auto_deauth();
   return;
+#endif
+
+#ifdef CONFIG_WITH_ETHERNET
+
 #endif
 
   command_init();

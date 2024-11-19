@@ -114,40 +114,33 @@ menu "Ghost ESP Options"
         help
             Enable support for ILI9341 display module.
 
-    config HAS_BATTERY
-        bool "Enable power saving"
-        default n
-        help
-            Enable power saving features if you have a battery.
-
-    config HAS_RTC_CLOCK
-        bool "Enable RTC Clock"
-        default n
-        help
-            Enable RTC Clock.
-    
     endmenu
 
-    menu  "Ghost Board Config"
+    menu "Misc Options"
+
+        config HAS_BATTERY
+            bool "Enable power saving"
+            default n
+            help
+                Enable power saving features if you have a battery.
+    
+        config HAS_RTC_CLOCK
+            bool "Enable RTC Clock"
+            default n
+            help
+                Enable RTC Clock.
+
+        config WITH_ETHERNET
+            bool "Enable Ethernet Support"
+            default n
+            help
+                Enable Ethernet Support.   
+            
         config IS_GHOST_BOARD
             bool "Enable Ghost Board Configuration"
             default n
             help
                 Enable configuration for Ghost board.
-
-        config GHOST_GPS_MODE
-            bool "Enable GPS Mode for Ghost Board"
-            default n
-            depends on IS_GHOST_BOARD
-            help
-                Enable GPS Mode for Ghost Board.
-
-        config GHOST_MARAUDER_MODE
-            bool "Enable Marauder Controller Mode for Ghost Board"
-            default n
-            depends on IS_GHOST_BOARD
-            help
-                Enable Marauder Controller Mode for Ghost Board.
 
     endmenu
     
