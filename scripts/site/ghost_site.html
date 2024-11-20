@@ -634,8 +634,36 @@
         <div id="Settings" class="tabcontent show">
             <div class="settings-grid">
                 <!-- WiFi/BLE Section -->
-                <div class="settings-section" id="wifi-ble-section">
-                    <h2>WiFi/BLE Settings</h2>
+                <div class="settings-section" id="miscellaneous_section">
+                    <h2>Miscellaneous Settings</h2>
+                
+                    <!-- Timezone Selection -->
+                    <div class="input-group">
+                        <label for="timezone_select">Timezone 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Select your timezone. This will be used to adjust the device clock.</span>
+                            </span>
+                        </label>
+                        <select id="timezone_select">
+                            <option value="UTC0">UTC</option>
+                            <option value="MST7MDT,M3.2.0,M11.1.0">Mountain Time (MST/MDT)</option>
+                            <option value="EST5EDT,M3.2.0,M11.1.0">Eastern Time (EST/EDT)</option>
+                            <option value="PST8PDT,M3.2.0,M11.1.0">Pacific Time (PST/PDT)</option>
+                            <option value="CST6CDT,M3.2.0,M11.1.0">Central Time (CST/CDT)</option>
+                            <option value="IST-5:30">India Standard Time (IST)</option>
+                            <option value="GMT0BST,M3.5.0/1,M10.5.0/2">British Summer Time (GMT/BST)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="gps_rx_pin">GPS RX Pin
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Provide the GPS RX Pin For the Firmware. Only for those who have a working GPS Installed</span>
+                            </span>
+                        </label>
+                        <input type="number" id="gps_rx_pin" min="0" max="50" step="1" placeholder="0 - 50" required>
+                    </div>
+
                     <div class="input-group">
                         <label for="broadcast_speed">Broadcast Speed (ms) 
                             <span class="tooltip">?
@@ -644,21 +672,15 @@
                         </label>
                         <input type="number" id="broadcast_speed" min="5" max="1000" step="1" placeholder="5 - 1000 ms" required>
                     </div>
+                    
                     <div class="input-group">
-                        <label for="ap_ssid">Ghost ESP SSID 
+                        <label for="accent_color_picker">Accent Color 
                             <span class="tooltip">?
-                                <span class="tooltiptext">Enter the SSID you would like the ESP to use when starting up this default network you are connected to.</span>
+                                <span class="tooltiptext">Pick a custom accent color for the firmware. Use the color picker to select your preferred color.</span>
                             </span>
                         </label>
-                        <input type="text" id="ap_ssid" placeholder="Enter SSID">
-                    </div>
-                    <div class="input-group">
-                        <label for="ap_password">Ghost ESP Password 
-                            <span class="tooltip">?
-                                <span class="tooltiptext">Enter the password you would like the ESP to use when starting up this default network you are connected to.</span>
-                            </span>
-                        </label>
-                        <input type="text" id="ap_password" placeholder="Enter Password">
+                        <input type="color" id="accent_color_picker" value="#ffffff">
+                        <span id="accent_color_hex" style="margin-left: 10px;">#ffffff</span>
                     </div>
                 </div>
                 <!-- Connect to WiFi Section (Disabled) -->
@@ -821,37 +843,6 @@
                             </span>
                         </label>
                         <textarea id="flappy_name_text" placeholder="Enter Name"></textarea>
-                    </div>
-                </div>
-                <div class="settings-section" id="miscellaneous_section">
-                    <h2>Miscellaneous Settings</h2>
-                
-                    <!-- Timezone Selection -->
-                    <div class="input-group">
-                        <label for="timezone_select">Timezone 
-                            <span class="tooltip">?
-                                <span class="tooltiptext">Select your timezone. This will be used to adjust the device clock.</span>
-                            </span>
-                        </label>
-                        <select id="timezone_select">
-                            <option value="UTC0">UTC</option>
-                            <option value="MST7MDT,M3.2.0,M11.1.0">Mountain Time (MST/MDT)</option>
-                            <option value="EST5EDT,M3.2.0,M11.1.0">Eastern Time (EST/EDT)</option>
-                            <option value="PST8PDT,M3.2.0,M11.1.0">Pacific Time (PST/PDT)</option>
-                            <option value="CST6CDT,M3.2.0,M11.1.0">Central Time (CST/CDT)</option>
-                            <option value="IST-5:30">India Standard Time (IST)</option>
-                            <option value="GMT0BST,M3.5.0/1,M10.5.0/2">British Summer Time (GMT/BST)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="accent_color_picker">Accent Color 
-                            <span class="tooltip">?
-                                <span class="tooltiptext">Pick a custom accent color for the firmware. Use the color picker to select your preferred color.</span>
-                            </span>
-                        </label>
-                        <input type="color" id="accent_color_picker" value="#ffffff">
-                        <span id="accent_color_hex" style="margin-left: 10px;">#ffffff</span>
                     </div>
                 </div>
             </div>
@@ -1254,8 +1245,6 @@
                 .then(data => {
                     // WiFi/BLE Settings
                     document.getElementById('broadcast_speed').value = data.broadcast_speed;
-                    document.getElementById('ap_ssid').value = data.ap_ssid;
-                    document.getElementById('ap_password').value = data.ap_password;
 
                     // RGB Settings
                     document.getElementById('rainbow_mode').checked = data.rainbow_mode;
@@ -1296,8 +1285,8 @@
             const settings = {
                 // WiFi/BLE Settings
                 broadcast_speed: parseInt(document.getElementById('broadcast_speed').value),
-                ap_ssid: document.getElementById('ap_ssid').value,
-                ap_password: document.getElementById('ap_password').value,
+                ap_ssid: "GhostNet",
+                ap_password: "GhostNet",
 
                 // RGB Settings
                 rainbow_mode: document.getElementById('rainbow_mode').checked,
@@ -1389,8 +1378,8 @@
         }
 
         // Helper function to wrap strings in quotes if they contain spaces
-        function wrapInQuotesIfNeeded(str) {
-            return str.includes(' ') ? `"${str}"` : str;
+        function replaceSpacesWithAsterisk(str) {
+            return str.includes(' ') ? str.replace(/ /g, '*') : str;
         }
 
         // Function to validate settings before saving
@@ -1481,8 +1470,8 @@
                 return;
             }
 
-            const finalssid = wrapInQuotesIfNeeded(ssid);
-            const finalpassword = wrapInQuotesIfNeeded(password);
+            const finalssid = replaceSpacesWithAsterisk(ssid);
+            const finalpassword = replaceSpacesWithAsterisk(password);
             const command = `connect ${finalssid} ${finalpassword}`;
 
             fetch('/api/command', {
