@@ -71,7 +71,7 @@ typedef struct {
     char flappy_ghost_name[65];
     char selected_timezone[25];
     char selected_hex_accent_color[25];
-    int gps_rx_pin = 0;
+    int gps_rx_pin;
 } FSettings;
 
 // Function declarations
