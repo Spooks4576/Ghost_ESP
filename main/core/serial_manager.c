@@ -105,37 +105,53 @@ void serial_manager_init() {
 
 int handle_serial_command(const char *input) {
     char *input_copy = strdup(input);
+    if (input_copy == NULL) {
+        printf("Memory allocation error\n");
+        return ESP_ERR_INVALID_ARG;
+    }
     char *argv[10];
     int argc = 0;
     char *p = input_copy;
 
-    // Replace all '*' with spaces and trim leading spaces
-    while (*p != '\0') {
-        if (*p == '*') {
-            *p = ' ';
-        }
-        p++;
-    }
-
-    p = input_copy; // Reset pointer to start of modified string
-
-    // Tokenize the input using spaces
     while (*p != '\0' && argc < 10) {
         while (isspace((unsigned char)*p)) {
-            p++; // Skip spaces
-        }
-
-        if (*p != '\0') {
-            argv[argc++] = p; // Store argument
-        }
-
-        while (*p != '\0' && !isspace((unsigned char)*p)) {
-            p++; // Move to end of the argument
-        }
-
-        if (*p != '\0') {
-            *p = '\0'; // Null-terminate the argument
             p++;
+        }
+
+        if (*p == '\0') {
+            break;
+        }
+
+        if (*p == '"' || *p == '\'') {
+            // Handle quoted arguments
+            char quote = *p++;
+            argv[argc++] = p; // Start of the argument
+
+            while (*p != '\0' && *p != quote) {
+                p++;
+            }
+
+            if (*p == quote) {
+                *p = '\0'; // Null-terminate the argument
+                p++;
+            } else {
+                // Handle missing closing quote
+                printf("Error: Missing closing quote\n");
+                free(input_copy);
+                return ESP_ERR_INVALID_ARG;
+            }
+        } else {
+            // Handle unquoted arguments
+            argv[argc++] = p; // Start of the argument
+
+            while (*p != '\0' && !isspace((unsigned char)*p)) {
+                p++;
+            }
+
+            if (*p != '\0') {
+                *p = '\0'; // Null-terminate the argument
+                p++;
+            }
         }
     }
 
