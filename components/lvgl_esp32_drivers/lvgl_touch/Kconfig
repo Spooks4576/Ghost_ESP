@@ -10,6 +10,7 @@ menu "LVGL Touch controller"
         default 5 if LV_TOUCH_CONTROLLER_FT81X
         default 6 if LV_TOUCH_CONTROLLER_RA8875
         default 7 if LV_TOUCH_CONTROLLER_GT911
+        default 8 if LV_TOUCH_CONTROLLER_CST820
 
     choice
         prompt "Select a touch panel controller model."
@@ -40,6 +41,9 @@ menu "LVGL Touch controller"
         config LV_TOUCH_CONTROLLER_GT911
             select LV_I2C_TOUCH
             bool "GT911"
+        config LV_TOUCH_CONTROLLER_CST820
+            select LV_I2C_TOUCH
+            bool "CST820"
     endchoice
 
     config LV_TOUCH_DRIVER_PROTOCOL_SPI
@@ -445,6 +449,27 @@ menu "LVGL Touch controller"
             default y
 
     endmenu
+
+    menu "Touchpanel Configuration (CST820)"
+        depends on LV_TOUCH_CONTROLLER_CST820
+
+        config LV_CST820_SWAPXY
+            bool
+            prompt "Swap X with Y coordinate."
+            default n
+
+        config LV_CST820_INVERT_X
+            bool
+            prompt "Invert X coordinate value."
+            default n
+
+        config LV_CST820_INVERT_Y
+            bool
+            prompt "Invert Y coordinate value."
+            default n
+
+    endmenu
+
 
     menu "Touchpanel Configuration (GT911)"
         depends on LV_TOUCH_CONTROLLER_GT911

@@ -1741,12 +1741,12 @@ void wifi_manager_stop_beacon()
 }
 
 void wifi_manager_connect_wifi(const char* ssid, const char* password)
-{
-    wifi_config_t wifi_config = {
+{ 
+    wifi_config_t wifi_config = { //WIFI_AUTH_WPA2_PSK
         .sta = {
             .ssid = "",
             .password = "",
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK,  // Set to WPA2-PSK authentication
+            .threshold.authmode = strlen(password) > 8 ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,  // Set to WPA2-PSK authentication
             .pmf_cfg = {
                 .capable = true,
                 .required = false

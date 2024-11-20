@@ -235,15 +235,20 @@ void handle_dial_command(int argc, char** argv)
 }
 
 void handle_wifi_connection(int argc, char** argv) {
-    if (argc < 3) {
+    if (argc < 2) {
         printf("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
         return;
     }
 
     const char* ssid = argv[1];
-    const char* password = argv[2];
+    const char* password = "";
 
-    if (strlen(ssid) == 0 || strlen(password) == 0) {
+    if (argc == 3 && strlen(argv[2]) > 8)
+    {
+        password = argv[2];
+    }
+
+    if (strlen(ssid) == 0) {
         printf("SSID and password cannot be empty");
         return;
     }
@@ -651,7 +656,7 @@ void handle_startwd(int argc, char **argv) {
         }
     }
 
-#ifdef CONFIG_HAS_GPS
+
 
     if (stop_flag) {
         gps_manager_deinit(&g_gpsManager);
@@ -664,10 +669,6 @@ void handle_startwd(int argc, char **argv) {
         printf("Wardriving started.\n");
         TERMINAL_VIEW_ADD_TEXT("Wardriving started.\n");
     }
-#else 
-    printf("Your ESP / Build Does not Support GPS\n");
-    TERMINAL_VIEW_ADD_TEXT("Your ESP / Build Does not Support GPS\n");
-#endif
 }
 
 

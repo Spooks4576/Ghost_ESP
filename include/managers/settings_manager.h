@@ -71,6 +71,7 @@ typedef struct {
     char flappy_ghost_name[65];
     char selected_timezone[25];
     char selected_hex_accent_color[25];
+    int gps_rx_pin;
 } FSettings;
 
 // Function declarations
@@ -114,6 +115,9 @@ const char* settings_get_portal_url(const FSettings* settings);
 
 void settings_set_portal_ssid(FSettings* settings, const char* ssid);
 const char* settings_get_portal_ssid(const FSettings* settings);
+
+void settings_set_gps_rx_pin(FSettings* settings, uint8_t RxPin);
+uint8_t settings_get_gps_rx_pin(const FSettings* settings);
 
 void settings_set_portal_password(FSettings* settings, const char* password);
 const char* settings_get_portal_password(const FSettings* settings);

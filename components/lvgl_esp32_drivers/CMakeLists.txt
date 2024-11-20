@@ -74,6 +74,8 @@ if(CONFIG_LV_TOUCH_CONTROLLER)
         list(APPEND SOURCES "lvgl_touch/ra8875_touch.c")
     elseif(CONFIG_LV_TOUCH_CONTROLLER_GT911)
         list(APPEND SOURCES "lvgl_touch/gt911.c")
+    elseif(CONFIG_LV_TOUCH_CONTROLLER_CST820)
+        list(APPEND SOURCES "lvgl_touch/cst820.c")
     endif()
 
     if(CONFIG_LV_TOUCH_DRIVER_PROTOCOL_SPI)

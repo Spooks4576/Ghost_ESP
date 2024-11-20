@@ -28,6 +28,7 @@ static const char* NVS_CUSTOM_PIN_CONFIG_KEY = "custom_pin_config";
 static const char* NVS_FLAPPY_GHOST_NAME = "flap_name";
 static const char* NVS_TIMEZONE_NAME = "sel_tz";
 static const char* NVS_ACCENT_COLOR = "sel_ac";
+static const char* NVS_GPS_RX_PIN = "gps_rx_pin";
 
 void settings_init(FSettings* settings) {
     settings_set_defaults(settings);
@@ -74,6 +75,7 @@ void settings_set_defaults(FSettings* settings) {
     strcpy(settings->flappy_ghost_name, "Bob");
     strcpy(settings->selected_hex_accent_color, "#ffffff");
     strcpy(settings->selected_timezone, "MST7MDT,M3.2.0,M11.1.0");
+    settings->gps_rx_pin = 0;
 }
 
 void settings_load(FSettings* settings) {
@@ -202,6 +204,10 @@ void settings_load(FSettings* settings) {
         printf("Failed to load Hex Accent Color String\n");
     }
 
+    err = nvs_get_u8(nvsHandle, NVS_GPS_RX_PIN, &value_u8);
+    if (err == ESP_OK) {
+        settings->gps_rx_pin = value_u8;
+    }
 
     printf("Settings loaded from NVS.\n");
 }
@@ -312,6 +318,11 @@ void settings_save(const FSettings* settings) {
         printf("Failed to Save Hex Accent Color %s", esp_err_to_name(err));
     }
 
+    err = nvs_set_u8(nvsHandle, NVS_GPS_RX_PIN, (uint8_t)settings->gps_rx_pin);
+    if (err != ESP_OK) {
+        printf("Failed to save Printer Alignment\n");
+    }
+
     if (settings_get_rgb_mode(&G_Settings) == 0)
     {
         if (rgb_effect_task_handle != NULL)
@@ -413,6 +424,14 @@ void settings_set_ap_password(FSettings* settings, const char* password) {
 
 const char* settings_get_ap_password(const FSettings* settings) {
     return settings->ap_password;
+}
+
+void settings_set_gps_rx_pin(FSettings* settings, uint8_t RxPin) {
+    settings->gps_rx_pin = RxPin;
+}
+
+uint8_t settings_get_gps_rx_pin(const FSettings* settings) {
+    return settings->gps_rx_pin;
 }
 
 void settings_set_rgb_speed(FSettings* settings, uint8_t speed) {
