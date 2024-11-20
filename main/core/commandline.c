@@ -656,7 +656,7 @@ void handle_startwd(int argc, char **argv) {
         }
     }
 
-#ifdef CONFIG_HAS_GPS
+
 
     if (stop_flag) {
         gps_manager_deinit(&g_gpsManager);
@@ -669,10 +669,6 @@ void handle_startwd(int argc, char **argv) {
         printf("Wardriving started.\n");
         TERMINAL_VIEW_ADD_TEXT("Wardriving started.\n");
     }
-#else 
-    printf("Your ESP / Build Does not Support GPS\n");
-    TERMINAL_VIEW_ADD_TEXT("Your ESP / Build Does not Support GPS\n");
-#endif
 }
 
 
