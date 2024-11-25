@@ -13,7 +13,7 @@
 #include <esp_log.h>
 
 #ifdef CONFIG_WITH_ETHERNET
-
+// TODO
 #endif
 
 #ifdef CONFIG_WITH_SCREEN

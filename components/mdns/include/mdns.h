@@ -768,7 +768,7 @@ esp_err_t mdns_lookup_selfhosted_service(const char *instance, const char *servi
  *     - ESP_ERR_NO_MEM         memory error
  *     - ESP_ERR_INVALID_ARG    parameter error
  */
-esp_err_t mdns_query_a(const char *host_name, uint32_t timeout, esp_ip4_addr_t *addr);
+mdns_result_t* mdns_query_a(const char *host_name, uint32_t timeout, esp_ip4_addr_t *addr);
 
 #if CONFIG_LWIP_IPV6
 /**

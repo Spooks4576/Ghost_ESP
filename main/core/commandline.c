@@ -528,6 +528,10 @@ void handle_tp_link_test(int argc, char **argv)
     }
 }
 
+void handle_ip_lookup(int argc, char** argv) {
+    wifi_manager_start_ip_lookup();
+}
+
 void handle_capture_scan(int argc, char** argv)
 {
     if (argc != 2) {
@@ -793,6 +797,7 @@ void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
     register_command("scansta", handle_sta_scan);
+    register_command("scanlocal", handle_ip_lookup);
     register_command("stopscan", cmd_wifi_scan_stop);
     register_command("attack", handle_attack_cmd);
     register_command("list", handle_list);
