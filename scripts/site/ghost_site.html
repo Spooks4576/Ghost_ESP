@@ -636,56 +636,6 @@
                 <!-- WiFi/BLE Section -->
                 <div class="settings-section" id="miscellaneous_section">
                     <h2>Miscellaneous Settings</h2>
-                
-                    <!-- Timezone Selection -->
-                    <div class="input-group">
-                        <label for="timezone_select">Timezone 
-                            <span class="tooltip">?
-                                <span class="tooltiptext">Select your timezone. This will be used to adjust the device clock.</span>
-                            </span>
-                        </label>
-                        <select id="timezone_select">
-                            <option value="UTC0">UTC</option>
-                            
-                            <!-- United States Timezones -->
-                            <option value="HST10">Hawaii-Aleutian Standard Time (HST)</option>
-                            <option value="AKST9AKDT,M3.2.0,M11.1.0">Alaska Time (AKST/AKDT)</option>
-                            <option value="PST8PDT,M3.2.0,M11.1.0">Pacific Time (PST/PDT)</option>
-                            <option value="MST7MDT,M3.2.0,M11.1.0">Mountain Time (MST/MDT)</option>
-                            <option value="CST6CDT,M3.2.0,M11.1.0">Central Time (CST/CDT)</option>
-                            <option value="EST5EDT,M3.2.0,M11.1.0">Eastern Time (EST/EDT)</option>
-                            <option value="AST4">Atlantic Standard Time (AST)</option>
-                            
-                            <!-- Australian Timezones -->
-                            <option value="AWST-8">Australian Western Time (AWST)</option>
-                            <option value="ACST-9:30">Australian Central Standard Time (ACST)</option>
-                            <option value="ACDT-10:30,M10.1.0,M4.1.0/3">Australian Central Daylight Time (ACST/ACDT)</option>
-                            <option value="AEST-10">Australian Eastern Standard Time (AEST)</option>
-                            <option value="AEDT-11,M10.1.0,M4.1.0/3">Australian Eastern Daylight Time (AEST/AEDT)</option>
-                            <option value="LHST-10:30">Lord Howe Standard Time (LHST)</option>
-                            
-                            <!-- Additional European Timezones -->
-                            <option value="WET0WEST,M3.5.0/1,M10.5.0">Western European Time (WET/WEST)</option>
-                            <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Eastern European Time (EET/EEST)</option>
-                            
-                            <!-- Additional Asian Timezones -->
-                            <option value="PKT-5">Pakistan Standard Time (PKT)</option>
-                            <option value="KST-9">Korea Standard Time (KST)</option>
-                            <option value="PHT-8">Philippine Time (PHT)</option>
-                            <option value="ICT-7">Indochina Time (ICT)</option>
-                            
-                            <!-- Additional Pacific Timezones -->
-                            <option value="NZST-12NZDT,M9.5.0,M4.1.0/3">New Zealand Time (NZST/NZDT)</option>
-                            <option value="FJT-12">Fiji Time (FJT)</option>
-                            
-                            <!-- Existing Other Common Timezones -->
-                            <option value="IST-5:30">India Standard Time (IST)</option>
-                            <option value="GMT0BST,M3.5.0/1,M10.5.0/2">British Summer Time (GMT/BST)</option>
-                            <option value="CET-1CEST,M3.5.0,M10.5.0/3">Central European Time (CET/CEST)</option>
-                            <option value="JST-9">Japan Standard Time (JST)</option>
-                            <option value="CST-8">China Standard Time (CST)</option>
-                        </select>
-                    </div>
 
                     <div class="input-group">
                         <label for="gps_rx_pin">GPS RX Pin
@@ -694,6 +644,15 @@
                             </span>
                         </label>
                         <input type="number" id="gps_rx_pin" min="0" max="50" step="1" placeholder="0 - 50" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="flappy_name_text">Name 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Enter the Name you want to have on the Flappy Ghost leaderboards.</span>
+                            </span>
+                        </label>
+                        <textarea id="flappy_name_text" placeholder="Enter Name"></textarea>
                     </div>
 
                     <div class="input-group">
@@ -867,14 +826,54 @@
                 </div>
                 <!-- Flappy Ghost Section -->
                 <div class="settings-section" id="flappy_ghost_section">
-                    <h2>Flappy Ghost Settings</h2>
+                    <h2>Watch / RTC Settings</h2>
                     <div class="input-group">
-                        <label for="flappy_name_text">Name 
+                        <label for="timezone_select">Timezone 
                             <span class="tooltip">?
-                                <span class="tooltiptext">Enter the Name you want to have on the Flappy Ghost leaderboards.</span>
+                                <span class="tooltiptext">Select your timezone. This will be used to adjust the device clock.</span>
                             </span>
                         </label>
-                        <textarea id="flappy_name_text" placeholder="Enter Name"></textarea>
+                        <select id="timezone_select">
+                            <option value="UTC0">UTC</option>
+                            
+                            <!-- United States Timezones -->
+                            <option value="HST10">Hawaii-Aleutian Standard Time (HST)</option>
+                            <option value="AKST9AKDT,M3.2.0,M11.1.0">Alaska Time (AKST/AKDT)</option>
+                            <option value="PST8PDT,M3.2.0,M11.1.0">Pacific Time (PST/PDT)</option>
+                            <option value="MST7MDT,M3.2.0,M11.1.0">Mountain Time (MST/MDT)</option>
+                            <option value="CST6CDT,M3.2.0,M11.1.0">Central Time (CST/CDT)</option>
+                            <option value="EST5EDT,M3.2.0,M11.1.0">Eastern Time (EST/EDT)</option>
+                            <option value="AST4">Atlantic Standard Time (AST)</option>
+                            
+                            <!-- Australian Timezones -->
+                            <option value="AWST-8">Australian Western Time (AWST)</option>
+                            <option value="ACST-9:30">Australian Central Standard Time (ACST)</option>
+                            <option value="ACDT-10:30,M10.1.0,M4.1.0/3">Australian Central Daylight Time (ACST/ACDT)</option>
+                            <option value="AEST-10">Australian Eastern Standard Time (AEST)</option>
+                            <option value="AEDT-11,M10.1.0,M4.1.0/3">Australian Eastern Daylight Time (AEST/AEDT)</option>
+                            <option value="LHST-10:30">Lord Howe Standard Time (LHST)</option>
+                            
+                            <!-- Additional European Timezones -->
+                            <option value="WET0WEST,M3.5.0/1,M10.5.0">Western European Time (WET/WEST)</option>
+                            <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Eastern European Time (EET/EEST)</option>
+                            
+                            <!-- Additional Asian Timezones -->
+                            <option value="PKT-5">Pakistan Standard Time (PKT)</option>
+                            <option value="KST-9">Korea Standard Time (KST)</option>
+                            <option value="PHT-8">Philippine Time (PHT)</option>
+                            <option value="ICT-7">Indochina Time (ICT)</option>
+                            
+                            <!-- Additional Pacific Timezones -->
+                            <option value="NZST-12NZDT,M9.5.0,M4.1.0/3">New Zealand Time (NZST/NZDT)</option>
+                            <option value="FJT-12">Fiji Time (FJT)</option>
+                            
+                            <!-- Existing Other Common Timezones -->
+                            <option value="IST-5:30">India Standard Time (IST)</option>
+                            <option value="GMT0BST,M3.5.0/1,M10.5.0/2">British Summer Time (GMT/BST)</option>
+                            <option value="CET-1CEST,M3.5.0,M10.5.0/3">Central European Time (CET/CEST)</option>
+                            <option value="JST-9">Japan Standard Time (JST)</option>
+                            <option value="CST-8">China Standard Time (CST)</option>
+                        </select>
                     </div>
                 </div>
             </div>
