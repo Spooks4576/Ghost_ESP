@@ -86,10 +86,10 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
 
     char data_line[CSV_BUFFER_SIZE];
     int len = snprintf(data_line, CSV_BUFFER_SIZE, 
-        "%s,%s,%s,%s,%d,%d,%d,%lf,%lf,%f,%f,WIFI\n",
+        "%s,%s,%s,%s,%d,%d,%d,%.6f,%.6f,%.1f,%.1f,WIFI\n",
         data->bssid,                    // MAC
         data->ssid,                     // SSID
-        data->encryption_type,          // AuthMode
+        data->encryption_type,          // AuthMode (WEP, WPA, etc)
         timestamp,                      // FirstSeen
         data->channel,                  // Channel
         (2412 + (data->channel-1)*5),  // Frequency (MHz)
@@ -97,8 +97,7 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
         data->latitude,                 // CurrentLatitude
         data->longitude,                // CurrentLongitude
         gps->altitude,                  // AltitudeMeters
-        gps->dop_h * 5.0               // AccuracyMeters (HDOP * 5m is common approximation)
-        // Type is hardcoded as "WIFI"
+        gps->dop_h * 5.0               // AccuracyMeters (HDOP * 5m)
     );
 
     if (buffer_offset + len > BUFFER_SIZE) {
