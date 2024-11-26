@@ -23,18 +23,29 @@ static char csv_buffer[BUFFER_SIZE];
 static size_t buffer_offset = 0;
 
 esp_err_t csv_write_header(FILE* f) {
-    const char* header = "BSSID,SSID,Latitude,Longitude,RSSI,Channel,Encryption,Time\n";
+    // Wigle pre-header
+    const char* pre_header = "WigleWifi-1.6,appRelease=1.0,model=ESP32,release=1.0,device=GhostESP,"
+                            "display=NONE,board=ESP32,brand=Espressif,star=Sol,body=3,subBody=0\n";
+    
+    // Wigle main header
+    const char* header = "MAC,SSID,AuthMode,FirstSeen,Channel,Frequency,RSSI,"
+                        "CurrentLatitude,CurrentLongitude,AltitudeMeters,AccuracyMeters,Type\n";
 
     if (f == NULL) {
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
         uart_write_bytes(UART_NUM_0, mark_begin, strlen(mark_begin));
+        uart_write_bytes(UART_NUM_0, pre_header, strlen(pre_header));
         uart_write_bytes(UART_NUM_0, header, strlen(header));
         uart_write_bytes(UART_NUM_0, mark_close, strlen(mark_close));
         uart_write_bytes(UART_NUM_0, "\n", 1);
         return ESP_OK;
     } else {
-        size_t written = fwrite(header, 1, strlen(header), f);
+        size_t written = fwrite(pre_header, 1, strlen(pre_header), f);
+        if (written != strlen(pre_header)) {
+            return ESP_FAIL;
+        }
+        written = fwrite(header, 1, strlen(header), f);
         return (written == strlen(header)) ? ESP_OK : ESP_FAIL;
     }
 }
