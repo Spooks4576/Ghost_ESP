@@ -81,8 +81,10 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
     char timestamp[35];
     
     snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
-             gps->date.year, gps->date.month, gps->date.day,
-             gps->tim.hour, gps->tim.minute, gps->tim.second, gps->tim.thousand);
+             gps_get_absolute_year(gps->date.year), 
+             gps->date.month, gps->date.day,
+             gps->tim.hour, gps->tim.minute, gps->tim.second, 
+             gps->tim.thousand);
 
     char data_line[CSV_BUFFER_SIZE];
     int len = snprintf(data_line, CSV_BUFFER_SIZE, 

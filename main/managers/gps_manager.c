@@ -18,6 +18,30 @@ nmea_parser_handle_t nmea_hdl;
 
 gps_date_t cacheddate = {0};
 
+static bool is_valid_date(const gps_date_t* date) {
+    if (!date) return false;
+    
+    // Check year
+    if (!gps_is_valid_year(date->year)) return false;
+    
+    // Check month
+    if (date->month < 1 || date->month > 12) return false;
+    
+    // Check day
+    uint8_t days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    
+    // Adjust February for leap years
+    uint16_t absolute_year = gps_get_absolute_year(date->year);
+    if ((absolute_year % 4 == 0 && absolute_year % 100 != 0) || 
+        (absolute_year % 400 == 0)) {
+        days_in_month[1] = 29;
+    }
+    
+    if (date->day < 1 || date->day > days_in_month[date->month - 1]) return false;
+    
+    return true;
+}
+
 void gps_manager_init(GPSManager* manager) {
     
     nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
@@ -74,25 +98,29 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
         return ESP_OK;
     }
 
-    if (cacheddate.year <= 0)
-    {
-        if (gps->date.year > 100 ||
-            gps->date.month < 1 || gps->date.month > 12 || 
-            gps->date.day < 1 || gps->date.day > 31) {
-            if (rand() % 20 == 0) {
-                printf("Warning: GPS date is out of range: %04d-%02d-%02d\n",
-                    2000 + gps->date.year, gps->date.month, gps->date.day);
-            }
-            return ESP_OK;
+    // First, validate the current GPS date
+    if (!is_valid_date(&gps->date)) {
+        // Only show warning if we have a truly valid fix
+        if (gps->valid && 
+            gps->fix >= GPS_FIX_GPS && 
+            gps->fix_mode >= GPS_MODE_2D && 
+            gps->sats_in_use >= 3 && 
+            gps->sats_in_use <= GPS_MAX_SATELLITES_IN_USE && // Should be ≤ 12
+            rand() % 100 == 0) {
+            printf("Warning: GPS date is out of range despite good fix: %04d-%02d-%02d "
+                   "(Fix: %d, Mode: %d, Sats: %d)\n",
+                gps_get_absolute_year(gps->date.year), 
+                gps->date.month, gps->date.day,
+                gps->fix, gps->fix_mode, gps->sats_in_use);
         }
+        return ESP_OK;
     }
 
-    if (cacheddate.year <= 0)
-    {
-        cacheddate = gps->date;     // if we pass this check cache the year to avoid missing data
+    // Then, only if we don't have a cached date and the current date is valid, cache it
+    if (cacheddate.year <= 0) {
+        cacheddate = gps->date;
     }
 
-    
     if (gps->tim.hour > 23 || gps->tim.minute > 59 || gps->tim.second > 59) {
         if (rand() % 20 == 0) {
         printf("Warning: GPS time is invalid: %02d:%02d:%02d\n",
