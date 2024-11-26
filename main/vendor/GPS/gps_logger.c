@@ -23,18 +23,29 @@ static char csv_buffer[BUFFER_SIZE];
 static size_t buffer_offset = 0;
 
 esp_err_t csv_write_header(FILE* f) {
-    const char* header = "BSSID,SSID,Latitude,Longitude,RSSI,Channel,Encryption,Time\n";
+    // Wigle pre-header
+    const char* pre_header = "WigleWifi-1.6,appRelease=1.0,model=ESP32,release=1.0,device=GhostESP,"
+                            "display=NONE,board=ESP32,brand=Espressif,star=Sol,body=3,subBody=0\n";
+    
+    // Wigle main header
+    const char* header = "MAC,SSID,AuthMode,FirstSeen,Channel,Frequency,RSSI,"
+                        "CurrentLatitude,CurrentLongitude,AltitudeMeters,AccuracyMeters,Type\n";
 
     if (f == NULL) {
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
         uart_write_bytes(UART_NUM_0, mark_begin, strlen(mark_begin));
+        uart_write_bytes(UART_NUM_0, pre_header, strlen(pre_header));
         uart_write_bytes(UART_NUM_0, header, strlen(header));
         uart_write_bytes(UART_NUM_0, mark_close, strlen(mark_close));
         uart_write_bytes(UART_NUM_0, "\n", 1);
         return ESP_OK;
     } else {
-        size_t written = fwrite(header, 1, strlen(header), f);
+        size_t written = fwrite(pre_header, 1, strlen(pre_header), f);
+        if (written != strlen(pre_header)) {
+            return ESP_FAIL;
+        }
+        written = fwrite(header, 1, strlen(header), f);
         return (written == strlen(header)) ? ESP_OK : ESP_FAIL;
     }
 }
@@ -69,17 +80,25 @@ esp_err_t csv_file_open(const char* base_file_name) {
 esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
     char timestamp[35];
     
-
     snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
              gps->date.year, gps->date.month, gps->date.day,
              gps->tim.hour, gps->tim.minute, gps->tim.second, gps->tim.thousand);
 
-
     char data_line[CSV_BUFFER_SIZE];
-    int len = snprintf(data_line, CSV_BUFFER_SIZE, "%s,%s,%lf,%lf,%d,%d,%s,%s\n",
-                       data->bssid, data->ssid, data->latitude, data->longitude,
-                       data->rssi, data->channel, data->encryption_type, timestamp);
-
+    int len = snprintf(data_line, CSV_BUFFER_SIZE, 
+        "%s,%s,%s,%s,%d,%d,%d,%.6f,%.6f,%.1f,%.1f,WIFI\n",
+        data->bssid,                    // MAC
+        data->ssid,                     // SSID
+        data->encryption_type,          // AuthMode (WEP, WPA, etc)
+        timestamp,                      // FirstSeen
+        data->channel,                  // Channel
+        (2412 + (data->channel-1)*5),  // Frequency (MHz)
+        data->rssi,                     // RSSI
+        data->latitude,                 // CurrentLatitude
+        data->longitude,                // CurrentLongitude
+        gps->altitude,                  // AltitudeMeters
+        gps->dop_h * 5.0               // AccuracyMeters (HDOP * 5m)
+    );
 
     if (buffer_offset + len > BUFFER_SIZE) {
         printf("Buffer full, flushing to file.\n");
@@ -88,7 +107,6 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
             return ret;
         }
     }
-
 
     memcpy(csv_buffer + buffer_offset, data_line, len);
     buffer_offset += len;
