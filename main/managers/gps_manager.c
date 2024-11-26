@@ -81,8 +81,11 @@ void gps_manager_deinit(GPSManager* manager) {
     }
 }
 
-#define GPS_STATUS_MESSAGE "GPS: %s\nSats: %u/%u\nAccuracy: %s\n"
+#define GPS_STATUS_MESSAGE "GPS: %s\nSats: %u/%u\nSpeed: %.1f km/h\nAccuracy: %s\n"
 #define GPS_UPDATE_INTERVAL 4  // Show status every 4th update (25% chance)
+
+#define MIN_SPEED_THRESHOLD 0.1     // Minimum 0.1 m/s (~0.36 km/h)
+#define MAX_SPEED_THRESHOLD 340.0   // Maximum 340 m/s (~1224 km/h)
 
 esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     if (!data || !gps || !gps->valid || strlen(data->ssid) <= 2) {
@@ -188,19 +191,10 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
 
         // Validate satellite counts
         uint8_t sats_in_use = gps->sats_in_use;
-        uint8_t sats_in_view = gps->sats_in_view;
 
-        // First ensure counts are non-negative and within limits
+        // Ensure count is non-negative and within limits
         if (sats_in_use > GPS_MAX_SATELLITES_IN_USE || sats_in_use < 0) {
             sats_in_use = 0;
-        }
-        if (sats_in_view > GPS_MAX_SATELLITES_IN_VIEW || sats_in_view < 0) {
-            sats_in_view = 0;
-        }
-
-        // Then ensure in_view is at least equal to in_use
-        if (sats_in_view < sats_in_use) {
-            sats_in_view = sats_in_use;
         }
 
         // Determine accuracy based on HDOP
@@ -219,12 +213,25 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
             strcpy(accuracy, "Poor");
         }
 
+        // Convert speed from m/s to km/h for display with validation
+        float speed_kmh = 0.0;
+        if (gps->valid && gps->fix >= GPS_FIX_GPS) {  // Only trust speed with a valid fix
+            if (gps->speed >= MIN_SPEED_THRESHOLD && gps->speed <= MAX_SPEED_THRESHOLD) {
+                speed_kmh = gps->speed * 3.6;  // Convert m/s to km/h
+            } else if (gps->speed < MIN_SPEED_THRESHOLD && gps->speed >= 0.0) {
+                speed_kmh = 0.0;  // Show as stopped if below threshold but not negative
+            }
+            // Speeds above MAX_SPEED_THRESHOLD remain at 0.0
+        }
+
         // Add newline before status update for better readability
         printf("\n");
         printf(GPS_STATUS_MESSAGE, 
-               fix_status, sats_in_use, sats_in_view, accuracy);
+               fix_status, sats_in_use, GPS_MAX_SATELLITES_IN_USE, 
+               speed_kmh, accuracy);
         TERMINAL_VIEW_ADD_TEXT(GPS_STATUS_MESSAGE,
-                              fix_status, sats_in_use, sats_in_view, accuracy);
+                              fix_status, sats_in_use, GPS_MAX_SATELLITES_IN_USE, 
+                              speed_kmh, accuracy);
     }
 
     return ret;
