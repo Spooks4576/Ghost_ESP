@@ -81,13 +81,22 @@ void gps_manager_deinit(GPSManager* manager) {
     }
 }
 
+#define GPS_STATUS_MESSAGE "GPS: %s\nSats: %u/%u\nAccuracy: %s\n"
+#define GPS_UPDATE_INTERVAL 4  // Show status every 4th update (25% chance)
+
 esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
-    if (!data) {
+    if (!data || !gps || !gps->valid || strlen(data->ssid) <= 2) {
         return ESP_ERR_INVALID_ARG;
     }
 
-    if (!gps) {
-        return ESP_ERR_INVALID_ARG;
+    // Validate GPS data
+    if (!is_valid_date(&gps->date) || 
+        gps->tim.hour > 23 || gps->tim.minute > 59 || gps->tim.second > 59 ||
+        gps->latitude < -90.0 || gps->latitude > 90.0 || 
+        gps->longitude < -180.0 || gps->longitude > 180.0 ||
+        gps->speed < 0.0 || gps->speed > 340.0 ||
+        gps->dop_h < 0.0 || gps->dop_h > 50.0) {
+        return ESP_OK;  // Skip invalid data silently
     }
 
     if (!gps->valid) {
@@ -159,11 +168,13 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
 
     esp_err_t ret = csv_write_data_to_buffer(data);
     if (ret != ESP_OK) {
-        printf("Failed to write wardriving data to CSV buffer.\n");
+        ESP_LOGE(GPS_TAG, "Failed to write wardriving data to CSV buffer");
         return ret;
     }
 
-    if (rand() % 2 == 0) {
+    // Update display periodically
+    if (rand() % GPS_UPDATE_INTERVAL == 0) {
+        // Determine GPS fix status
         char fix_status[10];
         if (!gps->valid || gps->fix == GPS_FIX_INVALID) {
             strcpy(fix_status, "No Fix");
@@ -175,24 +186,45 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
             strcpy(fix_status, "Unknown");
         }
 
+        // Validate satellite counts
+        uint8_t sats_in_use = gps->sats_in_use;
+        uint8_t sats_in_view = gps->sats_in_view;
+
+        // First ensure counts are non-negative and within limits
+        if (sats_in_use > GPS_MAX_SATELLITES_IN_USE || sats_in_use < 0) {
+            sats_in_use = 0;
+        }
+        if (sats_in_view > GPS_MAX_SATELLITES_IN_VIEW || sats_in_view < 0) {
+            sats_in_view = 0;
+        }
+
+        // Then ensure in_view is at least equal to in_use
+        if (sats_in_view < sats_in_use) {
+            sats_in_view = sats_in_use;
+        }
+
+        // Determine accuracy based on HDOP
         char accuracy[10];
-        if (gps->dop_h <= 1.0) {
-            strcpy(accuracy, "Ideal");
+        if (gps->dop_h < 0.0 || gps->dop_h > 50.0) {
+            strcpy(accuracy, "Invalid");
+        } else if (gps->dop_h <= 1.0) {
+            strcpy(accuracy, "Perfect");
         } else if (gps->dop_h <= 2.0) {
             strcpy(accuracy, "High");
         } else if (gps->dop_h <= 5.0) {
             strcpy(accuracy, "Good");
         } else if (gps->dop_h <= 10.0) {
-            strcpy(accuracy, "Fair");
+            strcpy(accuracy, "Okay");
         } else {
             strcpy(accuracy, "Poor");
         }
 
-        const char* message = "GPS: %s | Satellites: %u/%u | Accuracy: %s";
-        printf(message, fix_status, 
-               gps->sats_in_use, gps->sats_in_view, accuracy);
-        TERMINAL_VIEW_ADD_TEXT(message, fix_status,
-                              gps->sats_in_use, gps->sats_in_view, accuracy);
+        // Add newline before status update for better readability
+        printf("\n");
+        printf(GPS_STATUS_MESSAGE, 
+               fix_status, sats_in_use, sats_in_view, accuracy);
+        TERMINAL_VIEW_ADD_TEXT(GPS_STATUS_MESSAGE,
+                              fix_status, sats_in_use, sats_in_view, accuracy);
     }
 
     return ret;
