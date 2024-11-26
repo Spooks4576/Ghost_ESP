@@ -1822,33 +1822,7 @@ void wifi_manager_start_ip_lookup()
                     TERMINAL_VIEW_ADD_TEXT("  Name: %s\n", current_result->hostname);
                     TERMINAL_VIEW_ADD_TEXT("  Type: %s\n", services[s].type);
                     TERMINAL_VIEW_ADD_TEXT("  Port: %u\n", current_result->port);
-                    
-                    
-                    size_t offset = esp_netif_get_lwipnetif(wifiSTA);
-                    
-                    struct netif* netif = *lwip_netif_ptr;
-                    ip4_addr_t ip_addr;
-                    ip4addr_aton(ip_str, &ip_addr);
-
-                    err_t err = etharp_request(netif, &ip_addr);
-
-                    vTaskDelay(pdMS_TO_TICKS(ARP_DELAY_MS));
-
-                    if (err == ERR_OK) {
-                        struct eth_addr* eth_ret = NULL;
-                        struct ip4_addr ip_ret;
-                        ssize_t result = etharp_find_addr(netif, &ip_addr, &eth_ret, &ip_ret);
-
-                        if (result != -1 && eth_ret != NULL) {
-                            printf("  MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-                                   eth_ret->addr[0], eth_ret->addr[1], eth_ret->addr[2],
-                                   eth_ret->addr[3], eth_ret->addr[4], eth_ret->addr[5]);
-                            TERMINAL_VIEW_ADD_TEXT("  MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
-                                   eth_ret->addr[0], eth_ret->addr[1], eth_ret->addr[2],
-                                   eth_ret->addr[3], eth_ret->addr[4], eth_ret->addr[5]);
-                        }
-                        device_count++;
-                    }
+                    device_count++;
 
                     current_result = current_result->next;
                 }
