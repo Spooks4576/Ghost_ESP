@@ -164,8 +164,35 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     }
 
     if (rand() % 2 == 0) {
-        printf("Wrote to the buffer with %u Satellites\n", gps->sats_in_view);
-        TERMINAL_VIEW_ADD_TEXT("Wrote to the buffer with %u Satellites\n", gps->sats_in_view);
+        char fix_status[10];
+        if (!gps->valid || gps->fix == GPS_FIX_INVALID) {
+            strcpy(fix_status, "No Fix");
+        } else if (gps->fix_mode == GPS_MODE_2D) {
+            strcpy(fix_status, "Basic");
+        } else if (gps->fix_mode == GPS_MODE_3D) {
+            strcpy(fix_status, "Locked");
+        } else {
+            strcpy(fix_status, "Unknown");
+        }
+
+        char accuracy[10];
+        if (gps->dop_h <= 1.0) {
+            strcpy(accuracy, "Ideal");
+        } else if (gps->dop_h <= 2.0) {
+            strcpy(accuracy, "High");
+        } else if (gps->dop_h <= 5.0) {
+            strcpy(accuracy, "Good");
+        } else if (gps->dop_h <= 10.0) {
+            strcpy(accuracy, "Fair");
+        } else {
+            strcpy(accuracy, "Poor");
+        }
+
+        const char* message = "GPS: %s | Satellites: %u/%u | Accuracy: %s";
+        printf(message, fix_status, 
+               gps->sats_in_use, gps->sats_in_view, accuracy);
+        TERMINAL_VIEW_ADD_TEXT(message, fix_status,
+                              gps->sats_in_use, gps->sats_in_view, accuracy);
     }
 
     return ret;
