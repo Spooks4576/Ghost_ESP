@@ -1256,18 +1256,21 @@ void wifi_manager_select_ap(int index)
     
     if (ap_count == 0) {
         printf("No access points found\n");
+        TERMINAL_VIEW_ADD_TEXT("No access points found\n");
         return;
     }
 
 
     if (scanned_aps == NULL) {
         printf("No AP info available (scanned_aps is NULL)\n");
+        TERMINAL_VIEW_ADD_TEXT("No AP info available (scanned_aps is NULL)\n");
         return;
     }
 
 
     if (index < 0 || index >= ap_count) {
         printf("Invalid index: %d. Index should be between 0 and %d\n", index, ap_count - 1);
+        TERMINAL_VIEW_ADD_TEXT("Invalid index: %d. Index should be between 0 and %d\n", index, ap_count - 1);
         return;
     }
     
@@ -1616,6 +1619,7 @@ void wifi_manager_stop_deauth()
 void wifi_manager_print_scan_results_with_oui() {
     if (scanned_aps == NULL) {
         printf("AP information not available\n");
+        TERMINAL_VIEW_ADD_TEXT("AP information not available\n");
         return;
     }
 
@@ -1762,6 +1766,7 @@ void wifi_manager_stop_beacon()
         ap_manager_start_services();
     } else {
         printf("No beacon transmission is running.\n");
+        TERMINAL_VIEW_ADD_TEXT("No beacon transmission is running.\n");
     }
 }
 
@@ -1770,12 +1775,14 @@ void wifi_manager_start_ip_lookup()
     wifi_ap_record_t ap_info;
     if (esp_wifi_sta_get_ap_info(&ap_info) != ESP_OK || ap_info.rssi == 0) {
         printf("Not connected to an Access Point.\n");
+        TERMINAL_VIEW_ADD_TEXT("Not connected to an Access Point.\n");
         return;
     }
 
     esp_netif_ip_info_t ip_info;
     if (esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info) == ESP_OK) {
         printf("Connected. Proceeding with IP lookup...\n");
+        TERMINAL_VIEW_ADD_TEXT("Connected. Proceeding with IP lookup...\n");
 
         int device_count = 0;
         struct DeviceInfo devices[MAX_DEVICES];
@@ -1791,6 +1798,7 @@ void wifi_manager_start_ip_lookup()
 
                     if (mdnsresult == NULL) {
                         retries++;
+                        TERMINAL_VIEW_ADD_TEXT("Retrying mDNS query for service: %s (Attempt %d)\n", services[s].query, retries);
                         printf("Retrying mDNS query for service: %s (Attempt %d)\n", services[s].query, retries);
                         vTaskDelay(pdMS_TO_TICKS(500));
                     }
@@ -1799,7 +1807,7 @@ void wifi_manager_start_ip_lookup()
 
             if (mdnsresult != NULL) {
                 printf("mDNS query succeeded for service: %s\n", services[s].query);
-
+                TERMINAL_VIEW_ADD_TEXT("mDNS query succeeded for service: %s\n", services[s].query);
                 
                 mdns_result_t* current_result = mdnsresult;
                 while (current_result != NULL && device_count < MAX_DEVICES) {
@@ -1810,10 +1818,15 @@ void wifi_manager_start_ip_lookup()
                     printf("  Name: %s\n", current_result->hostname);
                     printf("  Type: %s\n", services[s].type);
                     printf("  Port: %u\n", current_result->port);
+                    TERMINAL_VIEW_ADD_TEXT("Device at: %s\n", ip_str);
+                    TERMINAL_VIEW_ADD_TEXT("  Name: %s\n", current_result->hostname);
+                    TERMINAL_VIEW_ADD_TEXT("  Type: %s\n", services[s].type);
+                    TERMINAL_VIEW_ADD_TEXT("  Port: %u\n", current_result->port);
                     
-
                     
-                    struct netif* netif = esp_netif_get_lwipnetif(wifiSTA);
+                    size_t offset = esp_netif_get_lwipnetif(wifiSTA);
+                    
+                    struct netif* netif = *lwip_netif_ptr;
                     ip4_addr_t ip_addr;
                     ip4addr_aton(ip_str, &ip_addr);
 
@@ -1830,6 +1843,9 @@ void wifi_manager_start_ip_lookup()
                             printf("  MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
                                    eth_ret->addr[0], eth_ret->addr[1], eth_ret->addr[2],
                                    eth_ret->addr[3], eth_ret->addr[4], eth_ret->addr[5]);
+                            TERMINAL_VIEW_ADD_TEXT("  MAC: %02x:%02x:%02x:%02x:%02x:%02x\n",
+                                   eth_ret->addr[0], eth_ret->addr[1], eth_ret->addr[2],
+                                   eth_ret->addr[3], eth_ret->addr[4], eth_ret->addr[5]);
                         }
                         device_count++;
                     }
@@ -1840,6 +1856,7 @@ void wifi_manager_start_ip_lookup()
                 mdns_query_results_free(mdnsresult);
             } else {
                 printf("Failed to find devices for service: %s after %d retries\n", services[s].query, retries);
+                TERMINAL_VIEW_ADD_TEXT("Failed to find devices for service: %s after %d retries\n", services[s].query, retries);
             }
         }
     } else {
