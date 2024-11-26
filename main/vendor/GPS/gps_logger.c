@@ -73,7 +73,7 @@ esp_err_t csv_file_open(const char* base_file_name) {
         return ret;
     }
 
-    printf("CSV file %s opened and header written.", file_name);
+    printf("Storage: Created new log file: %s\n", file_name);
     return ESP_OK;
 }
 
@@ -81,8 +81,10 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
     char timestamp[35];
     
     snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
-             gps->date.year, gps->date.month, gps->date.day,
-             gps->tim.hour, gps->tim.minute, gps->tim.second, gps->tim.thousand);
+             gps_get_absolute_year(gps->date.year), 
+             gps->date.month, gps->date.day,
+             gps->tim.hour, gps->tim.minute, gps->tim.second, 
+             gps->tim.thousand);
 
     char data_line[CSV_BUFFER_SIZE];
     int len = snprintf(data_line, CSV_BUFFER_SIZE, 
@@ -116,7 +118,7 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
 
 esp_err_t csv_flush_buffer_to_file() {
     if (csv_file == NULL) {
-        printf("CSV file is not open. Flushing to Serial...");
+        printf("Storage: No SD card found, logging to serial\n");
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
 

@@ -18,6 +18,11 @@ extern "C" {
 #define GPS_MAX_SATELLITES_IN_USE (12)
 #define GPS_MAX_SATELLITES_IN_VIEW (16)
 
+
+#define GPS_EPOCH_YEAR 2000  // GPS dates are relative to year 2000
+#define GPS_MIN_YEAR 0       // Minimum valid year offset (2000)
+#define GPS_MAX_YEAR 99      // Maximum valid year offset (2099)
+
 /**
  * @brief Declare of NMEA Parser Event base
  *
@@ -220,6 +225,15 @@ esp_err_t nmea_parser_add_handler(nmea_parser_handle_t nmea_hdl, esp_event_handl
  *  - Others: Fail
  */
 esp_err_t nmea_parser_remove_handler(nmea_parser_handle_t nmea_hdl, esp_event_handler_t event_handler);
+
+// Helper functions
+static inline uint16_t gps_get_absolute_year(uint16_t year_offset) {
+    return GPS_EPOCH_YEAR + year_offset;
+}
+
+static inline bool gps_is_valid_year(uint16_t year_offset) {
+    return (year_offset >= GPS_MIN_YEAR && year_offset <= GPS_MAX_YEAR);
+}
 
 #ifdef __cplusplus
 }
