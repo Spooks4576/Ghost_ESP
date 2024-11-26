@@ -221,56 +221,70 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
 
     for (int i = 0; i < uuids.uuid16_count; i++) {
         if (uuids.uuid16[i] == 0x3082) {
-            printf("Found White Flipper Device: MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found White Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (uuids.uuid16[i] == 0x3081) {
-            printf("Found Black Flipper Device: MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Black Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (uuids.uuid16[i] == 0x3083) {
-            printf("Found Transparent Flipper Device: MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Transparent Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
     }
-
-
     for (int i = 0; i < uuids.uuid32_count; i++) {
         if (uuids.uuid32[i] == 0x3082) {
-            printf("Found White Flipper Device (32-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found White Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (uuids.uuid32[i] == 0x3081) {
-            printf("Found Black Flipper Device (32-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Black Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (uuids.uuid32[i] == 0x3083) {
-            printf("Found Transparent Flipper Device (32-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Transparent Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
     }
-
-    
     for (int i = 0; i < uuids.uuid128_count; i++) {
         if (strstr(uuids.uuid128[i], "3082") != NULL) {
-            printf("Found White Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (strstr(uuids.uuid128[i], "3081") != NULL) {
-            printf("Found Black Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
         if (strstr(uuids.uuid128[i], "3083") != NULL) {
-            printf("Found Transparent Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): MAC: %s, Name: %s, RSSI: %d\n", advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
+                                advertisementMac, advertisementName, advertisementRssi);
             rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
         }
     }
