@@ -133,7 +133,7 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     if (gps->latitude < -90.0 || gps->latitude > 90.0 || 
         gps->longitude < -180.0 || gps->longitude > 180.0) {
         if (rand() % 20 == 0) {
-            printf("Warning: GPS coordinates are out of range: Lat: %f, Lon: %f\n",
+            printf("GPS Error: Invalid location detected (Lat: %f, Lon: %f)\n",
                 gps->latitude, gps->longitude);
         }
         return ESP_OK;
