@@ -169,7 +169,9 @@ static size_t calculate_wifi_frame_length(const uint8_t* frame, size_t max_len) 
                     pos += 2 + tag_len;
                     
                     // Check for padding or end of tags
-                    if (tag_len == 0) break;
+                    if (tag_num == 0 && tag_len == 0) {
+                        break;
+                    }
                 }
                 length = pos;
             }
@@ -190,28 +192,25 @@ static size_t calculate_wifi_frame_length(const uint8_t* frame, size_t max_len) 
             break;
             
         case 0x2:  // Data frames
-            // Determine address field length based on To/From DS flags
             if (to_ds && from_ds) {
-                length = 30;  // 24 + 6 (four address fields)
+                if (max_len < 30) return max_len;
+                length = 30;
             }
             
-            // Check for QoS data frames (subtypes 0x8 to 0xF)
-            if ((subtype & 0x8) != 0) {
-                length += 2;  // Add QoS Control field
+            if ((subtype & 0x8) != 0) {  // QoS data
+                if (max_len < length + 2) return length;
+                length += 2;
             }
             
-            // If there's a frame body, include it
             if (max_len > length) {
-                // Data frames must have at least 8 bytes for LLC/SNAP
                 size_t data_len = max_len - length;
                 if (data_len >= 8) {  // Minimum LLC/SNAP header
-                    length = max_len;  // Include the entire frame body
+                    length = max_len;
                 }
             }
             break;
     }
     
-    // Ensure we don't return a length longer than the actual packet
     return (length <= max_len) ? length : max_len;
 }
 
