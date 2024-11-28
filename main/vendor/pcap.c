@@ -127,17 +127,29 @@ static size_t calculate_wifi_frame_length(const uint8_t* frame, size_t max_len) 
             if (max_len > length + 2) {
                 size_t pos = length;
                 while (pos + 2 <= max_len) {
+                    uint8_t tag_num = frame[pos];
                     uint8_t tag_len = frame[pos + 1];
                     
-                    // Check if we can safely read this tag
-                    if (pos + 2 + tag_len > max_len) {
+                    // Handle extended tags (255)
+                    if (tag_num == 255 && pos + 4 <= max_len) {
+                        // Extended tags have an additional length byte
+                        tag_len = frame[pos + 2];
+                        pos += 3 + tag_len;  // num(1) + len(2) + payload(len)
+                    } else {
+                        // Standard tags
+                        pos += 2 + tag_len;  // num(1) + len(1) + payload(len)
+                    }
+                    
+                    // Validate position
+                    if (pos > max_len) {
+                        pos = max_len;
                         break;
                     }
                     
-                    pos += 2 + tag_len;
-                    
                     // Check for padding or end of tags
-                    if (tag_len == 0) break;
+                    if (tag_num == 0 && tag_len == 0) {
+                        break;
+                    }
                 }
                 length = pos;
             }
