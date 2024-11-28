@@ -266,6 +266,14 @@ static bool is_valid_tag_length(uint8_t tag_num, uint8_t tag_len) {
             return tag_len >= 7;
         case 255: // Extended tag
             return tag_len >= 1;
+        case 42:  // ERP Information
+            return tag_len == 1;
+        case 50:  // Extended Supported Rates
+            return tag_len > 0;
+        case 93:  // WNM-Sleep Mode
+            return tag_len >= 4;
+        case 62:  // Secondary Channel Offset
+            return tag_len == 1;
         default:
             return true;  // All other tags can have any length
     }
