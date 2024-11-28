@@ -274,6 +274,12 @@ static bool _mdns_service_match(const mdns_service_t *srv, const char *service, 
     if (!service || !proto || !srv->hostname) {
         return false;
     }
+
+    if (!_str_null_or_empty(hostname) && !strcasecmp(hostname, "*")) // * wildcard for no filter
+    {
+        return true;
+    }
+
     return !strcasecmp(srv->service, service) && !strcasecmp(srv->proto, proto) &&
            (_str_null_or_empty(hostname) || !strcasecmp(srv->hostname, hostname));
 }
@@ -409,6 +415,12 @@ static bool _mdns_service_match_instance(const mdns_service_t *srv, const char *
     if (!service || !proto) {
         return false;
     }
+
+    if (!_str_null_or_empty(hostname) && !strcasecmp(hostname, "*"))
+    {
+        return true;
+    }
+
     // instance==NULL -> _mdns_instance_name_match() will check the default instance
     // hostname==NULL -> matches if instance, service and proto matches
     return !strcasecmp(srv->service, service) && _mdns_instance_name_match(srv->instance, instance) &&
@@ -4863,7 +4875,7 @@ static mdns_search_once_t *_mdns_search_find_from(mdns_search_once_t *s, mdns_na
                 continue;
             }
             if (s->type != MDNS_TYPE_PTR && s->type != MDNS_TYPE_SRV) {
-                if (!strcasecmp(name->host, s->instance)) {
+                if (!strcasecmp(name->host, s->instance) || !strcasecmp(s->instance, "*")) {
                     return s;
                 }
                 s = s->next;
@@ -6650,13 +6662,13 @@ esp_err_t mdns_lookup_selfhosted_service(const char *instance, const char *servi
 }
 
 #ifdef CONFIG_LWIP_IPV4
-esp_err_t mdns_query_a(const char *name, uint32_t timeout, esp_ip4_addr_t *addr)
+mdns_result_t* mdns_query_a(const char *name, uint32_t timeout, esp_ip4_addr_t *addr)
 {
     mdns_result_t *result = NULL;
     esp_err_t err;
 
     if (_str_null_or_empty(name)) {
-        return ESP_ERR_INVALID_ARG;
+        return NULL;
     }
 
     if (strstr(name, ".local")) {
@@ -6666,25 +6678,14 @@ esp_err_t mdns_query_a(const char *name, uint32_t timeout, esp_ip4_addr_t *addr)
     err = mdns_query(name, NULL, NULL, MDNS_TYPE_A, timeout, 1, &result);
 
     if (err) {
-        return err;
+        return NULL;
     }
 
     if (!result) {
-        return ESP_ERR_NOT_FOUND;
+        return NULL;
     }
 
-    mdns_ip_addr_t *a = result->addr;
-    while (a) {
-        if (a->addr.type == ESP_IPADDR_TYPE_V4) {
-            addr->addr = a->addr.u_addr.ip4.addr;
-            mdns_query_results_free(result);
-            return ESP_OK;
-        }
-        a = a->next;
-    }
-
-    mdns_query_results_free(result);
-    return ESP_ERR_NOT_FOUND;
+    return result;
 }
 #endif /* CONFIG_LWIP_IPV4 */
 

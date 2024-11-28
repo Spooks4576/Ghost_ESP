@@ -34,6 +34,7 @@ const char* options_menu_type_to_string(EOptionsMenuType menuType) {
 
 static const char *wifi_options[] = {
     "Scan Access Points",
+    "Scan LAN Devices",
     "Start Deauth Attack",
     "Beacon Spam - Random",
     "Beacon Spam - Rickroll",
@@ -278,6 +279,12 @@ void option_event_cb(const char* Selected_Option) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("beaconspam -rr");
+    }
+
+    if (strcmp(Selected_Option, "Scan LAN Devices") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("scanlocal");
     }
 
 
