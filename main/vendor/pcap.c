@@ -122,6 +122,14 @@ static size_t calculate_wifi_frame_length(const uint8_t* frame, size_t max_len) 
             if (subtype == 0x8 || subtype == 0x5) {  // Beacon or Probe Response
                 length += 12;  // timestamp(8) + beacon_interval(2) + capability_info(2)
             }
+            else if (subtype == 0xD) {  // Action frame
+                // Action frame has category(1) + action(1) at minimum
+                length += 2;
+                // Use remaining frame length since action frame body is variable
+                if (max_len > length) {
+                    length = max_len;
+                }
+            }
             
             // Parse tagged parameters if we have enough data
             if (max_len > length + 2) {
