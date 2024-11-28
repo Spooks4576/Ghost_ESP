@@ -103,29 +103,112 @@ esp_err_t pcap_file_open(const char* base_file_name) {
     return ESP_OK;
 }
 
+static size_t calculate_wifi_frame_length(const uint8_t* frame, size_t max_len) {
+    if (max_len < 2) return 0;
+    
+    uint16_t frame_control = frame[0] | (frame[1] << 8);
+    uint8_t type = (frame_control >> 2) & 0x3;
+    uint8_t subtype = (frame_control >> 4) & 0xF;
+    uint8_t to_ds = (frame_control >> 8) & 0x1;
+    uint8_t from_ds = (frame_control >> 9) & 0x1;
+    
+    // Start with MAC header
+    size_t length = 24;  // Basic MAC header length
+    
+    // Handle different frame types
+    switch (type) {
+        case 0x0:  // Management frames
+            // Add fixed parameters for beacons and probe responses
+            if (subtype == 0x8 || subtype == 0x5) {  // Beacon or Probe Response
+                length += 12;  // timestamp(8) + beacon_interval(2) + capability_info(2)
+            }
+            
+            // Parse tagged parameters if we have enough data
+            if (max_len > length + 2) {
+                size_t pos = length;
+                while (pos + 2 <= max_len) {
+                    uint8_t tag_len = frame[pos + 1];
+                    
+                    // Check if we can safely read this tag
+                    if (pos + 2 + tag_len > max_len) {
+                        break;
+                    }
+                    
+                    pos += 2 + tag_len;
+                    
+                    // Check for padding or end of tags
+                    if (tag_len == 0) break;
+                }
+                length = pos;
+            }
+            break;
+            
+        case 0x1:  // Control frames
+            switch (subtype) {
+                case 0xB:  // RTS
+                    length = 16;
+                    break;
+                case 0xC:  // CTS
+                case 0xD:  // ACK
+                    length = 10;
+                    break;
+                default:
+                    length = 16;  // Default for other control frames
+            }
+            break;
+            
+        case 0x2:  // Data frames
+            // Determine address field length based on To/From DS flags
+            if (to_ds && from_ds) {
+                length = 30;  // 24 + 6 (four address fields)
+            }
+            
+            // Check for QoS data frames (subtypes 0x8 to 0xF)
+            if ((subtype & 0x8) != 0) {
+                length += 2;  // Add QoS Control field
+            }
+            
+            // If there's a frame body, include it
+            if (max_len > length) {
+                // Data frames must have at least 8 bytes for LLC/SNAP
+                size_t data_len = max_len - length;
+                if (data_len >= 8) {  // Minimum LLC/SNAP header
+                    length = max_len;  // Include the entire frame body
+                }
+            }
+            break;
+    }
+    
+    // Ensure we don't return a length longer than the actual packet
+    return (length <= max_len) ? length : max_len;
+}
 
 esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
-    if (packet == NULL || length == 0) {
+    if (packet == NULL || length < 2) {
         ESP_LOGE(PCAP_TAG, "Invalid packet data");
         return ESP_ERR_INVALID_ARG;
     }
 
-    if (pcap_mutex == NULL) {
-        ESP_LOGE(PCAP_TAG, "PCAP mutex not initialized");
-        return ESP_ERR_INVALID_STATE;
-    }
-
-    if (xSemaphoreTake(pcap_mutex, portMAX_DELAY) != pdTRUE) {
+    if (xSemaphoreTake(pcap_mutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
         ESP_LOGE(PCAP_TAG, "Failed to take mutex");
         return ESP_ERR_TIMEOUT;
+    }
+
+    const uint8_t* frame = (const uint8_t*)packet;
+    size_t actual_length = calculate_wifi_frame_length(frame, length);
+    
+    if (actual_length == 0) {
+        xSemaphoreGive(pcap_mutex);
+        ESP_LOGE(PCAP_TAG, "Invalid frame length calculated");
+        return ESP_ERR_INVALID_ARG;
     }
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
     pcap_packet_header_t packet_header;
 
-    // Add radiotap length to packet length
-    size_t total_length = length + RADIOTAP_HEADER_LEN;
+    // Add radiotap header length to packet length
+    size_t total_length = actual_length + RADIOTAP_HEADER_LEN;
     packet_header.ts_sec = tv.tv_sec;
     packet_header.ts_usec = tv.tv_usec;
     packet_header.incl_len = total_length;
@@ -155,22 +238,23 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
     memcpy(pcap_buffer + buffer_offset, &packet_header, sizeof(packet_header));
     buffer_offset += sizeof(packet_header);
 
-    // Write minimal radiotap header
+    // Write radiotap header
     uint8_t radiotap_header[RADIOTAP_HEADER_LEN] = {
-        0x00, 0x00,             // Version 0
-        0x08, 0x00,             // Header length (8 bytes)
-        0x00, 0x00, 0x00, 0x00  // Present flags (none)
+        0x00, 0x00,  // Version 0
+        0x08, 0x00,  // Header length
+        0x00, 0x00, 0x00, 0x00  // Present flags
     };
     memcpy(pcap_buffer + buffer_offset, radiotap_header, RADIOTAP_HEADER_LEN);
     buffer_offset += RADIOTAP_HEADER_LEN;
 
-    // Write actual packet
-    memcpy(pcap_buffer + buffer_offset, packet, length);
-    buffer_offset += length;
+    // Write actual packet data
+    memcpy(pcap_buffer + buffer_offset, packet, actual_length);
+    buffer_offset += actual_length;
 
-    ESP_LOGD(PCAP_TAG, "Added packet: size=%zu, buffer at: %zu", length, buffer_offset);
-    
     xSemaphoreGive(pcap_mutex);
+    
+    ESP_LOGD(PCAP_TAG, "Added packet: size=%zu, buffer at: %zu", actual_length, buffer_offset);
+    
     return ESP_OK;
 }
 
