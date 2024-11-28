@@ -16,26 +16,25 @@
 #include "esp_timer.h"
 #include <ctype.h>
 #include <stdio.h>
+#include <mdns.h>
 #include <math.h>
 #include <dhcpserver/dhcpserver.h>
 #include "esp_http_client.h"
 #include "lwip/lwip_napt.h"
+#include "lwip/etharp.h"
 #include <esp_http_server.h>
 #include <core/dns_server.h>
 #include "esp_crt_bundle.h"
 #ifdef WITH_SCREEN
 #include "managers/views/music_visualizer.h"
 #endif
-
-
 // Include Outside so we have access to the Terminal View Macro
 #include "managers/views/terminal_screen.h"
 
-
-
-
-
+#define MAX_DEVICES 255
 #define CHUNK_SIZE 8192
+#define MDNS_NAME_BUF_LEN 65
+#define ARP_DELAY_MS 500
 
 uint16_t ap_count;
 wifi_ap_record_t* scanned_aps;
@@ -50,6 +49,32 @@ httpd_handle_t evilportal_server = NULL;
 dns_server_handle_t dns_handle;
 esp_netif_t* wifiAP;
 esp_netif_t* wifiSTA;
+
+struct service_info {
+    const char *query;
+    const char *type;
+};
+
+
+struct service_info services[] = {
+    {"_http", "Web Server Enabled Device"},
+    {"_ssh", "SSH Server"},
+    {"_ipp", "Printer (IPP)"},
+    {"_googlecast", "Google Cast"},
+    {"_raop", "AirPlay"},
+    {"_smb", "SMB File Sharing"},
+    {"_hap", "HomeKit Accessory"},
+    {"_spotify-connect", "Spotify Connect Device"},
+    {"_printer", "Printer (Generic)"},
+    {"_mqtt", "MQTT Broker"}
+};
+
+#define NUM_SERVICES (sizeof(services) / sizeof(services[0]))
+
+struct DeviceInfo {
+    struct ip4_addr ip;
+    struct eth_addr mac;
+};
 
 typedef enum {
     COMPANY_DLINK,
@@ -1231,18 +1256,21 @@ void wifi_manager_select_ap(int index)
     
     if (ap_count == 0) {
         printf("No access points found\n");
+        TERMINAL_VIEW_ADD_TEXT("No access points found\n");
         return;
     }
 
 
     if (scanned_aps == NULL) {
         printf("No AP info available (scanned_aps is NULL)\n");
+        TERMINAL_VIEW_ADD_TEXT("No AP info available (scanned_aps is NULL)\n");
         return;
     }
 
 
     if (index < 0 || index >= ap_count) {
         printf("Invalid index: %d. Index should be between 0 and %d\n", index, ap_count - 1);
+        TERMINAL_VIEW_ADD_TEXT("Invalid index: %d. Index should be between 0 and %d\n", index, ap_count - 1);
         return;
     }
     
@@ -1591,6 +1619,7 @@ void wifi_manager_stop_deauth()
 void wifi_manager_print_scan_results_with_oui() {
     if (scanned_aps == NULL) {
         printf("AP information not available\n");
+        TERMINAL_VIEW_ADD_TEXT("AP information not available\n");
         return;
     }
 
@@ -1737,16 +1766,89 @@ void wifi_manager_stop_beacon()
         ap_manager_start_services();
     } else {
         printf("No beacon transmission is running.\n");
+        TERMINAL_VIEW_ADD_TEXT("No beacon transmission is running.\n");
     }
+}
+
+void wifi_manager_start_ip_lookup()
+{
+    wifi_ap_record_t ap_info;
+    if (esp_wifi_sta_get_ap_info(&ap_info) != ESP_OK || ap_info.rssi == 0) {
+        printf("Not connected to an Access Point.\n");
+        TERMINAL_VIEW_ADD_TEXT("Not connected to an Access Point.\n");
+        return;
+    }
+
+    esp_netif_ip_info_t ip_info;
+    if (esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info) == ESP_OK) {
+        printf("Connected. Proceeding with IP lookup...\n");
+        TERMINAL_VIEW_ADD_TEXT("Connected. Proceeding with IP lookup...\n");
+
+        int device_count = 0;
+        struct DeviceInfo devices[MAX_DEVICES];
+
+        for (int s = 0; s < NUM_SERVICES; s++) {
+            int retries = 0;
+            mdns_result_t* mdnsresult = NULL;
+
+            if (mdnsresult == NULL)
+            {
+                while (retries < 5 && mdnsresult == NULL) {
+                    mdns_query_ptr(services[s].query, "_tcp", 2000, 30, &mdnsresult);
+
+                    if (mdnsresult == NULL) {
+                        retries++;
+                        TERMINAL_VIEW_ADD_TEXT("Retrying mDNS query for service: %s (Attempt %d)\n", services[s].query, retries);
+                        printf("Retrying mDNS query for service: %s (Attempt %d)\n", services[s].query, retries);
+                        vTaskDelay(pdMS_TO_TICKS(500));
+                    }
+                }
+            }
+
+            if (mdnsresult != NULL) {
+                printf("mDNS query succeeded for service: %s\n", services[s].query);
+                TERMINAL_VIEW_ADD_TEXT("mDNS query succeeded for service: %s\n", services[s].query);
+                
+                mdns_result_t* current_result = mdnsresult;
+                while (current_result != NULL && device_count < MAX_DEVICES) {
+                    char ip_str[INET_ADDRSTRLEN];
+                    inet_ntop(AF_INET, &current_result->addr->addr.u_addr.ip4, ip_str, INET_ADDRSTRLEN);
+
+                    printf("Device at: %s\n", ip_str);
+                    printf("  Name: %s\n", current_result->hostname);
+                    printf("  Type: %s\n", services[s].type);
+                    printf("  Port: %u\n", current_result->port);
+                    TERMINAL_VIEW_ADD_TEXT("Device at: %s\n", ip_str);
+                    TERMINAL_VIEW_ADD_TEXT("  Name: %s\n", current_result->hostname);
+                    TERMINAL_VIEW_ADD_TEXT("  Type: %s\n", services[s].type);
+                    TERMINAL_VIEW_ADD_TEXT("  Port: %u\n", current_result->port);
+                    device_count++;
+
+                    current_result = current_result->next;
+                }
+
+                mdns_query_results_free(mdnsresult);
+            } else {
+                printf("Failed to find devices for service: %s after %d retries\n", services[s].query, retries);
+                TERMINAL_VIEW_ADD_TEXT("Failed to find devices for service: %s after %d retries\n", services[s].query, retries);
+            }
+        }
+    } else {
+        printf("Could not get network interface info.\n");
+        TERMINAL_VIEW_ADD_TEXT("Could not get network interface info.\n");
+    }
+
+    printf("IP Scan Done.\n");
+    TERMINAL_VIEW_ADD_TEXT("IP Scan Done...\n");
 }
 
 void wifi_manager_connect_wifi(const char* ssid, const char* password)
 { 
-    wifi_config_t wifi_config = { //WIFI_AUTH_WPA2_PSK
+    wifi_config_t wifi_config = {
         .sta = {
             .ssid = "",
             .password = "",
-            .threshold.authmode = strlen(password) > 8 ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,  // Set to WPA2-PSK authentication
+            .threshold.authmode = strlen(password) > 8 ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,
             .pmf_cfg = {
                 .capable = true,
                 .required = false

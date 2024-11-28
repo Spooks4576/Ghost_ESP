@@ -104,6 +104,8 @@ void wifi_manager_auto_deauth();
 
 void wifi_manager_stop_beacon();
 
+void wifi_manager_start_ip_lookup();
+
 void wifi_manager_connect_wifi(const char* ssid, const char* password);
 
 void wifi_manager_stop_monitor_mode();
