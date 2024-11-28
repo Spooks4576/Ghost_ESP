@@ -1151,7 +1151,7 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     cJSON* rgb_mode = cJSON_GetObjectItem(root, "rainbow_mode");
     if (cJSON_IsBool(rgb_mode)) {
         bool rgb_mode_value = cJSON_IsTrue(rgb_mode);
-         printf("Debug: Passed rgb_mode_value = %d to settings_set_rgb_mode()\n", rgb_mode_value);
+        printf("Debug: Passed rgb_mode_value = %d to settings_set_rgb_mode()\n", rgb_mode_value);
         settings_set_rgb_mode(settings, (RGBMode)rgb_mode_value);
     } else {
         printf("Error: 'rgb_mode' is not a boolean.\n");
@@ -1237,9 +1237,11 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
     }
 
     cJSON* gps_rx_pin = cJSON_GetObjectItem(root, "gps_rx_pin");
-    if (rgb_speed) {
+    if (gps_rx_pin) {
         settings_set_gps_rx_pin(settings, gps_rx_pin->valueint);
     }
+
+    printf("About to Save Settings\n");
 
     settings_save(settings);
 

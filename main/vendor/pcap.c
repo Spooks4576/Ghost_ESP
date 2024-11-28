@@ -15,6 +15,8 @@
 #define RADIOTAP_HEADER_LEN 8
 
 static const char *PCAP_TAG = "PCAP";
+static bool is_valid_tag_length(uint8_t tag_num, uint8_t tag_len);
+static bool is_valid_beacon_fixed_params(const uint8_t* frame, size_t offset, size_t max_len);
 
 esp_err_t pcap_init(void) {
     if (pcap_mutex != NULL) {
@@ -103,29 +105,225 @@ esp_err_t pcap_file_open(const char* base_file_name) {
     return ESP_OK;
 }
 
+static size_t calculate_wifi_frame_length(const uint8_t* frame, size_t max_len) {
+    if (frame == NULL || max_len < 2) return 0;
+    
+    uint16_t frame_control = frame[0] | (frame[1] << 8);
+    uint8_t type = (frame_control >> 2) & 0x3;
+    uint8_t subtype = (frame_control >> 4) & 0xF;
+    uint8_t to_ds = (frame_control >> 8) & 0x1;
+    uint8_t from_ds = (frame_control >> 9) & 0x1;
+    
+    size_t length = 24;  // Basic MAC header length
+    
+    switch (type) {
+        case 0x0:  // Management frames
+            if (max_len < length) return max_len;
+            
+            // Handle fixed parameters
+            switch (subtype) {
+                case 0x8:  // Beacon
+                case 0x5:  // Probe Response
+                    if (max_len < length + 12) return length;
+                    if (subtype == 0x8 && !is_valid_beacon_fixed_params(frame, length, max_len)) {
+                        return length;
+                    }
+                    length += 12;
+                    break;
+                    
+                case 0x0:  // Association Request
+                    if (max_len < length + 4) return length;
+                    length += 4;
+                    break;
+                    
+                case 0xb:  // Authentication
+                    if (max_len < length + 6) return length;
+                    length += 6;
+                    break;
+                    
+                case 0xd:  // Action
+                    if (max_len < length + 1) return length;
+                    length += 1;
+                    break;
+            }
+
+            // Process tagged parameters with validation
+            if (max_len > length) {
+                size_t pos = length;
+                while (pos + 2 <= max_len) {
+                    uint8_t tag_num = frame[pos];
+                    uint8_t tag_len = frame[pos + 1];
+
+                    if (pos + 2 + tag_len > max_len) {
+                        length = pos;
+                        break;
+                    }
+
+                    if (!is_valid_tag_length(tag_num, tag_len)) {
+                        length = pos;
+                        break;
+                    }
+
+                    pos += 2 + tag_len;
+                    
+                    // Check for padding or end of tags
+                    if (tag_num == 0 && tag_len == 0) {
+                        break;
+                    }
+                }
+                length = pos;
+            }
+            break;
+            
+        case 0x1:  // Control frames
+            switch (subtype) {
+                case 0xB:  // RTS
+                    length = 16;
+                    break;
+                case 0xC:  // CTS
+                case 0xD:  // ACK
+                    length = 10;
+                    break;
+                default:
+                    length = 16;  // Default for other control frames
+            }
+            break;
+            
+        case 0x2:  // Data frames
+            if (to_ds && from_ds) {
+                if (max_len < 30) return max_len;
+                length = 30;
+            }
+            
+            if ((subtype & 0x8) != 0) {  // QoS data
+                if (max_len < length + 2) return length;
+                length += 2;
+            }
+            
+            if (max_len > length) {
+                size_t data_len = max_len - length;
+                if (data_len >= 8) {  // Minimum LLC/SNAP header
+                    length = max_len;
+                }
+            }
+            break;
+    }
+    
+    return (length <= max_len) ? length : max_len;
+}
+
+static bool is_valid_tag_length(uint8_t tag_num, uint8_t tag_len) {
+    switch (tag_num) {
+        case 9:   // Hopping Pattern Table
+            return tag_len >= 4;
+        case 32:  // Power Constraint
+            return tag_len == 1;
+        case 33:  // Power Capability
+            return tag_len == 2;
+        case 35:  // TPC Report
+            return tag_len == 2;
+        case 36:  // Channels
+            return tag_len >= 3;
+        case 37:  // Channel Switch Announcement
+            return tag_len == 3;
+        case 38:  // Measurement Request
+            return tag_len >= 3;
+        case 39:  // Measurement Report
+            return tag_len >= 3;
+        case 41:  // IBSS DFS
+            return tag_len >= 7;
+        case 45:  // HT Capabilities
+            return tag_len == 26;
+        case 47:  // HT Operation
+            return tag_len >= 22;
+        case 48:  // RSN
+            return tag_len >= 2;
+        case 51:  // AP Channel Report
+            return tag_len >= 3;
+        case 61:  // HT Operation
+            return tag_len >= 22;
+        case 74:  // Overlapping BSS Scan Parameters
+            return tag_len == 14;
+        case 107: // Interworking
+            return tag_len >= 1;
+        case 127: // Extended Capabilities
+            return tag_len >= 1;
+        case 142: // Page Slice
+            return tag_len >= 3;
+        case 191: // VHT Capabilities
+            return tag_len == 12;
+        case 192: // VHT Operation
+            return tag_len >= 5;
+        case 195: // VHT Transmit Power Envelope
+            return tag_len >= 2;
+        case 216: // Target Wake Time
+            return tag_len >= 4;
+        case 221: // Vendor Specific
+            return tag_len >= 3;
+        case 232: // DMG Operation
+            return tag_len >= 5;
+        case 235: // S1G Beacon Compatibility
+            return tag_len >= 7;
+        case 255: // Extended tag
+            return tag_len >= 1;
+        case 42:  // ERP Information
+            return tag_len == 1;
+        case 50:  // Extended Supported Rates
+            return tag_len > 0;
+        case 93:  // WNM-Sleep Mode
+            return tag_len >= 4;
+        case 62:  // Secondary Channel Offset
+            return tag_len == 1;
+        default:
+            return true;  // All other tags can have any length
+    }
+}
+
+static bool is_valid_beacon_fixed_params(const uint8_t* frame, size_t offset, size_t max_len) {
+    if (offset + 12 > max_len) return false;
+    
+    // Skip timestamp (8 bytes) as it can be any value
+    
+    // Check beacon interval (2 bytes) - typically between 1-65535
+    uint16_t beacon_interval = frame[offset + 8] | (frame[offset + 9] << 8);
+    if (beacon_interval == 0) return false;
+    
+    // Check capability info (2 bytes) - must have some bits set
+    uint16_t capability = frame[offset + 10] | (frame[offset + 11] << 8);
+    if ((capability & 0x0001) == 0 && (capability & 0x0002) == 0) {
+        // At least one of ESS or IBSS must be set
+        return false;
+    }
+    
+    return true;
+}
 
 esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
-    if (packet == NULL || length == 0) {
+    if (packet == NULL || length < 2) {
         ESP_LOGE(PCAP_TAG, "Invalid packet data");
         return ESP_ERR_INVALID_ARG;
     }
 
-    if (pcap_mutex == NULL) {
-        ESP_LOGE(PCAP_TAG, "PCAP mutex not initialized");
-        return ESP_ERR_INVALID_STATE;
-    }
-
-    if (xSemaphoreTake(pcap_mutex, portMAX_DELAY) != pdTRUE) {
+    if (xSemaphoreTake(pcap_mutex, pdMS_TO_TICKS(1000)) != pdTRUE) {
         ESP_LOGE(PCAP_TAG, "Failed to take mutex");
         return ESP_ERR_TIMEOUT;
+    }
+
+    const uint8_t* frame = (const uint8_t*)packet;
+    size_t actual_length = calculate_wifi_frame_length(frame, length);
+    
+    if (actual_length == 0) {
+        xSemaphoreGive(pcap_mutex);
+        ESP_LOGE(PCAP_TAG, "Invalid frame length calculated");
+        return ESP_ERR_INVALID_ARG;
     }
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
     pcap_packet_header_t packet_header;
 
-    // Add radiotap length to packet length
-    size_t total_length = length + RADIOTAP_HEADER_LEN;
+    // Add radiotap header length to packet length
+    size_t total_length = actual_length + RADIOTAP_HEADER_LEN;
     packet_header.ts_sec = tv.tv_sec;
     packet_header.ts_usec = tv.tv_usec;
     packet_header.incl_len = total_length;
@@ -155,22 +353,23 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
     memcpy(pcap_buffer + buffer_offset, &packet_header, sizeof(packet_header));
     buffer_offset += sizeof(packet_header);
 
-    // Write minimal radiotap header
+    // Write radiotap header
     uint8_t radiotap_header[RADIOTAP_HEADER_LEN] = {
-        0x00, 0x00,             // Version 0
-        0x08, 0x00,             // Header length (8 bytes)
-        0x00, 0x00, 0x00, 0x00  // Present flags (none)
+        0x00, 0x00,  // Version 0
+        0x08, 0x00,  // Header length
+        0x00, 0x00, 0x00, 0x00  // Present flags
     };
     memcpy(pcap_buffer + buffer_offset, radiotap_header, RADIOTAP_HEADER_LEN);
     buffer_offset += RADIOTAP_HEADER_LEN;
 
-    // Write actual packet
-    memcpy(pcap_buffer + buffer_offset, packet, length);
-    buffer_offset += length;
+    // Write actual packet data
+    memcpy(pcap_buffer + buffer_offset, packet, actual_length);
+    buffer_offset += actual_length;
 
-    ESP_LOGD(PCAP_TAG, "Added packet: size=%zu, buffer at: %zu", length, buffer_offset);
-    
     xSemaphoreGive(pcap_mutex);
+    
+    ESP_LOGD(PCAP_TAG, "Added packet: size=%zu, buffer at: %zu", actual_length, buffer_offset);
+    
     return ESP_OK;
 }
 
