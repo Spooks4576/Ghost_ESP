@@ -125,7 +125,6 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
     buffer_offset += length;
 
     ESP_LOGD(PCAP_TAG, "Added packet: size=%zu, buffer at: %zu", length, buffer_offset);
-    
     return ESP_OK;
 }
 
