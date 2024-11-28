@@ -23,6 +23,14 @@ esp_timer_handle_t stop_timer;
 int should_store_wps = 1;
 gps_t *gps = NULL;
 
+static void trim_trailing(char *str) {
+    int i = strlen(str) - 1;
+    while (i >= 0 && (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' || str[i] == '\r')) {
+        str[i] = '\0';
+        i--;
+    }
+}
+
 void gps_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     switch (event_id) {
@@ -172,6 +180,7 @@ void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
         if (id == 0 && ie_len <= 32) {
             memcpy(ssid, &payload[index + 2], ie_len);
             ssid[ie_len] = '\0';
+            trim_trailing(ssid);
         }
 
         
@@ -328,6 +337,7 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
         if (id == 0 && ie_len <= 32) {
             memcpy(ssid, &payload[index + 2], ie_len);
             ssid[ie_len] = '\0';
+            trim_trailing(ssid);
         }
 
 
