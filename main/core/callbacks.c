@@ -254,15 +254,45 @@ void wifi_probe_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
 
 void wifi_beacon_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
-
     
     if (is_beacon_packet(pkt)) {
-        printf("Beacon packet detected, length: %d", pkt->rx_ctrl.sig_len);
-
+        // Get the frame control field
+        const uint8_t* frame = pkt->payload;
         
-        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
+        // Calculate actual 802.11 frame length
+        // 24 bytes for MAC header + 12 bytes for fixed parameters
+        size_t fixed_len = 36;
+        size_t actual_len = fixed_len;
+        
+        // Parse through tagged parameters to find true end
+        const uint8_t* curr_tag = frame + fixed_len;
+        while (actual_len + 2 <= pkt->rx_ctrl.sig_len) {
+            uint8_t tag_num = curr_tag[0];
+            uint8_t tag_len = curr_tag[1];
+            
+            // Check if we've reached the end of valid tags
+            if (tag_num == 0 && tag_len == 0) {
+                actual_len += 2;  // Include the empty tag
+                break;
+            }
+            
+            // Validate tag length
+            if (actual_len + 2 + tag_len > pkt->rx_ctrl.sig_len) {
+                break;
+            }
+            
+            actual_len += 2 + tag_len;  // tag header + length
+            curr_tag += 2 + tag_len;
+        }
+
+        printf("[+] Captured beacon frame (%zu bytes)\n", actual_len);
+        ESP_LOGI(TAG, "Beacon packet detected, original length: %d, adjusted length: %zu", 
+                 pkt->rx_ctrl.sig_len, actual_len);
+        
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, actual_len);
         if (ret != ESP_OK) {
-            printf("Failed to write beacon packet to PCAP buffer.");
+            printf("[-] Failed to save beacon frame\n");
+            ESP_LOGE(TAG, "Failed to write beacon packet to PCAP buffer.");
         }
     }
 }

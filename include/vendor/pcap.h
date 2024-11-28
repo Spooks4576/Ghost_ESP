@@ -1,10 +1,11 @@
-
 #ifndef PCAP_HEADER
 #define PCAP_HEADER
 
 #include <stdio.h>
 #include <stdint.h>
 #include "esp_vfs_fat.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 #define PCAP_GLOBAL_HEADER_SIZE 24
 #define PCAP_PACKET_HEADER_SIZE 16
@@ -36,8 +37,10 @@ typedef struct {
 static uint8_t pcap_buffer[BUFFER_SIZE];
 static size_t buffer_offset = 0;
 static FILE *pcap_file = NULL;
+static SemaphoreHandle_t pcap_mutex = NULL;
 
-
+// Add initialization function declaration
+esp_err_t pcap_init(void);
 
 esp_err_t pcap_write_global_header(FILE* f);
 esp_err_t pcap_file_open(const char* base_file_name);
