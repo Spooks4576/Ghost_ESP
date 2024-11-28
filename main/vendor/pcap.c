@@ -126,13 +126,6 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
 
     ESP_LOGD(PCAP_TAG, "Added packet: size=%zu, buffer at: %zu", length, buffer_offset);
     
-    // Flush immediately after writing packet
-    esp_err_t ret = pcap_flush_buffer_to_file();
-    if (ret != ESP_OK) {
-        ESP_LOGE(PCAP_TAG, "Failed to flush packet to file");
-        return ret;
-    }
-
     return ESP_OK;
 }
 
