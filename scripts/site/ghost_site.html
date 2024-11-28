@@ -623,7 +623,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP vA1.4.1</h1>
+        <h1>Ghost ESP vA1.4.4</h1>
         <!-- Tab Navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
@@ -1341,6 +1341,7 @@
                 flappy_ghost_name: document.getElementById('flappy_name_text').value,
                 hex_accent_color: document.getElementById('accent_color_hex').textContent,
                 timezone_str: document.getElementById('timezone_select').value,
+                gps_rx_pin: parseInt(document.getElementById('gps_rx_pin').value),
             };
 
             const validationErrors = validateSettings(settings);
