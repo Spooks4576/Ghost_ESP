@@ -16,7 +16,7 @@
 #define WIFI_PKT_PROBE_REQ 0x04  // Probe Request subtype
 #define WIFI_PKT_PROBE_RESP 0x05 // Probe Response subtype
 #define WIFI_PKT_EAPOL 0x80
-
+#define ESP_WIFI_VENDOR_METADATA_LEN 8  // Channel(1) + RSSI(1) + Rate(1) + Timestamp(4) + Noise(1)
 wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 int detected_network_count = 0;
 esp_timer_handle_t stop_timer;
@@ -225,81 +225,14 @@ void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     esp_err_t err = gps_manager_log_wardriving_data(&wardriving_data);
 }
 
-// Helper function to calculate actual frame length
-static size_t calculate_mgmt_frame_length(const wifi_promiscuous_pkt_t *pkt, uint8_t subtype) {
-    const uint8_t* frame = pkt->payload;
-    size_t fixed_len;
-    
-    // Determine fixed length based on frame subtype
-    switch (subtype) {
-        case WIFI_PKT_BEACON:  // Beacon frames
-            fixed_len = 24 + 12;  // MAC header + fixed params (timestamp[8] + interval[2] + capinfo[2])
-            break;
-        case WIFI_PKT_PROBE_REQ:  // Probe Request
-            fixed_len = 24;  // MAC header only
-            break;
-        case WIFI_PKT_PROBE_RESP:  // Probe Response
-            fixed_len = 24 + 12;  // Same as beacon
-            break;
-        case WIFI_PKT_DEAUTH:  // Deauth
-            fixed_len = 24 + 2;  // MAC header + reason code
-            return fixed_len;  // Deauth has no tags, return immediately
-        default:
-            ESP_LOGW(TAG, "Unknown management frame subtype: %d", subtype);
-            return pkt->rx_ctrl.sig_len;  // Return full length if unknown
-    }
-    
-    size_t actual_len = fixed_len;
-    
-    // Only parse tags for frames that have them
-    if (subtype != WIFI_PKT_DEAUTH) {
-        const uint8_t* curr_tag = frame + fixed_len;
-        while (actual_len + 2 <= pkt->rx_ctrl.sig_len) {
-            uint8_t tag_num = curr_tag[0];
-            uint8_t tag_len = curr_tag[1];
-            
-            ESP_LOGD(TAG, "Tag: num=%u, len=%u", tag_num, tag_len);
-            
-            // Check if we've reached the end of valid tags
-            if (tag_num == 0 && tag_len == 0) {
-                actual_len += 2;  // Include the empty tag
-                break;
-            }
-            
-            // Validate tag length
-            if (actual_len + 2 + tag_len > pkt->rx_ctrl.sig_len) {
-                ESP_LOGW(TAG, "Invalid tag length: %u at offset %zu", tag_len, actual_len);
-                break;
-            }
-            
-            actual_len += 2 + tag_len;  // tag header + length
-            curr_tag += 2 + tag_len;
-        }
-    }
-    
-    return actual_len;
-}
-
 void wifi_probe_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
     
-    if (is_probe_request(pkt)) {
-        size_t actual_len = calculate_mgmt_frame_length(pkt, WIFI_PKT_PROBE_REQ);
-        printf("Probe Request detected, original length: %d, adjusted length: %zu", 
-               pkt->rx_ctrl.sig_len, actual_len);
-        
-        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, actual_len);
+    if (is_probe_request(pkt) || is_probe_response(pkt)) {
+        ESP_LOGI(TAG, "Probe packet detected");
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            printf("Failed to write Probe Request packet to PCAP buffer.");
-        }
-    } else if (is_probe_response(pkt)) {
-        size_t actual_len = calculate_mgmt_frame_length(pkt, WIFI_PKT_PROBE_RESP);
-        printf("Probe Response detected, original length: %d, adjusted length: %zu", 
-               pkt->rx_ctrl.sig_len, actual_len);
-        
-        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, actual_len);
-        if (ret != ESP_OK) {
-            printf("Failed to write Probe Response packet to PCAP buffer.");
+            ESP_LOGE(TAG, "Failed to write Probe packet to PCAP buffer.");
         }
     }
 }
@@ -308,13 +241,10 @@ void wifi_beacon_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
     
     if (is_beacon_packet(pkt)) {
-        size_t actual_len = calculate_mgmt_frame_length(pkt, WIFI_PKT_BEACON);
-        printf("Beacon packet detected, original length: %d, adjusted length: %zu", 
-               pkt->rx_ctrl.sig_len, actual_len);
-        
-        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, actual_len);
+        ESP_LOGI(TAG, "Beacon packet detected");
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            printf("Failed to write beacon packet to PCAP buffer.");
+            ESP_LOGE(TAG, "Failed to write beacon packet to PCAP buffer.");
         }
     }
 }
@@ -323,13 +253,10 @@ void wifi_deauth_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
     
     if (is_deauth_packet(pkt)) {
-        size_t actual_len = calculate_mgmt_frame_length(pkt, WIFI_PKT_DEAUTH);
-        printf("Deauth packet detected, original length: %d, adjusted length: %zu", 
-               pkt->rx_ctrl.sig_len, actual_len);
-        
-        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, actual_len);
+        ESP_LOGI(TAG, "Deauth packet detected");
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            printf("Failed to write deauth packet to PCAP buffer.");
+            ESP_LOGE(TAG, "Failed to write deauth packet to PCAP buffer.");
         }
     }
 }
@@ -338,14 +265,10 @@ void wifi_pwn_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
     
     if (is_pwn_response(pkt)) {
-        // Assuming PWN responses are management frames similar to probe responses
-        size_t actual_len = calculate_mgmt_frame_length(pkt, WIFI_PKT_PROBE_RESP);
-        printf("Pwn packet detected, original length: %d, adjusted length: %zu", 
-               pkt->rx_ctrl.sig_len, actual_len);
-        
-        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, actual_len);
+        ESP_LOGI(TAG, "Pwn packet detected");
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            printf("Failed to write pwn packet to PCAP buffer.");
+            ESP_LOGE(TAG, "Failed to write pwn packet to PCAP buffer.");
         }
     }
 }
@@ -354,12 +277,10 @@ void wifi_eapol_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
     
     if (is_eapol_response(pkt)) {
-        // EAPOL packets don't have tagged parameters, use sig_len directly
-        printf("EAPOL packet detected, length: %d", pkt->rx_ctrl.sig_len);
-        
+        ESP_LOGI(TAG, "EAPOL packet detected");
         esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
         if (ret != ESP_OK) {
-            printf("Failed to write EAPOL packet to PCAP buffer.");
+            ESP_LOGE(TAG, "Failed to write EAPOL packet to PCAP buffer.");
         }
     }
 }
