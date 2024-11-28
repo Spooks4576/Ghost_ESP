@@ -80,78 +80,106 @@ esp_err_t pcap_file_open(const char* base_file_name) {
 
 
 esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
+    if (packet == NULL || length == 0) {
+        ESP_LOGE(PCAP_TAG, "Invalid packet data");
+        return ESP_ERR_INVALID_ARG;
+    }
+
     struct timeval tv;
     gettimeofday(&tv, NULL);
     pcap_packet_header_t packet_header;
-
 
     packet_header.ts_sec = tv.tv_sec;
     packet_header.ts_usec = tv.tv_usec;
     packet_header.incl_len = length;
     packet_header.orig_len = length;
 
-    
     size_t total_packet_size = sizeof(packet_header) + length;
+    
+    // Validate total size
+    if (total_packet_size > BUFFER_SIZE) {
+        ESP_LOGE(PCAP_TAG, "Packet too large for buffer: %zu", total_packet_size);
+        return ESP_ERR_NO_MEM;
+    }
+
+    // If buffer doesn't have space, flush first
     if (buffer_offset + total_packet_size > BUFFER_SIZE) {
-        // Buffer is full, flush to file
-        ESP_LOGI(PCAP_TAG, "Buffer full, flushing to file.");
+        ESP_LOGI(PCAP_TAG, "Buffer full, flushing %zu bytes", buffer_offset);
         esp_err_t ret = pcap_flush_buffer_to_file();
         if (ret != ESP_OK) {
+            ESP_LOGE(PCAP_TAG, "Buffer flush failed");
             return ret;
         }
     }
 
-    
+    // Double check we have space after flush
+    if (buffer_offset + total_packet_size > BUFFER_SIZE) {
+        ESP_LOGE(PCAP_TAG, "Packet too large for buffer: %zu", total_packet_size);
+        return ESP_FAIL;
+    }
+
+    // Write header and packet atomically
     memcpy(pcap_buffer + buffer_offset, &packet_header, sizeof(packet_header));
     buffer_offset += sizeof(packet_header);
-
-    
     memcpy(pcap_buffer + buffer_offset, packet, length);
     buffer_offset += length;
+
+    ESP_LOGD(PCAP_TAG, "Added packet: size=%zu, buffer at: %zu", length, buffer_offset);
+    
+    // Flush immediately after writing packet
+    esp_err_t ret = pcap_flush_buffer_to_file();
+    if (ret != ESP_OK) {
+        ESP_LOGE(PCAP_TAG, "Failed to flush packet to file");
+        return ret;
+    }
 
     return ESP_OK;
 }
 
 
 esp_err_t pcap_flush_buffer_to_file() {
+    if (buffer_offset == 0) {
+        return ESP_OK;  // Nothing to flush
+    }
+
     if (pcap_file == NULL) {
         ESP_LOGE(PCAP_TAG, "PCAP file is not open. Flushing to Serial...");
-
         const char* mark_begin = "[BUF/BEGIN]";
         const size_t mark_begin_len = strlen(mark_begin);
         const char* mark_close = "[BUF/CLOSE]";
         const size_t mark_close_len = strlen(mark_close);
 
         uart_write_bytes(UART_NUM_0, mark_begin, mark_begin_len);
-
-        
         uart_write_bytes(UART_NUM_0, (const char*)pcap_buffer, buffer_offset);
-
-        
         uart_write_bytes(UART_NUM_0, mark_close, mark_close_len);
-
-        
-        const char* newline = "\n";
-        uart_write_bytes(UART_NUM_0, newline, 1);
-
+        uart_write_bytes(UART_NUM_0, "\n", 1);
         
         buffer_offset = 0;
-
         return ESP_OK;
     }
 
-    
-    size_t written = fwrite(pcap_buffer, 1, buffer_offset, pcap_file);
-    if (written != buffer_offset) {
-        ESP_LOGE(PCAP_TAG, "Failed to write buffer to file.");
+    // Validate buffer contains at least one complete packet
+    if (buffer_offset < sizeof(pcap_packet_header_t)) {
+        ESP_LOGE(PCAP_TAG, "Buffer contains incomplete packet header");
         return ESP_FAIL;
     }
 
-    ESP_LOGI(PCAP_TAG, "Flushed %zu bytes to PCAP file.", buffer_offset);
+    // Write entire buffer
+    size_t written = fwrite(pcap_buffer, 1, buffer_offset, pcap_file);
+    if (written != buffer_offset) {
+        ESP_LOGE(PCAP_TAG, "Failed to write buffer: %zu of %zu written", written, buffer_offset);
+        return ESP_FAIL;
+    }
 
-    
+    // Force flush to disk
+    if (fflush(pcap_file) != 0) {
+        ESP_LOGE(PCAP_TAG, "Failed to flush file buffer");
+        return ESP_FAIL;
+    }
+
+    ESP_LOGI(PCAP_TAG, "Flushed %zu bytes to file", written);
+    memset(pcap_buffer, 0, BUFFER_SIZE);
     buffer_offset = 0;
-
     return ESP_OK;
 }
 

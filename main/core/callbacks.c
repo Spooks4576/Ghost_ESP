@@ -231,12 +231,11 @@ void wifi_eapol_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type)
 
 void wifi_probe_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type) {
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
-
     
     if (is_probe_request(pkt) || is_probe_response(pkt)) {
-        printf("Probe packet detected, length: %d", pkt->rx_ctrl.sig_len);
+        uint16_t frame_len = *(uint16_t*)(pkt->payload + 2);
         
-        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, pkt->rx_ctrl.sig_len);
+        esp_err_t ret = pcap_write_packet_to_buffer(pkt->payload, frame_len + 4);
         if (ret != ESP_OK) {
             printf("Failed to write Probe packet to PCAP buffer.");
         }
