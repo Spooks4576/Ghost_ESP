@@ -43,28 +43,7 @@ ESP_EVENT_DEFINE_BASE(ESP_NMEA_EVENT);
 
 static const char *GPS_TAG = "nmea_parser";
 
-/**
- * @brief GPS parser library runtime structure
- *
- */
-typedef struct {
-    uint8_t item_pos;                              /*!< Current position in item */
-    uint8_t item_num;                              /*!< Current item number */
-    uint8_t asterisk;                              /*!< Asterisk detected flag */
-    uint8_t crc;                                   /*!< Calculated CRC value */
-    uint8_t parsed_statement;                      /*!< OR'd of statements that have been parsed */
-    uint8_t sat_num;                               /*!< Satellite number */
-    uint8_t sat_count;                             /*!< Satellite count */
-    uint8_t cur_statement;                         /*!< Current statement ID */
-    uint32_t all_statements;                       /*!< All statements mask */
-    char item_str[NMEA_MAX_STATEMENT_ITEM_LENGTH]; /*!< Current item */
-    gps_t parent;                                  /*!< Parent class */
-    uart_port_t uart_port;                         /*!< Uart port number */
-    uint8_t *buffer;                               /*!< Runtime buffer */
-    esp_event_loop_handle_t event_loop_hdl;        /*!< Event loop handle */
-    TaskHandle_t tsk_hdl;                          /*!< NMEA Parser task handle */
-    QueueHandle_t event_queue;                     /*!< UART event queue handle */
-} esp_gps_t;
+
 
 /**
  * @brief parse latitude or longitude
@@ -74,11 +53,32 @@ typedef struct {
  */
 static float parse_lat_long(esp_gps_t *esp_gps)
 {
-    float ll = strtof(esp_gps->item_str, NULL);
-    int deg = ((int)ll) / 100;
-    float min = ll - (deg * 100);
-    ll = deg + min / 60.0f;
-    return ll;
+    ESP_LOGD(GPS_TAG, "Parsing coordinate: %s", esp_gps->item_str);
+    
+    if (!esp_gps->item_str[0] || esp_gps->item_str[0] == ',')
+        return 0.0f;
+
+    // Determine if this is latitude (2 digits) or longitude (3 digits)
+    bool is_latitude = (esp_gps->cur_statement == STATEMENT_GGA && esp_gps->item_num == 2) ||
+                      (esp_gps->cur_statement == STATEMENT_RMC && esp_gps->item_num == 3);
+    int deg_width = is_latitude ? 2 : 3;
+    
+    // Parse degrees part
+    char deg_str[4] = {0};
+    strncpy(deg_str, esp_gps->item_str, deg_width);
+    int degrees = atoi(deg_str);
+    
+    // Parse minutes part
+    float minutes = strtof(esp_gps->item_str + deg_width, NULL);
+    
+    // Convert to decimal degrees
+    float decimal_degrees = degrees + (minutes / 60.0f);
+    
+    ESP_LOGD(GPS_TAG, "Parsed %s: %d° %f' = %f°", 
+             is_latitude ? "latitude" : "longitude",
+             degrees, minutes, decimal_degrees);
+             
+    return decimal_degrees;
 }
 
 /**
