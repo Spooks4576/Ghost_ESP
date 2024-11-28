@@ -98,8 +98,8 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
         data->rssi,                     // RSSI
         data->latitude,                 // CurrentLatitude
         data->longitude,                // CurrentLongitude
-        gps->altitude,                  // AltitudeMeters
-        gps->dop_h * 5.0               // AccuracyMeters (HDOP * 5m)
+        data->altitude,                 // AltitudeMeters
+        data->accuracy                 // AccuracyMeters (HDOP * 5m)
     );
 
     if (buffer_offset + len > BUFFER_SIZE) {

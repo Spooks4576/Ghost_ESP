@@ -11,7 +11,6 @@
 #include "managers/settings_manager.h"
 #include <managers/views/terminal_screen.h>
 
-
 static const char *GPS_TAG = "GPS";
 
 nmea_parser_handle_t nmea_hdl;
@@ -88,7 +87,14 @@ void gps_manager_deinit(GPSManager* manager) {
 #define MAX_SPEED_THRESHOLD 340.0   // Maximum 340 m/s (~1224 km/h)
 
 esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
-    if (!data || !gps || !gps->valid || strlen(data->ssid) <= 2) {
+    if (!data || !nmea_hdl) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    // Get the GPS data from the parser handle
+    gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
+    
+    if (!gps->valid || strlen(data->ssid) <= 2) {
         return ESP_ERR_INVALID_ARG;
     }
 
@@ -110,6 +116,12 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
         return ESP_OK;
     }
 
+
+    data->latitude = gps->latitude;
+    data->longitude = gps->longitude;
+    data->altitude = gps->altitude;
+    data->accuracy = gps->dop_h * 5.0;
+    
     // First, validate the current GPS date
     if (!is_valid_date(&gps->date)) {
         // Only show warning if we have a truly valid fix
