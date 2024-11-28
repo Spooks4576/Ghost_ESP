@@ -12,9 +12,10 @@
 #include "vendor/GPS/MicroNMEA.h"
 #include "core/callbacks.h"
 
+static const char *GPS_TAG = "GPS";
 static const char *CSV_TAG = "CSV";
 
-
+static bool is_valid_date(const gps_date_t* date);
 
 #define CSV_BUFFER_SIZE 512
 
@@ -78,7 +79,19 @@ esp_err_t csv_file_open(const char* base_file_name) {
 }
 
 esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
+    if (!data) return ESP_ERR_INVALID_ARG;
+    
+    // Get GPS data from the global handle
+    gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
+    if (!gps) return ESP_ERR_INVALID_STATE;
+    
     char timestamp[35];
+    if (!is_valid_date(&gps->date) || 
+        gps->tim.hour > 23 || gps->tim.minute > 59 || gps->tim.second > 59) {
+        // Use a fallback timestamp or return error
+        ESP_LOGW(GPS_TAG, "Invalid date/time for CSV entry");
+        return ESP_ERR_INVALID_STATE;
+    }
     
     snprintf(timestamp, sizeof(timestamp), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
              gps_get_absolute_year(gps->date.year), 
@@ -98,8 +111,8 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
         data->rssi,                     // RSSI
         data->latitude,                 // CurrentLatitude
         data->longitude,                // CurrentLongitude
-        gps->altitude,                  // AltitudeMeters
-        gps->dop_h * 5.0               // AccuracyMeters (HDOP * 5m)
+        data->altitude,                 // AltitudeMeters
+        data->accuracy                 // AccuracyMeters (HDOP * 5m)
     );
 
     if (buffer_offset + len > BUFFER_SIZE) {
@@ -153,4 +166,28 @@ void csv_file_close() {
         csv_file = NULL;
         printf("CSV file closed.\n");
     }
+}
+
+static bool is_valid_date(const gps_date_t* date) {
+    if (!date) return false;
+    
+    // Check year (0-99 represents 2000-2099)
+    if (!gps_is_valid_year(date->year)) return false;
+    
+    // Check month (1-12)
+    if (date->month < 1 || date->month > 12) return false;
+    
+    // Check day (1-31 depending on month)
+    uint8_t days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    
+    // Adjust February for leap years
+    uint16_t absolute_year = gps_get_absolute_year(date->year);
+    if ((absolute_year % 4 == 0 && absolute_year % 100 != 0) || 
+        (absolute_year % 400 == 0)) {
+        days_in_month[1] = 29;
+    }
+    
+    if (date->day < 1 || date->day > days_in_month[date->month - 1]) return false;
+    
+    return true;
 }

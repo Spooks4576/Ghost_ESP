@@ -17,6 +17,8 @@ typedef struct {
     int channel;
     double latitude;
     double longitude;
+    double altitude;
+    double accuracy;
     char encryption_type[8];  // WPA2, WPA, WEP, or OPEN
 } wardriving_data_t;
 

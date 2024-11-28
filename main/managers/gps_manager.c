@@ -11,23 +11,23 @@
 #include "managers/settings_manager.h"
 #include <managers/views/terminal_screen.h>
 
-
 static const char *GPS_TAG = "GPS";
 
 nmea_parser_handle_t nmea_hdl;
 
 gps_date_t cacheddate = {0};
+static bool has_valid_cached_date = false;
 
 static bool is_valid_date(const gps_date_t* date) {
     if (!date) return false;
     
-    // Check year
+    // Check year (0-99 represents 2000-2099)
     if (!gps_is_valid_year(date->year)) return false;
     
-    // Check month
+    // Check month (1-12)
     if (date->month < 1 || date->month > 12) return false;
     
-    // Check day
+    // Check day (1-31 depending on month)
     uint8_t days_in_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     
     // Adjust February for leap years
@@ -88,28 +88,58 @@ void gps_manager_deinit(GPSManager* manager) {
 #define MAX_SPEED_THRESHOLD 340.0   // Maximum 340 m/s (~1224 km/h)
 
 esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
-    if (!data || !gps || !gps->valid || strlen(data->ssid) <= 2) {
+    if (!data || !nmea_hdl) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    
+    // Get the GPS data from the parser handle
+    gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
+    
+    if (!gps->valid || strlen(data->ssid) <= 2) {
         return ESP_ERR_INVALID_ARG;
     }
 
     // Validate GPS data
-    if (!is_valid_date(&gps->date) || 
-        gps->tim.hour > 23 || gps->tim.minute > 59 || gps->tim.second > 59 ||
-        gps->latitude < -90.0 || gps->latitude > 90.0 || 
-        gps->longitude < -180.0 || gps->longitude > 180.0 ||
-        gps->speed < 0.0 || gps->speed > 340.0 ||
-        gps->dop_h < 0.0 || gps->dop_h > 50.0) {
-        return ESP_OK;  // Skip invalid data silently
+    if (!is_valid_date(&gps->date)) {
+        if (!has_valid_cached_date) {
+            ESP_LOGW(GPS_TAG, "No valid GPS date available");
+            return ESP_ERR_INVALID_STATE;
+        }
+        
+        // Only log warning for good GPS fixes
+        if (gps->valid && 
+            gps->fix >= GPS_FIX_GPS && 
+            gps->fix_mode >= GPS_MODE_2D && 
+            gps->sats_in_use >= 3 && 
+            gps->sats_in_use <= GPS_MAX_SATELLITES_IN_USE &&
+            rand() % 100 == 0) {
+            ESP_LOGW(GPS_TAG, "Invalid date despite good fix: %04d-%02d-%02d "
+                   "(Fix: %d, Mode: %d, Sats: %d)",
+                gps_get_absolute_year(gps->date.year), 
+                gps->date.month, gps->date.day,
+                gps->fix, gps->fix_mode, gps->sats_in_use);
+        }
+        
+        // Use cached date for validation
+        ESP_LOGD(GPS_TAG, "Using cached date: %04d-%02d-%02d",
+                gps_get_absolute_year(cacheddate.year),
+                cacheddate.month,
+                cacheddate.day);
+    } else if (!has_valid_cached_date) {
+        // Valid date - update cache
+        cacheddate = gps->date;
+        has_valid_cached_date = true;
+        ESP_LOGI(GPS_TAG, "Cached valid GPS date: %04d-%02d-%02d",
+                gps_get_absolute_year(cacheddate.year),
+                cacheddate.month,
+                cacheddate.day);
     }
 
-    if (!gps->valid) {
-        return ESP_ERR_INVALID_ARG;
-    }
-
-    if (strlen(data->ssid) <= 2) {
-        return ESP_OK;
-    }
-
+    data->latitude = gps->latitude;
+    data->longitude = gps->longitude;
+    data->altitude = gps->altitude;
+    data->accuracy = gps->dop_h * 5.0;
+    
     // First, validate the current GPS date
     if (!is_valid_date(&gps->date)) {
         // Only show warning if we have a truly valid fix
