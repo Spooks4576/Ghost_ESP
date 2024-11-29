@@ -293,10 +293,9 @@ void gps_info_display_task(void *pvParameters) {
             printf("Sats: %d/%d\n", gps_data.gps_quality.satellites_used, GPS_MAX_SATELLITES_IN_USE);
             printf("Lat: %s\n", lat_str);
             printf("Long: %s\n", lon_str);
-
             printf("Direction: %d° %s\n", (int)gps_data.gps_quality.course, direction);
             
-            vTaskDelay(delay/3);
+            vTaskDelay(delay);  // Full 5-second delay
             
             // Page 2: Signal Quality
             printf("Alt: %dm\n", (int)gps_data.altitude);
@@ -305,8 +304,8 @@ void gps_info_display_task(void *pvParameters) {
                 gps_data.accuracy,
                 get_accuracy_percentage(gps_data.gps_quality.hdop));
             printf("Quality: %s\n", get_gps_quality_string(&gps_data));
+            
+            vTaskDelay(delay);  // Full 5-second delay
         }
-        
-        vTaskDelay(delay);
     }
 }
