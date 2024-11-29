@@ -256,6 +256,17 @@ static void format_coordinates(double lat, double lon, char* lat_str, char* lon_
     sprintf(lon_str, "%d°%.4f'%c", lon_deg, lon_min, lon >= 0 ? 'E' : 'W');
 }
 
+float get_accuracy_percentage(float hdop) {
+    // HDOP ranges from 1 (best) to 20+ (worst)
+    // Let's consider HDOP of 1 as 100% and HDOP of 20 as 0%
+    
+    if (hdop <= 1.0f) return 100.0f;
+    if (hdop >= 20.0f) return 0.0f;
+    
+    // Linear interpolation between 1 and 20
+    return (20.0f - hdop) * (100.0f / 19.0f);
+}
+
 void gps_info_display_task(void *pvParameters) {
     const TickType_t delay = pdMS_TO_TICKS(5000);
     char lat_str[20], lon_str[20];
@@ -278,18 +289,21 @@ void gps_info_display_task(void *pvParameters) {
             float speed_kmh = gps_data.gps_quality.speed * 3.6;
             
             // Page 1: Position and Movement
-            printf("Lat: %s\n", lat_str);
-            printf("Long: %s\n", lon_str);
-            printf("Alt: %dm\n", (int)gps_data.altitude);
-            printf("Speed: %d km/h\n", (int)speed_kmh);
-            printf("Direction: %d° %s\n", (int)gps_data.gps_quality.course, direction);
-            
-            vTaskDelay(delay/2);
-            
-            // Page 2: Signal Quality
             printf("GPS Info\n");
             printf("Sats: %d/%d\n", gps_data.gps_quality.satellites_used, GPS_MAX_SATELLITES_IN_USE);
-            printf("Accuracy: %.1f\n", gps_data.accuracy);
+            printf("Lat: %s\n", lat_str);
+            printf("Long: %s\n", lon_str);
+
+            printf("Direction: %d° %s\n", (int)gps_data.gps_quality.course, direction);
+            
+            vTaskDelay(delay/3);
+            
+            // Page 2: Signal Quality
+            printf("Alt: %dm\n", (int)gps_data.altitude);
+            printf("Speed: %d km/h\n", (int)speed_kmh);
+            printf("Accuracy: %.1fm (%.0f%%)\n", 
+                gps_data.accuracy,
+                get_accuracy_percentage(gps_data.gps_quality.hdop));
             printf("Quality: %s\n", get_gps_quality_string(&gps_data));
         }
         
