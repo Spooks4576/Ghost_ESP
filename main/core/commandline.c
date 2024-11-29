@@ -227,6 +227,11 @@ void handle_stop_flipper(int argc, char** argv)
 #ifndef CONFIG_IDF_TARGET_ESP32S2
     ble_stop();
 #endif
+    csv_flush_buffer_to_file();  // Ensure any buffered data is written
+    csv_file_close();           // Close any open CSV files
+    gps_manager_deinit(&g_gpsManager);  // Clean up GPS if active
+    wifi_manager_stop_monitor_mode();    // Stop any active monitoring
+    printf("All activities stopped and files closed.\n");
 }
 
 void handle_dial_command(int argc, char** argv)
@@ -659,8 +664,6 @@ void handle_startwd(int argc, char **argv) {
             break;
         }
     }
-
-
 
     if (stop_flag) {
         gps_manager_deinit(&g_gpsManager);

@@ -278,7 +278,6 @@ void gps_info_display_task(void *pvParameters) {
             float speed_kmh = gps_data.gps_quality.speed * 3.6;
             
             // Page 1: Position and Movement
-            printf("GPS Navigation\n");
             printf("Lat: %s\n", lat_str);
             printf("Long: %s\n", lon_str);
             printf("Alt: %dm\n", (int)gps_data.altitude);
@@ -288,8 +287,7 @@ void gps_info_display_task(void *pvParameters) {
             vTaskDelay(delay/2);
             
             // Page 2: Signal Quality
-            printf("GPS Signal Quality\n");
-            printf("Signal: %s\n", get_fix_type_str(gps_data.gps_quality.fix_quality));
+            printf("GPS Info\n");
             printf("Sats: %d/%d\n", gps_data.gps_quality.satellites_used, GPS_MAX_SATELLITES_IN_USE);
             printf("Accuracy: %.1f\n", gps_data.accuracy);
             printf("Quality: %s\n", get_gps_quality_string(&gps_data));
