@@ -257,11 +257,17 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
         // Add newline before status update for better readability
         printf("\n");
         printf(GPS_STATUS_MESSAGE, 
-               fix_status, sats_in_use, GPS_MAX_SATELLITES_IN_USE, 
-               speed_kmh, accuracy);
+               fix_status,
+               data->gps_quality.satellites_used,
+               GPS_MAX_SATELLITES_IN_USE,
+               data->gps_quality.speed * 3.6,  // Convert m/s to km/h
+               get_gps_quality_string(data));   // Only keep the arguments that match the format string
         TERMINAL_VIEW_ADD_TEXT(GPS_STATUS_MESSAGE,
-                              fix_status, sats_in_use, GPS_MAX_SATELLITES_IN_USE, 
-                              speed_kmh, accuracy);
+                              fix_status,
+                              data->gps_quality.satellites_used,
+                              GPS_MAX_SATELLITES_IN_USE,
+                              data->gps_quality.speed * 3.6,
+                              get_gps_quality_string(data));
     }
 
     return ret;

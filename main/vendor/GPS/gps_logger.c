@@ -191,3 +191,110 @@ static bool is_valid_date(const gps_date_t* date) {
     
     return true;
 }
+
+void populate_gps_quality_data(wardriving_data_t *data, const gps_t *gps) {
+    if (!data || !gps) return;
+    
+    data->gps_quality.satellites_used = gps->sats_in_use;
+    data->gps_quality.hdop = gps->dop_h;
+    data->gps_quality.speed = gps->speed;
+    data->gps_quality.course = gps->cog;
+    data->gps_quality.fix_quality = gps->fix;
+    data->gps_quality.magnetic_var = gps->variation;
+    data->gps_quality.has_valid_fix = gps->valid;
+    
+    // Calculate accuracy (existing method)
+    data->accuracy = gps->dop_h * 5.0;
+    
+    // Copy basic GPS data (existing fields)
+    data->latitude = gps->latitude;
+    data->longitude = gps->longitude;
+    data->altitude = gps->altitude;
+}
+
+const char* get_gps_quality_string(const wardriving_data_t *data) {
+    if (!data->gps_quality.has_valid_fix) {
+        return "No Fix";
+    }
+    
+    if (data->gps_quality.hdop <= 1.0) {
+        return "Excellent";
+    } else if (data->gps_quality.hdop <= 2.0) {
+        return "Good";
+    } else if (data->gps_quality.hdop <= 5.0) {
+        return "Moderate";
+    } else if (data->gps_quality.hdop <= 10.0) {
+        return "Fair";
+    } else {
+        return "Poor";
+    }
+}
+
+static const char* get_cardinal_direction(float course) {
+    const char* directions[] = {"N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                               "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"};
+    int index = (int)((course + 11.25f) / 22.5f) % 16;
+    return directions[index];
+}
+
+static const char* get_fix_type_str(uint8_t fix) {
+    switch(fix) {
+        case GPS_FIX_INVALID: return "No Fix";
+        case GPS_FIX_GPS: return "GPS";
+        case GPS_FIX_DGPS: return "DGPS";
+        default: return "Unknown";
+    }
+}
+
+static void format_coordinates(double lat, double lon, char* lat_str, char* lon_str) {
+    int lat_deg = (int)fabs(lat);
+    double lat_min = (fabs(lat) - lat_deg) * 60;
+    int lon_deg = (int)fabs(lon);
+    double lon_min = (fabs(lon) - lon_deg) * 60;
+    
+    sprintf(lat_str, "%d°%.4f'%c", lat_deg, lat_min, lat >= 0 ? 'N' : 'S');
+    sprintf(lon_str, "%d°%.4f'%c", lon_deg, lon_min, lon >= 0 ? 'E' : 'W');
+}
+
+void gps_info_display_task(void *pvParameters) {
+    const TickType_t delay = pdMS_TO_TICKS(5000);
+    char lat_str[20], lon_str[20];
+    static wardriving_data_t gps_data = {0};
+    
+    while(1) {
+        gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
+        
+        // Only populate GPS data, don't trigger CSV operations
+        if (gps && gps->valid) {
+            populate_gps_quality_data(&gps_data, gps);
+        }
+        
+        // Simple validation
+        if (!gps->valid || !is_valid_date(&gps->date)) {
+            printf("Searching sats...\n");
+        } else {
+            format_coordinates(gps_data.latitude, gps_data.longitude, lat_str, lon_str);
+            const char* direction = get_cardinal_direction(gps_data.gps_quality.course);
+            float speed_kmh = gps_data.gps_quality.speed * 3.6;
+            
+            // Page 1: Position and Movement
+            printf("GPS Navigation\n");
+            printf("Lat: %s\n", lat_str);
+            printf("Long: %s\n", lon_str);
+            printf("Alt: %dm\n", (int)gps_data.altitude);
+            printf("Speed: %d km/h\n", (int)speed_kmh);
+            printf("Direction: %d° %s\n", (int)gps_data.gps_quality.course, direction);
+            
+            vTaskDelay(delay/2);
+            
+            // Page 2: Signal Quality
+            printf("GPS Signal Quality\n");
+            printf("Signal: %s\n", get_fix_type_str(gps_data.gps_quality.fix_quality));
+            printf("Sats: %d/%d\n", gps_data.gps_quality.satellites_used, GPS_MAX_SATELLITES_IN_USE);
+            printf("Accuracy: %.1f\n", gps_data.accuracy);
+            printf("Quality: %s\n", get_gps_quality_string(&gps_data));
+        }
+        
+        vTaskDelay(delay);
+    }
+}

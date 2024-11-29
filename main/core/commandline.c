@@ -793,6 +793,32 @@ void handle_help(int argc, char **argv) {
     printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
 }
 
+void handle_gps_info(int argc, char **argv) {
+    bool stop_flag = false;
+    static TaskHandle_t gps_info_task_handle = NULL;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-s") == 0) {
+            stop_flag = true;
+            break;
+        }
+    }
+
+    if (stop_flag) {
+        if (gps_info_task_handle != NULL) {
+            vTaskDelete(gps_info_task_handle);
+            gps_info_task_handle = NULL;
+            printf("GPS info display stopped.\n");
+        }
+    } else {
+        if (gps_info_task_handle == NULL) {
+            gps_manager_init(&g_gpsManager);
+            xTaskCreate(gps_info_display_task, "gps_info", 4096, NULL, 1, &gps_info_task_handle);
+            printf("GPS info display started.\n");
+        }
+    }
+}
+
 void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
@@ -815,6 +841,7 @@ void register_commands() {
     register_command("stop", handle_stop_flipper);
     register_command("reboot", handle_reboot);
     register_command("startwd", handle_startwd);
+    register_command("gpsinfo", handle_gps_info);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif
