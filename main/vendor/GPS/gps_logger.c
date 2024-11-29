@@ -283,6 +283,7 @@ void gps_info_display_task(void *pvParameters) {
         // Simple validation
         if (!gps->valid || !is_valid_date(&gps->date)) {
             printf("Searching sats...\n");
+            vTaskDelay(pdMS_TO_TICKS(5000));
         } else {
             format_coordinates(gps_data.latitude, gps_data.longitude, lat_str, lon_str);
             const char* direction = get_cardinal_direction(gps_data.gps_quality.course);
