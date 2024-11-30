@@ -25,6 +25,7 @@
 static const char *TAG_BLE = "BLE_MANAGER";
 static int airTagCount = 0;
 static bool ble_initialized = false;
+static esp_timer_handle_t flush_timer = NULL;
 
 typedef struct {
     ble_data_handler_t handler;
@@ -490,12 +491,22 @@ void ble_stop(void) {
         free(last_company_id);
         last_company_id = NULL;
     }
+
+    // Stop and delete the flush timer if it exists
+    if (flush_timer != NULL) {
+        esp_timer_stop(flush_timer);
+        esp_timer_delete(flush_timer);
+        flush_timer = NULL;
+    }
+    
     rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
     ble_unregister_handler(ble_findtheflippers_callback);
     ble_unregister_handler(airtag_scanner_callback);
     ble_unregister_handler(ble_print_raw_packet_callback);
     ble_unregister_handler(detect_ble_spam_callback);
     pcap_flush_buffer_to_file(); // Final flush
+    pcap_file_close(); // Close the file after final flush
+    
     int rc = ble_gap_disc_cancel();
 
     if (rc == 0) {
@@ -584,7 +595,14 @@ static void ble_pcap_callback(struct ble_gap_event *event, size_t len) {
 }
 
 void ble_start_capture(void) {
-    pcap_file_open("ble_capture", PCAP_CAPTURE_BLUETOOTH);
+    // Open PCAP file first
+    esp_err_t err = pcap_file_open("ble_capture", PCAP_CAPTURE_BLUETOOTH);
+    if (err != ESP_OK) {
+        ESP_LOGE("BLE_PCAP", "Failed to open PCAP file: %d", err);
+        return;
+    }
+    
+    // Register BLE handler only after file is open
     ble_register_handler(ble_pcap_callback);
     
     // Create a timer to flush the buffer periodically
@@ -592,9 +610,10 @@ void ble_start_capture(void) {
         .callback = (esp_timer_cb_t)pcap_flush_buffer_to_file,
         .name = "pcap_flush"
     };
-    esp_timer_handle_t flush_timer;
-    esp_timer_create(&timer_args, &flush_timer);
-    esp_timer_start_periodic(flush_timer, 1000000); // Flush every second
+    
+    if (esp_timer_create(&timer_args, &flush_timer) == ESP_OK) {
+        esp_timer_start_periodic(flush_timer, 1000000); // Flush every second
+    }
     
     ble_start_scanning();
 }
