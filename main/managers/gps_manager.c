@@ -43,13 +43,11 @@ static bool is_valid_date(const gps_date_t* date) {
 }
 
 void gps_manager_init(GPSManager* manager) {
-    
     nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
 
     uint8_t current_rx_pin = settings_get_gps_rx_pin(&G_Settings);
 
-    if (current_rx_pin != 0)
-    {   
+    if (current_rx_pin != 0) {   
         config.uart.rx_pin = current_rx_pin;
     }
         
@@ -58,25 +56,14 @@ void gps_manager_init(GPSManager* manager) {
 #endif
 
     nmea_hdl = nmea_parser_init(&config);
-
     nmea_parser_add_handler(nmea_hdl, gps_event_handler, NULL);
-
     manager->isinitilized = true;
-    
-    if (csv_file_open("gps_data") == ESP_OK) {
-        printf("CSV file opened for GPS data logging.");
-    } else {
-        printf("Failed to open CSV file for GPS data logging.");
-    }
 }
 
 void gps_manager_deinit(GPSManager* manager) {
     if (manager->isinitilized) {
         nmea_parser_remove_handler(nmea_hdl, gps_event_handler);
         nmea_parser_deinit(nmea_hdl);
-        csv_file_close();
-        printf("CSV file closed for GPS data logging.");
-
         manager->isinitilized = false;
     }
 }
@@ -257,11 +244,17 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
         // Add newline before status update for better readability
         printf("\n");
         printf(GPS_STATUS_MESSAGE, 
-               fix_status, sats_in_use, GPS_MAX_SATELLITES_IN_USE, 
-               speed_kmh, accuracy);
+               fix_status,
+               data->gps_quality.satellites_used,
+               GPS_MAX_SATELLITES_IN_USE,
+               data->gps_quality.speed * 3.6,  // Convert m/s to km/h
+               get_gps_quality_string(data));   // Only keep the arguments that match the format string
         TERMINAL_VIEW_ADD_TEXT(GPS_STATUS_MESSAGE,
-                              fix_status, sats_in_use, GPS_MAX_SATELLITES_IN_USE, 
-                              speed_kmh, accuracy);
+                              fix_status,
+                              data->gps_quality.satellites_used,
+                              GPS_MAX_SATELLITES_IN_USE,
+                              data->gps_quality.speed * 3.6,
+                              get_gps_quality_string(data));
     }
 
     return ret;
