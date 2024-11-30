@@ -18,6 +18,12 @@ static const char *PCAP_TAG = "PCAP";
 static bool is_valid_tag_length(uint8_t tag_num, uint8_t tag_len);
 static bool is_valid_beacon_fixed_params(const uint8_t* frame, size_t offset, size_t max_len);
 
+typedef struct {
+    uint8_t packet_type;    // HCI packet type (1 byte)
+    uint16_t length;        // Length of data (2 bytes)
+    uint8_t data[256];      // HCI packet data
+} __attribute__((packed)) hci_packet_t;
+
 esp_err_t pcap_init(void) {
     if (pcap_mutex != NULL) {
         // Already initialized
@@ -34,7 +40,7 @@ esp_err_t pcap_init(void) {
     return ESP_OK;
 }
 
-esp_err_t pcap_write_global_header(FILE* f) {
+esp_err_t pcap_write_global_header(FILE* f, pcap_capture_type_t capture_type) {
     pcap_global_header_t header = {
         .magic_number = 0xa1b2c3d4,
         .version_major = 2,
@@ -42,7 +48,8 @@ esp_err_t pcap_write_global_header(FILE* f) {
         .thiszone = 0,
         .sigfigs = 0,
         .snaplen = 65535,
-        .network = 127  // DLT_IEEE802_11_RADIO
+        .network = (capture_type == PCAP_CAPTURE_BLUETOOTH) ? 
+                   DLT_BLUETOOTH_HCI_H4 : DLT_IEEE802_11_RADIO
     };
 
     if (f == NULL)
@@ -77,7 +84,7 @@ void get_next_pcap_file_name(char *file_name_buffer, const char* base_name) {
     snprintf(file_name_buffer, MAX_FILE_NAME_LENGTH, "/mnt/ghostesp/pcaps/%s_%d.pcap", base_name, next_index);
 }
 
-esp_err_t pcap_file_open(const char* base_file_name) {
+esp_err_t pcap_file_open(const char* base_file_name, pcap_capture_type_t capture_type) {
     // First ensure PCAP is initialized
     esp_err_t init_ret = pcap_init();
     if (init_ret != ESP_OK) {
@@ -93,7 +100,7 @@ esp_err_t pcap_file_open(const char* base_file_name) {
         pcap_file = fopen(file_name, "wb");
     }
     
-    esp_err_t ret = pcap_write_global_header(pcap_file);
+    esp_err_t ret = pcap_write_global_header(pcap_file, capture_type);
     if (ret != ESP_OK) {
         ESP_LOGE(PCAP_TAG, "Failed to write PCAP global header.");
         fclose(pcap_file);
@@ -298,7 +305,7 @@ static bool is_valid_beacon_fixed_params(const uint8_t* frame, size_t offset, si
     return true;
 }
 
-esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
+esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length, pcap_capture_type_t capture_type) {
     if (packet == NULL || length < 2) {
         ESP_LOGE(PCAP_TAG, "Invalid packet data");
         return ESP_ERR_INVALID_ARG;
@@ -309,8 +316,50 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
         return ESP_ERR_TIMEOUT;
     }
 
-    const uint8_t* frame = (const uint8_t*)packet;
-    size_t actual_length = calculate_wifi_frame_length(frame, length);
+    size_t actual_length;
+    size_t header_length = 0;
+    
+    if (capture_type == PCAP_CAPTURE_WIFI) {
+        const uint8_t* frame = (const uint8_t*)packet;
+        actual_length = calculate_wifi_frame_length(frame, length);
+        header_length = RADIOTAP_HEADER_LEN;
+    } else if (capture_type == PCAP_CAPTURE_BLUETOOTH) {
+        const uint8_t* raw_packet = (const uint8_t*)packet;
+        
+        // Add Bluetooth H4 header (4 bytes)
+        uint8_t h4_header[4] = {
+            0x00,  // Direction: Host to Controller
+            raw_packet[0],  // HCI packet type
+            0x00, 0x00     // Reserved
+        };
+        
+        // Calculate total length including H4 header
+        actual_length = length + sizeof(h4_header);
+        header_length = 0;
+        
+        // Copy H4 header and packet data to a temporary buffer
+        uint8_t* temp_buffer = malloc(actual_length);
+        if (!temp_buffer) {
+            xSemaphoreGive(pcap_mutex);
+            return ESP_ERR_NO_MEM;
+        }
+        
+        memcpy(temp_buffer, h4_header, sizeof(h4_header));
+        memcpy(temp_buffer + sizeof(h4_header), packet, length);
+        
+        // Update packet pointer and length
+        packet = temp_buffer;
+        ESP_LOGI(PCAP_TAG, "Writing BT packet with H4 header, total len=%d", actual_length);
+    } else {
+        const uint8_t* hci_packet = (const uint8_t*)packet;
+        // Verify HCI packet type (should be 0x04 for events)
+        if (hci_packet[0] != 0x04) {
+            ESP_LOGE(PCAP_TAG, "Invalid HCI packet type: 0x%02x", hci_packet[0]);
+            xSemaphoreGive(pcap_mutex);
+            return ESP_ERR_INVALID_ARG;
+        }
+        actual_length = length;
+    }
     
     if (actual_length == 0) {
         xSemaphoreGive(pcap_mutex);
@@ -320,10 +369,14 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    pcap_packet_header_t packet_header;
+    pcap_packet_header_t packet_header = {
+        .ts_sec = tv.tv_sec,
+        .ts_usec = tv.tv_usec,
+        .incl_len = actual_length + header_length,
+        .orig_len = actual_length + header_length
+    };
 
-    // Add radiotap header length to packet length
-    size_t total_length = actual_length + RADIOTAP_HEADER_LEN;
+    size_t total_length = actual_length + header_length;
     packet_header.ts_sec = tv.tv_sec;
     packet_header.ts_usec = tv.tv_usec;
     packet_header.incl_len = total_length;
@@ -331,16 +384,13 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
 
     size_t total_packet_size = sizeof(packet_header) + total_length;
     
-    // Validate total size
     if (total_packet_size > BUFFER_SIZE) {
         xSemaphoreGive(pcap_mutex);
         ESP_LOGE(PCAP_TAG, "Packet too large for buffer: %zu", total_packet_size);
         return ESP_ERR_NO_MEM;
     }
 
-    // If buffer doesn't have space, flush first
     if (buffer_offset + total_packet_size > BUFFER_SIZE) {
-        ESP_LOGI(PCAP_TAG, "Buffer full, flushing %zu bytes", buffer_offset);
         esp_err_t ret = pcap_flush_buffer_to_file();
         if (ret != ESP_OK) {
             xSemaphoreGive(pcap_mutex);
@@ -353,23 +403,22 @@ esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length) {
     memcpy(pcap_buffer + buffer_offset, &packet_header, sizeof(packet_header));
     buffer_offset += sizeof(packet_header);
 
-    // Write radiotap header
-    uint8_t radiotap_header[RADIOTAP_HEADER_LEN] = {
-        0x00, 0x00,  // Version 0
-        0x08, 0x00,  // Header length
-        0x00, 0x00, 0x00, 0x00  // Present flags
-    };
-    memcpy(pcap_buffer + buffer_offset, radiotap_header, RADIOTAP_HEADER_LEN);
-    buffer_offset += RADIOTAP_HEADER_LEN;
+    if (capture_type == PCAP_CAPTURE_WIFI) {
+        // Write radiotap header for WiFi packets
+        uint8_t radiotap_header[RADIOTAP_HEADER_LEN] = {
+            0x00, 0x00,  // Version 0
+            0x08, 0x00,  // Header length
+            0x00, 0x00, 0x00, 0x00  // Present flags
+        };
+        memcpy(pcap_buffer + buffer_offset, radiotap_header, RADIOTAP_HEADER_LEN);
+        buffer_offset += RADIOTAP_HEADER_LEN;
+    }
 
-    // Write actual packet data
+    // Write packet data
     memcpy(pcap_buffer + buffer_offset, packet, actual_length);
     buffer_offset += actual_length;
 
     xSemaphoreGive(pcap_mutex);
-    
-    ESP_LOGD(PCAP_TAG, "Added packet: size=%zu, buffer at: %zu", actual_length, buffer_offset);
-    
     return ESP_OK;
 }
 

@@ -37,6 +37,8 @@ void stop_ble_stack(void);
 void ble_start_airtag_scanner(void);
 void ble_start_raw_ble_packetscan(void);
 void ble_start_blespam_detector(void);
+void ble_start_capture(void);
+
 
 #endif 
 #endif // BLE_MANAGER_H

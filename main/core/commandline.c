@@ -553,7 +553,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-probe") == 0)
     {
-        int err = pcap_file_open("probescan");
+        int err = pcap_file_open("probescan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
         {
@@ -565,7 +565,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-deauth") == 0)
     {
-        int err = pcap_file_open("deauthscan");
+        int err = pcap_file_open("deauthscan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
         {
@@ -577,7 +577,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-beacon") == 0)
     {
-        int err = pcap_file_open("beaconscan");
+        int err = pcap_file_open("beaconscan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
         {
@@ -589,7 +589,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-raw") == 0)
     {
-        int err = pcap_file_open("rawscan");
+        int err = pcap_file_open("rawscan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
         {
@@ -601,7 +601,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-eapol") == 0)
     {
-        int err = pcap_file_open("eapolscan");
+        int err = pcap_file_open("eapolscan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
         {
@@ -613,7 +613,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-pwn") == 0)
     {
-        int err = pcap_file_open("pwnscan");
+        int err = pcap_file_open("pwnscan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
         {
@@ -625,7 +625,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-wps") == 0)
     {
-        int err = pcap_file_open("wpsscan");
+        int err = pcap_file_open("wpsscan", PCAP_CAPTURE_WIFI);
 
         should_store_wps = 0;
         
@@ -640,6 +640,17 @@ void handle_capture_scan(int argc, char** argv)
     if (strcmp(capturetype, "-stop") == 0)
     {
         wifi_manager_stop_monitor_mode();
+        pcap_file_close();
+    }
+
+    if (strcmp(capturetype, "-ble") == 0) {
+        printf("Starting BLE packet capture...\n");
+        ble_start_capture();
+    }
+
+    if (strcmp(capturetype, "-blestop") == 0) {
+        printf("Stopping BLE packet capture...\n");
+        ble_stop();
         pcap_file_close();
     }
 }
@@ -796,6 +807,18 @@ void handle_help(int argc, char **argv) {
     printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
 }
 
+void handle_capture(int argc, char **argv) {
+    if (argc < 2) {
+        printf("Usage: capture [-probe|-beacon|-deauth|-raw|-ble]\n");
+        return;
+    }
+
+    if (strcmp(argv[1], "-ble") == 0) {
+        printf("Starting BLE packet capture...\n");
+        ble_start_capture();
+    }
+}
+
 void handle_gps_info(int argc, char **argv) {
     bool stop_flag = false;
     static TaskHandle_t gps_info_task_handle = NULL;
@@ -821,7 +844,6 @@ void handle_gps_info(int argc, char **argv) {
         }
     }
 }
-
 void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);

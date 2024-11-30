@@ -15,6 +15,7 @@
 #include <managers/rgb_manager.h>
 #include <managers/settings_manager.h>
 #include "managers/views/terminal_screen.h"
+#include "vendor/pcap.h"
 
 
 #define MAX_DEVICES 30
@@ -24,6 +25,7 @@
 static const char *TAG_BLE = "BLE_MANAGER";
 static int airTagCount = 0;
 static bool ble_initialized = false;
+static esp_timer_handle_t flush_timer = NULL;
 
 typedef struct {
     ble_data_handler_t handler;
@@ -35,7 +37,7 @@ static int handler_count = 0;
 static int spam_counter = 0;
 static uint16_t *last_company_id = NULL;
 static TickType_t last_detection_time = 0;  
-
+static void ble_pcap_callback(struct ble_gap_event *event, size_t len);
 
 static void notify_handlers(struct ble_gap_event *event, int len) {
     for (int i = 0; i < handler_count; i++) {
@@ -489,11 +491,22 @@ void ble_stop(void) {
         free(last_company_id);
         last_company_id = NULL;
     }
+
+    // Stop and delete the flush timer if it exists
+    if (flush_timer != NULL) {
+        esp_timer_stop(flush_timer);
+        esp_timer_delete(flush_timer);
+        flush_timer = NULL;
+    }
+    
     rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
     ble_unregister_handler(ble_findtheflippers_callback);
     ble_unregister_handler(airtag_scanner_callback);
     ble_unregister_handler(ble_print_raw_packet_callback);
     ble_unregister_handler(detect_ble_spam_callback);
+    pcap_flush_buffer_to_file(); // Final flush
+    pcap_file_close(); // Close the file after final flush
+    
     int rc = ble_gap_disc_cancel();
 
     if (rc == 0) {
@@ -521,6 +534,87 @@ void ble_start_raw_ble_packetscan(void)
 void ble_start_airtag_scanner(void)
 {
     ble_register_handler(airtag_scanner_callback);
+    ble_start_scanning();
+}
+
+static void ble_pcap_callback(struct ble_gap_event *event, size_t len) {
+    if (!event || len == 0) return;
+    
+    uint8_t hci_buffer[258];  // Max HCI packet size
+    size_t hci_len = 0;
+    
+    if (event->type == BLE_GAP_EVENT_DISC) {
+        // [1] HCI packet type (0x04 for HCI Event)
+        hci_buffer[0] = 0x04;
+        
+        // [2] HCI Event Code (0x3E for LE Meta Event)
+        hci_buffer[1] = 0x3E;
+        
+        // [3] Calculate total parameter length
+        uint8_t param_len = 10 + event->disc.length_data;  // 1 (subevent) + 1 (num reports) + 1 (event type) + 1 (addr type) + 6 (addr)
+        hci_buffer[2] = param_len;
+        
+        // [4] LE Meta Subevent (0x02 for LE Advertising Report)
+        hci_buffer[3] = 0x02;
+        
+        // [5] Number of reports
+        hci_buffer[4] = 0x01;
+        
+        // [6] Event type (ADV_IND = 0x00)
+        hci_buffer[5] = 0x00;
+        
+        // [7] Address type
+        hci_buffer[6] = event->disc.addr.type;
+        
+        // [8] Address (6 bytes)
+        memcpy(&hci_buffer[7], event->disc.addr.val, 6);
+        
+        // [9] Data length
+        hci_buffer[13] = event->disc.length_data;
+        
+        // [10] Data
+        if (event->disc.length_data > 0) {
+            memcpy(&hci_buffer[14], event->disc.data, event->disc.length_data);
+        }
+        
+        // [11] RSSI
+        hci_buffer[14 + event->disc.length_data] = (uint8_t)event->disc.rssi;
+        
+        hci_len = 15 + event->disc.length_data;  // Total length
+        
+        // Debug logging
+        ESP_LOGI("BLE_PCAP", "HCI Event: type=0x04, meta=0x3E, len=%d", hci_len);
+        printf("Packet: ");
+        for (int i = 0; i < hci_len; i++) {
+            printf("%02x ", hci_buffer[i]);
+        }
+        printf("\n");
+        
+        pcap_write_packet_to_buffer(hci_buffer, hci_len, PCAP_CAPTURE_BLUETOOTH);
+    }
+}
+
+void ble_start_capture(void) {
+    // Open PCAP file first
+    esp_err_t err = pcap_file_open("ble_capture", PCAP_CAPTURE_BLUETOOTH);
+    if (err != ESP_OK) {
+        ESP_LOGE("BLE_PCAP", "Failed to open PCAP file: %d", err);
+        return;
+    }
+    
+    // Register BLE handler only after file is open
+    ble_register_handler(ble_pcap_callback);
+    
+    // Create a timer to flush the buffer periodically
+    esp_timer_create_args_t timer_args = {
+        .callback = (esp_timer_cb_t)pcap_flush_buffer_to_file,
+        .name = "pcap_flush"
+    };
+    
+    if (esp_timer_create(&timer_args, &flush_timer) == ESP_OK) {
+        esp_timer_start_periodic(flush_timer, 1000000); // Flush every second
+    }
+    
     ble_start_scanning();
 }
 
