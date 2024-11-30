@@ -949,8 +949,10 @@ void wifi_manager_stop_monitor_mode() {
     TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.");
 }
 
-void wifi_manager_init() {
+void wifi_manager_init(void) {
 
+    esp_log_level_set("wifi", ESP_LOG_ERROR);  // Only show errors, not warnings
+    
     esp_wifi_set_ps(WIFI_PS_NONE);
 
     esp_err_t ret = nvs_flash_init();

@@ -227,6 +227,11 @@ void handle_stop_flipper(int argc, char** argv)
 #ifndef CONFIG_IDF_TARGET_ESP32S2
     ble_stop();
 #endif
+    csv_flush_buffer_to_file();  // Ensure any buffered data is written
+    csv_file_close();           // Close any open CSV files
+    gps_manager_deinit(&g_gpsManager);  // Clean up GPS if active
+    wifi_manager_stop_monitor_mode();    // Stop any active monitoring
+    printf("All activities stopped and files closed.\n");
 }
 
 void handle_dial_command(int argc, char** argv)
@@ -671,8 +676,6 @@ void handle_startwd(int argc, char **argv) {
         }
     }
 
-
-
     if (stop_flag) {
         gps_manager_deinit(&g_gpsManager);
         wifi_manager_stop_monitor_mode();
@@ -816,6 +819,31 @@ void handle_capture(int argc, char **argv) {
     }
 }
 
+void handle_gps_info(int argc, char **argv) {
+    bool stop_flag = false;
+    static TaskHandle_t gps_info_task_handle = NULL;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-s") == 0) {
+            stop_flag = true;
+            break;
+        }
+    }
+
+    if (stop_flag) {
+        if (gps_info_task_handle != NULL) {
+            vTaskDelete(gps_info_task_handle);
+            gps_info_task_handle = NULL;
+            printf("GPS info display stopped.\n");
+        }
+    } else {
+        if (gps_info_task_handle == NULL) {
+            gps_manager_init(&g_gpsManager);
+            xTaskCreate(gps_info_display_task, "gps_info", 4096, NULL, 1, &gps_info_task_handle);
+            printf("GPS info display started.\n");
+        }
+    }
+}
 void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
@@ -838,6 +866,7 @@ void register_commands() {
     register_command("stop", handle_stop_flipper);
     register_command("reboot", handle_reboot);
     register_command("startwd", handle_startwd);
+    register_command("gpsinfo", handle_gps_info);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif
