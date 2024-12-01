@@ -1392,7 +1392,7 @@
             PortalAPSSID = wrapInQuotesIfNeeded(PortalAPSSID);
             PortalDomain = wrapInQuotesIfNeeded(PortalDomain);
 
-            const command = `startportal ${PortalURL} ${PortalSSID} ${PortalPassword} ${PortalAPSSID} ${PortalDomain}`;
+            const command = `startportal`;
 
             fetch('/api/command', {
                 method: 'POST',
@@ -1407,11 +1407,6 @@
                 }
             })
             .catch(error => console.error('Error Sending Evil Portal Command...', error));
-        }
-
-        // Helper function to wrap strings in quotes if they contain spaces
-        function replaceSpacesWithAsterisk(str) {
-            return str.includes(' ') ? str.replace(/ /g, '*') : str;
         }
 
         // Function to validate settings before saving
@@ -1433,9 +1428,17 @@
                 errors.push('Printer Font Size must be between 10 and 72.');
             }
 
-            // Additional validations can be added here
+            
 
             return errors;
+        }
+
+        function wrapInQuotesIfNeeded(str) {
+            if (str.startsWith('"') && str.endsWith('"')) {
+                return str;
+            } else {
+                return `"${str}"`;
+            }
         }
 
         // Function to send text to the printer
@@ -1502,8 +1505,8 @@
                 return;
             }
 
-            const finalssid = replaceSpacesWithAsterisk(ssid);
-            const finalpassword = replaceSpacesWithAsterisk(password);
+            const finalssid = wrapInQuotesIfNeeded(ssid);
+            const finalpassword = wrapInQuotesIfNeeded(password);
             const command = `connect ${finalssid} ${finalpassword}`;
 
             fetch('/api/command', {
