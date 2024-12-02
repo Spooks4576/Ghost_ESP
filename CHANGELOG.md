@@ -6,6 +6,8 @@
 - Street Detector
 - Port Scanner
 - Web Console
+- Add support for variable display timeout on TWatch S3
+
 
 ## 1.4.5
 
