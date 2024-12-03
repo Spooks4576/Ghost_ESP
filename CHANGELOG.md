@@ -9,6 +9,7 @@
 
 
 ## 1.4.5
+- Added starting logs to capture commands - @jaylikesbunda
 - Improve WiFi Connection logic - @jaylikesbunda
 - Forward printf logs from managers to terminal view - @jaylikesbunda
 - Added support for variable display timeout on TWatch S3 - @jaylikesbunda
