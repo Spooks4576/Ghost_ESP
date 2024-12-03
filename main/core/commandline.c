@@ -553,6 +553,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-probe") == 0)
     {
+        printf("Starting probe request capture...\n");
         int err = pcap_file_open("probescan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
@@ -565,6 +566,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-deauth") == 0)
     {
+        printf("Starting deauth packet capture...\n");
         int err = pcap_file_open("deauthscan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
@@ -613,6 +615,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-pwn") == 0)
     {
+        printf("Starting PWN packet capture...\n");
         int err = pcap_file_open("pwnscan", PCAP_CAPTURE_WIFI);
         
         if (err != ESP_OK)
@@ -625,6 +628,7 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-wps") == 0)
     {
+        printf("Starting WPS packet capture...\n");
         int err = pcap_file_open("wpsscan", PCAP_CAPTURE_WIFI);
 
         should_store_wps = 0;
