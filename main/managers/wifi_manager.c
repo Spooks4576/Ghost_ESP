@@ -31,6 +31,7 @@
 // Include Outside so we have access to the Terminal View Macro
 #include "managers/views/terminal_screen.h"
 
+
 #define MAX_DEVICES 255
 #define CHUNK_SIZE 8192
 #define MDNS_NAME_BUF_LEN 65
@@ -1841,12 +1842,9 @@ void wifi_manager_start_ip_lookup()
     TERMINAL_VIEW_ADD_TEXT("IP Scan Done...\n");
 }
 
-void wifi_manager_connect_wifi(const char* ssid, const char* password)
-{ 
+void wifi_manager_connect_wifi(const char* ssid, const char* password) { 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = "",
-            .password = "",
             .threshold.authmode = strlen(password) > 8 ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,
             .pmf_cfg = {
                 .capable = true,
@@ -1855,50 +1853,85 @@ void wifi_manager_connect_wifi(const char* ssid, const char* password)
         },
     };
 
+    // Copy SSID and password safely
+    strlcpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+    strlcpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
+
+    // Ensure we're disconnected before starting
+    esp_wifi_disconnect();
+    vTaskDelay(pdMS_TO_TICKS(500));  // Increased delay to ensure disconnect completes
+
+    // Clear any previous connection state
+    xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
+    
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
-
-    // Copy SSID and password into Wi-Fi config
-    strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
-    strncpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password) - 1);
-
-    // Apply the Wi-Fi configuration and start Wi-Fi
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    // Attempt to connect to the Wi-Fi network
     int retry_count = 0;
-    while (retry_count < 5) {
-        printf("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, 5);
-        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, 5);
-        
-        int ret = esp_wifi_connect();
+    const int max_retries = 5;
+    bool connected = false;
+
+    while (retry_count < max_retries && !connected) {
+        printf("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, max_retries);
+        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, max_retries);
+
+        esp_err_t ret = esp_wifi_connect();
+        if (ret == ESP_ERR_WIFI_CONN) {
+            // If already connecting, wait for result instead of treating as error
+            printf("Connection already in progress, waiting for result...\n");
+            TERMINAL_VIEW_ADD_TEXT("Connection already in progress, waiting for result...\n");
+            ret = ESP_OK;
+        }
+
         if (ret == ESP_OK) {
-            printf("Connecting...\n");
-            TERMINAL_VIEW_ADD_TEXT("Connecting...\n");
-            vTaskDelay(5000 / portTICK_PERIOD_MS);  // Wait for 5 seconds
-            
-            // Check if connected to the AP
-            wifi_ap_record_t ap_info;
-            if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-                printf("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
-                TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
-                break;
-            } else {
-                printf("Connection failed or timed out, retrying...\n");
+            // Wait for connection event with timeout
+            EventBits_t bits = xEventGroupWaitBits(wifi_event_group,
+                                                 WIFI_CONNECTED_BIT,
+                                                 pdFALSE,
+                                                 pdTRUE,
+                                                 pdMS_TO_TICKS(8000)); // Increased to 8 second timeout
+
+            if (bits & WIFI_CONNECTED_BIT) {
+                // Double check connection status
+                wifi_ap_record_t ap_info;
+                if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+                    printf("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
+                    TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
+                    connected = true;
+                    break;
+                }
             }
         } else {
-            printf("esp_wifi_connect() failed: %s\n", esp_err_to_name(ret));
-            if (ret == ESP_ERR_WIFI_CONN) {
-                printf("Already connected or connection in progress.\n");
-            }
+            // Only treat as failed attempt if it's not ESP_ERR_WIFI_CONN
+            printf("Connection attempt %d failed: %s\n", retry_count + 1, esp_err_to_name(ret));
+            TERMINAL_VIEW_ADD_TEXT("Connection attempt %d failed\n", retry_count + 1);
         }
-        retry_count++;
+
+        // If we get here and not connected, prepare for retry
+        if (!connected) {
+            esp_wifi_disconnect();
+            vTaskDelay(pdMS_TO_TICKS(1000));  // 1 second delay between retries
+            retry_count++;
+        }
     }
 
-    // Final status after retries
-    if (retry_count == 5) {
-        TERMINAL_VIEW_ADD_TEXT("Failed to connect to Wi-Fi after %d attempts\n", 5);
-        printf("Failed to connect to Wi-Fi after %d attempts\n", 5);
+    if (!connected) {
+        TERMINAL_VIEW_ADD_TEXT("Failed to connect to Wi-Fi after %d attempts\n", max_retries);
+        printf("Failed to connect to Wi-Fi after %d attempts\n", max_retries);
+        // Clean up
+        esp_wifi_disconnect();
+    } else {
+        // Get and display IP info
+        esp_netif_ip_info_t ip_info;
+        if (esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info) == ESP_OK) {
+            printf("IP Address: " IPSTR "\n", IP2STR(&ip_info.ip));
+            printf("Subnet Mask: " IPSTR "\n", IP2STR(&ip_info.netmask));
+            printf("Gateway: " IPSTR "\n", IP2STR(&ip_info.gw));
+            
+            TERMINAL_VIEW_ADD_TEXT("IP Address: " IPSTR "\n", IP2STR(&ip_info.ip));
+            TERMINAL_VIEW_ADD_TEXT("Connection successful!\n");
+        }
     }
 }
 

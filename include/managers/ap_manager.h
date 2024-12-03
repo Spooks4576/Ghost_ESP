@@ -2,7 +2,7 @@
 #define AP_MANAGER_H
 
 #include <esp_err.h>
-
+#include "managers/logging.h"
 // Initialize the Access Point, DNS server, and HTTP server
 esp_err_t ap_manager_init(void);
 

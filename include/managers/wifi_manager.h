@@ -5,7 +5,7 @@
 
 #include "esp_err.h"
 #include "esp_wifi_types.h"
-
+#include "managers/logging.h"
 
 #define RANDOM_SSID_LEN 8
 #define BEACON_INTERVAL 0x0064  // 100 Time Units (TU)

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "esp_err.h"
-
+#include "managers/logging.h"
 #define MAX_UUID16 10
 #define MAX_UUID32 5
 #define MAX_UUID128 3

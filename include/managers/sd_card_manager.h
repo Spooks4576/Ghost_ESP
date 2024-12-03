@@ -5,7 +5,7 @@
 #include "driver/sdmmc_host.h"
 #include "driver/sdmmc_types.h"
 #include <stdbool.h>
-
+#include "managers/logging.h"
 
 typedef struct {
     sdmmc_card_t *card;

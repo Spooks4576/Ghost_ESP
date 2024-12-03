@@ -4,7 +4,7 @@
 #include "vendor/dial_client.h"
 #include "esp_err.h"
 #include "esp_http_client.h"
-
+#include "managers/logging.h"
 // Enum for supported apps
 typedef enum {
     APP_YOUTUBE,
