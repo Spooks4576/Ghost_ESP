@@ -440,7 +440,7 @@ esp_err_t pcap_flush_buffer_to_file() {
     esp_err_t ret = ESP_OK;
     
     if (pcap_file == NULL) {
-        ESP_LOGE(PCAP_TAG, "PCAP file is not open. Flushing to Serial...");
+        printf("PCAP file is not open. Flushing to Serial...\n");
         const char* mark_begin = "[BUF/BEGIN]";
         const size_t mark_begin_len = strlen(mark_begin);
         const char* mark_close = "[BUF/CLOSE]";

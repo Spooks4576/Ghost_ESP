@@ -510,12 +510,11 @@ void ble_stop(void) {
     int rc = ble_gap_disc_cancel();
 
     if (rc == 0) {
-        ESP_LOGI(TAG_BLE, "BLE scanning stopped successfully.");
-        TERMINAL_VIEW_ADD_TEXT("BLE scanning stopped successfully.");
+        printf("BLE scanning stopped successfully.\n");
     } else if (rc == BLE_HS_EALREADY) {
-        ESP_LOGW(TAG_BLE, "BLE scanning was not active.");
+        printf("BLE scanning was not active.\n");
     } else {
-        ESP_LOGE(TAG_BLE, "Failed to stop BLE scanning; rc=%d", rc);
+        printf("Failed to stop BLE scanning; rc=%d\n", rc);
     }
 }
 

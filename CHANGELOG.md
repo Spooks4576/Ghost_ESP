@@ -6,16 +6,17 @@
 - Street Detector
 - Port Scanner
 - Web Console
-- Improve WiFi Connection logic
 
 
 ## 1.4.5
-- Forward printf logs from managers to terminal view
-- Added support for variable display timeout on TWatch S3
-- Added "gpsinfo" command to get GPS information
-- make sure .csv files are closed with generic stop command
-- Removed wifi warnings and color codes from logs to clean up the output
-- Added BLE Packet Capture support
-- WebUI Tweaks
-- Miscellaneous fixes and improvements
+- Improve WiFi Connection logic - @jaylikesbunda
+- Forward printf logs from managers to terminal view - @jaylikesbunda
+- Added support for variable display timeout on TWatch S3 - @jaylikesbunda
+- Added "gpsinfo" command to get GPS information - @jaylikesbunda
+- make sure .csv files are closed with generic stop command - @jaylikesbunda
+- Removed wifi warnings and color codes from logs to clean up the output - @jaylikesbunda
+- Added BLE Packet Capture support - @jaylikesbunda
+- WebUI Fixes - @Spooks4576
+- Miscellaneous fixes and improvements - @jaylikesbunda, @Spooks4576
 
+...changelog starts here... 
