@@ -878,16 +878,17 @@ void handle_ble_wardriving(int argc, char **argv) {
             gps_manager_init(&g_gpsManager);
         }
         
+        // Open CSV file for BLE wardriving
         esp_err_t err = csv_file_open("ble_wardriving");
         if (err != ESP_OK) {
             printf("Failed to open CSV file for BLE wardriving\n");
             return;
         }
         
-        ble_start_raw_ble_packetscan();
-        
-        printf("BLE wardriving started. Data will be logged to CSV.\n");
-        TERMINAL_VIEW_ADD_TEXT("BLE wardriving started. Data will be logged to CSV.\n");
+        ble_register_handler(ble_wardriving_callback);
+        ble_start_scanning();
+        printf("BLE wardriving started.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE wardriving started.\n");
     }
 }
 

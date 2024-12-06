@@ -38,6 +38,7 @@ void ble_start_airtag_scanner(void);
 void ble_start_raw_ble_packetscan(void);
 void ble_start_blespam_detector(void);
 void ble_start_capture(void);
+void ble_start_scanning(void);
 
 
 #endif 

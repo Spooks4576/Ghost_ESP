@@ -32,10 +32,10 @@ esp_err_t csv_write_header(FILE* f) {
     const char* header = "MAC,SSID,AuthMode,FirstSeen,Channel,Frequency,RSSI,"
                         "CurrentLatitude,CurrentLongitude,AltitudeMeters,AccuracyMeters,Type\n";
 
-    // Add BLE header after WiFi header
-    const char* ble_header = "# BLE Devices\n"
+    // Add Bluetooth header after WiFi header
+    const char* ble_header = "# Bluetooth\n"
                             "MAC,Name,RSSI,FirstSeen,CurrentLatitude,CurrentLongitude,"
-                            "AltitudeMeters,AccuracyMeters,Type,SatCount,HDOP\n";
+                            "AltitudeMeters,AccuracyMeters,Type\n";
 
     if (f == NULL) {
         const char* mark_begin = "[BUF/BEGIN]";
@@ -115,9 +115,9 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
     int len;
 
     if (data->ble_data.is_ble_device) {
-        // BLE device format
+        // BLE device format - matches WiGLE Bluetooth format
         len = snprintf(data_line, CSV_BUFFER_SIZE,
-            "%s,%s,%d,%s,%.6f,%.6f,%.1f,%.1f,BLE,%d,%.1f\n",
+            "%s,%s,%d,%s,%.6f,%.6f,%.1f,%.1f,%s\n",
             data->ble_data.ble_mac,
             data->ble_data.ble_name[0] ? data->ble_data.ble_name : "[Unknown]",
             data->ble_data.ble_rssi,
@@ -126,18 +126,20 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
             data->longitude,
             data->altitude,
             data->accuracy,
-            data->gps_quality.satellites_used,
-            data->gps_quality.hdop);
+            "BLE");  // Fixed type for BLE devices
     } else {
-        // Original WiFi format (unchanged)
-        len = snprintf(data_line, CSV_BUFFER_SIZE, 
+        // WiFi device format
+        int frequency = data->channel > 14 ? 
+            5000 + (data->channel * 5) : 2407 + (data->channel * 5);
+            
+        len = snprintf(data_line, CSV_BUFFER_SIZE,
             "%s,%s,%s,%s,%d,%d,%d,%.6f,%.6f,%.1f,%.1f,WIFI\n",
             data->bssid,
             data->ssid,
             data->encryption_type,
             timestamp,
             data->channel,
-            (2412 + (data->channel-1)*5),
+            frequency,
             data->rssi,
             data->latitude,
             data->longitude,
@@ -150,10 +152,22 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
         return ESP_ERR_NO_MEM;
     }
 
-    // Use existing buffer management
+    // Check if buffer needs flushing
     if (buffer_offset + len >= BUFFER_SIZE) {
-        ESP_LOGE(CSV_TAG, "CSV buffer full, needs flushing");
-        return ESP_ERR_NO_MEM;
+        esp_err_t err = csv_flush_buffer_to_file();
+        if (err != ESP_OK) {
+            return err;
+        }
+        buffer_offset = 0;
+    }
+
+    // For BLE entries, ensure we're past the headers
+    if (data->ble_data.is_ble_device && buffer_offset == 0) {
+        // Skip to Bluetooth section if this is the first entry after a flush
+        const char* ble_section = "# Bluetooth\n";
+        size_t section_len = strlen(ble_section);
+        memcpy(csv_buffer, ble_section, section_len);
+        buffer_offset = section_len;
     }
 
     memcpy(csv_buffer + buffer_offset, data_line, len);

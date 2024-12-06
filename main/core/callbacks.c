@@ -407,11 +407,10 @@ void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
         return;
     }
 
-    // 1. Create wardriving data structure
     wardriving_data_t wardriving_data = {0};
     wardriving_data.ble_data.is_ble_device = true;
-    
-    // 2. Extract BLE device info
+
+    // Get BLE MAC and RSSI
     snprintf(wardriving_data.ble_data.ble_mac, sizeof(wardriving_data.ble_data.ble_mac),
              "%02x:%02x:%02x:%02x:%02x:%02x",
              event->disc.addr.val[0], event->disc.addr.val[1], 
@@ -420,30 +419,19 @@ void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
     
     wardriving_data.ble_data.ble_rssi = event->disc.rssi;
     
-    // 3. Get device name (if available)
+    // Parse BLE name if available
     if (event->disc.length_data > 0) {
-        // Use correct NimBLE parsing function
-        const struct ble_hs_adv_field *field;
-        int rc = ble_hs_adv_parse(event->disc.data, 
-                                 event->disc.length_data,
-                                 ble_hs_adv_parse_fields_cb,
-                                 &wardriving_data);
+        ble_hs_adv_parse(event->disc.data, 
+                        event->disc.length_data,
+                        ble_hs_adv_parse_fields_cb,
+                        &wardriving_data);
     }
-    
-    // 4. Add GPS data
-    if (gps != NULL && gps->valid) {
-        wardriving_data.latitude = gps->latitude;
-        wardriving_data.longitude = gps->longitude;
-        wardriving_data.altitude = gps->altitude;
-        wardriving_data.accuracy = gps->dop_h * 5.0;
-        populate_gps_quality_data(&wardriving_data, gps);
+
+    // Use GPS manager to log data instead of direct CSV write
+    esp_err_t err = gps_manager_log_wardriving_data(&wardriving_data);
+    if (err != ESP_OK) {
+        ESP_LOGD("BLE_WD", "Skipped logging entry - GPS data not ready");
     }
-    
-    // 5. Write to both CSV and PCAP
-    csv_write_data_to_buffer(&wardriving_data);
-    pcap_write_packet_to_buffer(event->disc.data, 
-                               event->disc.length_data, 
-                               PCAP_CAPTURE_BLUETOOTH);
 }
 
 // Implementation of the callback function

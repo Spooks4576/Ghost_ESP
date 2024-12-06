@@ -82,8 +82,16 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     // Get the GPS data from the parser handle
     gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
     
-    if (!gps->valid || strlen(data->ssid) <= 2) {
-        return ESP_ERR_INVALID_ARG;
+    // For WiFi entries, keep original validation
+    if (!data->ble_data.is_ble_device) {
+        if (!gps->valid || strlen(data->ssid) <= 2) {
+            return ESP_ERR_INVALID_ARG;
+        }
+    } else {
+        // For BLE entries, only check GPS validity
+        if (!gps->valid) {
+            return ESP_ERR_INVALID_STATE;
+        }
     }
 
     // Validate GPS data
