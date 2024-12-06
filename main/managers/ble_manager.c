@@ -120,6 +120,25 @@ static bool extract_company_id(const uint8_t *payload, size_t length, uint16_t *
     return false;
 }
 
+void ble_stop_skimmer_detection(void) {
+    ESP_LOGI("BLE", "Stopping skimmer detection scan...");
+    
+    // Unregister the skimmer detection callback
+    ble_unregister_handler(ble_skimmer_scan_callback);
+    pcap_flush_buffer_to_file(); // Final flush
+    pcap_file_close(); // Close the file after final flush
+    
+    int rc = ble_gap_disc_cancel();
+
+    if (rc == 0) {
+        printf("BLE skimmer detection stopped successfully.\n");
+    } else if (rc == BLE_HS_EALREADY) {
+        printf("BLE scanning was not active.\n");
+    } else {
+        printf("Failed to stop BLE scanning; rc=%d\n", rc);
+    }
+}
+
 static void parse_device_name(const uint8_t *data, uint8_t data_len, char *name, size_t name_size) {
     int index = 0;
 

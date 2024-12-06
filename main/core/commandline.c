@@ -660,20 +660,22 @@ void handle_capture_scan(int argc, char** argv)
     }
 
     if (strcmp(capturetype, "-skimmer") == 0) {
-        printf("Starting BLE skimmer detection...\n");
-        printf("Looking for suspicious Bluetooth modules...\n");
-        
-        // Open PCAP file for capturing suspicious devices
-        int err = pcap_file_open("skimmer_scan", PCAP_CAPTURE_BLUETOOTH);
-        if (err != ESP_OK) {
-            printf("Warning: PCAP capture failed to start\n");
+        if (argc > 2 && strcmp(argv[2], "stop") == 0) {
+            printf("Stopping BLE skimmer detection...\n");
+            ble_stop_skimmer_detection();
         } else {
-            printf("PCAP capture started - suspicious devices will be logged to:\n");
-            printf("  /mnt/ghostesp/pcaps/skimmer_scan_X.pcap\n");
+            printf("Starting BLE skimmer detection...\n");
+            int err = pcap_file_open("skimmer_scan", PCAP_CAPTURE_BLUETOOTH);
+            if (err != ESP_OK) {
+                printf("Warning: PCAP capture failed to start\n");
+            } else {
+                printf("PCAP capture started - suspicious devices will be logged\n");
+
+            }
+            
+            // Start skimmer detection
+            ble_start_skimmer_detection();
         }
-        
-        // Start skimmer detection
-        ble_start_skimmer_detection();
     }
 }
 
