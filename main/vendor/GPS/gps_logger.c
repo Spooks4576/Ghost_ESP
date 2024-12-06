@@ -32,12 +32,18 @@ esp_err_t csv_write_header(FILE* f) {
     const char* header = "MAC,SSID,AuthMode,FirstSeen,Channel,Frequency,RSSI,"
                         "CurrentLatitude,CurrentLongitude,AltitudeMeters,AccuracyMeters,Type\n";
 
+    // Add BLE header after WiFi header
+    const char* ble_header = "# BLE Devices\n"
+                            "MAC,Name,RSSI,FirstSeen,CurrentLatitude,CurrentLongitude,"
+                            "AltitudeMeters,AccuracyMeters,Type,SatCount,HDOP\n";
+
     if (f == NULL) {
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
         uart_write_bytes(UART_NUM_0, mark_begin, strlen(mark_begin));
         uart_write_bytes(UART_NUM_0, pre_header, strlen(pre_header));
         uart_write_bytes(UART_NUM_0, header, strlen(header));
+        uart_write_bytes(UART_NUM_0, ble_header, strlen(ble_header));
         uart_write_bytes(UART_NUM_0, mark_close, strlen(mark_close));
         uart_write_bytes(UART_NUM_0, "\n", 1);
         return ESP_OK;
@@ -47,17 +53,24 @@ esp_err_t csv_write_header(FILE* f) {
             return ESP_FAIL;
         }
         written = fwrite(header, 1, strlen(header), f);
-        return (written == strlen(header)) ? ESP_OK : ESP_FAIL;
+        if (written != strlen(header)) {
+            return ESP_FAIL;
+        }
+        written = fwrite(ble_header, 1, strlen(ble_header), f);
+        if (written != strlen(ble_header)) {
+            return ESP_FAIL;
+        }
+        return ESP_OK;
     }
 }
 
 void get_next_csv_file_name(char *file_name_buffer, const char* base_name) {
-    int next_index = get_next_csv_file_index(base_name);  // Modify this to be CSV specific
-    snprintf(file_name_buffer, MAX_FILE_NAME_LENGTH, "/mnt/ghostesp/gps/%s_%d.csv", base_name, next_index);
+    int next_index = get_next_csv_file_index(base_name);
+    snprintf(file_name_buffer, GPS_MAX_FILE_NAME_LENGTH, "/mnt/ghostesp/gps/%s_%d.csv", base_name, next_index);
 }
 
 esp_err_t csv_file_open(const char* base_file_name) {
-    char file_name[MAX_FILE_NAME_LENGTH];
+    char file_name[GPS_MAX_FILE_NAME_LENGTH];
 
 
     if (sd_card_exists("/mnt/ghostesp/gps"))
@@ -88,7 +101,6 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
     char timestamp[35];
     if (!is_valid_date(&gps->date) || 
         gps->tim.hour > 23 || gps->tim.minute > 59 || gps->tim.second > 59) {
-        // Use a fallback timestamp or return error
         ESP_LOGW(GPS_TAG, "Invalid date/time for CSV entry");
         return ESP_ERR_INVALID_STATE;
     }
@@ -100,27 +112,48 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
              gps->tim.thousand);
 
     char data_line[CSV_BUFFER_SIZE];
-    int len = snprintf(data_line, CSV_BUFFER_SIZE, 
-        "%s,%s,%s,%s,%d,%d,%d,%.6f,%.6f,%.1f,%.1f,WIFI\n",
-        data->bssid,                    // MAC
-        data->ssid,                     // SSID
-        data->encryption_type,          // AuthMode (WEP, WPA, etc)
-        timestamp,                      // FirstSeen
-        data->channel,                  // Channel
-        (2412 + (data->channel-1)*5),  // Frequency (MHz)
-        data->rssi,                     // RSSI
-        data->latitude,                 // CurrentLatitude
-        data->longitude,                // CurrentLongitude
-        data->altitude,                 // AltitudeMeters
-        data->accuracy                 // AccuracyMeters (HDOP * 5m)
-    );
+    int len;
 
-    if (buffer_offset + len > BUFFER_SIZE) {
-        printf("Buffer full, flushing to file.\n");
-        esp_err_t ret = csv_flush_buffer_to_file();
-        if (ret != ESP_OK) {
-            return ret;
-        }
+    if (data->ble_data.is_ble_device) {
+        // BLE device format
+        len = snprintf(data_line, CSV_BUFFER_SIZE,
+            "%s,%s,%d,%s,%.6f,%.6f,%.1f,%.1f,BLE,%d,%.1f\n",
+            data->ble_data.ble_mac,
+            data->ble_data.ble_name[0] ? data->ble_data.ble_name : "[Unknown]",
+            data->ble_data.ble_rssi,
+            timestamp,
+            data->latitude,
+            data->longitude,
+            data->altitude,
+            data->accuracy,
+            data->gps_quality.satellites_used,
+            data->gps_quality.hdop);
+    } else {
+        // Original WiFi format (unchanged)
+        len = snprintf(data_line, CSV_BUFFER_SIZE, 
+            "%s,%s,%s,%s,%d,%d,%d,%.6f,%.6f,%.1f,%.1f,WIFI\n",
+            data->bssid,
+            data->ssid,
+            data->encryption_type,
+            timestamp,
+            data->channel,
+            (2412 + (data->channel-1)*5),
+            data->rssi,
+            data->latitude,
+            data->longitude,
+            data->altitude,
+            data->accuracy);
+    }
+
+    if (len < 0 || len >= CSV_BUFFER_SIZE) {
+        ESP_LOGE(CSV_TAG, "Buffer overflow prevented");
+        return ESP_ERR_NO_MEM;
+    }
+
+    // Use existing buffer management
+    if (buffer_offset + len >= BUFFER_SIZE) {
+        ESP_LOGE(CSV_TAG, "CSV buffer full, needs flushing");
+        return ESP_ERR_NO_MEM;
     }
 
     memcpy(csv_buffer + buffer_offset, data_line, len);

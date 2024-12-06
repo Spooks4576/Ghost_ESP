@@ -8,7 +8,7 @@
 #include "vendor/GPS/MicroNMEA.h"
 
 // Define constants
-#define MAX_FILE_NAME_LENGTH 64
+#define GPS_MAX_FILE_NAME_LENGTH 64
 #define BUFFER_SIZE 4096
 #define MIN_SPEED_THRESHOLD 0.1     // Minimum 0.1 m/s (~0.36 km/h)
 #define MAX_SPEED_THRESHOLD 340.0   // Maximum 340 m/s (~1224 km/h)
@@ -36,6 +36,15 @@ typedef struct {
         float geoid_sep;      // geoid separation
         bool has_valid_fix;   // indicates if GPS data is valid
     } gps_quality;
+    
+    // Add BLE fields
+    struct {
+        char ble_mac[18];
+        int ble_rssi;
+        char ble_name[32];
+        uint8_t ble_type;    // 0=Classic, 1=BLE, 2=Dual
+        bool is_ble_device;  // Flag to identify BLE entries
+    } ble_data;
     
 } wardriving_data_t;
 

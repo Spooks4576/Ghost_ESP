@@ -21,6 +21,7 @@
 #include "esp_sntp.h"
 
 static Command *command_list_head = NULL;
+TaskHandle_t VisualizerHandle = NULL;
 
 void command_init() {
     command_list_head = NULL;
@@ -809,6 +810,12 @@ void handle_help(int argc, char **argv) {
     printf("    Description: Print Custom Text to a Printer on your LAN (Requires You to Run Connect First)\n");
     printf("    Usage: powerprinter <Printer IP> <Text> <FontSize> <alignment>\n");
     printf("    aligment options: CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left\n\n");
+
+    printf("blewardriving\n");
+    printf("    Description: Start/Stop BLE wardriving with GPS logging\n");
+    printf("    Usage: blewardriving [-s]\n");
+    printf("    Arguments:\n");
+    printf("        -s  : Stop BLE wardriving\n\n");
 }
 
 void handle_capture(int argc, char **argv) {
@@ -848,6 +855,42 @@ void handle_gps_info(int argc, char **argv) {
         }
     }
 }
+
+void handle_ble_wardriving(int argc, char **argv) {
+    bool stop_flag = false;
+    
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-s") == 0) {
+            stop_flag = true;
+            break;
+        }
+    }
+
+    if (stop_flag) {
+        ble_stop();
+        gps_manager_deinit(&g_gpsManager);
+        csv_flush_buffer_to_file();
+        csv_file_close();
+        printf("BLE wardriving stopped.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE wardriving stopped.\n");
+    } else {
+        if (!g_gpsManager.isinitilized) {
+            gps_manager_init(&g_gpsManager);
+        }
+        
+        esp_err_t err = csv_file_open("ble_wardriving");
+        if (err != ESP_OK) {
+            printf("Failed to open CSV file for BLE wardriving\n");
+            return;
+        }
+        
+        ble_start_raw_ble_packetscan();
+        
+        printf("BLE wardriving started. Data will be logged to CSV.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE wardriving started. Data will be logged to CSV.\n");
+    }
+}
+
 void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
@@ -871,11 +914,10 @@ void register_commands() {
     register_command("reboot", handle_reboot);
     register_command("startwd", handle_startwd);
     register_command("gpsinfo", handle_gps_info);
+    register_command("blescan", handle_ble_scan_cmd);
+    register_command("blewardriving", handle_ble_wardriving);
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
-#endif
-#ifndef CONFIG_IDF_TARGET_ESP32S2
-    register_command("blescan", handle_ble_scan_cmd);
 #endif
     printf("Registered Commands\n");
 }

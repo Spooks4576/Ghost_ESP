@@ -5,7 +5,6 @@
 #include "vendor/pcap.h"
 #include "vendor/GPS/gps_logger.h"
 #include "managers/gps_manager.h"
-
 #define WPS_OUI 0x0050f204 
 #define TAG "WIFI_MONITOR"
 #define WPS_CONF_METHODS_PBC        0x0080
@@ -398,4 +397,64 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
 
         index += (2 + ie_len);
     }
+}
+
+// Forward declare the callback function
+static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void *arg);
+
+void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
+    if (!event || event->type != BLE_GAP_EVENT_DISC) {
+        return;
+    }
+
+    // 1. Create wardriving data structure
+    wardriving_data_t wardriving_data = {0};
+    wardriving_data.ble_data.is_ble_device = true;
+    
+    // 2. Extract BLE device info
+    snprintf(wardriving_data.ble_data.ble_mac, sizeof(wardriving_data.ble_data.ble_mac),
+             "%02x:%02x:%02x:%02x:%02x:%02x",
+             event->disc.addr.val[0], event->disc.addr.val[1], 
+             event->disc.addr.val[2], event->disc.addr.val[3], 
+             event->disc.addr.val[4], event->disc.addr.val[5]);
+    
+    wardriving_data.ble_data.ble_rssi = event->disc.rssi;
+    
+    // 3. Get device name (if available)
+    if (event->disc.length_data > 0) {
+        // Use correct NimBLE parsing function
+        const struct ble_hs_adv_field *field;
+        int rc = ble_hs_adv_parse(event->disc.data, 
+                                 event->disc.length_data,
+                                 ble_hs_adv_parse_fields_cb,
+                                 &wardriving_data);
+    }
+    
+    // 4. Add GPS data
+    if (gps != NULL && gps->valid) {
+        wardriving_data.latitude = gps->latitude;
+        wardriving_data.longitude = gps->longitude;
+        wardriving_data.altitude = gps->altitude;
+        wardriving_data.accuracy = gps->dop_h * 5.0;
+        populate_gps_quality_data(&wardriving_data, gps);
+    }
+    
+    // 5. Write to both CSV and PCAP
+    csv_write_data_to_buffer(&wardriving_data);
+    pcap_write_packet_to_buffer(event->disc.data, 
+                               event->disc.length_data, 
+                               PCAP_CAPTURE_BLUETOOTH);
+}
+
+// Implementation of the callback function
+static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void *arg) {
+    wardriving_data_t *data = (wardriving_data_t *)arg;
+    
+    if (field->type == BLE_HS_ADV_TYPE_COMP_NAME) {
+        size_t name_len = MIN(field->length, sizeof(data->ble_data.ble_name) - 1);
+        memcpy(data->ble_data.ble_name, field->value, name_len);
+        data->ble_data.ble_name[name_len] = '\0';
+    }
+    
+    return 0;
 }
