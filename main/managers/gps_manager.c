@@ -89,7 +89,11 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
         }
     } else {
         // For BLE entries, only check GPS validity
-        if (!gps->valid) {
+        if (!gps->valid || 
+            gps->fix < GPS_FIX_GPS || 
+            gps->fix_mode < GPS_MODE_2D || 
+            gps->sats_in_use < 3 || 
+            gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE) {
             return ESP_ERR_INVALID_STATE;
         }
     }
