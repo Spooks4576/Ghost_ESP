@@ -16,6 +16,7 @@
 #include <managers/settings_manager.h>
 #include "managers/views/terminal_screen.h"
 #include "vendor/pcap.h"
+#include "core/callbacks.h"
 
 
 #define MAX_DEVICES 30
@@ -614,6 +615,20 @@ void ble_start_capture(void) {
         esp_timer_start_periodic(flush_timer, 1000000); // Flush every second
     }
     
+    ble_start_scanning();
+}
+
+void ble_start_skimmer_detection(void) {
+    ESP_LOGI("BLE", "Starting skimmer detection scan...");
+    
+    // Register the skimmer detection callback
+    esp_err_t err = ble_register_handler(ble_skimmer_scan_callback);
+    if (err != ESP_OK) {
+        ESP_LOGE("BLE", "Failed to register skimmer detection callback");
+        return;
+    }
+    
+    // Start BLE scanning
     ble_start_scanning();
 }
 

@@ -457,3 +457,92 @@ static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void
     
     return 0;
 }
+
+static const char *SKIMMER_TAG = "SKIMMER_DETECT";
+
+// List of suspicious device names commonly used in skimmers
+static const char *suspicious_names[] = {
+    "HC-03", "HC-05", "HC-06", "HC-08", 
+    "BT-HC05", "JDY-31", "AT-09", "HM-10",
+    "CC41-A", "MLT-BT05", "SPP-CA", "FFD0"
+};
+static const int suspicious_names_count = sizeof(suspicious_names) / sizeof(suspicious_names[0]);
+
+void ble_skimmer_scan_callback(struct ble_gap_event *event, void *arg) {
+    if (!event || event->type != BLE_GAP_EVENT_DISC) {
+        return;
+    }
+
+    struct ble_hs_adv_fields fields;
+    int rc = ble_hs_adv_parse_fields(&fields, event->disc.data, 
+                                    event->disc.length_data);
+    
+    if (rc != 0) {
+        ESP_LOGD(SKIMMER_TAG, "Failed to parse advertisement data");
+        return;
+    }
+
+    // Check device name
+    if (fields.name != NULL && fields.name_len > 0) {
+        char device_name[32] = {0};
+        size_t name_len = MIN(fields.name_len, sizeof(device_name) - 1);
+        memcpy(device_name, fields.name, name_len);
+
+        // Check against suspicious names
+        for (int i = 0; i < suspicious_names_count; i++) {
+            if (strcasecmp(device_name, suspicious_names[i]) == 0) {
+                char mac_addr[18];
+                snprintf(mac_addr, sizeof(mac_addr), "%02x:%02x:%02x:%02x:%02x:%02x",
+                        event->disc.addr.val[0], event->disc.addr.val[1],
+                        event->disc.addr.val[2], event->disc.addr.val[3],
+                        event->disc.addr.val[4], event->disc.addr.val[5]);
+
+                ESP_LOGW(SKIMMER_TAG, "POTENTIAL SKIMMER DETECTED!");
+                ESP_LOGW(SKIMMER_TAG, "Device Name: %s", device_name);
+                ESP_LOGW(SKIMMER_TAG, "MAC Address: %s", mac_addr);
+                ESP_LOGW(SKIMMER_TAG, "RSSI: %d dBm", event->disc.rssi);
+
+                // Create enhanced PCAP packet with metadata
+                if (pcap_file != NULL) {
+                    // Format: [Timestamp][MAC][RSSI][Name][Raw Data]
+                    uint8_t enhanced_packet[256] = {0};
+                    size_t packet_len = 0;
+                    
+                    // Add MAC address
+                    memcpy(enhanced_packet + packet_len, event->disc.addr.val, 6);
+                    packet_len += 6;
+                    
+                    // Add RSSI
+                    enhanced_packet[packet_len++] = (uint8_t)event->disc.rssi;
+                    
+                    // Add device name length and name
+                    enhanced_packet[packet_len++] = (uint8_t)name_len;
+                    memcpy(enhanced_packet + packet_len, device_name, name_len);
+                    packet_len += name_len;
+                    
+                    // Add reason for flagging
+                    const char *reason = suspicious_names[i];
+                    uint8_t reason_len = strlen(reason);
+                    enhanced_packet[packet_len++] = reason_len;
+                    memcpy(enhanced_packet + packet_len, reason, reason_len);
+                    packet_len += reason_len;
+                    
+                    // Add raw advertisement data
+                    memcpy(enhanced_packet + packet_len, 
+                           event->disc.data, 
+                           event->disc.length_data);
+                    packet_len += event->disc.length_data;
+
+                    // Write to PCAP with proper BLE packet format
+                    pcap_write_packet_to_buffer(enhanced_packet, 
+                                              packet_len,
+                                              PCAP_CAPTURE_BLUETOOTH);
+                    
+                    // Force flush to ensure suspicious device is captured
+                    pcap_flush_buffer_to_file();
+                }
+                break;
+            }
+        }
+    }
+}
