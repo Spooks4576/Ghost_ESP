@@ -18,6 +18,9 @@ Ghost ESP offers an array of tools for wireless testing, with new functionalitie
 - **BLE Scanning:** Detect BLE devices, including unique modes for identifying devices like AirTags and Flipper Zeros.
 - **Deauthentication Attacks:** Execute deauthentication attacks to disconnect clients from specific WiFi networks.
 - **WiFi Capture:** Capture and store probe requests, beacon frames, deauthentication packets, and raw wireless data for detailed analysis (requires an SD card or compatible storage).
+- **BLE Packet Capture:** Capture and analyze Bluetooth Low Energy packets, including support for detecting card skimmers.
+- **BLE Wardriving:** Map and track BLE devices in your area.
+- **GPS Integration:** Get location information using the "gpsinfo" command (on supported hardware).
 - **Evil Portal:** Create a fake WiFi portal with a custom SSID and domain for controlled network testing.
 - **RGB LED Modes:** Customize RGB lighting for different task feedback with modes such as Stealth, Normal, and Rainbow.
 - **BLE Detectors:** Specialized BLE scan modes to find specific devices like AirTags, Flipper Zeros, and other BLE emitters (upcoming in future versions).
