@@ -10,6 +10,10 @@
 #include "vendor/GPS/gps_logger.h"
 #include "managers/settings_manager.h"
 #include <managers/views/terminal_screen.h>
+#include "soc/uart_periph.h"
+#include "driver/periph_ctrl.h"
+#include "soc/gpio_periph.h"
+#include "soc/io_mux_reg.h"
 
 static const char *GPS_TAG = "GPS";
 
@@ -44,11 +48,25 @@ static bool is_valid_date(const gps_date_t* date) {
 
 void gps_manager_init(GPSManager* manager) {
     nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
-
     uint8_t current_rx_pin = settings_get_gps_rx_pin(&G_Settings);
 
     if (current_rx_pin != 0) {   
+        printf("GPS RX: IO%d\n", current_rx_pin);
+        
+        // Only disable UART1 which we use for GPS
+        periph_module_disable(PERIPH_UART1_MODULE);
+        
+        gpio_reset_pin(current_rx_pin);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        
+        periph_module_enable(PERIPH_UART1_MODULE);
+        
+        gpio_set_direction(current_rx_pin, GPIO_MODE_INPUT);
+        gpio_set_pull_mode(current_rx_pin, GPIO_FLOATING);
+        PIN_FUNC_SELECT(GPIO_PIN_MUX_REG[current_rx_pin], UART_PIN_NO_CHANGE);
+        
         config.uart.rx_pin = current_rx_pin;
+        config.uart.uart_port = UART_NUM_1;  // Explicitly set UART1 for GPS
     }
         
 #ifdef CONFIG_IS_GHOST_BOARD
