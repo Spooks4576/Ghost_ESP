@@ -2,7 +2,6 @@
 
 ## TODO
 - Evil Portal Rewrite!
-- BLE Wardriving
 - Street Detector
 - Port Scanner
 - Web Console
@@ -18,6 +17,8 @@
 - Removed wifi warnings and color codes from logs to clean up the output - @jaylikesbunda
 - Added BLE Packet Capture support - @jaylikesbunda
 - WebUI Fixes - @Spooks4576
+- Added BLE Wardriving - @jaylikesbunda
+- Added support for capturing packets from card skimmers - @jaylikesbunda
 - Miscellaneous fixes and improvements - @jaylikesbunda, @Spooks4576
 
 ...changelog starts here... 
