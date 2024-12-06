@@ -661,15 +661,15 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-skimmer") == 0) {
         if (argc > 2 && strcmp(argv[2], "stop") == 0) {
-            printf("Stopping BLE skimmer detection...\n");
+            printf("Stopping BLE\nSkimmer detection...\n");
             ble_stop_skimmer_detection();
         } else {
-            printf("Starting BLE skimmer detection...\n");
+            printf("Starting BLE\nSkimmer detection...");
             int err = pcap_file_open("skimmer_scan", PCAP_CAPTURE_BLUETOOTH);
             if (err != ESP_OK) {
                 printf("Warning: PCAP capture failed to start\n");
             } else {
-                printf("PCAP capture started - suspicious devices will be logged\n");
+                printf("PCAP capture started\nSuspicious devices will be logged\n");
 
             }
             
