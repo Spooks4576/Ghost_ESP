@@ -427,7 +427,18 @@ void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
                         &wardriving_data);
     }
 
-    // Use GPS manager to log data instead of direct CSV write
+    // Get GPS data from the global handle
+    gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
+    if (gps != NULL && gps->valid) {
+        wardriving_data.gps_quality.satellites_used = gps->sats_in_use;
+        wardriving_data.gps_quality.hdop = gps->dop_h;
+        wardriving_data.gps_quality.speed = gps->speed;
+        wardriving_data.gps_quality.course = gps->cog;
+        wardriving_data.gps_quality.fix_quality = gps->fix;
+        wardriving_data.gps_quality.has_valid_fix = (gps->fix >= GPS_FIX_GPS);
+    }
+
+    // Use GPS manager to log data
     esp_err_t err = gps_manager_log_wardriving_data(&wardriving_data);
     if (err != ESP_OK) {
         ESP_LOGD("BLE_WD", "Skipped logging entry - GPS data not ready");
