@@ -1,0 +1,235 @@
+name: Custom Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      board_type:
+        description: 'ESP32 Board Type'
+        required: true
+        type: choice
+        options:
+          - esp32
+          - esp32s2
+          - esp32s3
+          - esp32c3
+          - esp32c6
+      display_type:
+        description: 'Display Configuration'
+        required: true
+        type: choice
+        options:
+          - custom
+          - none
+          - MarauderV4_FlipperHub
+          - MarauderV6_AwokDual
+          - AwokMini
+          - ESP32-S3-Cardputer
+          - LillyGoTWatch_S3
+          - CYD2USB
+          - CYDMicroUSB
+          - CYDDualUSB
+          - CYD2USB2.4_Inch
+          - Waveshare_LCD
+          - Crowtech_LCD
+      screen_width:
+        description: 'Screen Width (only for custom display)'
+        required: false
+        type: string
+      screen_height:
+        description: 'Screen Height (only for custom display)'
+        required: false
+        type: string
+      use_touch:
+        description: 'Enable Touch Support (auto-enabled for some displays)'
+        required: true
+        type: boolean
+        default: false
+      flash_size:
+        description: 'Flash Size'
+        required: true
+        type: choice
+        options:
+          - 4MB
+          - 8MB
+          - 16MB
+        default: '4MB'
+
+jobs:
+  build:
+    name: Build Custom Firmware
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Validate Configuration
+        run: |
+          # Board-Display Compatibility Check
+          case "${{ github.event.inputs.display_type }}" in
+            "ESP32-S3-Cardputer"|"LillyGoTWatch_S3"|"Waveshare_LCD"|"Crowtech_LCD")
+              if [ "${{ github.event.inputs.board_type }}" != "esp32s3" ]; then
+                echo "Error: ${{ github.event.inputs.display_type }} requires ESP32-S3 board type"
+                exit 1
+              fi
+              ;;
+            "MarauderV4_FlipperHub"|"MarauderV6_AwokDual"|"AwokMini"|"CYD2USB"|"CYDMicroUSB"|"CYDDualUSB"|"CYD2USB2.4_Inch")
+              if [ "${{ github.event.inputs.board_type }}" != "esp32" ]; then
+                echo "Error: ${{ github.event.inputs.display_type }} requires ESP32 board type"
+                exit 1
+              fi
+              ;;
+          esac
+
+          # Flash Size Validation
+          case "${{ github.event.inputs.display_type }}" in
+            "Waveshare_LCD"|"Crowtech_LCD")
+              if [ "${{ github.event.inputs.flash_size }}" == "4MB" ]; then
+                echo "::warning::7-inch displays are recommended to use 8MB or larger flash size"
+              fi
+              ;;
+          esac
+
+          # Custom Display Validation
+          if [ "${{ github.event.inputs.display_type }}" == "custom" ]; then
+            if [ -z "${{ github.event.inputs.screen_width }}" ] || [ -z "${{ github.event.inputs.screen_height }}" ]; then
+              echo "Error: Screen width and height are required for custom display configuration"
+              exit 1
+            fi
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install ESP-IDF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget git flex bison gperf python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util
+          git clone -b v5.3.1 --depth 1 https://github.com/espressif/esp-idf.git ~/esp-idf
+          ~/esp-idf/install.sh
+
+      - name: Generate Custom SDK Config
+        run: |
+          # Handle predefined display configurations
+          if [ "${{ github.event.inputs.display_type }}" != "custom" ] && [ "${{ github.event.inputs.display_type }}" != "none" ]; then
+            case "${{ github.event.inputs.display_type }}" in
+              "MarauderV4_FlipperHub")
+                cp "configs/sdkconfig.marauderv4" sdkconfig.defaults
+                ;;
+              "MarauderV6_AwokDual")
+                cp "configs/sdkconfig.marauderv6" sdkconfig.defaults
+                ;;
+              "AwokMini")
+                cp "configs/sdkconfig.awokmini" sdkconfig.defaults
+                ;;
+              "ESP32-S3-Cardputer")
+                cp "configs/sdkconfig.cardputer" sdkconfig.defaults
+                ;;
+              "LillyGoTWatch_S3")
+                cp "configs/sdkconfig.S3TWatch" sdkconfig.defaults
+                ;;
+              "CYD2USB")
+                cp "configs/sdkconfig.CYD2USB" sdkconfig.defaults
+                ;;
+              "CYDMicroUSB")
+                cp "configs/sdkconfig.CYDMicroUSB" sdkconfig.defaults
+                ;;
+              "CYDDualUSB")
+                cp "configs/sdkconfig.CYDDualUSB" sdkconfig.defaults
+                ;;
+              "CYD2USB2.4_Inch")
+                cp "configs/sdkconfig.CYD2USB2.4Inch" sdkconfig.defaults
+                ;;
+              "Waveshare_LCD")
+                cp "configs/sdkconfig.waveshare7inch" sdkconfig.defaults
+                ;;
+              "Crowtech_LCD")
+                cp "configs/sdkconfig.crowtech7inch" sdkconfig.defaults
+                ;;
+            esac
+          else
+            # Start with base config for the selected board
+            cp "configs/sdkconfig.default.${{ github.event.inputs.board_type }}" sdkconfig.defaults
+            
+            # Add screen configuration if dimensions are provided and custom display is selected
+            if [ "${{ github.event.inputs.display_type }}" == "custom" ]; then
+              cat >> sdkconfig.defaults << EOF
+          CONFIG_WITH_SCREEN=y
+          CONFIG_TFT_WIDTH=${{ github.event.inputs.screen_width }}
+          CONFIG_TFT_HEIGHT=${{ github.event.inputs.screen_height }}
+          EOF
+            fi
+          fi
+          
+          # Handle touch support
+          if [ "${{ github.event.inputs.use_touch }}" == "true" ] || \
+             [ "${{ github.event.inputs.display_type }}" == "ESP32-S3-Cardputer" ] || \
+             [ "${{ github.event.inputs.display_type }}" == "LillyGoTWatch_S3" ] || \
+             [[ "${{ github.event.inputs.display_type }}" == CYD* ]]; then
+            echo "CONFIG_USE_TOUCHSCREEN=y" >> sdkconfig.defaults
+          fi
+
+          # Configure flash size
+          echo "CONFIG_ESPTOOLPY_FLASHSIZE=\"${{ github.event.inputs.flash_size }}\"" >> sdkconfig.defaults
+
+      - name: Set up ESP-IDF and Target
+        run: |
+          . ~/esp-idf/export.sh
+          export IDF_TARGET=${{ github.event.inputs.board_type }}
+          echo "IDF_TARGET=${{ github.event.inputs.board_type }}" >> $GITHUB_ENV
+
+      - name: Download Bootloader
+        run: |
+          BOOTLOADER_URL="https://cdn.spookytools.com/bootloaders/${{ github.event.inputs.board_type }}.bin"
+          BOOTLOADER_PATH="build/bootloader.bin"
+          echo "Downloading bootloader from $BOOTLOADER_URL..."
+          curl -L -o "$BOOTLOADER_PATH" "$BOOTLOADER_URL" || {
+            echo "Warning: Could not download bootloader, continuing with build..."
+            rm -f "$BOOTLOADER_PATH"
+          }
+
+      - name: Clean and Build Project
+        env:
+          SDKCONFIG_DEFAULTS: "sdkconfig.defaults"
+        run: |
+          . ~/esp-idf/export.sh
+          idf.py clean
+          idf.py build
+
+      - name: Package Artifacts into ZIP
+        run: |
+          ZIP_FILE="ghost_esp_${{ github.event.inputs.board_type }}_${{ github.event.inputs.display_type }}.zip"
+          mkdir -p artifacts
+          cp build/partition_table/partition-table.bin artifacts/
+          cp build/*.bin artifacts/
+          cd artifacts
+          zip "../$ZIP_FILE" ./*
+          cd ..
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ghost_esp_${{ github.event.inputs.board_type }}_${{ github.event.inputs.display_type }}
+          path: ghost_esp_${{ github.event.inputs.board_type }}_${{ github.event.inputs.display_type }}.zip
+
+      - name: Build Summary
+        run: |
+          echo "### Build Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "- **Board Type:** ${{ github.event.inputs.board_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Display Type:** ${{ github.event.inputs.display_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Flash Size:** ${{ github.event.inputs.flash_size }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.display_type }}" == "custom" ]; then
+            echo "- **Screen Resolution:** ${{ github.event.inputs.screen_width }}x${{ github.event.inputs.screen_height }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Touch Support:** $(
+            if [ "${{ github.event.inputs.use_touch }}" == "true" ] || \
+               [ "${{ github.event.inputs.display_type }}" == "ESP32-S3-Cardputer" ] || \
+               [ "${{ github.event.inputs.display_type }}" == "LillyGoTWatch_S3" ] || \
+               [[ "${{ github.event.inputs.display_type }}" == CYD* ]]; then
+              echo "Yes"
+            else
+              echo "No"
+            fi
+          )" >> $GITHUB_STEP_SUMMARY
