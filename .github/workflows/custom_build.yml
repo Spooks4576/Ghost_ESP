@@ -1,0 +1,98 @@
+name: Custom Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      board_type:
+        description: 'ESP32 Board Type'
+        required: true
+        type: choice
+        options:
+          - esp32
+          - esp32s2
+          - esp32s3
+          - esp32c3
+          - esp32c6
+      screen_width:
+        description: 'Screen Width (leave empty for no screen)'
+        required: false
+        type: string
+      screen_height:
+        description: 'Screen Height (leave empty for no screen)'
+        required: false
+        type: string
+      use_touch:
+        description: 'Enable Touch Support'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    name: Build Custom Firmware
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install ESP-IDF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget git flex bison gperf python3-pip python3-setuptools cmake ninja-build ccache libffi-dev libssl-dev dfu-util
+          git clone -b v5.3.1 --depth 1 https://github.com/espressif/esp-idf.git ~/esp-idf
+          ~/esp-idf/install.sh
+
+      - name: Generate Custom SDK Config
+        run: |
+          # Start with base config for the selected board
+          cp "configs/sdkconfig.default.${{ github.event.inputs.board_type }}" sdkconfig.defaults
+          
+          # Add screen configuration if dimensions are provided
+          if [ ! -z "${{ github.event.inputs.screen_width }}" ] && [ ! -z "${{ github.event.inputs.screen_height }}" ]; then
+            cat >> sdkconfig.defaults << EOF
+          CONFIG_WITH_SCREEN=y
+          CONFIG_TFT_WIDTH=${{ github.event.inputs.screen_width }}
+          CONFIG_TFT_HEIGHT=${{ github.event.inputs.screen_height }}
+          EOF
+          fi
+          
+          # Add touch support if enabled
+          if [ "${{ github.event.inputs.use_touch }}" == "true" ]; then
+            echo "CONFIG_USE_TOUCHSCREEN=y" >> sdkconfig.defaults
+          fi
+
+      - name: Set up ESP-IDF and Target
+        run: |
+          . ~/esp-idf/export.sh
+          export IDF_TARGET=${{ github.event.inputs.board_type }}
+          echo "IDF_TARGET=${{ github.event.inputs.board_type }}" >> $GITHUB_ENV
+
+      - name: Clean and Build Project
+        env:
+          SDKCONFIG_DEFAULTS: "sdkconfig.defaults"
+        run: |
+          . ~/esp-idf/export.sh
+          idf.py clean
+          idf.py build
+
+      - name: Package Artifacts into ZIP
+        run: |
+          ZIP_FILE="custom_ghost_esp_${{ github.event.inputs.board_type }}.zip"
+          mkdir -p artifacts
+          cp build/partition_table/partition-table.bin artifacts/
+          cp build/*.bin artifacts/
+          cd artifacts
+          zip "../$ZIP_FILE" ./*
+          cd ..
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: custom_ghost_esp_${{ github.event.inputs.board_type }}
+          path: custom_ghost_esp_${{ github.event.inputs.board_type }}.zip 
