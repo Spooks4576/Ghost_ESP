@@ -223,7 +223,13 @@ jobs:
           if [ "${{ github.event.inputs.display_type }}" == "custom" ]; then
             echo "- **Screen Resolution:** ${{ github.event.inputs.screen_width }}x${{ github.event.inputs.screen_height }}" >> $GITHUB_STEP_SUMMARY
           fi
-          echo "- **Touch Support:** $([ "${{ github.event.inputs.use_touch }}" == "true" ] || \
-            [ "${{ github.event.inputs.display_type }}" == "ESP32-S3-Cardputer" ] || \
-            [ "${{ github.event.inputs.display_type }}" == "LillyGoTWatch_S3" ] || \
-            [[ "${{ github.event.inputs.display_type }}" == CYD* ]] && echo "Yes" || echo "No")" >> $GITHUB_STEP_SU
+          echo "- **Touch Support:** $(
+            if [ "${{ github.event.inputs.use_touch }}" == "true" ] || \
+               [ "${{ github.event.inputs.display_type }}" == "ESP32-S3-Cardputer" ] || \
+               [ "${{ github.event.inputs.display_type }}" == "LillyGoTWatch_S3" ] || \
+               [[ "${{ github.event.inputs.display_type }}" == CYD* ]]; then
+              echo "Yes"
+            else
+              echo "No"
+            fi
+          )" >> $GITHUB_STEP_SUMMARY
