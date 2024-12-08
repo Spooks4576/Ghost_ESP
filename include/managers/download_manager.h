@@ -3,6 +3,18 @@
 
 #include "esp_err.h"
 #include <stddef.h>
+#include "cJSON.h"
+
+/**
+ * WiFi connection status codes
+ * Used to track the current state of WiFi connectivity
+ */
+typedef enum {
+    DOWNLOAD_WIFI_STATUS_DISCONNECTED, // No WiFi connection available
+    DOWNLOAD_WIFI_STATUS_CONNECTING,   // Currently attempting to connect
+    DOWNLOAD_WIFI_STATUS_CONNECTED,    // Successfully connected to WiFi
+    DOWNLOAD_WIFI_STATUS_ERROR        // Error occurred during connection
+} download_wifi_status_t;
 
 /**
  * Status codes to track download operations
@@ -18,6 +30,70 @@ typedef enum {
     DOWNLOAD_STATUS_INVALID_URL,     // URL is NULL or malformed
     DOWNLOAD_STATUS_HTTP_ERROR       // Server returned error status code
 } download_status_t;
+
+/**
+ * HTTP request method types
+ * Supported HTTP methods for requests
+ */
+typedef enum {
+    HTTP_METHOD_GET,     // HTTP GET request
+    HTTP_METHOD_POST,    // HTTP POST request
+    HTTP_METHOD_PUT,     // HTTP PUT request
+    HTTP_METHOD_DELETE,  // HTTP DELETE request
+    HTTP_METHOD_HEAD     // HTTP HEAD request
+} http_method_t;
+
+/**
+ * HTTP request configuration structure
+ * Used to configure detailed HTTP request parameters
+ */
+typedef struct {
+    const char* url;          // Target URL for the request
+    http_method_t method;     // HTTP method to use
+    const char* headers;      // Optional custom headers (NULL if none)
+    const char* payload;      // Request body for POST/PUT (NULL if none)
+    uint32_t timeout_ms;      // Request timeout (0 for default)
+    bool verify_ssl;          // Whether to verify SSL certificates
+} http_request_config_t;
+
+/**
+ * HTTP response structure
+ * Contains the response data from HTTP requests
+ */
+typedef struct {
+    char* body;              // Response body (must be freed by caller)
+    int status_code;         // HTTP status code
+    size_t content_length;   // Content length (if known)
+    char* content_type;      // Content type header value
+    cJSON* json;            // Add JSON parsed response
+} http_response_t;
+
+/**
+ * Check if WiFi is connected and ready for downloads
+ * 
+ * Usage example:
+ *   download_wifi_status_t status = download_manager_check_wifi();
+ *   if (status != DOWNLOAD_WIFI_STATUS_CONNECTED) {
+ *       // Handle disconnected state
+ *   }
+ * 
+ * @return Current WiFi connection status
+ */
+download_wifi_status_t download_manager_check_wifi(void);
+
+/**
+ * Wait for WiFi connection with timeout
+ * 
+ * Usage example:
+ *   esp_err_t ret = download_manager_await_wifi(5000);  // Wait up to 5 seconds
+ *   if (ret != ESP_OK) {
+ *       // Handle connection timeout
+ *   }
+ *
+ * @param timeout_ms Maximum time to wait in milliseconds (0 for no timeout)
+ * @return ESP_OK if connected, ESP_ERR_TIMEOUT if timeout reached
+ */
+esp_err_t download_manager_await_wifi(uint32_t timeout_ms);
 
 /**
  * Get the current status of the last/ongoing download operation
@@ -128,40 +204,15 @@ esp_err_t download_manager_resume_file(
 );
 
 /**
- * HTTP request method types
- */
-typedef enum {
-    HTTP_METHOD_GET,
-    HTTP_METHOD_POST,
-    HTTP_METHOD_PUT,
-    HTTP_METHOD_DELETE,
-    HTTP_METHOD_HEAD
-} http_method_t;
-
-/**
- * HTTP request configuration
- */
-typedef struct {
-    const char* url;
-    http_method_t method;
-    const char* headers;      // Optional custom headers (NULL if none)
-    const char* payload;      // Request body for POST/PUT (NULL if none)
-    uint32_t timeout_ms;      // Request timeout (0 for default)
-    bool verify_ssl;          // Whether to verify SSL certificates
-} http_request_config_t;
-
-/**
- * HTTP response structure
- */
-typedef struct {
-    char* body;              // Response body (must be freed by caller)
-    int status_code;         // HTTP status code
-    size_t content_length;   // Content length (if known)
-    char* content_type;      // Content type header value
-} http_response_t;
-
-/**
  * Simple GET request with default configuration
+ * 
+ * Usage example:
+ *   http_response_t* response = download_manager_http_get("https://api.example.com/data");
+ *   if (response) {
+ *       printf("Response: %s\n", response->body);
+ *       download_manager_free_response(response);
+ *   }
+ *
  * @param url Target URL
  * @return Response (must be freed by caller) or NULL on error
  */
@@ -169,6 +220,14 @@ http_response_t* download_manager_http_get(const char* url);
 
 /**
  * Simple POST request with default configuration
+ * 
+ * Usage example:
+ *   http_response_t* response = download_manager_http_post("https://api.example.com/data", "{\"key\":\"value\"}");
+ *   if (response) {
+ *       printf("Status: %d\n", response->status_code);
+ *       download_manager_free_response(response);
+ *   }
+ *
  * @param url Target URL
  * @param payload POST data
  * @return Response (must be freed by caller) or NULL on error
@@ -177,6 +236,18 @@ http_response_t* download_manager_http_post(const char* url, const char* payload
 
 /**
  * Perform HTTP request with custom configuration
+ * 
+ * Usage example:
+ *   http_request_config_t config = {
+ *       .url = "https://api.example.com",
+ *       .method = HTTP_METHOD_POST,
+ *       .headers = "Content-Type: application/json\nAuthorization: Bearer token",
+ *       .payload = "{\"data\":\"test\"}",
+ *       .timeout_ms = 5000,
+ *       .verify_ssl = true
+ *   };
+ *   http_response_t* response = download_manager_http_request(&config);
+ *
  * @param config Request configuration
  * @return Response (must be freed by caller) or NULL on error
  */
@@ -184,31 +255,17 @@ http_response_t* download_manager_http_request(const http_request_config_t* conf
 
 /**
  * Free HTTP response structure
+ * Must be called to clean up response data after use
+ * 
  * @param response Response to free
  */
 void download_manager_free_response(http_response_t* response);
 
 /**
- * Add WiFi connection status
+ * Parse response body as JSON
+ * @param response HTTP response to parse
+ * @return ESP_OK if parsed successfully, error code otherwise
  */
-typedef enum {
-    DOWNLOAD_WIFI_STATUS_DISCONNECTED,
-    DOWNLOAD_WIFI_STATUS_CONNECTING,
-    DOWNLOAD_WIFI_STATUS_CONNECTED,
-    DOWNLOAD_WIFI_STATUS_ERROR
-} download_wifi_status_t;
-
-/**
- * Check if WiFi is connected and ready for downloads
- * @return Current WiFi connection status
- */
-download_wifi_status_t download_manager_check_wifi(void);
-
-/**
- * Wait for WiFi connection with timeout
- * @param timeout_ms Maximum time to wait in milliseconds (0 for no timeout)
- * @return ESP_OK if connected, ESP_ERR_TIMEOUT if timeout reached
- */
-esp_err_t download_manager_await_wifi(uint32_t timeout_ms);
+esp_err_t download_manager_parse_json(http_response_t* response);
 
 #endif // DOWNLOAD_MANAGER_H 

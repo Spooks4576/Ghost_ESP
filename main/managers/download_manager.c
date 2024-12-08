@@ -135,6 +135,7 @@ void download_manager_free_response(http_response_t* response) {
     if (response) {
         if (response->body) free(response->body);
         if (response->content_type) free(response->content_type);
+        if (response->json) cJSON_Delete(response->json);
         free(response);
     }
 }
@@ -506,4 +507,40 @@ char* download_manager_fetch_string(const char* url) {
     buffer.buffer[buffer.size] = '\0';
 
     return buffer.buffer;
+}
+
+esp_err_t download_manager_parse_json(http_response_t* response) {
+    if (!response || !response->body) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    // Free existing JSON if any
+    if (response->json) {
+        cJSON_Delete(response->json);
+        response->json = NULL;
+    }
+
+    // Parse JSON
+    response->json = cJSON_Parse(response->body);
+    if (!response->json) {
+        const char* error_ptr = cJSON_GetErrorPtr();
+        if (error_ptr) {
+            ESP_LOGE(TAG, "JSON Parse Error before: %s", error_ptr);
+        }
+        return ESP_FAIL;
+    }
+
+    return ESP_OK;
+}
+
+// Helper function for JSON requests
+http_response_t* download_manager_http_get_json(const char* url) {
+    http_response_t* response = download_manager_http_get(url);
+    if (response) {
+        if (download_manager_parse_json(response) != ESP_OK) {
+            download_manager_free_response(response);
+            return NULL;
+        }
+    }
+    return response;
 } 
