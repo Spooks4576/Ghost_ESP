@@ -19,6 +19,7 @@
 - WebUI Fixes - @Spooks4576
 - Added BLE Wardriving - @jaylikesbunda
 - Added support for capturing packets from card skimmers - @jaylikesbunda
+- Deauth Attack now supports disassociation frames and reverse direction packets - @jaylikesbunda
 - Miscellaneous fixes and improvements - @jaylikesbunda, @Spooks4576
 
 ...changelog starts here... 

