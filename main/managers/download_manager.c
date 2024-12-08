@@ -5,12 +5,13 @@
 #include "esp_crt_bundle.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
+#include "esp_timer.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include "cJSON.h"
-#include "esp_httpd.h"
+#include "esp_http_server.h"
 
 static const char *TAG = "DOWNLOAD_MANAGER";
 static int download_progress = 0;
@@ -27,7 +28,6 @@ typedef struct {
     size_t capacity;
 } dynamic_buffer_t;
 
-static int last_http_status = 0;
 static download_status_t current_status = DOWNLOAD_STATUS_OK;
 
 static uint32_t g_timeout_ms = 30000; // Default 30 second timeout
@@ -141,8 +141,9 @@ void download_manager_free_response(http_response_t* response) {
 }
 
 http_response_t* download_manager_http_request(const http_request_config_t* config) {
-    if (!config || !config->url) {
+    if (!config || !config->url || strlen(config->url) == 0) {
         ESP_LOGE(TAG, "Invalid request configuration");
+        current_status = DOWNLOAD_STATUS_INVALID_URL;
         return NULL;
     }
 
@@ -258,7 +259,13 @@ esp_err_t download_manager_init(void) {
 
 esp_err_t download_manager_set_timeout(uint32_t timeout_ms) {
     if (timeout_ms == 0) {
-        g_timeout_ms = 30000; // Reset to default
+        g_timeout_ms = DEFAULT_TIMEOUT_MS;
+    } else if (timeout_ms < MIN_TIMEOUT_MS) {
+        g_timeout_ms = MIN_TIMEOUT_MS;
+        ESP_LOGW(TAG, "Timeout too short, using minimum: %d ms", MIN_TIMEOUT_MS);
+    } else if (timeout_ms > MAX_TIMEOUT_MS) {
+        g_timeout_ms = MAX_TIMEOUT_MS;
+        ESP_LOGW(TAG, "Timeout too long, using maximum: %d ms", MAX_TIMEOUT_MS);
     } else {
         g_timeout_ms = timeout_ms;
     }

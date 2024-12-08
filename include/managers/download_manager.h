@@ -3,7 +3,9 @@
 
 #include "esp_err.h"
 #include <stddef.h>
+#include <stdbool.h>
 #include "cJSON.h"
+#include "esp_http_client.h"
 
 /**
  * WiFi connection status codes
@@ -32,24 +34,12 @@ typedef enum {
 } download_status_t;
 
 /**
- * HTTP request method types
- * Supported HTTP methods for requests
- */
-typedef enum {
-    HTTP_METHOD_GET,     // HTTP GET request
-    HTTP_METHOD_POST,    // HTTP POST request
-    HTTP_METHOD_PUT,     // HTTP PUT request
-    HTTP_METHOD_DELETE,  // HTTP DELETE request
-    HTTP_METHOD_HEAD     // HTTP HEAD request
-} http_method_t;
-
-/**
  * HTTP request configuration structure
  * Used to configure detailed HTTP request parameters
  */
 typedef struct {
     const char* url;          // Target URL for the request
-    http_method_t method;     // HTTP method to use
+    esp_http_client_method_t method;     // Using ESP-IDF's HTTP method enum
     const char* headers;      // Optional custom headers (NULL if none)
     const char* payload;      // Request body for POST/PUT (NULL if none)
     uint32_t timeout_ms;      // Request timeout (0 for default)
