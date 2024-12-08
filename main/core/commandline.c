@@ -84,6 +84,7 @@ CommandFunction find_command(const char *name) {
 
 void cmd_wifi_scan_start(int argc, char **argv) {
     printf("WiFi scan started.\n");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scan started.\n");
     wifi_manager_start_scan();
     wifi_manager_print_scan_results_with_oui();
 }
@@ -91,11 +92,13 @@ void cmd_wifi_scan_start(int argc, char **argv) {
 void cmd_wifi_scan_stop(int argc, char **argv) {
     pcap_file_close();
     printf("WiFi scan stopped.\n");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scan stopped.\n");
 }
 
 void cmd_wifi_scan_results(int argc, char **argv) {
     wifi_manager_print_scan_results_with_oui();
     printf("WiFi scan results displayed with OUI matching.\n");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scan results displayed with OUI matching.\n");
 }
 
 void handle_list(int argc, char **argv) {
@@ -107,28 +110,33 @@ void handle_list(int argc, char **argv) {
     {
         wifi_manager_list_stations();
         printf("Listed Stations...");
+        TERMINAL_VIEW_ADD_TEXT("Listed Stations...");
         return;
     }
     else {
         printf("Usage: list -a (for Wi-Fi scan results)\n");
+        TERMINAL_VIEW_ADD_TEXT("Usage: list -a (for Wi-Fi scan results)\n");
     }
 }
 
 void handle_beaconspam(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-r") == 0) {
         printf("Starting Random beacon spam...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting Random beacon spam...\n");
         wifi_manager_start_beacon(NULL);
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-rr") == 0) {
         printf("Starting Rickroll beacon spam...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting Rickroll beacon spam...\n");
         wifi_manager_start_beacon("RICKROLL");
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-l") == 0) {
         printf("Starting AP List beacon spam...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting AP List beacon spam...\n");
         wifi_manager_start_beacon("APLISTMODE");
         return;
     }
@@ -140,6 +148,7 @@ void handle_beaconspam(int argc, char **argv) {
     }
     else {
         printf("Usage: beaconspam -r (for Beacon Spam Random)\n");
+        TERMINAL_VIEW_ADD_TEXT("Usage: beaconspam -r (for Beacon Spam Random)\n");
     }
 }
 
@@ -148,12 +157,14 @@ void handle_stop_spam(int argc, char **argv)
 {
     wifi_manager_stop_beacon();
     printf("Beacon Spam Stopped...");
+    TERMINAL_VIEW_ADD_TEXT("Beacon Spam Stopped...");
 }
 
 void handle_sta_scan(int argc, char **argv)
 {
     wifi_manager_start_monitor_mode(wifi_stations_sniffer_callback);
     printf("Started Station Scan...");
+    TERMINAL_VIEW_ADD_TEXT("Started Station Scan...");
 }
 
 
@@ -161,12 +172,14 @@ void handle_attack_cmd(int argc, char **argv)
 {
     if (argc > 1 && strcmp(argv[1], "-d") == 0) {
         printf("Deauth Attack Starting...");
+        TERMINAL_VIEW_ADD_TEXT("Deauth Attack Starting...");
         wifi_manager_start_deauth();
         return;
     }
     else 
     {
         printf("Usage: attack -d (for deauthing access points)\n");
+        TERMINAL_VIEW_ADD_TEXT("Usage: attack -d (for deauthing access points)\n");
     }
 }
 
@@ -175,6 +188,7 @@ void handle_stop_deauth(int argc, char **argv)
 {
     wifi_manager_stop_deauth();
     printf("Deauthing Stopped....\n");
+    TERMINAL_VIEW_ADD_TEXT("Deauthing Stopped....\n");
 }
 
 
@@ -196,9 +210,11 @@ void handle_select_cmd(int argc, char **argv)
             wifi_manager_select_ap(num);
         } else {
             printf("Error: is not a valid number.\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: is not a valid number.\n");
         }
     } else {
         printf("Invalid option. Usage: select -a <number>\n");
+        TERMINAL_VIEW_ADD_TEXT("Invalid option. Usage: select -a <number>\n");
     }
 }
 
@@ -218,6 +234,7 @@ void discover_task(void *pvParameter) {
         dial_client_deinit(&client);
     } else {
         printf("Failed to initialize DIAL client.\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to initialize DIAL client.\n");
     }
 
     vTaskDelete(NULL);
@@ -234,6 +251,7 @@ void handle_stop_flipper(int argc, char** argv)
     gps_manager_deinit(&g_gpsManager);  // Clean up GPS if active
     wifi_manager_stop_monitor_mode();    // Stop any active monitoring
     printf("All activities stopped and files closed.\n");
+    TERMINAL_VIEW_ADD_TEXT("All activities stopped and files closed.\n");
 }
 
 void handle_dial_command(int argc, char** argv)
@@ -244,6 +262,7 @@ void handle_dial_command(int argc, char** argv)
 void handle_wifi_connection(int argc, char** argv) {
     if (argc < 2) {
         printf("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
+        TERMINAL_VIEW_ADD_TEXT("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
         return;
     }
 
@@ -257,10 +276,12 @@ void handle_wifi_connection(int argc, char** argv) {
 
     if (strlen(ssid) == 0) {
         printf("SSID and password cannot be empty");
+        TERMINAL_VIEW_ADD_TEXT("SSID and password cannot be empty");
         return;
     }
 
     printf("Connecting to SSID: %s\n", ssid);
+    TERMINAL_VIEW_ADD_TEXT("Connecting to SSID: %s\n", ssid);
     
     wifi_manager_connect_wifi(ssid, password);
 
@@ -288,35 +309,41 @@ void handle_ble_scan_cmd(int argc, char**argv)
 {
     if (argc > 1 && strcmp(argv[1], "-f") == 0) {
         printf("Starting Find the Flippers...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting Find the Flippers...\n");
         ble_start_find_flippers();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-ds") == 0) {
         printf("Starting BLE Spam Detector...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting BLE Spam Detector...\n");
         ble_start_blespam_detector();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-a") == 0) {
         printf("Starting AirTag Scanner...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting AirTag Scanner...\n");
         ble_start_airtag_scanner();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-r") == 0) {
         printf("Scanning for Raw Packets\n");
+        TERMINAL_VIEW_ADD_TEXT("Scanning for Raw Packets\n");
         ble_start_raw_ble_packetscan();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-s") == 0) {
         printf("Stopping BLE Scan...\n");
+        TERMINAL_VIEW_ADD_TEXT("Stopping BLE Scan...\n");
         ble_stop();
         return;
     }
 
     printf("Invalid Command Syntax...");
+    TERMINAL_VIEW_ADD_TEXT("Invalid Command Syntax...");
 }
 
 #endif
@@ -355,34 +382,43 @@ void handle_start_portal(int argc, char **argv)
     else if (argc != 1)
     {
         printf("Error: Incorrect number of arguments.\n");
+        TERMINAL_VIEW_ADD_TEXT("Error: Incorrect number of arguments.\n");
         printf("Usage: %s <URL> <SSID> <Password> <AP_ssid> <DOMAIN>\n", argv[0]);
+        TERMINAL_VIEW_ADD_TEXT("Usage: %s <URL> <SSID> <Password> <AP_ssid> <DOMAIN>\n", argv[0]);
         printf("or\n");
+        TERMINAL_VIEW_ADD_TEXT("or\n");
         printf("Usage: %s <filepath> <APSSID> <Domain>\n", argv[0]);
+        TERMINAL_VIEW_ADD_TEXT("Usage: %s <filepath> <APSSID> <Domain>\n", argv[0]);
         return;
     }
 
 
     if (url == NULL || url[0] == '\0') {
         printf("Error: URL or File Path cannot be empty.\n");
+        TERMINAL_VIEW_ADD_TEXT("Error: URL or File Path cannot be empty.\n");
         return;
     }
 
     if (ap_ssid == NULL || ap_ssid[0] == '\0') {
         printf("Error: AP SSID cannot be empty.\n");
+        TERMINAL_VIEW_ADD_TEXT("Error: AP SSID cannot be empty.\n");
         return;
     }
 
     if (domain == NULL || domain[0] == '\0') {
         printf("Error: Domain cannot be empty.\n");
+        TERMINAL_VIEW_ADD_TEXT("Error: Domain cannot be empty.\n");
         return;
     }
 
     if (ssid && ssid[0] != '\0' && password && password[0] != '\0' && !offlinemode) {
         printf("Starting portal with SSID: %s, Password: %s, AP_SSID: %s, Domain: %s\n", ssid, password, ap_ssid, domain);
+        TERMINAL_VIEW_ADD_TEXT("Starting portal with SSID: %s, Password: %s, AP_SSID: %s, Domain: %s\n", ssid, password, ap_ssid, domain);
         wifi_manager_start_evil_portal(url, ssid, password, ap_ssid, domain);
     }
     else if (offlinemode){
         printf("Starting portal in offline mode with AP_SSID: %s, Domain: %s\n", ap_ssid, domain);
+        TERMINAL_VIEW_ADD_TEXT("Starting portal in offline mode with AP_SSID: %s, Domain: %s\n", ap_ssid, domain);
         wifi_manager_start_evil_portal(url, NULL, NULL, ap_ssid, domain);
     }
 }
@@ -429,8 +465,7 @@ void decrypt_tp_link_response(const uint8_t *input, char *output, size_t len)
     }
 }
 
-void handle_tp_link_test(int argc, char **argv)
-{
+void handle_tp_link_test(int argc, char **argv) {
     if (argc != 2) {
         printf("Usage: tp_link_test <on|off|loop>\n");
         TERMINAL_VIEW_ADD_TEXT("Usage: tp_link_test <on|off|loop>\n");
@@ -498,6 +533,7 @@ void handle_tp_link_test(int argc, char **argv)
                          (struct sockaddr *)&dest_addr, sizeof(dest_addr));
         if (err < 0) {
             printf("Error occurred during sending: errno %d\n", errno);
+            TERMINAL_VIEW_ADD_TEXT("Error occurred during sending: errno %d\n", errno);
             close(sock);
             return;
         }
@@ -545,8 +581,7 @@ void handle_ip_lookup(int argc, char** argv) {
     TERMINAL_VIEW_ADD_TEXT("Starting IP lookup...\n");
 }
 
-void handle_capture_scan(int argc, char** argv)
-{
+void handle_capture_scan(int argc, char** argv) {
     if (argc != 2) {
         printf("Error: Incorrect number of arguments.\n");
         TERMINAL_VIEW_ADD_TEXT("Error: Incorrect number of arguments.\n");
@@ -557,107 +592,104 @@ void handle_capture_scan(int argc, char** argv)
 
     if (capturetype == NULL || capturetype[0] == '\0') {
         printf("Error: Capture Type cannot be empty.\n");
+        TERMINAL_VIEW_ADD_TEXT("Error: Capture Type cannot be empty.\n");
         return;
     }
 
-    if (strcmp(capturetype, "-probe") == 0)
-    {
+    if (strcmp(capturetype, "-probe") == 0) {
         printf("Starting probe request capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Starting probe request capture...\n");
         int err = pcap_file_open("probescan", PCAP_CAPTURE_WIFI);
         
-        if (err != ESP_OK)
-        {
+        if (err != ESP_OK) {
             printf("Error: pcap failed to open\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: pcap failed to open\n");
             return;
         }
         wifi_manager_start_monitor_mode(wifi_probe_scan_callback);
     }
 
-    if (strcmp(capturetype, "-deauth") == 0)
-    {
+    if (strcmp(capturetype, "-deauth") == 0) {
         printf("Starting deauth packet capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Starting deauth packet capture...\n");
         int err = pcap_file_open("deauthscan", PCAP_CAPTURE_WIFI);
         
-        if (err != ESP_OK)
-        {
+        if (err != ESP_OK) {
             printf("Error: pcap failed to open\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: pcap failed to open\n");
             return;
         }
         wifi_manager_start_monitor_mode(wifi_deauth_scan_callback);
     }
 
-    if (strcmp(capturetype, "-beacon") == 0)
-    {
+    if (strcmp(capturetype, "-beacon") == 0) {
         printf("Starting beacon packet capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Starting beacon packet capture...\n");
         int err = pcap_file_open("beaconscan", PCAP_CAPTURE_WIFI);
         
-        if (err != ESP_OK)
-        {
+        if (err != ESP_OK) {
             printf("Error: pcap failed to open\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: pcap failed to open\n");
             return;
         }
         wifi_manager_start_monitor_mode(wifi_beacon_scan_callback);
     }
 
-    if (strcmp(capturetype, "-raw") == 0)
-    {
+    if (strcmp(capturetype, "-raw") == 0) {
         printf("Starting raw packet capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Starting raw packet capture...\n");
         int err = pcap_file_open("rawscan", PCAP_CAPTURE_WIFI);
         
-        if (err != ESP_OK)
-        {
+        if (err != ESP_OK) {
             printf("Error: pcap failed to open\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: pcap failed to open\n");
             return;
         }
         wifi_manager_start_monitor_mode(wifi_raw_scan_callback);
     }
 
-    if (strcmp(capturetype, "-eapol") == 0)
-    {
+    if (strcmp(capturetype, "-eapol") == 0) {
+        printf("Starting EAPOL packet capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting EAPOL packet capture...\n");
         int err = pcap_file_open("eapolscan", PCAP_CAPTURE_WIFI);
         
-        if (err != ESP_OK)
-        {
+        if (err != ESP_OK) {
             printf("Error: pcap failed to open\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: pcap failed to open\n");
             return;
         }
         wifi_manager_start_monitor_mode(wifi_eapol_scan_callback);
     }
 
-    if (strcmp(capturetype, "-pwn") == 0)
-    {
+    if (strcmp(capturetype, "-pwn") == 0) {
         printf("Starting PWN packet capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting PWN packet capture...\n");
         int err = pcap_file_open("pwnscan", PCAP_CAPTURE_WIFI);
         
-        if (err != ESP_OK)
-        {
+        if (err != ESP_OK) {
             printf("Error: pcap failed to open\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: pcap failed to open\n");
             return;
         }
         wifi_manager_start_monitor_mode(wifi_pwn_scan_callback);
     }
 
-    if (strcmp(capturetype, "-wps") == 0)
-    {
+    if (strcmp(capturetype, "-wps") == 0) {
         printf("Starting WPS packet capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting WPS packet capture...\n");
         int err = pcap_file_open("wpsscan", PCAP_CAPTURE_WIFI);
 
         should_store_wps = 0;
         
-        if (err != ESP_OK)
-        {
+        if (err != ESP_OK) {
             printf("Error: pcap failed to open\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: pcap failed to open\n");
             return;
         }
         wifi_manager_start_monitor_mode(wifi_wps_detection_callback);
     }
 
-    if (strcmp(capturetype, "-stop") == 0)
-    {
+    if (strcmp(capturetype, "-stop") == 0) {
         printf("Stopping packet capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Stopping packet capture...\n");
         wifi_manager_stop_monitor_mode();
@@ -666,11 +698,13 @@ void handle_capture_scan(int argc, char** argv)
 
     if (strcmp(capturetype, "-ble") == 0) {
         printf("Starting BLE packet capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting BLE packet capture...\n");
         ble_start_capture();
     }
 
     if (strcmp(capturetype, "-blestop") == 0) {
         printf("Stopping BLE packet capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Stopping BLE packet capture...\n");
         ble_stop();
         pcap_file_close();
     }
@@ -678,15 +712,18 @@ void handle_capture_scan(int argc, char** argv)
     if (strcmp(capturetype, "-skimmer") == 0) {
         if (argc > 2 && strcmp(argv[2], "stop") == 0) {
             printf("Stopping BLE\nSkimmer detection...\n");
+            TERMINAL_VIEW_ADD_TEXT("Stopping BLE\nSkimmer detection...\n");
             ble_stop_skimmer_detection();
         } else {
             printf("Starting BLE\nSkimmer detection...");
+            TERMINAL_VIEW_ADD_TEXT("Starting BLE\nSkimmer detection...");
             int err = pcap_file_open("skimmer_scan", PCAP_CAPTURE_BLUETOOTH);
             if (err != ESP_OK) {
                 printf("Warning: PCAP capture failed to start\n");
+                TERMINAL_VIEW_ADD_TEXT("Warning: PCAP capture failed to start\n");
             } else {
                 printf("PCAP capture started\nSuspicious devices will be logged\n");
-
+                TERMINAL_VIEW_ADD_TEXT("PCAP capture started\nSuspicious devices will be logged\n");
             }
             
             // Start skimmer detection
