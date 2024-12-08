@@ -1,4 +1,5 @@
 #include "managers/download_manager.h"
+#include "managers/ap_manager.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "esp_crt_bundle.h"
@@ -6,6 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include "cJSON.h"
+#include "esp_httpd.h"
 
 static const char *TAG = "DOWNLOAD_MANAGER";
 static int download_progress = 0;
@@ -29,30 +32,157 @@ static uint32_t g_timeout_ms = 30000; // Default 30 second timeout
 static download_progress_cb_t g_progress_cb = NULL;
 static void* g_user_data = NULL;
 
+// Default values
+#define DEFAULT_TIMEOUT_MS 30000
+#define DEFAULT_BUFFER_SIZE 1024
+#define MAX_HEADER_SIZE 1024
+
 static esp_err_t http_event_handler(esp_http_client_event_t *evt) {
-    dynamic_buffer_t *buffer = (dynamic_buffer_t *)evt->user_data;
+    http_response_t* response = (http_response_t*)evt->user_data;
     
     switch (evt->event_id) {
         case HTTP_EVENT_ON_DATA:
-            if (buffer != NULL) {
-                if (buffer->size + evt->data_len > buffer->capacity) {
-                    size_t new_capacity = buffer->capacity * 2 + evt->data_len;
-                    char *new_buffer = realloc(buffer->buffer, new_capacity);
-                    if (new_buffer == NULL) {
-                        ESP_LOGE(TAG, "Failed to allocate memory");
-                        return ESP_FAIL;
-                    }
-                    buffer->buffer = new_buffer;
-                    buffer->capacity = new_capacity;
+            if (!response->body) {
+                response->body = malloc(evt->data_len + 1);
+                if (!response->body) {
+                    ESP_LOGE(TAG, "Failed to allocate memory for response");
+                    return ESP_FAIL;
                 }
-                memcpy(buffer->buffer + buffer->size, evt->data, evt->data_len);
-                buffer->size += evt->data_len;
+                memcpy(response->body, evt->data, evt->data_len);
+                response->body[evt->data_len] = '\0';
+            } else {
+                size_t current_len = strlen(response->body);
+                char* new_body = realloc(response->body, current_len + evt->data_len + 1);
+                if (!new_body) {
+                    ESP_LOGE(TAG, "Failed to reallocate memory for response");
+                    return ESP_FAIL;
+                }
+                response->body = new_body;
+                memcpy(response->body + current_len, evt->data, evt->data_len);
+                response->body[current_len + evt->data_len] = '\0';
             }
             break;
+
+        case HTTP_EVENT_ON_HEADER:
+            if (evt->header_key && evt->header_value) {
+                if (strcmp(evt->header_key, "Content-Type") == 0) {
+                    response->content_type = strdup(evt->header_value);
+                }
+            }
+            break;
+
         default:
             break;
     }
     return ESP_OK;
+}
+
+static http_response_t* create_response(void) {
+    http_response_t* response = calloc(1, sizeof(http_response_t));
+    if (!response) {
+        ESP_LOGE(TAG, "Failed to allocate response structure");
+        return NULL;
+    }
+    return response;
+}
+
+void download_manager_free_response(http_response_t* response) {
+    if (response) {
+        if (response->body) free(response->body);
+        if (response->content_type) free(response->content_type);
+        free(response);
+    }
+}
+
+http_response_t* download_manager_http_request(const http_request_config_t* config) {
+    if (!config || !config->url) {
+        ESP_LOGE(TAG, "Invalid request configuration");
+        return NULL;
+    }
+
+    http_response_t* response = create_response();
+    if (!response) return NULL;
+
+    esp_http_client_config_t esp_config = {
+        .url = config->url,
+        .timeout_ms = config->timeout_ms ? config->timeout_ms : DEFAULT_TIMEOUT_MS,
+        .buffer_size = DEFAULT_BUFFER_SIZE,
+        .event_handler = http_event_handler,
+        .user_data = response,
+        .crt_bundle_attach = config->verify_ssl ? esp_crt_bundle_attach : NULL
+    };
+
+    esp_http_client_handle_t client = esp_http_client_init(&esp_config);
+    if (!client) {
+        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        download_manager_free_response(response);
+        return NULL;
+    }
+
+    // Set method
+    esp_http_client_set_method(client, config->method);
+
+    // Set custom headers if provided
+    if (config->headers) {
+        char* headers_copy = strdup(config->headers);
+        char* header = strtok(headers_copy, "\n");
+        while (header) {
+            char* separator = strchr(header, ':');
+            if (separator) {
+                *separator = '\0';
+                char* value = separator + 1;
+                while (*value == ' ') value++; // Skip leading spaces
+                esp_http_client_set_header(client, header, value);
+            }
+            header = strtok(NULL, "\n");
+        }
+        free(headers_copy);
+    }
+
+    // Set payload for POST/PUT requests
+    if (config->payload && (config->method == HTTP_METHOD_POST || config->method == HTTP_METHOD_PUT)) {
+        esp_http_client_set_post_field(client, config->payload, strlen(config->payload));
+    }
+
+    // Perform request
+    esp_err_t err = esp_http_client_perform(client);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
+        download_manager_free_response(response);
+        esp_http_client_cleanup(client);
+        return NULL;
+    }
+
+    // Get status code
+    response->status_code = esp_http_client_get_status_code(client);
+    response->content_length = esp_http_client_get_content_length(client);
+
+    esp_http_client_cleanup(client);
+    return response;
+}
+
+http_response_t* download_manager_http_get(const char* url) {
+    http_request_config_t config = {
+        .url = url,
+        .method = HTTP_METHOD_GET,
+        .headers = NULL,
+        .payload = NULL,
+        .timeout_ms = DEFAULT_TIMEOUT_MS,
+        .verify_ssl = true
+    };
+    return download_manager_http_request(&config);
+}
+
+http_response_t* download_manager_http_post(const char* url, const char* payload) {
+    http_request_config_t config = {
+        .url = url,
+        .method = HTTP_METHOD_POST,
+        .headers = "Content-Type: application/json\n",
+        .payload = payload,
+        .timeout_ms = DEFAULT_TIMEOUT_MS,
+        .verify_ssl = true
+    };
+    return download_manager_http_request(&config);
 }
 
 static void cleanup_resources(esp_http_client_handle_t client, FILE* file, void* buffer) {

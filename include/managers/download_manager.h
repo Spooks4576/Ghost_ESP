@@ -127,4 +127,65 @@ esp_err_t download_manager_resume_file(
     void* user_data
 );
 
+/**
+ * HTTP request method types
+ */
+typedef enum {
+    HTTP_METHOD_GET,
+    HTTP_METHOD_POST,
+    HTTP_METHOD_PUT,
+    HTTP_METHOD_DELETE,
+    HTTP_METHOD_HEAD
+} http_method_t;
+
+/**
+ * HTTP request configuration
+ */
+typedef struct {
+    const char* url;
+    http_method_t method;
+    const char* headers;      // Optional custom headers (NULL if none)
+    const char* payload;      // Request body for POST/PUT (NULL if none)
+    uint32_t timeout_ms;      // Request timeout (0 for default)
+    bool verify_ssl;          // Whether to verify SSL certificates
+} http_request_config_t;
+
+/**
+ * HTTP response structure
+ */
+typedef struct {
+    char* body;              // Response body (must be freed by caller)
+    int status_code;         // HTTP status code
+    size_t content_length;   // Content length (if known)
+    char* content_type;      // Content type header value
+} http_response_t;
+
+/**
+ * Simple GET request with default configuration
+ * @param url Target URL
+ * @return Response (must be freed by caller) or NULL on error
+ */
+http_response_t* download_manager_http_get(const char* url);
+
+/**
+ * Simple POST request with default configuration
+ * @param url Target URL
+ * @param payload POST data
+ * @return Response (must be freed by caller) or NULL on error
+ */
+http_response_t* download_manager_http_post(const char* url, const char* payload);
+
+/**
+ * Perform HTTP request with custom configuration
+ * @param config Request configuration
+ * @return Response (must be freed by caller) or NULL on error
+ */
+http_response_t* download_manager_http_request(const http_request_config_t* config);
+
+/**
+ * Free HTTP response structure
+ * @param response Response to free
+ */
+void download_manager_free_response(http_response_t* response);
+
 #endif // DOWNLOAD_MANAGER_H 
