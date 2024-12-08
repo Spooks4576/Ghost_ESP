@@ -188,4 +188,27 @@ http_response_t* download_manager_http_request(const http_request_config_t* conf
  */
 void download_manager_free_response(http_response_t* response);
 
+/**
+ * Add WiFi connection status
+ */
+typedef enum {
+    DOWNLOAD_WIFI_STATUS_DISCONNECTED,
+    DOWNLOAD_WIFI_STATUS_CONNECTING,
+    DOWNLOAD_WIFI_STATUS_CONNECTED,
+    DOWNLOAD_WIFI_STATUS_ERROR
+} download_wifi_status_t;
+
+/**
+ * Check if WiFi is connected and ready for downloads
+ * @return Current WiFi connection status
+ */
+download_wifi_status_t download_manager_check_wifi(void);
+
+/**
+ * Wait for WiFi connection with timeout
+ * @param timeout_ms Maximum time to wait in milliseconds (0 for no timeout)
+ * @return ESP_OK if connected, ESP_ERR_TIMEOUT if timeout reached
+ */
+esp_err_t download_manager_await_wifi(uint32_t timeout_ms);
+
 #endif // DOWNLOAD_MANAGER_H 

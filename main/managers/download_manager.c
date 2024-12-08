@@ -3,6 +3,8 @@
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "esp_crt_bundle.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +38,49 @@ static void* g_user_data = NULL;
 #define DEFAULT_TIMEOUT_MS 30000
 #define DEFAULT_BUFFER_SIZE 1024
 #define MAX_HEADER_SIZE 1024
+
+static download_wifi_status_t wifi_status = DOWNLOAD_WIFI_STATUS_DISCONNECTED;
+
+static esp_err_t check_wifi_connection(void) {
+    wifi_ap_record_t ap_info;
+    esp_err_t ret = esp_wifi_sta_get_ap_info(&ap_info);
+    
+    if (ret == ESP_OK) {
+        wifi_status = DOWNLOAD_WIFI_STATUS_CONNECTED;
+        return ESP_OK;
+    }
+    
+    wifi_status = DOWNLOAD_WIFI_STATUS_DISCONNECTED;
+    ESP_LOGE(TAG, "WiFi not connected: %s", esp_err_to_name(ret));
+    return ESP_ERR_WIFI_NOT_CONNECT;
+}
+
+download_wifi_status_t download_manager_check_wifi(void) {
+    if (check_wifi_connection() == ESP_OK) {
+        return DOWNLOAD_WIFI_STATUS_CONNECTED;
+    }
+    return wifi_status;
+}
+
+esp_err_t download_manager_await_wifi(uint32_t timeout_ms) {
+    uint32_t start_time = esp_timer_get_time() / 1000;
+    
+    while (1) {
+        if (check_wifi_connection() == ESP_OK) {
+            return ESP_OK;
+        }
+        
+        // Check timeout
+        if (timeout_ms > 0) {
+            uint32_t current_time = esp_timer_get_time() / 1000;
+            if ((current_time - start_time) >= timeout_ms) {
+                return ESP_ERR_TIMEOUT;
+            }
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(100)); // Wait 100ms before next check
+    }
+}
 
 static esp_err_t http_event_handler(esp_http_client_event_t *evt) {
     http_response_t* response = (http_response_t*)evt->user_data;
@@ -97,6 +142,13 @@ void download_manager_free_response(http_response_t* response) {
 http_response_t* download_manager_http_request(const http_request_config_t* config) {
     if (!config || !config->url) {
         ESP_LOGE(TAG, "Invalid request configuration");
+        return NULL;
+    }
+
+    // Check WiFi connection first
+    if (check_wifi_connection() != ESP_OK) {
+        ESP_LOGE(TAG, "No WiFi connection available");
+        current_status = DOWNLOAD_STATUS_NETWORK_ERROR;
         return NULL;
     }
 
@@ -397,6 +449,15 @@ esp_err_t download_manager_resume_file(
 
 char* download_manager_fetch_string(const char* url) {
     if (!url) {
+        ESP_LOGE(TAG, "Invalid URL");
+        current_status = DOWNLOAD_STATUS_INVALID_URL;
+        return NULL;
+    }
+
+    // Check WiFi connection first
+    if (check_wifi_connection() != ESP_OK) {
+        ESP_LOGE(TAG, "No WiFi connection available");
+        current_status = DOWNLOAD_STATUS_NETWORK_ERROR;
         return NULL;
     }
 
