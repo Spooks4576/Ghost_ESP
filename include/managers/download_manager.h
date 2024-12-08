@@ -79,4 +79,52 @@ int download_manager_get_progress(void);
  */
 void download_manager_cancel(void);
 
+/**
+ * Callback function type for download progress updates
+ * @param progress Current progress percentage (0-100)
+ * @param bytes_received Number of bytes received so far
+ * @param total_bytes Total bytes to download (may be 0 if unknown)
+ * @param user_data User-provided context data
+ */
+typedef void (*download_progress_cb_t)(int progress, size_t bytes_received, size_t total_bytes, void* user_data);
+
+/**
+ * Configure download timeout
+ * @param timeout_ms Timeout in milliseconds (0 for default)
+ * @return ESP_OK on success
+ */
+esp_err_t download_manager_set_timeout(uint32_t timeout_ms);
+
+/**
+ * Download a file with progress callback
+ * @param url Source URL to download from
+ * @param save_path Local filesystem path to save the downloaded file
+ * @param progress_cb Optional callback function for progress updates (can be NULL)
+ * @param user_data Optional user data passed to callback (can be NULL)
+ * @return ESP_OK on success
+ */
+esp_err_t download_manager_get_file_with_cb(
+    const char* url,
+    const char* save_path,
+    download_progress_cb_t progress_cb,
+    void* user_data
+);
+
+/**
+ * Resume a partially downloaded file
+ * @param url Source URL to download from
+ * @param save_path Local filesystem path (must exist)
+ * @param offset Byte offset to resume from
+ * @param progress_cb Optional progress callback (can be NULL)
+ * @param user_data Optional user data for callback (can be NULL)
+ * @return ESP_OK on success
+ */
+esp_err_t download_manager_resume_file(
+    const char* url,
+    const char* save_path,
+    size_t offset,
+    download_progress_cb_t progress_cb,
+    void* user_data
+);
+
 #endif // DOWNLOAD_MANAGER_H 

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 static const char *TAG = "DOWNLOAD_MANAGER";
 static int download_progress = 0;
@@ -23,6 +24,10 @@ typedef struct {
 
 static int last_http_status = 0;
 static download_status_t current_status = DOWNLOAD_STATUS_OK;
+
+static uint32_t g_timeout_ms = 30000; // Default 30 second timeout
+static download_progress_cb_t g_progress_cb = NULL;
+static void* g_user_data = NULL;
 
 static esp_err_t http_event_handler(esp_http_client_event_t *evt) {
     dynamic_buffer_t *buffer = (dynamic_buffer_t *)evt->user_data;
@@ -68,17 +73,39 @@ esp_err_t download_manager_init(void) {
     return ESP_OK;
 }
 
-esp_err_t download_manager_get_file(const char* url, const char* save_path) {
-    if (!url || !save_path) {
-        current_status = DOWNLOAD_STATUS_INVALID_URL;
-        return ESP_ERR_INVALID_ARG;
+esp_err_t download_manager_set_timeout(uint32_t timeout_ms) {
+    if (timeout_ms == 0) {
+        g_timeout_ms = 30000; // Reset to default
+    } else {
+        g_timeout_ms = timeout_ms;
     }
+    return ESP_OK;
+}
 
-    current_status = DOWNLOAD_STATUS_IN_PROGRESS;
+// Helper function to invoke progress callback
+static void update_progress(size_t received, size_t total) {
+    int progress = (total > 0) ? (received * 100) / total : 0;
+    download_progress = progress; // Update global progress
 
+    if (g_progress_cb) {
+        g_progress_cb(progress, received, total, g_user_data);
+    }
+}
+
+esp_err_t download_manager_get_file_with_cb(
+    const char* url,
+    const char* save_path,
+    download_progress_cb_t progress_cb,
+    void* user_data
+) {
+    // Store callback info
+    g_progress_cb = progress_cb;
+    g_user_data = user_data;
+
+    // Configure HTTP client
     esp_http_client_config_t config = {
         .url = url,
-        .timeout_ms = 20000,
+        .timeout_ms = g_timeout_ms,
         .crt_bundle_attach = esp_crt_bundle_attach,
         .buffer_size = MAX_DOWNLOAD_BUFFER,
         .buffer_size_tx = MAX_DOWNLOAD_BUFFER
@@ -89,6 +116,7 @@ esp_err_t download_manager_get_file(const char* url, const char* save_path) {
         return ESP_FAIL;
     }
 
+    // Open file for writing
     FILE* file = fopen(save_path, "wb");
     if (!file) {
         esp_http_client_cleanup(client);
@@ -97,65 +125,144 @@ esp_err_t download_manager_get_file(const char* url, const char* save_path) {
 
     esp_err_t err = esp_http_client_open(client, 0);
     if (err != ESP_OK) {
-        fclose(file);
-        esp_http_client_cleanup(client);
+        cleanup_resources(client, file, NULL);
         return err;
     }
 
-    int content_length = esp_http_client_fetch_headers(client);
-    int total_read = 0;
+    // Get content length
+    int64_t content_length = esp_http_client_get_content_length(client);
+    size_t total_read = 0;
+
+    // Allocate read buffer
     char *buffer = malloc(MAX_DOWNLOAD_BUFFER);
     if (!buffer) {
-        current_status = DOWNLOAD_STATUS_MEMORY_ERROR;
         cleanup_resources(client, file, NULL);
         return ESP_ERR_NO_MEM;
     }
 
-    // Get content type and size
-    char *content_type = NULL;
-    content_type = esp_http_client_get_header(client, "Content-Type");
-    int64_t content_length = esp_http_client_get_content_length(client);
-
-    // Optional: Validate content type if needed
-    if (content_type) {
-        ESP_LOGI(TAG, "Content-Type: %s", content_type);
-    }
-
-    // Validate content length
-    if (content_length <= 0) {
-        ESP_LOGW(TAG, "Unknown or invalid content length");
-    } else if (content_length > MAX_ALLOWED_DOWNLOAD_SIZE) {
-        ESP_LOGE(TAG, "Content length too large: %lld", content_length);
-        current_status = DOWNLOAD_STATUS_FILE_ERROR;
-        fclose(file);
-        esp_http_client_cleanup(client);
-        return ESP_ERR_INVALID_SIZE;
-    }
-
-    while (total_read < content_length && !cancel_download) {
+    // Download loop
+    while (!cancel_download) {
         int read_len = esp_http_client_read(client, buffer, MAX_DOWNLOAD_BUFFER);
         if (read_len <= 0) {
             break;
         }
-        fwrite(buffer, 1, read_len, file);
+
+        if (fwrite(buffer, 1, read_len, file) != read_len) {
+            free(buffer);
+            cleanup_resources(client, file, NULL);
+            return ESP_FAIL;
+        }
+
         total_read += read_len;
-        download_progress = (total_read * 100) / content_length;
+        update_progress(total_read, content_length);
     }
 
+    // Cleanup
+    free(buffer);
+    fclose(file);
+    
+    int status_code = esp_http_client_get_status_code(client);
+    esp_http_client_cleanup(client);
+
+    // Reset callback info
+    g_progress_cb = NULL;
+    g_user_data = NULL;
+
+    return (status_code == 200 && !cancel_download) ? ESP_OK : ESP_FAIL;
+}
+
+esp_err_t download_manager_resume_file(
+    const char* url,
+    const char* save_path,
+    size_t offset,
+    download_progress_cb_t progress_cb,
+    void* user_data
+) {
+    // Verify file exists and get size
+    struct stat st;
+    if (stat(save_path, &st) != 0 || st.st_size < offset) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    // Store callback info
+    g_progress_cb = progress_cb;
+    g_user_data = user_data;
+
+    // Configure HTTP client
+    esp_http_client_config_t config = {
+        .url = url,
+        .timeout_ms = g_timeout_ms,
+        .crt_bundle_attach = esp_crt_bundle_attach,
+        .buffer_size = MAX_DOWNLOAD_BUFFER,
+        .buffer_size_tx = MAX_DOWNLOAD_BUFFER
+    };
+
+    esp_http_client_handle_t client = esp_http_client_init(&config);
+    if (!client) {
+        return ESP_FAIL;
+    }
+
+    // Set Range header
+    char range_header[64];
+    snprintf(range_header, sizeof(range_header), "bytes=%zu-", offset);
+    esp_http_client_set_header(client, "Range", range_header);
+
+    // Open file for appending
+    FILE* file = fopen(save_path, "ab");
+    if (!file) {
+        esp_http_client_cleanup(client);
+        return ESP_FAIL;
+    }
+
+    esp_err_t err = esp_http_client_open(client, 0);
+    if (err != ESP_OK) {
+        cleanup_resources(client, file, NULL);
+        return err;
+    }
+
+    // Verify server accepts range request
+    int status_code = esp_http_client_get_status_code(client);
+    if (status_code != 206) { // 206 Partial Content
+        cleanup_resources(client, file, NULL);
+        return ESP_FAIL;
+    }
+
+    int64_t content_length = esp_http_client_get_content_length(client);
+    size_t total_read = offset;
+
+    char *buffer = malloc(MAX_DOWNLOAD_BUFFER);
+    if (!buffer) {
+        cleanup_resources(client, file, NULL);
+        return ESP_ERR_NO_MEM;
+    }
+
+    // Download remaining data
+    while (!cancel_download) {
+        int read_len = esp_http_client_read(client, buffer, MAX_DOWNLOAD_BUFFER);
+        if (read_len <= 0) {
+            break;
+        }
+
+        if (fwrite(buffer, 1, read_len, file) != read_len) {
+            free(buffer);
+            cleanup_resources(client, file, NULL);
+            return ESP_FAIL;
+        }
+
+        total_read += read_len;
+        update_progress(total_read, offset + content_length);
+    }
+
+    // Cleanup
     free(buffer);
     fclose(file);
     esp_http_client_cleanup(client);
-    
-    int http_status = esp_http_client_get_status_code(client);
-    last_http_status = http_status;
-    
-    if (http_status != 200) {
-        ESP_LOGE(TAG, "HTTP request failed with status %d", http_status);
-        current_status = DOWNLOAD_STATUS_HTTP_ERROR;
-        return ESP_FAIL;
-    }
-    
-    return cancel_download ? ESP_FAIL : ESP_OK;
+
+    // Reset callback info
+    g_progress_cb = NULL;
+    g_user_data = NULL;
+
+    return (!cancel_download) ? ESP_OK : ESP_FAIL;
 }
 
 char* download_manager_fetch_string(const char* url) {
