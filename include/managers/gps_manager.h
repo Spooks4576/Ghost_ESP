@@ -5,7 +5,8 @@
 #include "vendor/GPS/MicroNMEA.h"
 #include "vendor/GPS/gps_logger.h"
 #include <esp_types.h>
-#include "managers/logging.h"
+
+
 extern nmea_parser_handle_t nmea_hdl;
 extern gps_date_t cacheddate;
 
