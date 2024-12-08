@@ -52,6 +52,7 @@ void gps_manager_init(GPSManager* manager) {
 
     if (current_rx_pin != 0) {   
         printf("GPS RX: IO%d\n", current_rx_pin);
+        TERMINAL_VIEW_ADD_TEXT("GPS RX: IO%d\n", current_rx_pin);
         
         // Only disable UART1 which we use for GPS
         periph_module_disable(PERIPH_UART1_MODULE);

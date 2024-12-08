@@ -9,6 +9,7 @@
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
 #include "managers/settings_manager.h"
+#include "managers/views/terminal_screen.h"
 #include "driver/gpio.h"
 #ifdef CONFIG_USE_CARDPUTER
 #include "vendor/m5/m5gfx_wrapper.h"

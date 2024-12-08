@@ -122,6 +122,7 @@ static bool extract_company_id(const uint8_t *payload, size_t length, uint16_t *
 
 void ble_stop_skimmer_detection(void) {
     ESP_LOGI("BLE", "Stopping skimmer detection scan...");
+    TERMINAL_VIEW_ADD_TEXT("Stopping skimmer detection scan...\n");
     
     // Unregister the skimmer detection callback
     ble_unregister_handler(ble_skimmer_scan_callback);
@@ -132,10 +133,13 @@ void ble_stop_skimmer_detection(void) {
 
     if (rc == 0) {
         printf("BLE skimmer detection stopped successfully.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE skimmer detection stopped successfully.\n");
     } else if (rc == BLE_HS_EALREADY) {
         printf("BLE scanning was not active.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
     } else {
         printf("Failed to stop BLE scanning; rc=%d\n", rc);
+        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning; rc=%d\n", rc);
     }
 }
 
@@ -324,9 +328,10 @@ void ble_print_raw_packet_callback(struct ble_gap_event *event, size_t len) {
 
     
     printf("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
-
+    TERMINAL_VIEW_ADD_TEXT("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
     
     printf("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
+    TERMINAL_VIEW_ADD_TEXT("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
     for (size_t i = 0; i < event->disc.length_data; i++) {
         printf("%02x ", event->disc.data[i]);
     }
@@ -356,6 +361,7 @@ void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
         
         if (spam_counter > MAX_PAYLOADS) {
             ESP_LOGW(TAG_BLE, "BLE Spam detected! Company ID: 0x%04X", current_company_id);
+            TERMINAL_VIEW_ADD_TEXT("BLE Spam detected! Company ID: 0x%04X\n", current_company_id);
             rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, true);
             spam_counter = 0;
         }
@@ -531,10 +537,13 @@ void ble_stop(void) {
 
     if (rc == 0) {
         printf("BLE scanning stopped successfully.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE scanning stopped successfully.\n");
     } else if (rc == BLE_HS_EALREADY) {
         printf("BLE scanning was not active.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
     } else {
         printf("Failed to stop BLE scanning; rc=%d\n", rc);
+        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning; rc=%d\n", rc);
     }
 }
 
@@ -639,6 +648,7 @@ void ble_start_capture(void) {
 
 void ble_start_skimmer_detection(void) {
     ESP_LOGI("BLE", "Starting skimmer detection scan...");
+    TERMINAL_VIEW_ADD_TEXT("Starting skimmer detection scan...\n");
     
     // Register the skimmer detection callback
     esp_err_t err = ble_register_handler(ble_skimmer_scan_callback);

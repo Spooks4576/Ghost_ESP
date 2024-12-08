@@ -11,6 +11,7 @@
 #include "managers/sd_card_manager.h"
 #include "vendor/GPS/MicroNMEA.h"
 #include "core/callbacks.h"
+#include "managers/views/terminal_screen.h"
 
 static const char *GPS_TAG = "GPS";
 static const char *CSV_TAG = "CSV";
@@ -82,12 +83,14 @@ esp_err_t csv_file_open(const char* base_file_name) {
     esp_err_t ret = csv_write_header(csv_file);
     if (ret != ESP_OK) {
         printf("Failed to write CSV header.");
+        TERMINAL_VIEW_ADD_TEXT("Failed to write CSV header.");
         fclose(csv_file);
         csv_file = NULL;
         return ret;
     }
 
     printf("Storage: Created new log file: %s\n", file_name);
+    TERMINAL_VIEW_ADD_TEXT("Storage: Created new log file: %s\n", file_name);
     return ESP_OK;
 }
 
@@ -179,6 +182,7 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
 esp_err_t csv_flush_buffer_to_file() {
     if (csv_file == NULL) {
         printf("Storage: No SD card found, logging to serial\n");
+        TERMINAL_VIEW_ADD_TEXT("Storage: No SD card found, logging to serial\n");
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
 
@@ -194,10 +198,12 @@ esp_err_t csv_flush_buffer_to_file() {
     size_t written = fwrite(csv_buffer, 1, buffer_offset, csv_file);
     if (written != buffer_offset) {
         printf("Failed to write buffer to file.\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to write buffer to file.\n");
         return ESP_FAIL;
     }
 
     printf("Flushed %zu bytes to CSV file.\n", buffer_offset);
+    TERMINAL_VIEW_ADD_TEXT("Flushed %zu bytes to CSV file.\n", buffer_offset);
     buffer_offset = 0;
 
     return ESP_OK;
@@ -207,11 +213,13 @@ void csv_file_close() {
     if (csv_file != NULL) {
         if (buffer_offset > 0) {
             printf("Flushing remaining buffer before closing file.\n");
+            TERMINAL_VIEW_ADD_TEXT("Flushing remaining buffer before closing file.\n");
             csv_flush_buffer_to_file();
         }
         fclose(csv_file);
         csv_file = NULL;
         printf("CSV file closed.\n");
+        TERMINAL_VIEW_ADD_TEXT("CSV file closed.\n");
     }
 }
 
@@ -330,6 +338,7 @@ void gps_info_display_task(void *pvParameters) {
         // Simple validation
         if (!gps->valid || !is_valid_date(&gps->date)) {
             printf("Searching sats...\n");
+            TERMINAL_VIEW_ADD_TEXT("Searching sats...\n");
             vTaskDelay(pdMS_TO_TICKS(5000));
         } else {
             format_coordinates(gps_data.latitude, gps_data.longitude, lat_str, lon_str);
@@ -338,20 +347,29 @@ void gps_info_display_task(void *pvParameters) {
             
             // Page 1: Position and Movement
             printf("GPS Info\n");
+            TERMINAL_VIEW_ADD_TEXT("GPS Info\n");
             printf("Sats: %d/%d\n", gps_data.gps_quality.satellites_used, GPS_MAX_SATELLITES_IN_USE);
+            TERMINAL_VIEW_ADD_TEXT("Sats: %d/%d\n", gps_data.gps_quality.satellites_used, GPS_MAX_SATELLITES_IN_USE);
             printf("Lat: %s\n", lat_str);
+            TERMINAL_VIEW_ADD_TEXT("Lat: %s\n", lat_str);
             printf("Long: %s\n", lon_str);
+            TERMINAL_VIEW_ADD_TEXT("Long: %s\n", lon_str);
             printf("Direction: %d° %s\n", (int)gps_data.gps_quality.course, direction);
+            TERMINAL_VIEW_ADD_TEXT("Direction: %d° %s\n", (int)gps_data.gps_quality.course, direction);
             
             vTaskDelay(delay);  // Full 5-second delay
             
             // Page 2: Signal Quality
             printf("Alt: %dm\n", (int)gps_data.altitude);
+            TERMINAL_VIEW_ADD_TEXT("Alt: %dm\n", (int)gps_data.altitude);
             printf("Speed: %d km/h\n", (int)speed_kmh);
+            TERMINAL_VIEW_ADD_TEXT("Speed: %d km/h\n", (int)speed_kmh);
             printf("Accuracy: %.1fm (%.0f%%)\n", 
                 gps_data.accuracy,
                 get_accuracy_percentage(gps_data.gps_quality.hdop));
+            TERMINAL_VIEW_ADD_TEXT("Accuracy: %.1fm (%.0f%%)\n", gps_data.accuracy, get_accuracy_percentage(gps_data.gps_quality.hdop));
             printf("Quality: %s\n", get_gps_quality_string(&gps_data));
+            TERMINAL_VIEW_ADD_TEXT("Quality: %s\n", get_gps_quality_string(&gps_data));
             
             vTaskDelay(delay);  // Full 5-second delay
         }
