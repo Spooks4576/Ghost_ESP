@@ -6,7 +6,8 @@
 #include <nvs_flash.h>
 #include "core/utils.h"
 #include <nvs.h>
-#include "managers/logging.h"
+
+
 // Enum for RGB Modes
 typedef enum {
     RGB_MODE_NORMAL = 0,
