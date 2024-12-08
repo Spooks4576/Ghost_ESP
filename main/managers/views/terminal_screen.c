@@ -55,14 +55,12 @@ void terminal_view_destroy(void) {
 
 void terminal_view_add_text(const char *text) {
     if (terminal_textarea == NULL) return;
-
+    if (text == NULL) return;
     
     lv_textarea_add_text(terminal_textarea, text);
     lv_textarea_add_text(terminal_textarea, "\n");
-
     
     lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
-
     
     lv_task_handler();
 }
