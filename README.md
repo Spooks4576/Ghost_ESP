@@ -59,13 +59,16 @@ Make sure to check out our [Discord](https://discord.gg/PkdjxqYKe4)
 This table should explain the key differences between ghost esp and ESP32 Marauder
 ![Ghost_VS_Marauder](https://github.com/user-attachments/assets/93031584-1b6a-4cdf-ae5a-b77f4b0fcce4)
 
+
 ## Special Acknowledgments
 
 We extend our thanks to the following projects and their developers for their contributions and inspiration in the development of Ghost ESP:
 
-- **[JustCallMeKoKo](https://github.com/justcallmekoko/ESP32Marauder):** For foundational ESP32 development and tools
-- **[thibauts](https://github.com/thibauts/node-castv2-client):** For insights into the CastV2 protocol for media integration
-- **[MarcoLucidi01](https://github.com/MarcoLucidi01/ytcast/tree/master/dial):** For pioneering DIAL protocol integration on ESP32 platforms
+- **[JustCallMeKoKo](https://github.com/justcallmekoko/ESP32Marauder):** For foundational ESP32 development and tools  
+- **[thibauts](https://github.com/thibauts/node-castv2-client):** For insights into the CastV2 protocol for media integration  
+- **[MarcoLucidi01](https://github.com/MarcoLucidi01/ytcast/tree/master/dial):** For pioneering DIAL protocol integration on ESP32 platforms  
+- **[SpacehuhnTech](https://github.com/SpacehuhnTech/esp8266_deauther):** For providing excellent reference code for deauthentication functionality  
+
 
 ## Legal Disclaimer
 
