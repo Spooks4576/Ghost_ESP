@@ -10,7 +10,7 @@
 ## 1.4.5
 - Added starting logs to capture commands - @jaylikesbunda
 - Improve WiFi Connection logic - @jaylikesbunda
-- Forward printf logs from managers to terminal view - @jaylikesbunda
+- Add more terminal view logs - @jaylikesbunda, @Spooks4576
 - Added support for variable display timeout on TWatch S3 - @jaylikesbunda
 - Added "gpsinfo" command to get GPS information - @jaylikesbunda
 - make sure .csv files are closed with generic stop command - @jaylikesbunda

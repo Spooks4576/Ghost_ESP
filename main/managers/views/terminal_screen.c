@@ -82,6 +82,12 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             handle_serial_command("stopspam");
             handle_serial_command("stopdeauth");
             handle_serial_command("capture -stop");
+            handle_serial_command("capture -blestop");
+            handle_serial_command("capture -skimmer stop");
+            handle_serial_command("stopportal");
+            handle_serial_command("startwd -s");
+            handle_serial_command("gpsinfo -s");
+            handle_serial_command("blewardriving -s");
             display_manager_switch_view(&options_menu_view);
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
@@ -91,6 +97,12 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             handle_serial_command("stopspam");
             handle_serial_command("stopdeauth");
             handle_serial_command("capture -stop");
+            handle_serial_command("capture -blestop");
+            handle_serial_command("capture -skimmer stop");
+            handle_serial_command("stopportal");
+            handle_serial_command("startwd -s");
+            handle_serial_command("gpsinfo -s");
+            handle_serial_command("blewardriving -s");
             display_manager_switch_view(&options_menu_view);
             return;
         }
