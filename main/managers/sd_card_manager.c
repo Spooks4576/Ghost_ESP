@@ -103,7 +103,50 @@ static void sdmmc_card_print_info(const sdmmc_card_t* card) {
 
 esp_err_t sd_card_init(void) {
     esp_err_t ret;
-#if CONFIG_USING_MMC
+
+#ifdef CONFIG_USING_MMC_1_BIT
+    printf("Initializing SD card in SDMMC mode (1-bit)...\n");
+
+    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    host.flags = SDMMC_HOST_FLAG_1BIT;
+
+    sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
+    slot_config.width = 1;
+
+    slot_config.clk = CONFIG_SD_MMC_CLK;
+    slot_config.cmd = CONFIG_SD_MMC_CMD;
+    slot_config.d0 = CONFIG_SD_MMC_D0;
+
+    gpio_set_pull_mode(CONFIG_SD_MMC_D0, GPIO_PULLUP_ONLY);  // CLK
+    gpio_set_pull_mode(CONFIG_SD_MMC_CLK, GPIO_PULLUP_ONLY);  // CMD
+    gpio_set_pull_mode(CONFIG_SD_MMC_CMD, GPIO_PULLUP_ONLY);  // D0
+
+    slot_config.gpio_cd = GPIO_NUM_NC;  // Disable Card Detect pin
+    slot_config.gpio_wp = GPIO_NUM_NC;  // Disable Write Protect pin
+
+    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+        .format_if_mount_failed = false,
+        .max_files = 5,
+        .allocation_unit_size = 16 * 1024
+    };
+   
+    ret = esp_vfs_fat_sdmmc_mount("/mnt", &host, &slot_config, &mount_config, &sd_card_manager.card);
+    if (ret != ESP_OK) {
+        if (ret == ESP_FAIL) {
+            printf("Failed to mount filesystem. If you want the card to be formatted, set format_if_mount_failed = true.\n");
+        } else {
+            printf("Failed to initialize the card (%s). Make sure SD card lines have pull-up resistors in place.\n", esp_err_to_name(ret));
+        }
+        return ret;
+    }
+
+    sd_card_manager.is_initialized = true;
+    sdmmc_card_print_info(sd_card_manager.card);
+    printf("SD card initialized successfully\n");
+
+    sd_card_setup_directory_structure();
+
+#elif defined(CONFIG_USING_MMC)
 
     printf("Initializing SD card in SDMMC mode (4-bit)...\n");
 

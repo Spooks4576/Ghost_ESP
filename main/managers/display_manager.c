@@ -28,6 +28,10 @@
 #include "vendor/drivers/ST7262.h"
 #endif
 
+#ifdef CONFIG_JC3248W535EN_LCD
+#include "vendor/drivers/axs15231b.h"
+#endif
+
 #ifndef CONFIG_TFT_WIDTH
 #define CONFIG_TFT_WIDTH 240
 #endif
@@ -47,7 +51,7 @@ lv_obj_t *bt_label = NULL;
 lv_obj_t *sd_label = NULL;
 lv_obj_t *battery_label = NULL;
 
-
+bool display_manager_init_success = false;
 
 #define FADE_DURATION_MS 10
 
@@ -303,14 +307,16 @@ void display_manager_add_status_bar(const char* CurrentMenuName)
 }
 
 void display_manager_init(void) {
+#ifndef CONFIG_JC3248W535EN_LCD
     lv_init();
 #ifdef CONFIG_USE_CARDPUTER
     init_m5gfx_display();
 #else 
     lvgl_driver_init();
 #endif
+#endif //CONFIG_JC3248W535EN_LCD
 
-#ifndef CONFIG_USE_7_INCHER
+#if !defined(CONFIG_USE_7_INCHER) && !defined(CONFIG_JC3248W535EN_LCD)
     static lv_color_t buf1[CONFIG_TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_color_t buf2[CONFIG_TFT_WIDTH * 20] __attribute__((aligned(4)));
     static lv_disp_draw_buf_t disp_buf;
@@ -324,11 +330,17 @@ void display_manager_init(void) {
 
 #ifdef CONFIG_USE_CARDPUTER
     disp_drv.flush_cb = m5stack_lvgl_render_callback;
-#else 
+#else
     disp_drv.flush_cb = disp_driver_flush;
 #endif
     disp_drv.draw_buf = &disp_buf;
     lv_disp_drv_register(&disp_drv);
+#elif defined(CONFIG_JC3248W535EN_LCD)
+    esp_err_t ret = lcd_axs15231b_init();
+    if (ret != ESP_OK) {
+        printf("LCD initialization failed");
+        return;
+    }
 #else 
 
     esp_err_t ret = lcd_st7262_init();
@@ -369,10 +381,14 @@ void display_manager_init(void) {
 #endif
 #endif
 
+#ifndef CONFIG_JC3248W535EN_LCD // JC3248W535EN has its own lvgl task
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
+#endif
     if (xTaskCreate(hardware_input_task, "RawInput", 2048, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL) != pdPASS) {
         printf("Failed to create RawInput task\n");
     }
+
+    display_manager_init_success = true;
 }
 
 bool display_manager_register_view(View *view) {
@@ -580,11 +596,44 @@ void hardware_input_task(void *pvParameters) {
     vTaskDelete(NULL);
 }
 
-
-void lvgl_tick_task(void *arg) {
-    const TickType_t tick_interval = pdMS_TO_TICKS(5);
+void processEvent()
+{
+    // do not process events until the display manager is up
+    if (!display_manager_init_success)
+    {
+        return;
+    }
 
     InputEvent event;
+
+    if (xQueueReceive(input_queue, &event, pdMS_TO_TICKS(10)) == pdTRUE) 
+    {
+        if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
+            View *current = dm.current_view;
+            void (*input_callback)(InputEvent*) = NULL;
+            const char* view_name = "NULL";
+
+            if (current) {
+                view_name = current->name;
+                input_callback = current->input_callback;
+            } else {
+                printf("[WARNING] Current view is NULL in input_processing_task\n");
+            }
+
+            xSemaphoreGive(dm.mutex);
+
+            printf("[INFO] Input event type: %d, Current view: %s\n", event.type, view_name);
+
+            if (input_callback) {
+                input_callback(&event);
+            }
+        }
+    }
+}
+
+void lvgl_tick_task(void *arg) {
+
+    const TickType_t tick_interval = pdMS_TO_TICKS(5);
 
     int tick_increment;
     
@@ -598,29 +647,7 @@ void lvgl_tick_task(void *arg) {
 
     while (1)
     {
-
-        if (xQueueReceive(input_queue, &event, pdMS_TO_TICKS(10)) == pdTRUE) {
-            if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
-                View *current = dm.current_view;
-                void (*input_callback)(InputEvent*) = NULL;
-                const char* view_name = "NULL";
-
-                if (current) {
-                    view_name = current->name;
-                    input_callback = current->input_callback;
-                } else {
-                    printf("[WARNING] Current view is NULL in input_processing_task\n");
-                }
-
-                xSemaphoreGive(dm.mutex);
-
-                printf("[INFO] Input event type: %d, Current view: %s\n", event.type, view_name);
-
-                if (input_callback) {
-                    input_callback(&event);
-                }
-            }
-        }
+        processEvent();
 
         lv_timer_handler();
         lv_tick_inc(tick_increment);
