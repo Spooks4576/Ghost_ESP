@@ -1,8 +1,12 @@
 # Gather all .c files recursively from the src/ folder
 file(GLOB_RECURSE app_sources "${CMAKE_SOURCE_DIR}/main/*.c")
+file(GLOB_RECURSE axs15231b_sources "${CMAKE_SOURCE_DIR}/components/axs15231b/*.c")
 
 # Gather all include directories within the include/ folder
 file(GLOB_RECURSE inc_dirs LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/include/*")
+file(GLOB_RECURSE axs15231b_inc_dirs LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/components/*")
+
+list(APPEND app_sources ${axs15231b_sources})
 
 # Filter out only directories (not files)
 set(filtered_inc_dirs "")
