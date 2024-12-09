@@ -18,7 +18,7 @@ void terminal_view_destroy(void);
 #ifdef CONFIG_WITH_SCREEN
     #define TERMINAL_VIEW_ADD_TEXT(fmt, ...) \
         do { \
-            char buffer[256]; \
+            char buffer[700]; \
             snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__); \
             terminal_view_add_text(buffer); \
         } while (0)

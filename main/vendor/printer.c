@@ -5,6 +5,7 @@
 #include "mdns.h"
 #include "esp_log.h"
 #include <string.h>
+#include "managers/views/terminal_screen.h"
 #include <managers/settings_manager.h>
 #include <stdio.h>
 

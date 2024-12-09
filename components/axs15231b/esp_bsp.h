@@ -12,11 +12,15 @@
 
 #pragma once
 
+
+
 #include "sdkconfig.h"
 #include "driver/gpio.h"
 #include "driver/i2c.h"
 #include "lvgl.h"
 #include "lv_port.h"
+
+#ifdef JC3248W535EN_LCD
 
 /**************************************************************************************************
  *  pinout
@@ -45,6 +49,30 @@
 #define EXAMPLE_PIN_NUM_QSPI_TOUCH_SDA  (GPIO_NUM_4)
 #define EXAMPLE_PIN_NUM_QSPI_TOUCH_RST  (-1)
 #define EXAMPLE_PIN_NUM_QSPI_TOUCH_INT  (-1)
+
+#else 
+
+#define EXAMPLE_PIN_NUM_QSPI_CS         (-1)
+#define EXAMPLE_PIN_NUM_QSPI_PCLK       (-1)
+#define EXAMPLE_PIN_NUM_QSPI_DATA0      (-1)
+#define EXAMPLE_PIN_NUM_QSPI_DATA1      (-1)
+#define EXAMPLE_PIN_NUM_QSPI_DATA2      (-1)
+#define EXAMPLE_PIN_NUM_QSPI_DATA3      (-1)
+#define EXAMPLE_PIN_NUM_QSPI_RST        (-1)
+#define EXAMPLE_PIN_NUM_QSPI_DC         (-1)
+#define EXAMPLE_PIN_NUM_QSPI_TE         (-1)
+#define EXAMPLE_PIN_NUM_QSPI_BL         (-1)
+
+#define EXAMPLE_PIN_NUM_QSPI_TOUCH_SCL  (-1)
+#define EXAMPLE_PIN_NUM_QSPI_TOUCH_SDA  (-1)
+#define EXAMPLE_PIN_NUM_QSPI_TOUCH_RST  (-1)
+#define EXAMPLE_PIN_NUM_QSPI_TOUCH_INT  (-1)
+
+#define BSP_I2C_NUM                     (I2C_NUM_0)
+#define BSP_I2C_CLK_SPEED_HZ            400000
+
+#define EXAMPLE_LCD_QSPI_HOST           (SPI2_HOST)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
