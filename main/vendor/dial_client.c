@@ -108,6 +108,8 @@ bool parse_ssdp_response(const char *response, Device *device) {
         snprintf(device->uniqueServiceName, sizeof(device->uniqueServiceName), "%s", device->usn);
 
         ESP_LOGI(TAG, "Discovered Device: USN=%s, Location=%s", device->usn, device->location);
+        printf("Discovered Device: USN=%s, Location=%s\n", device->usn, device->location);
+        terminal_view_add_text("Discovered Device: USN=%s, Location=%s\n", device->usn, device->location);
         return true;
     }
 
@@ -119,5 +121,7 @@ void dial_client_deinit(DIALClient *client) {
     if (client->socket_fd >= 0) {
         close(client->socket_fd);
         client->socket_fd = -1;
+        printf("Socket closed\n");
+        terminal_view_add_text("Socket closed\n");
     }
 }

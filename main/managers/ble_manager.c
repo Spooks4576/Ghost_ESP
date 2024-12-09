@@ -317,25 +317,23 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
 }
 
 void ble_print_raw_packet_callback(struct ble_gap_event *event, size_t len) {
-    
     int advertisementRssi = event->disc.rssi;
 
-    
     char advertisementMac[18];
     snprintf(advertisementMac, sizeof(advertisementMac), "%02x:%02x:%02x:%02x:%02x:%02x",
              event->disc.addr.val[0], event->disc.addr.val[1], event->disc.addr.val[2],
              event->disc.addr.val[3], event->disc.addr.val[4], event->disc.addr.val[5]);
 
+    // Remove or comment out the following lines to stop logging raw advertisement data
+    // printf("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
+    // TERMINAL_VIEW_ADD_TEXT("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
     
-    printf("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
-    TERMINAL_VIEW_ADD_TEXT("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
-    
-    printf("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
-    TERMINAL_VIEW_ADD_TEXT("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
-    for (size_t i = 0; i < event->disc.length_data; i++) {
-        printf("%02x ", event->disc.data[i]);
-    }
-    printf("\n");
+    // printf("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
+    // TERMINAL_VIEW_ADD_TEXT("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
+    // for (size_t i = 0; i < event->disc.length_data; i++) {
+    //     printf("%02x ", event->disc.data[i]);
+    // }
+    // printf("\n");
 }
 
 void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
@@ -440,9 +438,10 @@ void ble_start_scanning(void) {
     int rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, ble_gap_event_general, NULL);
     if (rc != 0) {
         ESP_LOGE(TAG_BLE, "Error starting BLE scan; rc=%d", rc);
+        TERMINAL_VIEW_ADD_TEXT("Error starting BLE scan; rc=%d\n", rc);
     } else {
         ESP_LOGI(TAG_BLE, "Scanning started...");
-        TERMINAL_VIEW_ADD_TEXT("Scanning started...");
+        TERMINAL_VIEW_ADD_TEXT("Scanning started...\n");
     }
 }
 
@@ -494,6 +493,7 @@ if (!ble_initialized) {
     ble_initialized = true;
 
     ESP_LOGI(TAG_BLE, "BLE initialized");
+    TERMINAL_VIEW_ADD_TEXT("BLE initialized\n");
 }
 #endif
 }
@@ -509,6 +509,7 @@ void ble_deinit(void) {
         nimble_port_stop();
         ble_initialized = false;
         ESP_LOGI(TAG_BLE, "BLE deinitialized successfully.");
+        TERMINAL_VIEW_ADD_TEXT("BLE deinitialized successfully.\n");
     }
 }
 
