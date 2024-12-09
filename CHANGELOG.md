@@ -18,6 +18,7 @@
 
 ## 🖥️ User Interface Updates
 - Added more terminal view logs - @jaylikesbunda, @Spooks4576  
-- WebUI fixes for better functionality - @Spooks4576  
+- WebUI fixes for better functionality - @Spooks4576
+- Better access for shared lvgl thread for panels where other work needs to be performed - @i-am-shodan
 
 ...changelog starts here... 
