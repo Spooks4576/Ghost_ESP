@@ -159,6 +159,8 @@ bool lvgl_port_lock(uint32_t timeout_ms);
  */
 void lvgl_port_unlock(void);
 
+void touch_driver_read_axs15231b(lv_indev_drv_t *drv, lv_indev_data_t *data);
+
 #ifdef __cplusplus
 }
 #endif

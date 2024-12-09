@@ -381,14 +381,14 @@ void display_manager_init(void) {
 #endif
 #endif
 
+    display_manager_init_success = true;
+
 #ifndef CONFIG_JC3248W535EN_LCD // JC3248W535EN has its own lvgl task
     xTaskCreate(lvgl_tick_task, "LVGL Tick Task", 4096, NULL, RENDERING_TASK_PRIORITY, NULL);
 #endif
     if (xTaskCreate(hardware_input_task, "RawInput", 2048, NULL, HARDWARE_INPUT_TASK_PRIORITY, NULL) != pdPASS) {
         printf("Failed to create RawInput task\n");
     }
-
-    display_manager_init_success = true;
 }
 
 bool display_manager_register_view(View *view) {
@@ -552,7 +552,12 @@ void hardware_input_task(void *pvParameters) {
         #endif
 
         #ifdef CONFIG_USE_TOUCHSCREEN
-            touch_driver_read(&touch_driver, &touch_data);
+
+            #ifdef CONFIG_JC3248W535EN_LCD
+                touch_driver_read_axs15231b(&touch_driver, &touch_data);
+            #else
+                touch_driver_read(&touch_driver, &touch_data);
+            #endif
 
             if (touch_data.state == LV_INDEV_STATE_PR && !touch_active) {
                 touch_active = true;

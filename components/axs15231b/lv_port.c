@@ -612,7 +612,7 @@ static void lvgl_port_touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *
     }
 }
 
-void touch_driver_read(lv_indev_drv_t *drv, lv_indev_data_t *data)
+void touch_driver_read_axs15231b(lv_indev_drv_t *drv, lv_indev_data_t *data)
 {
     if (drv == NULL || data == NULL)
     {

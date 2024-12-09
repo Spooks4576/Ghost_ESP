@@ -8,7 +8,6 @@
 #include <string.h>
 
 lv_obj_t *terminal_textarea = NULL;
-char text_buffer[1024] = "";
 uint32_t last_update = 0;
 #define MAX_TEXT_LENGTH 4096
 
@@ -61,8 +60,6 @@ void terminal_view_add_text(const char *text) {
     lv_textarea_add_text(terminal_textarea, "\n");
     
     lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
-    
-    lv_task_handler();
 }
 
 void terminal_view_hardwareinput_callback(InputEvent *event) {
@@ -78,32 +75,27 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
                 lv_textarea_cursor_down(terminal_textarea);
             }
         } else {
-            handle_serial_command("stop");
-            handle_serial_command("stopspam");
-            handle_serial_command("stopdeauth");
-            handle_serial_command("capture -stop");
-            handle_serial_command("capture -blestop");
-            handle_serial_command("capture -skimmer stop");
-            handle_serial_command("stopportal");
-            handle_serial_command("startwd -s");
-            handle_serial_command("gpsinfo -s");
-            handle_serial_command("blewardriving -s");
             display_manager_switch_view(&options_menu_view);
+            simulateCommand("stop");
+            simulateCommand("stopspam");
+            simulateCommand("stopdeauth");
+            simulateCommand("capture -stop");
+            simulateCommand("stopportal");
+            simulateCommand("gpsinfo -s");
+            simulateCommand("blewardriving -s");
+            return;
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
         if (button == 1) {
-            handle_serial_command("stop");
-            handle_serial_command("stopspam");
-            handle_serial_command("stopdeauth");
-            handle_serial_command("capture -stop");
-            handle_serial_command("capture -blestop");
-            handle_serial_command("capture -skimmer stop");
-            handle_serial_command("stopportal");
-            handle_serial_command("startwd -s");
-            handle_serial_command("gpsinfo -s");
-            handle_serial_command("blewardriving -s");
             display_manager_switch_view(&options_menu_view);
+            simulateCommand("stop");
+            simulateCommand("stopspam");
+            simulateCommand("stopdeauth");
+            simulateCommand("capture -stop");
+            simulateCommand("stopportal");
+            simulateCommand("gpsinfo -s");
+            simulateCommand("blewardriving -s");
             return;
         }
 

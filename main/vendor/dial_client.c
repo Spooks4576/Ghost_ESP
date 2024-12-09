@@ -110,7 +110,6 @@ bool parse_ssdp_response(const char *response, Device *device) {
 
         ESP_LOGI(TAG, "Discovered Device: USN=%s, Location=%s", device->usn, device->location);
         printf("Discovered Device: USN=%s, Location=%s\n", device->usn, device->location);
-        TERMINAL_VIEW_ADD_TEXT("Discovered Device: USN=%s, Location=%s\n", device->usn, device->location);
         return true;
     }
 

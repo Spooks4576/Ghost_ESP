@@ -693,6 +693,8 @@ void handle_capture_scan(int argc, char** argv) {
         printf("Stopping packet capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Stopping packet capture...\n");
         wifi_manager_stop_monitor_mode();
+        ble_stop();
+        ble_stop_skimmer_detection();
         pcap_file_close();
     }
 
@@ -702,19 +704,7 @@ void handle_capture_scan(int argc, char** argv) {
         ble_start_capture();
     }
 
-    if (strcmp(capturetype, "-blestop") == 0) {
-        printf("Stopping BLE packet capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Stopping BLE packet capture...\n");
-        ble_stop();
-        pcap_file_close();
-    }
-
     if (strcmp(capturetype, "-skimmer") == 0) {
-        if (argc > 2 && strcmp(argv[2], "stop") == 0) {
-            printf("Stopping BLE\nSkimmer detection...\n");
-            TERMINAL_VIEW_ADD_TEXT("Stopping BLE\nSkimmer detection...\n");
-            ble_stop_skimmer_detection();
-        } else {
             printf("Starting BLE\nSkimmer detection...");
             TERMINAL_VIEW_ADD_TEXT("Starting BLE\nSkimmer detection...");
             int err = pcap_file_open("skimmer_scan", PCAP_CAPTURE_BLUETOOTH);
@@ -725,10 +715,8 @@ void handle_capture_scan(int argc, char** argv) {
                 printf("PCAP capture started\nSuspicious devices will be logged\n");
                 TERMINAL_VIEW_ADD_TEXT("PCAP capture started\nSuspicious devices will be logged\n");
             }
-            
-            // Start skimmer detection
-            ble_start_skimmer_detection();
-        }
+        // Start skimmer detection
+        ble_start_skimmer_detection();
     }
 }
 
