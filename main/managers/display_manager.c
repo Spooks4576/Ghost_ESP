@@ -9,6 +9,7 @@
 #include "managers/views/options_screen.h"
 #include "managers/views/main_menu_screen.h"
 #include "managers/settings_manager.h"
+#include "managers/views/terminal_screen.h"
 #include "driver/gpio.h"
 #ifdef CONFIG_USE_CARDPUTER
 #include "vendor/m5/m5gfx_wrapper.h"
@@ -53,6 +54,17 @@ lv_obj_t *battery_label = NULL;
 bool display_manager_init_success = false;
 
 #define FADE_DURATION_MS 10
+
+// Default timeout duration in milliseconds
+#define DEFAULT_DISPLAY_TIMEOUT_MS 10000
+
+// Global variable to hold the configurable timeout duration
+static uint32_t display_timeout_ms = DEFAULT_DISPLAY_TIMEOUT_MS;
+
+// Function to set the display timeout duration
+void set_display_timeout(uint32_t timeout_ms) {
+    display_timeout_ms = timeout_ms;
+}
 
 #ifdef CONFIG_USE_CARDPUTER
 Keyboard_t gkeyboard;
@@ -568,7 +580,7 @@ void hardware_input_task(void *pvParameters) {
             }
 
             #ifdef CONFIG_HAS_BATTERY
-                if ((xTaskGetTickCount() - last_touch_time > pdMS_TO_TICKS(10000) && touch_data.state == LV_INDEV_STATE_REL)) {
+                if ((xTaskGetTickCount() - last_touch_time > pdMS_TO_TICKS(display_timeout_ms) && touch_data.state == LV_INDEV_STATE_REL)) {
                     if (!is_backlight_dimmed) {
                         set_backlight_brightness(0);
                         is_backlight_dimmed = true;

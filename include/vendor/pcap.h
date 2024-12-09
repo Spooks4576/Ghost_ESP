@@ -39,15 +39,20 @@ static size_t buffer_offset = 0;
 static FILE *pcap_file = NULL;
 static SemaphoreHandle_t pcap_mutex = NULL;
 
-// Add initialization function declaration
-esp_err_t pcap_init(void);
+#define DLT_IEEE802_11_RADIO 127
+#define DLT_BLUETOOTH_HCI_H4 201
 
-esp_err_t pcap_write_global_header(FILE* f);
-esp_err_t pcap_file_open(const char* base_file_name);
-esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length);
+typedef enum {
+    PCAP_CAPTURE_WIFI,
+    PCAP_CAPTURE_BLUETOOTH
+} pcap_capture_type_t;
+
+
+esp_err_t pcap_init(void);
+esp_err_t pcap_write_global_header(FILE* f, pcap_capture_type_t capture_type);
+esp_err_t pcap_file_open(const char* base_file_name, pcap_capture_type_t capture_type);
+esp_err_t pcap_write_packet_to_buffer(const void* packet, size_t length, pcap_capture_type_t capture_type);
 esp_err_t pcap_flush_buffer_to_file();
 void pcap_file_close();
-
-
 
 #endif

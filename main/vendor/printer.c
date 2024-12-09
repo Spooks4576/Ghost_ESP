@@ -66,6 +66,7 @@ void print_text_to_printer(const char *printer_ip, const char *text, int font_px
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        TERMINAL_VIEW_ADD_TEXT("Failed to create printer socket\n");
         return;
     }
 
@@ -76,11 +77,13 @@ void print_text_to_printer(const char *printer_ip, const char *text, int font_px
     int err = connect(sock, (struct sockaddr *)&printer_addr, sizeof(printer_addr));
     if (err != 0) {
         ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
+        TERMINAL_VIEW_ADD_TEXT("Failed to connect to printer at %s\n", printer_ip);
         close(sock);
         return;
     }
 
     ESP_LOGI(TAG, "Connected to printer at %s:%d", printer_ip, PRINTER_PORT);
+    TERMINAL_VIEW_ADD_TEXT("Connected to printer at %s\n", printer_ip);
 
     
     int font_points = pixels_to_points(font_px);
@@ -113,12 +116,15 @@ void print_text_to_printer(const char *printer_ip, const char *text, int font_px
     err = send(sock, formatted_text, len, 0);
     if (err < 0) {
         ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+        TERMINAL_VIEW_ADD_TEXT("Failed to send data to printer\n");
     } else {
         ESP_LOGI(TAG, "Sent %d bytes to the printer", err);
+        TERMINAL_VIEW_ADD_TEXT("Successfully sent print job to printer\n");
     }
 
     close(sock);
     ESP_LOGI(TAG, "Connection closed");
+    TERMINAL_VIEW_ADD_TEXT("Printer connection closed\n");
 }
 
 
@@ -128,6 +134,7 @@ void eject_blank_pages(const char *printer_ip, int num_pages) {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
         ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        TERMINAL_VIEW_ADD_TEXT("Failed to create printer socket\n");
         return;
     }
 
@@ -138,11 +145,13 @@ void eject_blank_pages(const char *printer_ip, int num_pages) {
     int err = connect(sock, (struct sockaddr *)&printer_addr, sizeof(printer_addr));
     if (err != 0) {
         ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
+        TERMINAL_VIEW_ADD_TEXT("Failed to connect to printer at %s\n", printer_ip);
         close(sock);
         return;
     }
 
     ESP_LOGI(TAG, "Connected to printer at %s:%d", printer_ip, PRINTER_PORT);
+    TERMINAL_VIEW_ADD_TEXT("Connected to printer at %s\n", printer_ip);
 
 
     for (int i = 0; i < num_pages; i++) {
@@ -150,13 +159,16 @@ void eject_blank_pages(const char *printer_ip, int num_pages) {
         err = send(sock, form_feed, strlen(form_feed), 0);
         if (err < 0) {
             ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+            TERMINAL_VIEW_ADD_TEXT("Failed to eject page %d\n", i + 1);
             break;
         }
         ESP_LOGI(TAG, "Ejected page %d", i + 1);
+        TERMINAL_VIEW_ADD_TEXT("Ejected page %d\n", i + 1);
     }
 
     close(sock);
     ESP_LOGI(TAG, "Connection closed");
+    TERMINAL_VIEW_ADD_TEXT("Printer connection closed\n");
 }
 
 
@@ -190,14 +202,17 @@ void handle_printer_command(int argc, char **argv) {
     
     if (printer_ip == NULL || printer_ip[0] == '\0') {
         ESP_LOGE(TAG, "Error: Printer IP cannot be empty.");
+        TERMINAL_VIEW_ADD_TEXT("Error: Printer IP cannot be empty\n");
         return;
     }
     if (text == NULL || text[0] == '\0') {
         ESP_LOGE(TAG, "Error: Text to print cannot be empty.");
+        TERMINAL_VIEW_ADD_TEXT("Error: Text to print cannot be empty\n");
         return;
     }
     if (font_px <= 0) {
         ESP_LOGE(TAG, "Error: Font size must be a positive integer.");
+        TERMINAL_VIEW_ADD_TEXT("Error: Invalid font size, using default (50)\n");
         font_px = 50;
     }
 
@@ -226,6 +241,7 @@ void handle_printer_command(int argc, char **argv) {
     }
 
     ESP_LOGI(TAG, "Printing to printer at IP: %s with text: %s, font size: %d, alignment: %s", printer_ip, text, font_px, alignment_str);
+    TERMINAL_VIEW_ADD_TEXT("Printing: \"%s\" (size: %d, alignment: %s)\n", text, font_px, alignment_str);
 
     print_text_to_printer(printer_ip, text, font_px, alignment_str);
 }

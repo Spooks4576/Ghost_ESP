@@ -55,14 +55,12 @@ void terminal_view_destroy(void) {
 
 void terminal_view_add_text(const char *text) {
     if (terminal_textarea == NULL) return;
-
+    if (text == NULL) return;
     
     lv_textarea_add_text(terminal_textarea, text);
     lv_textarea_add_text(terminal_textarea, "\n");
-
     
     lv_textarea_set_cursor_pos(terminal_textarea, LV_TEXTAREA_CURSOR_LAST);
-
     
     lv_task_handler();
 }
@@ -84,6 +82,12 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             handle_serial_command("stopspam");
             handle_serial_command("stopdeauth");
             handle_serial_command("capture -stop");
+            handle_serial_command("capture -blestop");
+            handle_serial_command("capture -skimmer stop");
+            handle_serial_command("stopportal");
+            handle_serial_command("startwd -s");
+            handle_serial_command("gpsinfo -s");
+            handle_serial_command("blewardriving -s");
             display_manager_switch_view(&options_menu_view);
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
@@ -93,6 +97,12 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             handle_serial_command("stopspam");
             handle_serial_command("stopdeauth");
             handle_serial_command("capture -stop");
+            handle_serial_command("capture -blestop");
+            handle_serial_command("capture -skimmer stop");
+            handle_serial_command("stopportal");
+            handle_serial_command("startwd -s");
+            handle_serial_command("gpsinfo -s");
+            handle_serial_command("blewardriving -s");
             display_manager_switch_view(&options_menu_view);
             return;
         }

@@ -4,6 +4,8 @@
 #define COMMAND_H
 
 #include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 typedef void (*CommandFunction)(int argc, char **argv);
 
@@ -19,7 +21,7 @@ void register_command(const char *name, CommandFunction function);
 void unregister_command(const char *name);
 CommandFunction find_command(const char *name);
 
-void* VisualizerHandle;
+extern TaskHandle_t VisualizerHandle;
 
 void register_commands();
 

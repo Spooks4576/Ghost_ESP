@@ -7,6 +7,7 @@
 #include "core/utils.h"
 #include <nvs.h>
 
+
 // Enum for RGB Modes
 typedef enum {
     RGB_MODE_NORMAL = 0,

@@ -3,6 +3,7 @@
 #include "esp_wifi_types.h"
 #include <esp_timer.h>
 #include "vendor/GPS/MicroNMEA.h"
+#include "host/ble_gap.h"  // NimBLE header
 
 void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type);
 void wifi_beacon_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
@@ -12,6 +13,8 @@ void wifi_probe_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wifi_raw_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wifi_eapol_scan_callback(void* buf, wifi_promiscuous_pkt_type_t type);
 void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type);
+void ble_wardriving_callback(struct ble_gap_event *event, void *arg);
+void ble_skimmer_scan_callback(struct ble_gap_event *event, void *arg);
 void gps_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
 
 

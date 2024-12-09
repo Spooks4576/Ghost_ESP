@@ -6,7 +6,6 @@
 #include "driver/sdmmc_types.h"
 #include <stdbool.h>
 
-
 typedef struct {
     sdmmc_card_t *card;
     bool is_initialized;

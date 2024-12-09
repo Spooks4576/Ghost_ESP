@@ -673,6 +673,15 @@
                         <input type="color" id="accent_color_picker" value="#ffffff">
                         <span id="accent_color_hex" style="margin-left: 10px;">#ffffff</span>
                     </div>
+
+                    <div class="input-group">
+                        <label for="display_timeout">Display Timeout (ms)
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Set how long before the display turns off when inactive (1000-60000 ms)</span>
+                            </span>
+                        </label>
+                        <input type="number" id="display_timeout" min="1000" max="60000" step="1000" placeholder="1000 - 60000 ms" required>
+                    </div>
                 </div>
                 <!-- Connect to WiFi Section (Disabled) -->
                 <div class="settings-section" id="connect-wifi-section">
@@ -1307,6 +1316,9 @@
                     } else {
                         document.getElementById('station_ip').value = 'Not connected';
                     }
+
+                    // Display timeout setting
+                    document.getElementById('display_timeout').value = data.display_timeout || DEFAULT_DISPLAY_TIMEOUT_MS;
                 })
                 .catch(error => console.error('Error fetching settings:', error));
         }
@@ -1342,6 +1354,7 @@
                 hex_accent_color: document.getElementById('accent_color_hex').textContent,
                 timezone_str: document.getElementById('timezone_select').value,
                 gps_rx_pin: parseInt(document.getElementById('gps_rx_pin').value),
+                display_timeout: parseInt(document.getElementById('display_timeout').value),
             };
 
             const validationErrors = validateSettings(settings);
@@ -1392,7 +1405,7 @@
             PortalAPSSID = wrapInQuotesIfNeeded(PortalAPSSID);
             PortalDomain = wrapInQuotesIfNeeded(PortalDomain);
 
-            const command = `startportal ${PortalURL} ${PortalSSID} ${PortalPassword} ${PortalAPSSID} ${PortalDomain}`;
+            const command = `startportal`;
 
             fetch('/api/command', {
                 method: 'POST',
@@ -1407,11 +1420,6 @@
                 }
             })
             .catch(error => console.error('Error Sending Evil Portal Command...', error));
-        }
-
-        // Helper function to wrap strings in quotes if they contain spaces
-        function replaceSpacesWithAsterisk(str) {
-            return str.includes(' ') ? str.replace(/ /g, '*') : str;
         }
 
         // Function to validate settings before saving
@@ -1433,9 +1441,17 @@
                 errors.push('Printer Font Size must be between 10 and 72.');
             }
 
-            // Additional validations can be added here
+            
 
             return errors;
+        }
+
+        function wrapInQuotesIfNeeded(str) {
+            if (str.startsWith('"') && str.endsWith('"')) {
+                return str;
+            } else {
+                return `"${str}"`;
+            }
         }
 
         // Function to send text to the printer
@@ -1502,8 +1518,8 @@
                 return;
             }
 
-            const finalssid = replaceSpacesWithAsterisk(ssid);
-            const finalpassword = replaceSpacesWithAsterisk(password);
+            const finalssid = wrapInQuotesIfNeeded(ssid);
+            const finalpassword = wrapInQuotesIfNeeded(password);
             const command = `connect ${finalssid} ${finalpassword}`;
 
             fetch('/api/command', {

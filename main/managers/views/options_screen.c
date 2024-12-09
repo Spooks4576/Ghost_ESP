@@ -46,8 +46,10 @@ static const char *wifi_options[] = {
     "Capture Raw",
     "Capture Eapol",
     "Capture WPS",
+    "Capture PWN",
     "TV Cast (Dial Connect)",
     "Power Printer",
+    "TP Link Test",
     "Go Back",
     "    ",
     NULL
@@ -56,6 +58,8 @@ static const char *wifi_options[] = {
 static const char *bluetooth_options[] = {
     "Find Flippers",
     "Start AirTag Scanner",
+    "Raw BLE Scanner",
+    "BLE Skimmer Detect",
     "Go Back",
     NULL
 };
@@ -63,6 +67,8 @@ static const char *bluetooth_options[] = {
 static const char *gps_options[] = {
     "Start Wardriving",
     "Stop Wardriving",
+    "GPS Info",
+    "BLE Wardriving",
     "Go Back",
     NULL
 };
@@ -416,6 +422,54 @@ if (strcmp(Selected_Option, "Find Flippers") == 0) {
         display_manager_switch_view(&main_menu_view);
     } else {
         printf("Option selected: %s\n", Selected_Option);
+    }
+
+    if (strcmp(Selected_Option, "Capture PWN") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("capture -pwn");
+    }
+
+    if (strcmp(Selected_Option, "TP Link Test") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("tplinktest");
+    }
+
+    if (strcmp(Selected_Option, "Raw BLE Scanner") == 0) {
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("blescan -r");
+#else 
+    error_popup_create("Device Does not Support Bluetooth...");
+#endif
+    }
+
+    if (strcmp(Selected_Option, "BLE Skimmer Detect") == 0) {
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("capture -skimmer");
+#else 
+    error_popup_create("Device Does not Support Bluetooth...");
+#endif
+    }
+
+    if (strcmp(Selected_Option, "GPS Info") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("gpsinfo");
+    }
+
+    if (strcmp(Selected_Option, "BLE Wardriving") == 0) {
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("blewardriving");
+#else 
+    error_popup_create("Device Does not Support Bluetooth...");
+#endif
     }
 }
 

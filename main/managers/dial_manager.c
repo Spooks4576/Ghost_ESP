@@ -1001,58 +1001,72 @@ const char *pick_random_yt_video() {
 
 
 void explore_network(DIALManager *manager) {
+    printf("\n[*] Starting network exploration...\n");
     
     for (int attempt = 0; attempt < 5; ++attempt) {
         Device *devices = (Device *)malloc(sizeof(Device) * 10);
         size_t device_count = 0;
 
+        printf("\n[+] Scan attempt %d/5\n", attempt + 1);
+        printf("    Discovering DIAL-enabled devices...\n");
         
-        ESP_LOGI(TAG, "Discovering devices... (Attempt %d/%d)", attempt + 1, 10);
+        ESP_LOGI(TAG, "Discovering devices... (Attempt %d/%d)", attempt + 1, 5);
         if (dial_client_discover_devices(manager->client, devices, 10, &device_count) != ESP_OK || device_count == 0) {
             ESP_LOGW(TAG, "No devices discovered. Retrying...");
+            printf("    [-] No devices found. Retrying...\n");
             vTaskDelay(500 / portTICK_PERIOD_MS);
             continue;
         }
 
+        printf("    [+] Found %d device(s)!\n", device_count);
         
         for (size_t i = 0; i < device_count; ++i) {
             Device *device = &devices[i];
             ESP_LOGI(TAG, "Discovered Device: %s (Location: %s)", device->uniqueServiceName, device->location);
 
-
             char* appUrl = get_dial_application_url(device->location);
-
-            if (appUrl == NULL)
-            {
+            if (appUrl == NULL) {
+                printf("    [-] Failed to get application URL\n");
                 continue;
             }
+            printf("    [+] Got application URL\n");
 
-            
             if (check_app_status(manager, APP_YOUTUBE, appUrl, device) != ESP_OK) {
+                printf("    [*] YouTube app not running, attempting launch...\n");
                 ESP_LOGI(TAG, "YouTube app is not running. Launching the app...");
                 if (!launch_app(manager, APP_YOUTUBE, appUrl)) {
                     ESP_LOGE(TAG, "Failed to launch YouTube app.");
+                    printf("    [-] Failed to launch YouTube app\n");
                     continue;
                 }
+                printf("    [+] YouTube app launched successfully\n");
+            } else {
+                printf("    [+] YouTube app already running\n");
             }
 
-           
+            printf("    [*] Fetching screen ID...\n");
             if (!fetch_screen_id_with_retries(appUrl, device, manager)) {
                 ESP_LOGE(TAG, "Failed to fetch Screen ID.");
+                printf("    [-] Failed to fetch screen ID\n");
                 continue;
             }
+            printf("    [+] Got screen ID: %s\n", device->screenID);
 
             const char *yt_url = pick_random_yt_video();
+            printf("    [*] Selected video ID: %s\n", yt_url);
 
-            
+            printf("    [*] Sending video command...\n");
             if (send_command("setVideo", yt_url, device) == ESP_OK) {
                 ESP_LOGI(TAG, "YouTube video command sent successfully.");
+                printf("    [+] Video command sent successfully!\n");
             } else {
                 ESP_LOGE(TAG, "Failed to send YouTube command.");
+                printf("    [-] Failed to send video command\n");
             }
         }
 
         free(devices);
+        printf("\n[+] Network exploration complete!\n\n");
         break;
     }
 }
