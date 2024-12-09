@@ -58,7 +58,6 @@ static const char *wifi_options[] = {
 static const char *bluetooth_options[] = {
     "Find Flippers",
     "Start AirTag Scanner",
-    "BLE Spam Detector",
     "Raw BLE Scanner",
     "BLE Skimmer Detect",
     "Go Back",
@@ -435,16 +434,6 @@ if (strcmp(Selected_Option, "Find Flippers") == 0) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("tplinktest");
-    }
-
-    if (strcmp(Selected_Option, "BLE Spam Detector") == 0) {
-#ifndef CONFIG_IDF_TARGET_ESP32S2
-        display_manager_switch_view(&terminal_view);
-        vTaskDelay(pdMS_TO_TICKS(10));
-        simulateCommand("blescan -ds");
-#else 
-    error_popup_create("Device Does not Support Bluetooth...");
-#endif
     }
 
     if (strcmp(Selected_Option, "Raw BLE Scanner") == 0) {
