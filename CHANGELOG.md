@@ -1,25 +1,23 @@
 // changelog.md 
 
-## TODO
-- Evil Portal Rewrite!
-- Street Detector
-- Port Scanner
-- Web Console
+# 1.4.5
+## 🛠️ General Improvements
+- Added starting logs to capture commands - @jaylikesbunda  
+- Improved WiFi connection logic - @jaylikesbunda  
+- Removed Wi-Fi warnings and color codes for cleaner logs - @jaylikesbunda  
+- Added support for variable display timeout on TWatch S3 - @jaylikesbunda  
+- Added "gpsinfo" command to retrieve GPS information - @jaylikesbunda  
+- Made sure `.csv` files are properly closed with a generic stop command - @jaylikesbunda  
+- Miscellaneous fixes and improvements - @jaylikesbunda, @Spooks4576  
 
+## 🌐 Network and Communication Features
+- Enhanced Deauth Attack with bidirectional frames, proper 802.11 sequencing, and rate limiting - @jaylikesbunda  
+- Added BLE Packet Capture support - @jaylikesbunda  
+- Added BLE Wardriving - @jaylikesbunda  
+- Added support for capturing packets from card skimmers - @jaylikesbunda  
 
-## 1.4.5
-- Added starting logs to capture commands - @jaylikesbunda
-- Improve WiFi Connection logic - @jaylikesbunda
-- Add more terminal view logs - @jaylikesbunda, @Spooks4576
-- Added support for variable display timeout on TWatch S3 - @jaylikesbunda
-- Added "gpsinfo" command to get GPS information - @jaylikesbunda
-- make sure .csv files are closed with generic stop command - @jaylikesbunda
-- Removed wifi warnings and color codes from logs to clean up the output - @jaylikesbunda
-- Added BLE Packet Capture support - @jaylikesbunda
-- WebUI Fixes - @Spooks4576
-- Added BLE Wardriving - @jaylikesbunda
-- Added support for capturing packets from card skimmers - @jaylikesbunda
-- Enhanced Deauth Attack with bidirectional frames, proper 802.11 sequencing, and rate limiting - @jaylikesbunda
-- Miscellaneous fixes and improvements - @jaylikesbunda, @Spooks4576
+## 🖥️ User Interface Updates
+- Added more terminal view logs - @jaylikesbunda, @Spooks4576  
+- WebUI fixes for better functionality - @Spooks4576  
 
 ...changelog starts here... 
