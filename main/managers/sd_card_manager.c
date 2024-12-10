@@ -497,6 +497,17 @@ esp_err_t sd_card_setup_directory_structure() {
     const char* gps_dir = "/mnt/ghostesp/gps";
     const char* games_dir = "/mnt/ghostesp/games";
 
+    if (!sd_card_exists(root_dir)) {
+        printf("Creating directory: %s\n", root_dir);
+        esp_err_t ret = sd_card_create_directory(root_dir);
+        if (ret != ESP_OK) {
+            printf("Failed to create directory %s: %s\n", root_dir, esp_err_to_name(ret));
+            return ret;
+        }
+    } else {
+        printf("Directory %s already exists\n", root_dir);
+    }
+
     if (!sd_card_exists(games_dir)) {
         printf("Creating directory: %s\n", games_dir);
         esp_err_t ret = sd_card_create_directory(games_dir);
@@ -520,18 +531,6 @@ esp_err_t sd_card_setup_directory_structure() {
         printf("Directory %s already exists\n", gps_dir);
     }
 
-    if (!sd_card_exists(root_dir)) {
-        printf("Creating directory: %s\n", root_dir);
-        esp_err_t ret = sd_card_create_directory(root_dir);
-        if (ret != ESP_OK) {
-            printf("Failed to create directory %s: %s\n", root_dir, esp_err_to_name(ret));
-            return ret;
-        }
-    } else {
-        printf("Directory %s already exists\n", root_dir);
-    }
-
-    
     if (!sd_card_exists(debug_dir)) {
         printf("Creating directory: %s\n", debug_dir);
         esp_err_t ret = sd_card_create_directory(debug_dir);
