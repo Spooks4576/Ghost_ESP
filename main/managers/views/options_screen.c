@@ -86,20 +86,22 @@ void options_menu_create() {
     int screen_width = LV_HOR_RES;
     int screen_height = LV_VER_RES;
 
-
     display_manager_fill_screen(lv_color_black());
 
 
     root = lv_obj_create(lv_scr_act());
     options_menu_view.root = root;
-    lv_obj_set_size(root, LV_HOR_RES, LV_VER_RES);
+    lv_obj_set_size(root, screen_width, screen_height);
     lv_obj_set_style_bg_color(root, lv_color_black(), 0);
     lv_obj_align(root, LV_ALIGN_BOTTOM_MID, -12, 0);
     lv_obj_set_scrollbar_mode(root, LV_SCROLLBAR_MODE_OFF);
 
+#ifdef CONFIG_JC3248W535EN_LCD
+    screen_width -= 50;
+#endif
     
     lv_obj_t *list = lv_list_create(root);
-    lv_obj_set_size(list, LV_HOR_RES, LV_VER_RES);
+    lv_obj_set_size(list, screen_width, screen_height);
     lv_obj_set_style_pad_all(list, screen_width < 240 ? 2 : 4, 0);
     lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_bg_color(list, lv_color_black(), 0);
@@ -210,7 +212,7 @@ void handle_hardware_button_press_options(InputEvent *event) {
     if (event->type == INPUT_TYPE_TOUCH) {
         lv_indev_data_t *data = &event->data.touch_data;
 
-        int screen_height = LV_VER_RES;
+        int screen_height = CONFIG_TFT_HEIGHT;
         int third_height = screen_height / 3;
 
         if (data->point.y < third_height) {
