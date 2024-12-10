@@ -622,6 +622,7 @@ void touch_driver_read_axs15231b(lv_indev_drv_t *drv, lv_indev_data_t *data)
 
     memcpy((void*)data, (void*)&lastTouchData, sizeof(lv_indev_data_t));
 
+    lastTouchData.state = LV_INDEV_STATE_RELEASED;
     drv = NULL;
 }
 
