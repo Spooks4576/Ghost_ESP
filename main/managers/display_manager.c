@@ -29,6 +29,7 @@
 #endif
 
 #ifdef CONFIG_JC3248W535EN_LCD
+#include "axs15231b/lv_port.h"
 #include "vendor/drivers/axs15231b.h"
 #endif
 
