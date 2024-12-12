@@ -7,6 +7,7 @@
 #include "freertos/task.h"
 #include "core/serial_manager.h"
 #include "esp_wifi_types.h"
+#include "esp_timer.h"
 #include <stdio.h>
 
 EOptionsMenuType SelectedMenuType = OT_Wifi;
@@ -14,6 +15,7 @@ int selected_item_index = 0;
 lv_obj_t *root = NULL;
 lv_obj_t *menu_container = NULL;
 int num_items = 0;
+unsigned long createdTimeInMs = 0;
 
 static void select_menu_item(int index); // Forward Declaration
 
@@ -80,7 +82,6 @@ static const char *settings_options[] = {
     "Go Back",
     NULL
 };
-
 
 void options_menu_create() {
     int screen_width = LV_HOR_RES;
@@ -165,6 +166,8 @@ void options_menu_create() {
     select_menu_item(0);
 
     display_manager_add_status_bar(options_menu_type_to_string(SelectedMenuType));
+
+    createdTimeInMs = (unsigned long) (esp_timer_get_time() / 1000ULL);
 }
 
 static void select_menu_item(int index) {
@@ -209,6 +212,11 @@ static void select_menu_item(int index) {
 }
 
 void handle_hardware_button_press_options(InputEvent *event) {
+#ifdef CONFIG_JC3248W535EN_LCD
+    // lvgl on the JC3248W535EN doesn't require custom input handling
+    return;
+#endif
+
     if (event->type == INPUT_TYPE_TOUCH) {
         lv_indev_data_t *data = &event->data.touch_data;
 
@@ -241,7 +249,16 @@ void handle_hardware_button_press_options(InputEvent *event) {
     }
 }
 
-void option_event_cb(const char* Selected_Option) {
+void option_event_cb(lv_event_t * e) {
+
+    // when moving to the options screen ignore any click events for 1s to make
+    // sure user input destined for the previosu is not accidentally used here
+    if ((esp_timer_get_time() / 1000ULL) - createdTimeInMs <= 500)
+    {
+        return;
+    }
+
+    char* Selected_Option = (char*) lv_event_get_user_data(e);
 
     if (strcmp(Selected_Option, "Scan Access Points") == 0) {
         display_manager_switch_view(&terminal_view);
