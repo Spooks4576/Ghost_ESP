@@ -617,7 +617,12 @@ static void nmea_parser_task_entry(void *arg)
                 break;
             case UART_BUFFER_FULL:
                 ESP_LOGW(GPS_TAG, "Ring Buffer Full");
-                uart_flush(esp_gps->uart_port);
+                // Read and discard data until we clear the buffer
+                uint8_t temp_buffer[64];
+                while (uart_read_bytes(esp_gps->uart_port, temp_buffer, sizeof(temp_buffer), 0) > 0) {
+                    // Small delay to prevent task starvation
+                    vTaskDelay(pdMS_TO_TICKS(1));
+                }
                 xQueueReset(esp_gps->event_queue);
                 break;
             case UART_BREAK:

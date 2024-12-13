@@ -324,54 +324,70 @@ float get_accuracy_percentage(float hdop) {
 
 void gps_info_display_task(void *pvParameters) {
     const TickType_t delay = pdMS_TO_TICKS(5000);
-    char lat_str[20], lon_str[20];
+    char output_buffer[512] = {0}; 
+    char lat_str[20] = {0}, lon_str[20] = {0};
     static wardriving_data_t gps_data = {0};
     
+    ESP_LOGI(GPS_TAG, "GPS info display task started");
+    
     while(1) {
+        // Add null check for nmea_hdl
+        if (!nmea_hdl) {
+            ESP_LOGW(GPS_TAG, "NMEA handle is null");
+            vTaskDelay(delay);
+            continue;
+        }
+
+        ESP_LOGD(GPS_TAG, "Getting GPS structure");
         gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
         
+        if (!gps) {
+            ESP_LOGW(GPS_TAG, "GPS structure is null");
+            vTaskDelay(delay);
+            continue;
+        }
+        
         // Only populate GPS data, don't trigger CSV operations
-        if (gps && gps->valid) {
+        if (gps->valid) {
+            ESP_LOGD(GPS_TAG, "Populating GPS data");
             populate_gps_quality_data(&gps_data, gps);
         }
         
-        // Simple validation
+        // Build complete string before sending to terminal
         if (!gps->valid || !is_valid_date(&gps->date)) {
-            printf("Searching sats...\n");
-            TERMINAL_VIEW_ADD_TEXT("Searching sats...\n");
-            vTaskDelay(pdMS_TO_TICKS(5000));
+            ESP_LOGD(GPS_TAG, "GPS not valid, showing searching message");
+            strncpy(output_buffer, "Searching sats...\n", sizeof(output_buffer) - 1);
+            output_buffer[sizeof(output_buffer) - 1] = '\0';
         } else {
+            ESP_LOGD(GPS_TAG, "Formatting GPS coordinates");
             format_coordinates(gps_data.latitude, gps_data.longitude, lat_str, lon_str);
             const char* direction = get_cardinal_direction(gps_data.gps_quality.course);
-            float speed_kmh = gps_data.gps_quality.speed * 3.6;
             
-            // Page 1: Position and Movement
-            printf("GPS Info\n");
-            TERMINAL_VIEW_ADD_TEXT("GPS Info\n");
-            printf("Sats: %d/%d\n", gps_data.gps_quality.satellites_used, GPS_MAX_SATELLITES_IN_USE);
-            TERMINAL_VIEW_ADD_TEXT("Sats: %d/%d\n", gps_data.gps_quality.satellites_used, GPS_MAX_SATELLITES_IN_USE);
-            printf("Lat: %s\n", lat_str);
-            TERMINAL_VIEW_ADD_TEXT("Lat: %s\n", lat_str);
-            printf("Long: %s\n", lon_str);
-            TERMINAL_VIEW_ADD_TEXT("Long: %s\n", lon_str);
-            printf("Direction: %d° %s\n", (int)gps_data.gps_quality.course, direction);
-            TERMINAL_VIEW_ADD_TEXT("Direction: %d° %s\n", (int)gps_data.gps_quality.course, direction);
-            
-            vTaskDelay(delay);  // Full 5-second delay
-            
-            // Page 2: Signal Quality
-            printf("Alt: %dm\n", (int)gps_data.altitude);
-            TERMINAL_VIEW_ADD_TEXT("Alt: %dm\n", (int)gps_data.altitude);
-            printf("Speed: %d km/h\n", (int)speed_kmh);
-            TERMINAL_VIEW_ADD_TEXT("Speed: %d km/h\n", (int)speed_kmh);
-            printf("Accuracy: %.1fm (%.0f%%)\n", 
-                gps_data.accuracy,
-                get_accuracy_percentage(gps_data.gps_quality.hdop));
-            TERMINAL_VIEW_ADD_TEXT("Accuracy: %.1fm (%.0f%%)\n", gps_data.accuracy, get_accuracy_percentage(gps_data.gps_quality.hdop));
-            printf("Quality: %s\n", get_gps_quality_string(&gps_data));
-            TERMINAL_VIEW_ADD_TEXT("Quality: %s\n", get_gps_quality_string(&gps_data));
-            
-            vTaskDelay(delay);  // Full 5-second delay
+            // Use safer snprintf with size checking
+            int written = snprintf(output_buffer, sizeof(output_buffer),
+                    "GPS Info\n"
+                    "Sats: %d/%d\n"
+                    "Lat: %s\n"
+                    "Long: %s\n"
+                    "Direction: %d° %s\n",
+                    gps_data.gps_quality.satellites_used, 
+                    GPS_MAX_SATELLITES_IN_USE,
+                    lat_str,
+                    lon_str,
+                    (int)gps_data.gps_quality.course,
+                    direction ? direction : "Unknown");
+
+            // Verify the write was successful
+            if (written < 0 || written >= sizeof(output_buffer)) {
+                ESP_LOGE(GPS_TAG, "Buffer overflow prevented in GPS info formatting");
+                strncpy(output_buffer, "GPS Data Error\n", sizeof(output_buffer) - 1);
+                output_buffer[sizeof(output_buffer) - 1] = '\0';
+            }
         }
+        
+        // Safely send to terminal with single call
+        terminal_view_add_text(output_buffer);
+        
+        vTaskDelay(delay);
     }
 }
