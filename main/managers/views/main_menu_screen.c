@@ -13,6 +13,7 @@
 #endif
 #include <stdio.h>
 
+static const char* TAG = "MainMenu";
 
 lv_obj_t *menu_container;
 static int selected_item_index = 0;
@@ -49,66 +50,74 @@ bool wifi_is_connected() {
 }
 
 void update_time_label(lv_timer_t *timer) {
-    static bool time_synced = false;
-
-    if (wifi_is_connected() && !time_synced) {
-        printf("Internet connection detected. Syncing time...");
-
-        setenv("TZ", settings_get_timezone_str(&G_Settings), 1);
+    extern DisplayManager dm;
+    
+    if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
+        ESP_LOGI(TAG, "Updating time with timezone: %s", G_Settings.selected_timezone);
+        setenv("TZ", G_Settings.selected_timezone, 1);
         tzset();
+        xSemaphoreGive(dm.mutex);
+        
+        static bool time_synced = false;
 
-        time_t now;
-        struct tm timeinfo;
-        time(&now);
-        localtime_r(&now, &timeinfo);
+        if (wifi_is_connected() && !time_synced) {
+            ESP_LOGI(TAG, "Internet connection detected, syncing time...");
 
-        if (timeinfo.tm_year >= (2020 - 1900)) {
-            printf("SNTP time synchronized: %s", asctime(&timeinfo));
+            time_t now;
+            struct tm timeinfo;
+            time(&now);
+            localtime_r(&now, &timeinfo);
 
-            // Sync RTC with SNTP time
-            RTC_Date rtc_time = {
-                .year = timeinfo.tm_year + 1900,
-                .month = timeinfo.tm_mon + 1,
-                .day = timeinfo.tm_mday,
-                .hour = timeinfo.tm_hour,
-                .minute = timeinfo.tm_min,
-                .second = timeinfo.tm_sec,
-            };
+            if (timeinfo.tm_year >= (2020 - 1900)) {
+                printf("SNTP time synchronized: %s", asctime(&timeinfo));
 
-            if (pcf8563_set_datetime(&rtc_time) == ESP_OK) {
-                printf("RTC successfully synchronized with SNTP\n");
-                time_synced = true; // Mark synchronization as completed
+                // Sync RTC with SNTP time
+                RTC_Date rtc_time = {
+                    .year = timeinfo.tm_year + 1900,
+                    .month = timeinfo.tm_mon + 1,
+                    .day = timeinfo.tm_mday,
+                    .hour = timeinfo.tm_hour,
+                    .minute = timeinfo.tm_min,
+                    .second = timeinfo.tm_sec,
+                };
+
+                if (pcf8563_set_datetime(&rtc_time) == ESP_OK) {
+                    printf("RTC successfully synchronized with SNTP\n");
+                    time_synced = true; // Mark synchronization as completed
+                } else {
+                    printf("Failed to sync RTC with SNTP\n");
+                }
             } else {
-                printf("Failed to sync RTC with SNTP\n");
+                printf("Failed to synchronize time using SNTP\n");
             }
-        } else {
-            printf("Failed to synchronize time using SNTP\n");
-        }
-    }
-
-
-    if (pcf8563_get_datetime(&current_time) == ESP_OK) {
-        char time_str[16];
-        int hour = current_time.hour;
-        const char *period = "AM";
-
-        
-        if (hour >= 12) {
-            period = "PM";
-            if (hour > 12) {
-                hour -= 12;
-            }
-        } else if (hour == 0) {
-            hour = 12;
         }
 
 
-        snprintf(time_str, sizeof(time_str), "%02d:%02d %s",
-                hour, current_time.minute, period);
+        if (pcf8563_get_datetime(&current_time) == ESP_OK) {
+            char time_str[16];
+            int hour = current_time.hour;
+            const char *period = "AM";
 
-        
-        lv_label_set_text(time_label, time_str);
-        lv_obj_set_pos(time_label, 70, 33);
+            
+            if (hour >= 12) {
+                period = "PM";
+                if (hour > 12) {
+                    hour -= 12;
+                }
+            } else if (hour == 0) {
+                hour = 12;
+            }
+
+
+            snprintf(time_str, sizeof(time_str), "%02d:%02d %s",
+                    hour, current_time.minute, period);
+
+            
+            lv_label_set_text(time_label, time_str);
+            lv_obj_set_pos(time_label, 70, 33);
+        }
+    } else {
+        ESP_LOGW(TAG, "Failed to take mutex for time update");
     }
 }
 #endif

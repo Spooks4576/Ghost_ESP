@@ -73,6 +73,7 @@ typedef struct {
     char selected_timezone[25];
     char selected_hex_accent_color[25];
     int gps_rx_pin;
+    uint32_t display_timeout_ms;  // Display timeout in milliseconds
 } FSettings;
 
 // Function declarations
@@ -144,6 +145,9 @@ uint8_t settings_get_printer_font_size(const FSettings* settings);
 
 void settings_set_printer_alignment(FSettings* settings, PrinterAlignment alignment);
 PrinterAlignment settings_get_printer_alignment(const FSettings* settings);
+
+void settings_set_display_timeout(FSettings* settings, uint32_t timeout_ms);
+uint32_t settings_get_display_timeout(const FSettings* settings);
 
 static nvs_handle_t nvsHandle;
 

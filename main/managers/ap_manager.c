@@ -1241,6 +1241,12 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_gps_rx_pin(settings, gps_rx_pin->valueint);
     }
 
+    // Handle display timeout
+    cJSON* display_timeout = cJSON_GetObjectItem(root, "display_timeout");
+    if (display_timeout) {
+        settings_set_display_timeout(settings, display_timeout->valueint);
+        ESP_LOGI(TAG, "Setting display timeout to: %d ms", display_timeout->valueint);
+    }
     printf("About to Save Settings\n");
 
     settings_save(settings);
@@ -1287,7 +1293,7 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     cJSON_AddStringToObject(root, "hex_accent_color", settings_get_accent_color_str(settings));
     cJSON_AddStringToObject(root, "timezone_str", settings_get_timezone_str(settings));
     cJSON_AddNumberToObject(root, "gps_rx_pin", settings_get_gps_rx_pin(settings));
-
+    cJSON_AddNumberToObject(root, "display_timeout", settings_get_display_timeout(settings));
     
     esp_netif_ip_info_t ip_info;
     esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");

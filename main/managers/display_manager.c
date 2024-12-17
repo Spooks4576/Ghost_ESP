@@ -11,6 +11,8 @@
 #include "managers/settings_manager.h"
 #include "managers/views/terminal_screen.h"
 #include "driver/gpio.h"
+#include "esp_log.h"
+
 #ifdef CONFIG_USE_CARDPUTER
 #include "vendor/m5/m5gfx_wrapper.h"
 #include "vendor/keyboard_handler.h"
@@ -468,6 +470,8 @@ void set_backlight_brightness(uint8_t percentage) {
     gpio_set_level(CONFIG_LV_DISP_PIN_BCKL, percentage);
 }
 
+static const char* TAG = "DisplayManager";
+
 void hardware_input_task(void *pvParameters) {
     const TickType_t tick_interval = pdMS_TO_TICKS(10);
 
@@ -585,8 +589,11 @@ void hardware_input_task(void *pvParameters) {
             }
 
             #ifdef CONFIG_HAS_BATTERY
-                if ((xTaskGetTickCount() - last_touch_time > pdMS_TO_TICKS(display_timeout_ms) && touch_data.state == LV_INDEV_STATE_REL)) {
+                uint32_t current_timeout = G_Settings.display_timeout_ms;
+                if ((xTaskGetTickCount() - last_touch_time > pdMS_TO_TICKS(current_timeout) && touch_data.state == LV_INDEV_STATE_REL)) {
+                    ESP_LOGD(TAG, "Display timeout check: last_touch=%lu, timeout=%lu", last_touch_time, current_timeout);
                     if (!is_backlight_dimmed) {
+                        ESP_LOGI(TAG, "Display timeout reached, dimming backlight");
                         set_backlight_brightness(0);
                         is_backlight_dimmed = true;
                     }
