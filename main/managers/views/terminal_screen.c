@@ -17,6 +17,26 @@ static SemaphoreHandle_t terminal_mutex = NULL;
 int custom_log_vprintf(const char *fmt, va_list args);
 static int (*default_log_vprintf)(const char *, va_list) = NULL;
 
+static void scroll_terminal_up(void) {
+    if (!terminal_textarea) return;
+    
+    lv_coord_t font_height = lv_font_get_line_height(lv_obj_get_style_text_font(terminal_textarea, LV_PART_MAIN));
+    lv_coord_t visible_lines = lv_obj_get_height(terminal_textarea) / font_height;
+    
+    int scroll_amount = LV_MAX(visible_lines / 4, 1);
+    lv_obj_scroll_by(terminal_textarea, 0, font_height * scroll_amount, LV_ANIM_OFF);
+}
+
+static void scroll_terminal_down(void) {
+    if (!terminal_textarea) return;
+    
+    lv_coord_t font_height = lv_font_get_line_height(lv_obj_get_style_text_font(terminal_textarea, LV_PART_MAIN));
+    lv_coord_t visible_lines = lv_obj_get_height(terminal_textarea) / font_height;
+    
+    int scroll_amount = LV_MAX(visible_lines / 4, 1);
+    lv_obj_scroll_by(terminal_textarea, 0, -font_height * scroll_amount, LV_ANIM_OFF);
+}
+
 void terminal_view_create(void) {
     if (terminal_view.root != NULL) {
         return;
@@ -41,10 +61,16 @@ void terminal_view_create(void) {
     lv_textarea_set_one_line(terminal_textarea, false);
     lv_textarea_set_text(terminal_textarea, "");
     lv_obj_set_size(terminal_textarea, LV_HOR_RES, LV_VER_RES);
-    lv_obj_set_scrollbar_mode(terminal_textarea, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_scrollbar_mode(terminal_textarea, LV_SCROLLBAR_MODE_AUTO);
+    lv_obj_set_style_anim_time(terminal_textarea, 150, 0);
+    lv_obj_set_scroll_snap_y(terminal_textarea, LV_SCROLL_SNAP_NONE);
     lv_obj_set_style_text_color(terminal_textarea, lv_color_hex(0x00FF00), 0);
     lv_obj_set_style_text_font(terminal_textarea, &lv_font_montserrat_10, 0);
     lv_obj_set_style_border_width(terminal_textarea, 0, 0);
+    
+    // Disable text selection and password mode
+    lv_textarea_set_text_selection(terminal_textarea, false);
+    lv_textarea_set_password_mode(terminal_textarea, false);
 
     display_manager_add_status_bar("Terminal");
 }
@@ -107,13 +133,9 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
         int touch_y = event->data.touch_data.point.y;
 
         if (touch_y < LV_VER_RES / 3) {
-            for (int i = 0; i < 5; i++) {
-                lv_textarea_cursor_up(terminal_textarea);
-            }
+            scroll_terminal_up();
         } else if (touch_y > (LV_VER_RES * 2) / 3) {
-            for (int i = 0; i < 5; i++) {
-                lv_textarea_cursor_down(terminal_textarea);
-            }
+            scroll_terminal_down();
         } else {
             display_manager_switch_view(&options_menu_view);
             simulateCommand("stop");
@@ -139,18 +161,12 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             return;
         }
 
-        if (button == 2)
-        {
-            for (int i = 0; i < 5; i++) {
-                lv_textarea_cursor_up(terminal_textarea);
-            }
+        if (button == 2) {
+            scroll_terminal_up();
         }
 
-        if (button == 4)
-        {
-            for (int i = 0; i < 5; i++) {
-                lv_textarea_cursor_down(terminal_textarea);
-            }
+        if (button == 4) {
+            scroll_terminal_down();
         }
     }
 }

@@ -24,6 +24,7 @@
 - Fixed GPS buffer overflow issue that could cause logging to stop - @jaylikesbunda
 - Improved UART buffer handling to prevent task crashes in terminal view - @jaylikesbunda
 - Terminal View trunication and cleanup to prevent overflow - @jaylikesbunda
+- Terminal View scrolling improvements - @jaylikesbunda
 
 ## Non Firmware Changes
 - New https://ghostesp.net website! - @jaylikesbunda
