@@ -248,15 +248,12 @@ void option_event_cb(const char* Selected_Option) {
     }
 
     if (strcmp(Selected_Option, "Start Deauth Attack") == 0) {
-        if (scanned_aps)
-        {
-            display_manager_switch_view(&terminal_view);
-            vTaskDelay(pdMS_TO_TICKS(10));
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        if (!scanned_aps) {
+            TERMINAL_VIEW_ADD_TEXT("No APs scanned. Please run 'Scan Access Points' first.\n");
+        } else {
             simulateCommand("attack -d");
-        }
-        else 
-        {
-            error_popup_create("You Need to Scan AP's First...");
         }
     }
 
