@@ -602,12 +602,50 @@ esp_err_t ap_manager_init(void) {
     // Initialize mDNS
     ret = mdns_init();
     if (ret != ESP_OK) {
-        printf("mdns_init failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
     mdns_freed = false;
 
+    ret = mdns_hostname_set("ghostesp");
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_hostname_set failed: %s\n", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = mdns_instance_name_set("GhostESP Web Interface");
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_instance_name_set failed: %s\n", esp_err_to_name(ret));
+    }
+
+    char ip_str[16];
+    snprintf(ip_str, sizeof(ip_str), "192.168.4.1");
+    
+    mdns_txt_item_t serviceTxtData[] = {
+        {"ip", ip_str}
+    };
+    
+    ret = mdns_service_add("GhostESP", "_http", "_tcp", 80, serviceTxtData, 1);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_service_add failed: %s\n", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = mdns_service_txt_set("_http", "_tcp", serviceTxtData, 1);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_service_txt_set failed: %s\n", esp_err_to_name(ret));
+        return ret;
+    }
+
+    char ip_txt[20];
+    snprintf(ip_txt, sizeof(ip_txt), "192.168.4.1");
+    mdns_txt_item_t ip_data[] = {
+        {"ipv4", ip_txt}
+    };
+    ret = mdns_service_txt_set("_http", "_tcp", ip_data, 1);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_service_txt_set failed: %s\n", esp_err_to_name(ret));
+    }
     
     FSettings* settings = &G_Settings;
 

