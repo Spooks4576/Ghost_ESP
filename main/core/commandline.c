@@ -90,15 +90,16 @@ void cmd_wifi_scan_start(int argc, char **argv) {
 }
 
 void cmd_wifi_scan_stop(int argc, char **argv) {
+    wifi_manager_stop_monitor_mode();
     pcap_file_close();
     printf("WiFi scan stopped.\n");
     TERMINAL_VIEW_ADD_TEXT("WiFi scan stopped.\n");
 }
 
 void cmd_wifi_scan_results(int argc, char **argv) {
+    printf("WiFi scan results displaying with OUI matching.\n");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scan results displaying with OUI matching.\n");
     wifi_manager_print_scan_results_with_oui();
-    printf("WiFi scan results displayed with OUI matching.\n");
-    TERMINAL_VIEW_ADD_TEXT("WiFi scan results displayed with OUI matching.\n");
 }
 
 void handle_list(int argc, char **argv) {
@@ -576,9 +577,9 @@ void handle_tp_link_test(int argc, char **argv) {
 }
 
 void handle_ip_lookup(int argc, char** argv) {
-    wifi_manager_start_ip_lookup();
     printf("Starting IP lookup...\n");
     TERMINAL_VIEW_ADD_TEXT("Starting IP lookup...\n");
+    wifi_manager_start_ip_lookup();
 }
 
 void handle_capture_scan(int argc, char** argv) {

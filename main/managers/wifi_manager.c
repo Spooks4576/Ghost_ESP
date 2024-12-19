@@ -282,9 +282,7 @@ static void add_station_ap_pair(const uint8_t *station_mac, const uint8_t *ap_bs
         station_count++;
 
         // Print formatted MAC addresses
-        printf("Added station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
-            station_mac[0], station_mac[1], station_mac[2], station_mac[3], station_mac[4], station_mac[5],
-            ap_bssid[0], ap_bssid[1], ap_bssid[2], ap_bssid[3], ap_bssid[4], ap_bssid[5]);
+        
     } else {
         printf("Station list is full, can't add more stations.\n");
     }
@@ -360,11 +358,10 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
     
     const uint8_t *src_mac = hdr->addr2;  // Station MAC
     const uint8_t *dest_mac = hdr->addr1; // AP BSSID
-
-
-    if (!station_exists(src_mac, dest_mac)) {
-        add_station_ap_pair(src_mac, dest_mac);
-    }
+    
+    printf("station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
+            src_mac[0], src_mac[1], src_mac[2], src_mac[3], src_mac[4], src_mac[5],
+            dest_mac[0], dest_mac[1], dest_mac[2], dest_mac[3], dest_mac[4], dest_mac[5]);
 }
 
 esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *content_type) {
@@ -945,7 +942,6 @@ void wifi_manager_start_monitor_mode(wifi_promiscuous_cb_t_t callback) {
 
 void wifi_manager_stop_monitor_mode() {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
-
     printf("WiFi monitor mode stopped.\n");
     TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.");
 }
