@@ -251,21 +251,21 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (uuids.uuid16[i] == 0x3081) {
             printf("Found Black Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (uuids.uuid16[i] == 0x3083) {
             printf("Found Transparent Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
     }
     for (int i = 0; i < uuids.uuid32_count; i++) {
@@ -274,21 +274,21 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (uuids.uuid32[i] == 0x3081) {
             printf("Found Black Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (uuids.uuid32[i] == 0x3083) {
             printf("Found Transparent Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
     }
     for (int i = 0; i < uuids.uuid128_count; i++) {
@@ -297,21 +297,21 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (strstr(uuids.uuid128[i], "3081") != NULL) {
             printf("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (strstr(uuids.uuid128[i], "3083") != NULL) {
             printf("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                 advertisementMac, advertisementName, advertisementRssi);
             TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
                                 advertisementMac, advertisementName, advertisementRssi);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 165, 0, true);
+            pulse_once(&rgb_manager, 255, 165, 0);
         }
     }
 }
@@ -324,7 +324,8 @@ void ble_print_raw_packet_callback(struct ble_gap_event *event, size_t len) {
              event->disc.addr.val[0], event->disc.addr.val[1], event->disc.addr.val[2],
              event->disc.addr.val[3], event->disc.addr.val[4], event->disc.addr.val[5]);
 
-    // Remove or comment out the following lines to stop logging raw advertisement data
+    // stop logging raw advertisement data
+    //
     // printf("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
     // TERMINAL_VIEW_ADD_TEXT("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
     
