@@ -1858,12 +1858,25 @@ void wifi_manager_stop_beacon()
     if (beacon_task_running) {
         printf("Stopping beacon transmission...\n");
         TERMINAL_VIEW_ADD_TEXT("Stopping beacon transmission...\n");
+        
+        // Stop the beacon task
         if (beacon_task_handle != NULL) {
             vTaskDelete(beacon_task_handle);
             beacon_task_handle = NULL;
             beacon_task_running = false;
         }
+        
+        // Turn off RGB indicator
         rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
+        
+        // Stop WiFi completely
+        esp_wifi_stop();
+        vTaskDelay(pdMS_TO_TICKS(500)); // Give some time for WiFi to stop
+        
+        // Reset WiFi mode
+        esp_wifi_set_mode(WIFI_MODE_AP);
+        
+        // Now restart services
         ap_manager_start_services();
     } else {
         printf("No beacon transmission is running.\n");
