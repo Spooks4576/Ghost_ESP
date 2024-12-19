@@ -2,12 +2,13 @@
 
 # 1.4.5
 ## 🛠️ General Improvements
-- Added starting logs to capture commands - @jaylikesbunda  
+- Added starting logs to capture commands - @jaylikesbunda
 - Improved WiFi connection logic - @jaylikesbunda  
 - Removed Wi-Fi warnings and color codes for cleaner logs - @jaylikesbunda  
-- Added support for variable display timeout on TWatch S3 - @jaylikesbunda 
+- Added support for variable display timeout on TWatch S3 - @jaylikesbunda
 - Revise stop command callbacks to be more consistent - @jaylikesbunda, @Spooks4576
 - Miscellaneous fixes and improvements - @jaylikesbunda, @Spooks4576  
+- Fix and revise station scan command - @Spooks4576
 
 ## 🌐 Network and Communication Features
 - Enhanced Deauth Attack with bidirectional frames, proper 802.11 sequencing, and rate limiting (thank you @SpacehuhnTech for amazing reference code) - @jaylikesbunda  

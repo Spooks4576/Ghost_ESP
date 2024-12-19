@@ -17,8 +17,8 @@
             --gradient-1: linear-gradient(135deg, #ff6b00, #9c27b0);
             --gradient-2: linear-gradient(45deg, #cc5500, #ff6b00);
             --card-bg: rgba(18, 18, 26, 0.8);
-            --border-color: rgba(156, 39, 176, 0.3);
-            --tooltip-bg: #401805;
+            --border-color: #ff6b00;
+            --tooltip-bg: #000000;
             --tooltip-text: #ffffff;
             --input-bg: rgba(30, 30, 30, 0.6);
             --input-border: #ff6b00;
@@ -208,7 +208,7 @@
             justify-content: space-between;
             padding: 10px 15px;
             position: relative;
-            background-color: var(--secondary-color);
+            background-color: var(--tooltip-bg);
             border-left: 2px solid var(--border-color);
             border-right: 2px solid var(--border-color);
             border-top: 0.5px solid var(--accent-color);
@@ -241,7 +241,7 @@
             top: 54%;
             transform: translateY(-50%);
             pointer-events: none;
-            color: var(--primary-color);
+            color: var(--text-primary);
             font-size: 14px;
         }
 
@@ -257,11 +257,12 @@
             display: flex;
             align-items: center;
             cursor: default;
+            color: var(--text-primary);
         }
 
         .file-explorer .file-name.folder {
             cursor: pointer;
-            color: var(--primary-color);
+            color: var(--text-primary);
         }
 
         .file-explorer .file-name.folder::before {
@@ -307,14 +308,14 @@
             font-size: 16px;
             background-color: var(--input-bg);
             border: 2px solid var(--input-border);
-            color: var(--text-color);
+            color: var(--text-primary);
             border-radius: 6px;
             transition: border-color 0.3s, background-color 0.3s;
         }
 
         .upload-section input[type="file"]:focus {
             border-color: var(--border-color);
-            background-color: #1a0d00;
+            background-color: #000000;
             outline: none;
         }
 
@@ -650,18 +651,19 @@
         }
 
         .help-list li {
-            background-color: var(--secondary-color);
+            background-color: var(--tooltip-bg);
             border: 2px solid var(--border-color);
             border-radius: 12px;
             padding: 16px 20px;
             margin-bottom: 15px;
+            color: var(--text-primary);
         }
 
         .help-list code {
-            background-color: #1a0d00;
+            background-color: rgba(0, 0, 0, 0.3);
             padding: 2px 4px;
             border-radius: 4px;
-            color: #ffffff;
+            color: var(--primary-color);
         }
 
         /* Responsive Enhancements */
@@ -865,7 +867,7 @@
                     </div>
 
                     <div class="input-group">
-                        <label for="display_timeout">Display Timeout (ms)
+                        <label for="display_timeout">LilyGo T-Watch Display Timeout (ms)
                             <span class="tooltip">?
                                 <span class="tooltiptext">Set how long before the display turns off when inactive (1000-60000 ms)</span>
                             </span>
