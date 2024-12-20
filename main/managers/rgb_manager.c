@@ -290,32 +290,45 @@ void pulse_once(RGBManager_t* rgb_manager, uint8_t red, uint8_t green, uint8_t b
     uint8_t brightness = 0;
     int direction = 1;
 
-    while (brightness <= 255 || brightness > 0) {
-        
+    while ((brightness <= 255 && direction > 0) || (brightness > 0 && direction < 0)) {
         float brightness_scale = brightness / 255.0;
         uint8_t adj_red = red * brightness_scale;
         uint8_t adj_green = green * brightness_scale;
         uint8_t adj_blue = blue * brightness_scale;
 
-        
-        esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, 0, adj_red, adj_green, adj_blue);
-        if (ret != ESP_OK) {
-            printf("Failed to set LED color\n");
-            return; 
+        // Handle multiple LEDs if present
+        if (rgb_manager->num_leds > 1) {
+            for (int i = 0; i < rgb_manager->num_leds; i++) {
+                esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, i, adj_red, adj_green, adj_blue);
+                if (ret != ESP_OK) {
+                    printf("Failed to set LED %d color\n", i);
+                    return;
+                }
+            }
+        } else {
+            esp_err_t ret = led_strip_set_pixel(rgb_manager->strip, 0, adj_red, adj_green, adj_blue);
+            if (ret != ESP_OK) {
+                printf("Failed to set LED color\n");
+                return;
+            }
         }
 
         led_strip_refresh(rgb_manager->strip);
         
-        
-        brightness += direction * 5; 
+        brightness += direction * 5;
 
         if (brightness >= 255) {
             direction = -1;
         }
-
         
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
+
+    // Ensure LEDs are off at the end
+    for (int i = 0; i < rgb_manager->num_leds; i++) {
+        led_strip_set_pixel(rgb_manager->strip, i, 0, 0, 0);
+    }
+    led_strip_refresh(rgb_manager->strip);
 }
 
 

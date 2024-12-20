@@ -25,4 +25,6 @@ void handle_hardware_button_press(int ButtonPressed);
 
 extern View main_menu_view;
 
+extern lv_timer_t *time_update_timer;
+
 #endif /* MAIN_MENU_SCREEN_H */

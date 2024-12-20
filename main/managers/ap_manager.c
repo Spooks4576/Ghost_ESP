@@ -602,12 +602,50 @@ esp_err_t ap_manager_init(void) {
     // Initialize mDNS
     ret = mdns_init();
     if (ret != ESP_OK) {
-        printf("mdns_init failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
 
     mdns_freed = false;
 
+    ret = mdns_hostname_set("ghostesp");
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_hostname_set failed: %s\n", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = mdns_instance_name_set("GhostESP Web Interface");
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_instance_name_set failed: %s\n", esp_err_to_name(ret));
+    }
+
+    char ip_str[16];
+    snprintf(ip_str, sizeof(ip_str), "192.168.4.1");
+    
+    mdns_txt_item_t serviceTxtData[] = {
+        {"ip", ip_str}
+    };
+    
+    ret = mdns_service_add("GhostESP", "_http", "_tcp", 80, serviceTxtData, 1);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_service_add failed: %s\n", esp_err_to_name(ret));
+        return ret;
+    }
+
+    ret = mdns_service_txt_set("_http", "_tcp", serviceTxtData, 1);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_service_txt_set failed: %s\n", esp_err_to_name(ret));
+        return ret;
+    }
+
+    char ip_txt[20];
+    snprintf(ip_txt, sizeof(ip_txt), "192.168.4.1");
+    mdns_txt_item_t ip_data[] = {
+        {"ipv4", ip_txt}
+    };
+    ret = mdns_service_txt_set("_http", "_tcp", ip_data, 1);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "mdns_service_txt_set failed: %s\n", esp_err_to_name(ret));
+    }
     
     FSettings* settings = &G_Settings;
 
@@ -1241,6 +1279,12 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_gps_rx_pin(settings, gps_rx_pin->valueint);
     }
 
+    // Handle display timeout
+    cJSON* display_timeout = cJSON_GetObjectItem(root, "display_timeout");
+    if (display_timeout) {
+        settings_set_display_timeout(settings, display_timeout->valueint);
+        ESP_LOGI(TAG, "Setting display timeout to: %d ms", display_timeout->valueint);
+    }
     printf("About to Save Settings\n");
 
     settings_save(settings);
@@ -1287,7 +1331,7 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     cJSON_AddStringToObject(root, "hex_accent_color", settings_get_accent_color_str(settings));
     cJSON_AddStringToObject(root, "timezone_str", settings_get_timezone_str(settings));
     cJSON_AddNumberToObject(root, "gps_rx_pin", settings_get_gps_rx_pin(settings));
-
+    cJSON_AddNumberToObject(root, "display_timeout", settings_get_display_timeout(settings));
     
     esp_netif_ip_info_t ip_info;
     esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");

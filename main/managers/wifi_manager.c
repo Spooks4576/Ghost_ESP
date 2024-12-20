@@ -282,9 +282,7 @@ static void add_station_ap_pair(const uint8_t *station_mac, const uint8_t *ap_bs
         station_count++;
 
         // Print formatted MAC addresses
-        printf("Added station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
-            station_mac[0], station_mac[1], station_mac[2], station_mac[3], station_mac[4], station_mac[5],
-            ap_bssid[0], ap_bssid[1], ap_bssid[2], ap_bssid[3], ap_bssid[4], ap_bssid[5]);
+        
     } else {
         printf("Station list is full, can't add more stations.\n");
     }
@@ -360,11 +358,10 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
     
     const uint8_t *src_mac = hdr->addr2;  // Station MAC
     const uint8_t *dest_mac = hdr->addr1; // AP BSSID
-
-
-    if (!station_exists(src_mac, dest_mac)) {
-        add_station_ap_pair(src_mac, dest_mac);
-    }
+    
+    printf("station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
+            src_mac[0], src_mac[1], src_mac[2], src_mac[3], src_mac[4], src_mac[5],
+            dest_mac[0], dest_mac[1], dest_mac[2], dest_mac[3], dest_mac[4], dest_mac[5]);
 }
 
 esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *content_type) {
@@ -780,7 +777,7 @@ httpd_handle_t start_portal_webserver(void) {
     return evilportal_server;
 }
 
-void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid, const char* domain)
+esp_err_t wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid, const char* domain)
 {
 
     if (strlen(URL) > 0 && strlen(domain) > 0)
@@ -848,28 +845,51 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
 
         start_portal_webserver();
 
+        // Configure DNS server to handle both regular and .local domains
         dns_server_config_t dns_config = {
-            .num_of_entries = 1,
+            .num_of_entries = 3,
             .item = {
                 {
                     .name = "*", 
+                    .if_key = NULL, 
+                    .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+                },
+                {
+                    .name = "ghostesp", 
+                    .if_key = NULL, 
+                    .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+                },
+                {
+                    .name = "ghostesp.local",
                     .if_key = NULL, 
                     .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
                 }
             }
         };
 
-        // Start the DNS server with the configured settings
+        // Start DNS server
         dns_handle = start_dns_server(&dns_config);
         if (dns_handle) {
-            printf("DNS server started, all requests will be redirected to 192.168.4.1\n");
+            ESP_LOGI(TAG, "DNS server started, handling all requests including ghostesp.local");
         } else {
-            printf("Failed to start DNS server\n");
+            ESP_LOGE(TAG, "Failed to start DNS server");
+            return ESP_FAIL;
         }
+
+        // Configure DHCP to offer our DNS server
+        esp_netif_dhcps_option(wifiAP, ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, 
+                              &dhcps_dns_value, sizeof(dhcps_dns_value));
+
+        // Set DNS server info
+        esp_netif_dns_info_t dns_info = {
+            .ip.u_addr.ip4.addr = ESP_IP4TOADDR(192, 168, 4, 1),
+            .ip.type = ESP_IPADDR_TYPE_V4
+        };
+        esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dns_info);
     }
     else 
     {
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP) );
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
         strlcpy((char*)ap_config.sta.ssid, ap_ssid, sizeof(ap_config.sta.ssid));
         ap_config.ap.authmode = WIFI_AUTH_OPEN;
 
@@ -880,7 +900,7 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
         dnsserver.ip.type = ESP_IPADDR_TYPE_V4;
         esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dnsserver);
 
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config) );
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config));
 
         ESP_ERROR_CHECK(esp_wifi_start());
 
@@ -905,6 +925,8 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
             printf("Failed to start DNS server\n");
         }
     }
+
+    return ESP_OK;  // Add return value at the end
 }
 
 
@@ -940,14 +962,13 @@ void wifi_manager_start_monitor_mode(wifi_promiscuous_cb_t_t callback) {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(callback));
 
     printf("WiFi monitor mode started.\n");
-    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode started.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode started.\n");
 }
 
 void wifi_manager_stop_monitor_mode() {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
-
     printf("WiFi monitor mode stopped.\n");
-    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.\n");
 }
 
 void wifi_manager_init(void) {
@@ -1014,11 +1035,11 @@ void wifi_manager_init(void) {
 
 void wifi_manager_start_scan() {
     ap_manager_stop_services();
-    TERMINAL_VIEW_ADD_TEXT("Stopped AP Manager...");
+    TERMINAL_VIEW_ADD_TEXT("Stopped AP Manager...\n");
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
-    TERMINAL_VIEW_ADD_TEXT("Set Wifi Modes...");
+    TERMINAL_VIEW_ADD_TEXT("Set Wifi Modes...\n");
 
     
     wifi_scan_config_t scan_config = {
@@ -1043,7 +1064,7 @@ void wifi_manager_start_scan() {
 
     if (err != ESP_OK) {
         printf("WiFi scan failed to start: %s", esp_err_to_name(err));
-        TERMINAL_VIEW_ADD_TEXT("WiFi scan failed to start");
+        TERMINAL_VIEW_ADD_TEXT("WiFi scan failed to start\n");
         return;
     }
 
@@ -1837,13 +1858,26 @@ void wifi_manager_stop_beacon()
     if (beacon_task_running) {
         printf("Stopping beacon transmission...\n");
         TERMINAL_VIEW_ADD_TEXT("Stopping beacon transmission...\n");
+        
+        // Stop the beacon task
         if (beacon_task_handle != NULL) {
             vTaskDelete(beacon_task_handle);
             beacon_task_handle = NULL;
             beacon_task_running = false;
         }
+        
+        // Turn off RGB indicator
         rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
-        ap_manager_start_services();
+        
+        // Stop WiFi completely
+        esp_wifi_stop();
+        vTaskDelay(pdMS_TO_TICKS(500)); // Give some time for WiFi to stop
+        
+        // Reset WiFi mode
+        esp_wifi_set_mode(WIFI_MODE_AP);
+        
+        // Now restart services
+        ap_manager_init();
     } else {
         printf("No beacon transmission is running.\n");
         TERMINAL_VIEW_ADD_TEXT("No beacon transmission is running.\n");
@@ -2013,6 +2047,7 @@ void wifi_manager_connect_wifi(const char* ssid, const char* password) {
             TERMINAL_VIEW_ADD_TEXT("Connection successful!\n");
         }
     }
+
 }
 
 void wifi_beacon_task(void *param) {

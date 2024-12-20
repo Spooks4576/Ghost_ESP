@@ -7,20 +7,95 @@
     <style>
         /* CSS Variables for Colors and Fonts */
         :root {
-            --background-color: #000000;
-            --primary-color: #ff5500;
-            --secondary-color: #110800;
-            --primary-color-faded: rgba(255, 85, 0, 0.7);
-            --accent-color: rgba(255, 85, 0, 0.3);
-            --accent-tone: rgba(255, 85, 0, 0.2);
-            --text-color: #ff5500;
-            --border-color: #ff5500;
-            --tooltip-bg: #401805;
-            --tooltip-text: #ff5500;
-            --input-bg: #110800;
-            --input-border: #ff5500;
-            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            --foreground-opacity: 1;
+            --background-color: #0a0a0f;
+            --surface-color: #12121a;
+            --primary-color: #ff6b00;
+            --secondary-color: #3e1900;
+            --accent-color: #9c27b0;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --gradient-1: linear-gradient(135deg, #ff6b00, #9c27b0);
+            --gradient-2: linear-gradient(45deg, #cc5500, #ff6b00);
+            --card-bg: rgba(18, 18, 26, 0.8);
+            --border-color: #ff6b00;
+            --tooltip-bg: #000000;
+            --tooltip-text: #ffffff;
+            --input-bg: rgba(30, 30, 30, 0.6);
+            --input-border: #ff6b00;
+            --font-display: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        /* Reset Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Global Styles */
+        html, body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Enhanced Background Effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(156, 39, 176, 0.15), transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(255, 107, 0, 0.15), transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(156, 39, 176, 0.1), transparent 60%),
+                repeating-linear-gradient(45deg, rgba(156, 39, 176, 0.03) 0px, rgba(156, 39, 176, 0.03) 1px, transparent 1px, transparent 10px),
+                repeating-linear-gradient(-45deg, rgba(255, 107, 0, 0.03) 0px, rgba(255, 107, 0, 0.03) 1px, transparent 1px, transparent 10px);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Container Styles */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-family: var(--font-display);
+            color: var(--text-primary);
+            text-align: center;
+            margin: 2rem 0;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 3rem;
         }
 
         input::-webkit-outer-spin-button,
@@ -30,33 +105,10 @@
             margin: 0;
         }
 
-        /* Global Styles */
-        body {
-            margin: 0;
-            font-family: var(--font-family);
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        h1, h2, h3 {
-            text-align: center;
-            color: var(--primary-color);
-            margin-top: 56px;
-            margin-bottom: 24px;
-        }
-
         /* Tabs Styling */
         .tab {
             display: flex;
             justify-content: space-around;
-            border: 2px solid var(--primary-color);
             border-radius: 12px;
             margin-bottom: 30px;
             padding: 4px;
@@ -74,7 +126,7 @@
             margin: 0 2px;
             font-size: 18px;
             color: var(--primary-color);
-            background-color: var(--secondary-color);
+            background-color: #311f13;
             transition: background-color 0.3s, color 0.3s;
         }
 
@@ -156,7 +208,7 @@
             justify-content: space-between;
             padding: 10px 15px;
             position: relative;
-            background-color: var(--secondary-color);
+            background-color: var(--tooltip-bg);
             border-left: 2px solid var(--border-color);
             border-right: 2px solid var(--border-color);
             border-top: 0.5px solid var(--accent-color);
@@ -189,7 +241,7 @@
             top: 54%;
             transform: translateY(-50%);
             pointer-events: none;
-            color: var(--primary-color);
+            color: var(--text-primary);
             font-size: 14px;
         }
 
@@ -205,11 +257,12 @@
             display: flex;
             align-items: center;
             cursor: default;
+            color: var(--text-primary);
         }
 
         .file-explorer .file-name.folder {
             cursor: pointer;
-            color: var(--primary-color);
+            color: var(--text-primary);
         }
 
         .file-explorer .file-name.folder::before {
@@ -255,14 +308,14 @@
             font-size: 16px;
             background-color: var(--input-bg);
             border: 2px solid var(--input-border);
-            color: var(--text-color);
+            color: var(--text-primary);
             border-radius: 6px;
             transition: border-color 0.3s, background-color 0.3s;
         }
 
         .upload-section input[type="file"]:focus {
-            border-color: var(--primary-color);
-            background-color: #1a0d00;
+            border-color: var(--border-color);
+            background-color: #000000;
             outline: none;
         }
 
@@ -282,7 +335,7 @@
             background-color: var(--secondary-color);
             border: 2px solid var(--border-color);
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 30px;
             position: relative;
         }
 
@@ -325,8 +378,8 @@
             padding: 10px 15px;
             font-family: inherit;
             font-size: 16px;
-            background-color: var(--input-bg);
-            border: 2px solid var(--input-border);
+            background-color: var(--gradient-2);
+            border: 2px solid var(--gradient-2);
             color: var(--text-color);
             border-radius: 6px;
             margin-top: 4px;
@@ -393,30 +446,39 @@
 
         /* Buttons */
         button {
-            background-color: var(--secondary-color);
+            background: rgba(0, 0, 0, 0.5);
             color: var(--primary-color);
+            border: 2px solid var(--primary-color);
             padding: 12px 25px;
-            border: 2px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 25px;
             cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            margin: 32px auto 20px;
+            font-family: var(--font-mono);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            /* Center the buttons */
             display: block;
-            transition: background-color 0.3s, color 0.3s;
+            margin: 20px auto;
+            min-width: 150px;
             max-width: 220px;
             width: 100%;
         }
 
         button:hover {
-            background-color: var(--accent-color);
-            color: #ffffff;
+            background: var(--primary-color);
+            color: var(--background-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
         }
 
         button.small {
-            padding: 6px 25px;
+            padding: 8px 20px;
+            font-size: 0.9em;
+            border-width: 1px;
+            display: inline-block;
             width: auto;
-            font-size: 14px;
+            min-width: auto;
+            margin: 0;
         }
 
         /* Textarea */
@@ -589,18 +651,19 @@
         }
 
         .help-list li {
-            background-color: var(--secondary-color);
+            background-color: var(--tooltip-bg);
             border: 2px solid var(--border-color);
             border-radius: 12px;
             padding: 16px 20px;
             margin-bottom: 15px;
+            color: var(--text-primary);
         }
 
         .help-list code {
-            background-color: #1a0d00;
+            background-color: rgba(0, 0, 0, 0.3);
             padding: 2px 4px;
             border-radius: 4px;
-            color: #ffffff;
+            color: var(--primary-color);
         }
 
         /* Responsive Enhancements */
@@ -619,11 +682,140 @@
                 font-size: 14px;
             }
         }
+
+        /* Settings Section Styles */
+        .settings-section {
+            background: rgba(10, 10, 15, 0.8);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-section h2 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: left;
+            background: none;
+            -webkit-text-fill-color: var(--primary-color);
+        }
+
+        .settings-section label {
+            color: var(--primary-color);
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        /* Input Styles */
+        input[type="number"],
+        input[type="text"],
+        input[type="color"],
+        select,
+        textarea {
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Tooltip Styles */
+        .tooltip .tooltiptext {
+            background-color: rgba(0, 0, 0, 0.9);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        /* Button Styles */
+        button {
+            background: rgba(0, 0, 0, 0.5);
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: var(--font-mono);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            /* Center the buttons */
+            display: block;
+            margin: 20px auto;
+            min-width: 150px;
+            max-width: 220px;
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--primary-color);
+            color: var(--background-color);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Small button variant - override centering for inline buttons */
+        button.small {
+            padding: 8px 20px;
+            font-size: 0.9em;
+            border-width: 1px;
+            display: inline-block;
+            width: auto;
+            min-width: auto;
+            margin: 0;
+        }
+
+        /* For button containers that need inline buttons */
+        .file-wrapper button,
+        .file-actions button {
+            display: inline-block;
+            width: auto;
+            min-width: auto;
+            margin: 0 5px;
+        }
+
+        /* Tab buttons should be inline and equal width */
+        .tab button {
+            display: inline-block;
+            width: auto;
+            min-width: auto;
+            margin: 0 4px;
+        }
+
+        /* Console/Output Styles */
+        #console,
+        .console {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP vA1.4.4</h1>
+        <h1>Ghost ESP vA1.4.5</h1>
         <!-- Tab Navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
@@ -674,14 +866,6 @@
                         <span id="accent_color_hex" style="margin-left: 10px;">#ffffff</span>
                     </div>
 
-                    <div class="input-group">
-                        <label for="display_timeout">Display Timeout (ms)
-                            <span class="tooltip">?
-                                <span class="tooltiptext">Set how long before the display turns off when inactive (1000-60000 ms)</span>
-                            </span>
-                        </label>
-                        <input type="number" id="display_timeout" min="1000" max="60000" step="1000" placeholder="1000 - 60000 ms" required>
-                    </div>
                 </div>
                 <!-- Connect to WiFi Section (Disabled) -->
                 <div class="settings-section" id="connect-wifi-section">
@@ -884,155 +1068,173 @@
                             <option value="CST-8">China Standard Time (CST)</option>
                         </select>
                     </div>
+                    
+                    <div class="input-group">
+                        <label for="display_timeout">LilyGo T-Watch Display Timeout (ms)
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Set how long before the display turns off when inactive (1000-60000 ms)</span>
+                            </span>
+                        </label>
+                        <input type="number" id="display_timeout" min="1000" max="60000" step="1000" placeholder="1000 - 60000 ms" required>
+                    </div>
                 </div>
             </div>
             <button onclick="saveSettings()">Save Settings</button>
         </div>
         <!-- Help Tab Content -->
         <div id="Help" class="tabcontent">
-            <h2>ESP32 Commands</h2>
-            <ul class="help-list">
-                <li>
-                    <strong>help</strong>: Display this help message.<br>
-                    <strong>Usage:</strong> <code>help</code>
-                </li>
-                <li>
-                    <strong>scanap</strong>: Start a Wi-Fi access point (AP) scan.<br>
-                    <strong>Usage:</strong> <code>scanap</code>
-                </li>
-                <li>
-                    <strong>scansta</strong>: Start scanning for Wi-Fi stations.<br>
-                    <strong>Usage:</strong> <code>scansta</code>
-                </li>
-                <li>
-                    <strong>stopscan</strong>: Stop any ongoing Wi-Fi scan.<br>
-                    <strong>Usage:</strong> <code>stopscan</code>
-                </li>
-                <li>
-                    <strong>attack</strong>: Launch an attack (e.g., deauthentication attack).<br>
-                    <strong>Usage:</strong> <code>attack -d</code><br>
-                    <strong>Arguments:</strong><br>
-                    <code>-d</code>: Start deauth attack
-                </li>
-                <li>
-                    <strong>list</strong>: List Wi-Fi scan results or connected stations.<br>
-                    <strong>Usage:</strong> <code>list -a | list -s</code><br>
-                    <strong>Arguments:</strong><br>
-                    <code>-a</code>: Show access points from Wi-Fi scan<br>
-                    <code>-s</code>: List connected stations
-                </li>
-                <li>
-                    <strong>beaconspam</strong>: Start beacon spam with different modes.<br>
-                    <strong>Usage:</strong> <code>beaconspam [OPTION]</code><br>
-                    <strong>Arguments:</strong><br>
-                    <code>-r</code>: Start random beacon spam<br>
-                    <code>-rr</code>: Start Rickroll beacon spam<br>
-                    <code>-l</code>: Start AP List beacon spam<br>
-                    <code>[SSID]</code>: Use specified SSID for beacon spam
-                </li>
-                <li>
-                    <strong>stopspam</strong>: Stop ongoing beacon spam.<br>
-                    <strong>Usage:</strong> <code>stopspam</code>
-                </li>
-                <li>
-                    <strong>stopdeauth</strong>: Stop ongoing deauthentication attack.<br>
-                    <strong>Usage:</strong> <code>stopdeauth</code>
-                </li>
-                <li>
-                    <strong>select</strong>: Select an access point by index from the scan results.<br>
-                    <strong>Usage:</strong> <code>select -a &lt;number&gt;</code><br>
-                    <strong>Arguments:</strong><br>
-                    <code>-a</code>: AP selection index (must be a valid number)
-                </li>
-                <li>
-                    <strong>startportal</strong>: Start a portal with specified SSID and password.<br>
-                    <strong>Usage:</strong> <code>startportal &lt;URL&gt; &lt;SSID&gt; &lt;Password&gt; &lt;AP_ssid&gt; &lt;Domain&gt;</code><br>
-                    <strong>Arguments:</strong><br>
-                    <code>&lt;URL&gt;</code>: URL for the portal<br>
-                    <code>&lt;SSID&gt;</code>: Wi-Fi SSID for the portal<br>
-                    <code>&lt;Password&gt;</code>: Wi-Fi password for the portal<br>
-                    <code>&lt;AP_ssid&gt;</code>: SSID for the access point<br>
-                    <code>&lt;Domain&gt;</code>: Custom domain to spoof in the address bar<br>
-                    <em>OR</em><br>
-                    <strong>Offline Usage:</strong> <code>startportal &lt;FilePath&gt; &lt;AP_ssid&gt; &lt;Domain&gt;</code>
-                </li>
-                <li>
-                    <strong>stopportal</strong>: Stop the Evil Portal.<br>
-                    <strong>Usage:</strong> <code>stopportal</code>
-                </li>
-                <li>
-                    <strong>blescan</strong>: Handle BLE scanning with various modes.<br>
-                    <strong>Usage:</strong> <code>blescan [OPTION]</code><br>
-                    <strong>Arguments:</strong><br>
-                    <code>-f</code>: Start 'Find the Flippers' mode<br>
-                    <code>-ds</code>: Start BLE spam detector<br>
-                    <code>-a</code>: Start AirTag scanner<br>
-                    <code>-r</code>: Scan for raw BLE packets<br>
-                    <code>-s</code>: Stop BLE scanning
-                </li>
-                <li>
-                    <strong>capture</strong>: Start a Wi-Fi capture (requires SD card or Flipper device).<br>
-                    <strong>Usage:</strong> <code>capture [OPTION]</code><br>
-                    <strong>Arguments:</strong><br>
-                    <code>-probe</code>: Start capturing probe packets<br>
-                    <code>-beacon</code>: Start capturing beacon packets<br>
-                    <code>-deauth</code>: Start capturing deauth packets<br>
-                    <code>-raw</code>: Start capturing raw packets<br>
-                    <code>-wps</code>: Start capturing WPS packets and their auth type<br>
-                    <code>-pwn</code>: Start capturing Pwnagotchi packets<br>
-                    <code>-stop</code>: Stop the active capture
-                </li>
-                <li>
-                    <strong>connect</strong>: Connect to a specific Wi-Fi network.<br>
-                    <strong>Usage:</strong> <code>connect &lt;SSID&gt; &lt;Password&gt;</code>
-                </li>
-                <li>
-                    <strong>dialconnect</strong>: Cast a random YouTube video on all smart TVs on your LAN (requires you to run <code>connect</code> first).<br>
-                    <strong>Usage:</strong> <code>dialconnect</code>
-                </li>
-                <li>
-                    <strong>powerprinter</strong>: Print custom text to a printer on your LAN (requires you to run <code>connect</code> first).<br>
-                    <strong>Usage:</strong> <code>powerprinter &lt;Printer IP&gt; &lt;Text&gt; &lt;FontSize&gt; &lt;Alignment&gt;</code><br>
-                    <strong>Alignment options:</strong> CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left
-                </li>
-            </ul>
+            <div class="settings-grid">
+                <div class="settings-section">
+                    <h2>ESP32 Commands</h2>
+                    <ul class="help-list">
+                        <li>
+                            <strong>help</strong>: Display this help message.<br>
+                            <strong>Usage:</strong> <code>help</code>
+                        </li>
+                        <li>
+                            <strong>scanap</strong>: Start a Wi-Fi access point (AP) scan.<br>
+                            <strong>Usage:</strong> <code>scanap</code>
+                        </li>
+                        <li>
+                            <strong>scansta</strong>: Start scanning for Wi-Fi stations.<br>
+                            <strong>Usage:</strong> <code>scansta</code>
+                        </li>
+                        <li>
+                            <strong>stopscan</strong>: Stop any ongoing Wi-Fi scan.<br>
+                            <strong>Usage:</strong> <code>stopscan</code>
+                        </li>
+                        <li>
+                            <strong>attack</strong>: Launch an attack (e.g., deauthentication attack).<br>
+                            <strong>Usage:</strong> <code>attack -d</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>-d</code>: Start deauth attack
+                        </li>
+                        <li>
+                            <strong>list</strong>: List Wi-Fi scan results or connected stations.<br>
+                            <strong>Usage:</strong> <code>list -a | list -s</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>-a</code>: Show access points from Wi-Fi scan<br>
+                            <code>-s</code>: List connected stations
+                        </li>
+                        <li>
+                            <strong>beaconspam</strong>: Start beacon spam with different modes.<br>
+                            <strong>Usage:</strong> <code>beaconspam [OPTION]</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>-r</code>: Start random beacon spam<br>
+                            <code>-rr</code>: Start Rickroll beacon spam<br>
+                            <code>-l</code>: Start AP List beacon spam<br>
+                            <code>[SSID]</code>: Use specified SSID for beacon spam
+                        </li>
+                        <li>
+                            <strong>stopspam</strong>: Stop ongoing beacon spam.<br>
+                            <strong>Usage:</strong> <code>stopspam</code>
+                        </li>
+                        <li>
+                            <strong>stopdeauth</strong>: Stop ongoing deauthentication attack.<br>
+                            <strong>Usage:</strong> <code>stopdeauth</code>
+                        </li>
+                        <li>
+                            <strong>select</strong>: Select an access point by index from the scan results.<br>
+                            <strong>Usage:</strong> <code>select -a &lt;number&gt;</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>-a</code>: AP selection index (must be a valid number)
+                        </li>
+                        <li>
+                            <strong>startportal</strong>: Start a portal with specified SSID and password.<br>
+                            <strong>Usage:</strong> <code>startportal &lt;URL&gt; &lt;SSID&gt; &lt;Password&gt; &lt;AP_ssid&gt; &lt;Domain&gt;</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>&lt;URL&gt;</code>: URL for the portal<br>
+                            <code>&lt;SSID&gt;</code>: Wi-Fi SSID for the portal<br>
+                            <code>&lt;Password&gt;</code>: Wi-Fi password for the portal<br>
+                            <code>&lt;AP_ssid&gt;</code>: SSID for the access point<br>
+                            <code>&lt;Domain&gt;</code>: Custom domain to spoof in the address bar<br>
+                            <em>OR</em><br>
+                            <strong>Offline Usage:</strong> <code>startportal &lt;FilePath&gt; &lt;AP_ssid&gt; &lt;Domain&gt;</code>
+                        </li>
+                        <li>
+                            <strong>stopportal</strong>: Stop the Evil Portal.<br>
+                            <strong>Usage:</strong> <code>stopportal</code>
+                        </li>
+                        <li>
+                            <strong>blescan</strong>: Handle BLE scanning with various modes.<br>
+                            <strong>Usage:</strong> <code>blescan [OPTION]</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>-f</code>: Start 'Find the Flippers' mode<br>
+                            <code>-ds</code>: Start BLE spam detector<br>
+                            <code>-a</code>: Start AirTag scanner<br>
+                            <code>-r</code>: Scan for raw BLE packets<br>
+                            <code>-s</code>: Stop BLE scanning
+                        </li>
+                        <li>
+                            <strong>capture</strong>: Start a Wi-Fi capture (requires SD card or Flipper device).<br>
+                            <strong>Usage:</strong> <code>capture [OPTION]</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>-probe</code>: Start capturing probe packets<br>
+                            <code>-beacon</code>: Start capturing beacon packets<br>
+                            <code>-deauth</code>: Start capturing deauth packets<br>
+                            <code>-raw</code>: Start capturing raw packets<br>
+                            <code>-wps</code>: Start capturing WPS packets and their auth type<br>
+                            <code>-pwn</code>: Start capturing Pwnagotchi packets<br>
+                            <code>-stop</code>: Stop the active capture
+                        </li>
+                        <li>
+                            <strong>connect</strong>: Connect to a specific Wi-Fi network.<br>
+                            <strong>Usage:</strong> <code>connect &lt;SSID&gt; &lt;Password&gt;</code>
+                        </li>
+                        <li>
+                            <strong>dialconnect</strong>: Cast a random YouTube video on all smart TVs on your LAN (requires you to run <code>connect</code> first).<br>
+                            <strong>Usage:</strong> <code>dialconnect</code>
+                        </li>
+                        <li>
+                            <strong>powerprinter</strong>: Print custom text to a printer on your LAN (requires you to run <code>connect</code> first).<br>
+                            <strong>Usage:</strong> <code>powerprinter &lt;Printer IP&gt; &lt;Text&gt; &lt;FontSize&gt; &lt;Alignment&gt;</code><br>
+                            <strong>Alignment options:</strong> CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
         <!-- SD Card Tab Content -->
         <div id="SDCard" class="tabcontent">
-            <h2>SD Card File Explorer</h2>
-            
-            <!-- Breadcrumb Navigation -->
-            <nav class="breadcrumb" id="breadcrumb">
-                <span class="breadcrumb-item" onclick="navigateToBreadcrumb(0)">Root</span>
-            </nav>
-            
-            <!-- SD Card Status -->
-            <div id="sdcard-status">
-                Loading SD card data...
-            </div>
-            
-            <!-- SD Card Structure -->
-            <div id="sdcard-structure">
-                <!-- SD Card Structure will be rendered here -->
-            </div>
-            
-            <!-- Upload File Section -->
-            <div class="upload-section">
-                <h2>Upload File</h2>
-                <div class="input-group">
-                    <label for="sdcard-upload">Choose File 
-                        <span class="tooltip">?
-                            <span class="tooltiptext">Select a file to upload to the current folder on the SD Card.</span>
-                        </span>
-                    </label>
-                    <div class="file-wrapper">
-                        <span id="upload-file-name">No files selected</span>
-                        <button class="small" onclick="document.getElementById('sdcard-upload').click()">Upload</button>
-                        <input type="file" id="sdcard-upload" accept="*/*" onchange="document.getElementById('upload-file-name').innerText = this.files[0].name">
+            <div class="settings-grid">
+                <!-- SD Card Explorer Section -->
+                <div class="settings-section">
+                    <h2>SD Card File Explorer</h2>
+                    
+                    <!-- Breadcrumb Navigation -->
+                    <nav class="breadcrumb" id="breadcrumb">
+                        <span class="breadcrumb-item" onclick="navigateToBreadcrumb(0)">Root</span>
+                    </nav>
+                    
+                    <!-- SD Card Status -->
+                    <div id="sdcard-status">
+                        Loading SD card data...
+                    </div>
+                    
+                    <!-- SD Card Structure -->
+                    <div id="sdcard-structure">
+                        <!-- SD Card Structure will be rendered here -->
                     </div>
                 </div>
-                <button onclick="uploadFile()">Upload</button>
+
+                <!-- Upload Section -->
+                <div class="settings-section">
+                    <h2>Upload File</h2>
+                    <div class="input-group">
+                        <label for="sdcard-upload">Choose File 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Select a file to upload to the current folder on the SD Card.</span>
+                            </span>
+                        </label>
+                        <div class="file-wrapper">
+                            <span id="upload-file-name">No files selected</span>
+                            <button class="small" onclick="document.getElementById('sdcard-upload').click()">Upload</button>
+                            <input type="file" id="sdcard-upload" accept="*/*" onchange="document.getElementById('upload-file-name').innerText = this.files[0].name">
+                        </div>
+                    </div>
+                    <button onclick="uploadFile()">Upload</button>
+                </div>
             </div>
         </div>
         

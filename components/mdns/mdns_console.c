@@ -81,7 +81,8 @@ static int cmd_mdns_query_a(int argc, char **argv)
     struct esp_ip4_addr addr;
     addr.addr = 0;
 
-    esp_err_t err = mdns_query_a(hostname, timeout,  &addr);
+    mdns_result_t *result = NULL;
+    esp_err_t err = mdns_query(hostname, "_http", "_tcp", MDNS_TYPE_A, timeout, 1, &result);
     if (err) {
         if (err == ESP_ERR_NOT_FOUND) {
             printf("ERROR: Host was not found!\n");
@@ -91,7 +92,10 @@ static int cmd_mdns_query_a(int argc, char **argv)
         return 1;
     }
 
-    printf(IPSTR "\n", IP2STR(&addr));
+    if (result && result->addr) {
+        addr.addr = result->addr->addr.u_addr.ip4.addr;
+        mdns_query_results_free(result);
+    }
 
     return 0;
 }
@@ -501,7 +505,7 @@ static void register_mdns_query_svc(void)
 
 static struct {
     struct arg_str *hostname;
-    struct arg_str *instance;
+    struct arg_str *instance;   
     struct arg_end *end;
 } mdns_init_args;
 
@@ -998,9 +1002,9 @@ static void register_mdns_service_txt_replace(void)
 static struct {
     struct arg_str *service;
     struct arg_str *proto;
+    struct arg_str *var;
     struct arg_str *instance;
     struct arg_str *host;
-    struct arg_str *var;
     struct arg_str *value;
     struct arg_end *end;
 } mdns_txt_set_args;
@@ -1056,10 +1060,10 @@ static void register_mdns_service_txt_set(void)
 static struct {
     struct arg_str *service;
     struct arg_str *proto;
-    struct arg_str *var;
     struct arg_str *instance;
     struct arg_str *host;
     struct arg_end *end;
+    struct arg_str *var;
 } mdns_txt_remove_args;
 
 static int cmd_mdns_service_txt_remove(int argc, char **argv)

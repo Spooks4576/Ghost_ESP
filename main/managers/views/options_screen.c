@@ -53,7 +53,6 @@ static const char *wifi_options[] = {
     "Power Printer",
     "TP Link Test",
     "Go Back",
-    "    ",
     NULL
 };
 
@@ -94,7 +93,8 @@ void options_menu_create() {
     options_menu_view.root = root;
     lv_obj_set_size(root, screen_width, screen_height);
     lv_obj_set_style_bg_color(root, lv_color_black(), 0);
-    lv_obj_align(root, LV_ALIGN_BOTTOM_MID, -12, 0);
+    lv_obj_set_style_pad_all(root, 0, 0);
+    lv_obj_align(root, LV_ALIGN_TOP_LEFT, 0, 0);
     lv_obj_set_scrollbar_mode(root, LV_SCROLLBAR_MODE_OFF);
 
 #ifdef CONFIG_JC3248W535EN_LCD
@@ -102,8 +102,12 @@ void options_menu_create() {
 #endif
     
     lv_obj_t *list = lv_list_create(root);
-    lv_obj_set_size(list, screen_width, screen_height);
-    lv_obj_set_style_pad_all(list, screen_width < 240 ? 2 : 4, 0);
+
+    lv_obj_set_size(list, LV_HOR_RES, LV_VER_RES - 17);
+    lv_obj_align(list, LV_ALIGN_TOP_LEFT, 0, 17);
+    lv_obj_set_style_pad_all(list, 0, 0);
+    lv_obj_set_style_pad_row(list, 0, 0);
+    lv_obj_set_style_pad_column(list, 0, 0);
     lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_bg_color(list, lv_color_black(), 0);
 
@@ -143,14 +147,15 @@ void options_menu_create() {
 
         
         if (screen_height < 200) {
-            lv_obj_set_style_radius(btn, 2, 0);
+            lv_obj_set_style_radius(btn, 0, 0);
             lv_obj_set_style_text_font(btn, &lv_font_montserrat_12, 0);
         } else {
-            lv_obj_set_style_radius(btn, 8, 0); 
+            lv_obj_set_style_radius(btn, 0, 0);
             lv_obj_set_style_text_font(btn, &lv_font_montserrat_16, 0);
         }
 
         
+        lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
         lv_obj_set_style_bg_color(btn, lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);     
         lv_obj_set_style_text_color(btn, lv_color_white(), LV_PART_MAIN);
@@ -187,24 +192,24 @@ static void select_menu_item(int index) {
     if (previous_index != selected_item_index) {
         lv_obj_t *previous_item = lv_obj_get_child(menu_container, previous_index);
         if (previous_item) {
-            printf("Resetting style for previous item at index %d\n", previous_index);
-
             lv_obj_set_style_bg_color(previous_item, lv_color_black(), LV_PART_MAIN);
             lv_obj_set_style_border_width(previous_item, 0, LV_PART_MAIN);
-        } else {
-            printf("Error: Previous item not found for index %d\n", previous_index);
         }
     }
 
 
     lv_obj_t *current_item = lv_obj_get_child(menu_container, selected_item_index);
     if (current_item) {
-        printf("Current item found for index %d\n", selected_item_index);
-
-        lv_obj_set_style_bg_color(current_item, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN);
+        lv_color_t deep_orange = lv_color_make(255, 87, 34);
+        lv_color_t darker_orange = lv_color_make(150, 45, 15);
+        lv_obj_set_style_bg_color(current_item, deep_orange, LV_PART_MAIN);
         lv_obj_set_style_bg_opa(current_item, LV_OPA_COVER, LV_PART_MAIN);
-
-        printf("Scrolling to view item at index %d\n", selected_item_index);
+        
+        lv_obj_set_style_radius(current_item, 12, LV_PART_MAIN);
+        lv_obj_set_style_border_side(current_item, LV_BORDER_SIDE_FULL, LV_PART_MAIN);
+        lv_obj_set_style_border_color(current_item, darker_orange, LV_PART_MAIN);
+        lv_obj_set_style_border_width(current_item, 2, LV_PART_MAIN);
+        
         lv_obj_scroll_to_view(current_item, LV_ANIM_OFF);
     } else {
         printf("Error: Current item not found for index %d\n", selected_item_index);
@@ -267,15 +272,12 @@ void option_event_cb(lv_event_t * e) {
     }
 
     if (strcmp(Selected_Option, "Start Deauth Attack") == 0) {
-        if (scanned_aps)
-        {
-            display_manager_switch_view(&terminal_view);
-            vTaskDelay(pdMS_TO_TICKS(10));
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        if (!scanned_aps) {
+            TERMINAL_VIEW_ADD_TEXT("No APs scanned. Please run 'Scan Access Points' first.\n");
+        } else {
             simulateCommand("attack -d");
-        }
-        else 
-        {
-            error_popup_create("You Need to Scan AP's First...");
         }
     }
 

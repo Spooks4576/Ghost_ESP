@@ -2,6 +2,11 @@
 #include "managers/rgb_manager.h"
 #include <string.h>
 #include <esp_log.h>
+#include <time.h>
+#include "lvgl.h"
+#include "managers/display_manager.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 #define S_TAG "SETTINGS"
 
@@ -29,6 +34,11 @@ static const char* NVS_FLAPPY_GHOST_NAME = "flap_name";
 static const char* NVS_TIMEZONE_NAME = "sel_tz";
 static const char* NVS_ACCENT_COLOR = "sel_ac";
 static const char* NVS_GPS_RX_PIN = "gps_rx_pin";
+static const char* NVS_DISPLAY_TIMEOUT_KEY = "disp_timeout";
+
+extern lv_timer_t *time_update_timer;
+
+static const char* TAG = "SettingsManager";
 
 void settings_init(FSettings* settings) {
     settings_set_defaults(settings);
@@ -76,6 +86,7 @@ void settings_set_defaults(FSettings* settings) {
     strcpy(settings->selected_hex_accent_color, "#ffffff");
     strcpy(settings->selected_timezone, "MST7MDT,M3.2.0,M11.1.0");
     settings->gps_rx_pin = 0;
+    settings->display_timeout_ms = 10000; // Default 10 seconds
 }
 
 void settings_load(FSettings* settings) {
@@ -209,10 +220,22 @@ void settings_load(FSettings* settings) {
         settings->gps_rx_pin = value_u8;
     }
 
+    uint32_t timeout_value;
+    err = nvs_get_u32(nvsHandle, NVS_DISPLAY_TIMEOUT_KEY, &timeout_value);
+    if (err == ESP_OK) {
+        settings->display_timeout_ms = timeout_value;
+    } else {
+        settings->display_timeout_ms = 10000; // Default 10 seconds if not found
+    }
+
     printf("Settings loaded from NVS.\n");
 }
 
 void settings_save(const FSettings* settings) {
+    ESP_LOGI(TAG, "Starting settings save process");
+    ESP_LOGI(TAG, "Current display timeout: %lu ms", settings->display_timeout_ms);
+    ESP_LOGI(TAG, "Current timezone: %s", settings->selected_timezone);
+    
     esp_err_t err;
 
     // Save RGB Mode
@@ -323,6 +346,11 @@ void settings_save(const FSettings* settings) {
         printf("Failed to save Printer Alignment\n");
     }
 
+    err = nvs_set_u32(nvsHandle, NVS_DISPLAY_TIMEOUT_KEY, settings->display_timeout_ms);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to save Display Timeout");
+    }
+
     if (settings_get_rgb_mode(&G_Settings) == 0)
     {
         if (rgb_effect_task_handle != NULL)
@@ -346,6 +374,34 @@ void settings_save(const FSettings* settings) {
         printf("Failed to commit NVS changes\n");
     } else {
         printf("Settings saved to NVS.\n");
+    }
+
+#ifdef CONFIG_HAS_RTC_CLOCK
+    // Apply timezone change immediately
+    ESP_LOGI(TAG, "Applying timezone change: %s", settings->selected_timezone);
+    setenv("TZ", settings->selected_timezone, 1);
+    tzset();
+    
+    // Force time display update if it exists
+    if (time_update_timer) {
+        ESP_LOGI(TAG, "Forcing time display update");
+        lv_timer_ready(time_update_timer);
+    } else {
+        ESP_LOGW(TAG, "Time update timer not available");
+    }
+#endif
+
+    // Update global settings immediately
+    ESP_LOGI(TAG, "Updating global settings");
+    ESP_LOGI(TAG, "Old display timeout: %lu ms", G_Settings.display_timeout_ms);
+    memcpy(&G_Settings, settings, sizeof(FSettings));
+    ESP_LOGI(TAG, "New display timeout: %lu ms", G_Settings.display_timeout_ms);
+
+    err = nvs_commit(nvsHandle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to commit NVS changes: %s", esp_err_to_name(err));
+    } else {
+        ESP_LOGI(TAG, "Settings saved to NVS successfully");
     }
 }
 
@@ -529,4 +585,13 @@ void settings_set_printer_alignment(FSettings* settings, PrinterAlignment alignm
 
 PrinterAlignment settings_get_printer_alignment(const FSettings* settings) {
     return settings->printer_alignment;
+}
+
+void settings_set_display_timeout(FSettings* settings, uint32_t timeout_ms) {
+    ESP_LOGI(TAG, "Setting display timeout from %lu to %lu ms", settings->display_timeout_ms, timeout_ms);
+    settings->display_timeout_ms = timeout_ms;
+}
+
+uint32_t settings_get_display_timeout(const FSettings* settings) {
+    return settings->display_timeout_ms;
 }
