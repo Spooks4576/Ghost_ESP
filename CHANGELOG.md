@@ -23,6 +23,8 @@
 - Better access for shared lvgl thread for panels where other work needs to be performed - @i-am-shodan
 - Revised the WebUI styling to be more consistent with GhostESP.net - @jaylikesbunda
 - Terminal View scrolling improvements - @jaylikesbunda
+- Terminal_View_Add_Text queue system for adding text to the terminal view - @jaylikesbunda
+- Revise options screen styling - @jaylikesbunda
 
 ## 🐛 Bug Fixes
 
