@@ -12,9 +12,56 @@ static const char *TAG = "Terminal";
 static lv_obj_t *terminal_textarea = NULL;
 static SemaphoreHandle_t terminal_mutex = NULL;
 static bool terminal_active = false;
+static bool is_stopping = false;
 #define MAX_TEXT_LENGTH 4096
 #define CLEANUP_THRESHOLD (MAX_TEXT_LENGTH * 3 / 4)
 #define CLEANUP_AMOUNT (MAX_TEXT_LENGTH / 2)
+#define MAX_QUEUE_SIZE 10
+#define MAX_MESSAGE_SIZE 256
+
+// Message queue system
+typedef struct {
+    char messages[MAX_QUEUE_SIZE][MAX_MESSAGE_SIZE];
+    int head;
+    int tail;
+    int count;
+} MessageQueue;
+
+static MessageQueue message_queue = {
+    .head = 0,
+    .tail = 0,
+    .count = 0
+};
+
+static void queue_message(const char* text) {
+    if (message_queue.count >= MAX_QUEUE_SIZE) {
+        // Remove oldest message by advancing head
+        message_queue.head = (message_queue.head + 1) % MAX_QUEUE_SIZE;
+        message_queue.count--;
+    }
+    
+    strncpy(message_queue.messages[message_queue.tail], text, MAX_MESSAGE_SIZE - 1);
+    message_queue.messages[message_queue.tail][MAX_MESSAGE_SIZE - 1] = '\0';
+    
+    message_queue.tail = (message_queue.tail + 1) % MAX_QUEUE_SIZE;
+    message_queue.count++;
+}
+
+static void clear_message_queue(void) {
+    message_queue.head = 0;
+    message_queue.tail = 0;
+    message_queue.count = 0;
+}
+
+static void process_queued_messages(void) {
+    while (message_queue.count > 0) {
+        const char* msg = message_queue.messages[message_queue.head];
+        terminal_view_add_text(msg);
+        
+        message_queue.head = (message_queue.head + 1) % MAX_QUEUE_SIZE;
+        message_queue.count--;
+    }
+}
 
 int custom_log_vprintf(const char *fmt, va_list args);
 static int (*default_log_vprintf)(const char *, va_list) = NULL;
@@ -41,6 +88,8 @@ static void scroll_terminal_down(void) {
 
 static void stop_all_operations(void) {
     terminal_active = false;
+    is_stopping = true;
+    clear_message_queue();  // Clear queue before sending stop commands
     
     // Stop all operations through command system
     simulateCommand("stop");         // Stops WiFi operations
@@ -50,9 +99,12 @@ static void stop_all_operations(void) {
     simulateCommand("stopportal");   // Stops evil portal
     simulateCommand("gpsinfo -s");   // Stops GPS operations
     simulateCommand("blewardriving -s"); // Stops BLE operations
+    
+    display_manager_switch_view(&options_menu_view);
 }
 
 void terminal_view_create(void) {
+    is_stopping = false;
     if (terminal_view.root != NULL) {
         return;
     }
@@ -100,10 +152,15 @@ void terminal_view_create(void) {
     lv_obj_clear_flag(terminal_textarea, LV_OBJ_FLAG_CLICKABLE);  // Disable clicking
 
     display_manager_add_status_bar("Terminal");
+    
+    // Process any queued messages after terminal is ready
+    process_queued_messages();
 }
 
 void terminal_view_destroy(void) {
     terminal_active = false;
+    is_stopping = true;
+    clear_message_queue();  // Clear any pending messages when destroying view
     
     // Wait a bit for pending operations
     vTaskDelay(pdMS_TO_TICKS(50));
@@ -120,16 +177,24 @@ void terminal_view_destroy(void) {
         terminal_view.root = NULL;
         terminal_textarea = NULL;
     }
+    
+    is_stopping = false;
 }
 
 void terminal_view_add_text(const char *text) {
-    if (!terminal_active || !terminal_textarea || !text) {
+    if (!text) return;
+    
+    if (is_stopping) return;
+    
+    if (!terminal_active || !terminal_textarea) {
+        queue_message(text);
         return;
     }
 
     // Try to take mutex with longer timeout
     if (xSemaphoreTake(terminal_mutex, pdMS_TO_TICKS(500)) != pdTRUE) {
         ESP_LOGW(TAG, "Failed to acquire terminal mutex");
+        queue_message(text);
         return;
     }
 
@@ -172,14 +237,12 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
             scroll_terminal_down();
         } else {
             stop_all_operations();
-            display_manager_switch_view(&options_menu_view);
             return;
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
         if (button == 1) {
             stop_all_operations();
-            display_manager_switch_view(&options_menu_view);
             return;
         }
 
