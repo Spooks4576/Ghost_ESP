@@ -402,6 +402,7 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
 // Forward declare the callback function
 static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void *arg);
 
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
     if (!event || event->type != BLE_GAP_EVENT_DISC) {
         return;
@@ -444,7 +445,7 @@ void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
         ESP_LOGD("BLE_WD", "Skipped logging entry - GPS data not ready");
     }
 }
-
+#endif
 
 static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void *arg) {
     wardriving_data_t *data = (wardriving_data_t *)arg;
