@@ -549,3 +549,4 @@ void ble_skimmer_scan_callback(struct ble_gap_event *event, void *arg) {
     }
 }
 #endif
+
