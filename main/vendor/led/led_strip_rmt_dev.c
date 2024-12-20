@@ -81,11 +81,36 @@ static esp_err_t led_strip_rmt_refresh(led_strip_t *strip)
         .loop_count = 0,
     };
 
-    ESP_RETURN_ON_ERROR(rmt_enable(rmt_strip->rmt_chan), TAG, "enable RMT channel failed");
-    ESP_RETURN_ON_ERROR(rmt_transmit(rmt_strip->rmt_chan, rmt_strip->strip_encoder, rmt_strip->pixel_buf,
-                                     rmt_strip->strip_len * rmt_strip->bytes_per_pixel, &tx_conf), TAG, "transmit pixels by RMT failed");
-    ESP_RETURN_ON_ERROR(rmt_tx_wait_all_done(rmt_strip->rmt_chan, -1), TAG, "flush RMT channel failed");
-    ESP_RETURN_ON_ERROR(rmt_disable(rmt_strip->rmt_chan), TAG, "disable RMT channel failed");
+    // Silent error handling for all operations
+    esp_err_t err;
+    
+    // Try to enable RMT channel
+    err = rmt_enable(rmt_strip->rmt_chan);
+    if (err != ESP_OK) {
+        return err;
+    }
+
+    // Try to transmit
+    err = rmt_transmit(rmt_strip->rmt_chan, rmt_strip->strip_encoder, rmt_strip->pixel_buf,
+                     rmt_strip->strip_len * rmt_strip->bytes_per_pixel, &tx_conf);
+    if (err != ESP_OK) {
+        rmt_disable(rmt_strip->rmt_chan);
+        return err;
+    }
+
+    // Wait for transmission
+    err = rmt_tx_wait_all_done(rmt_strip->rmt_chan, -1);
+    if (err != ESP_OK) {
+        rmt_disable(rmt_strip->rmt_chan);
+        return err;
+    }
+
+    // Disable RMT channel
+    err = rmt_disable(rmt_strip->rmt_chan);
+    if (err != ESP_OK) {
+        return err;
+    }
+
     return ESP_OK;
 }
 

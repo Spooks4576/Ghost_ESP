@@ -11,6 +11,7 @@
 #include "managers/sd_card_manager.h"
 #include "vendor/GPS/MicroNMEA.h"
 #include "core/callbacks.h"
+#include "managers/views/terminal_screen.h"
 
 static const char *GPS_TAG = "GPS";
 static const char *CSV_TAG = "CSV";
@@ -32,12 +33,18 @@ esp_err_t csv_write_header(FILE* f) {
     const char* header = "MAC,SSID,AuthMode,FirstSeen,Channel,Frequency,RSSI,"
                         "CurrentLatitude,CurrentLongitude,AltitudeMeters,AccuracyMeters,Type\n";
 
+    // Add Bluetooth header after WiFi header
+    const char* ble_header = "# Bluetooth\n"
+                            "MAC,Name,RSSI,FirstSeen,CurrentLatitude,CurrentLongitude,"
+                            "AltitudeMeters,AccuracyMeters,Type\n";
+
     if (f == NULL) {
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
         uart_write_bytes(UART_NUM_0, mark_begin, strlen(mark_begin));
         uart_write_bytes(UART_NUM_0, pre_header, strlen(pre_header));
         uart_write_bytes(UART_NUM_0, header, strlen(header));
+        uart_write_bytes(UART_NUM_0, ble_header, strlen(ble_header));
         uart_write_bytes(UART_NUM_0, mark_close, strlen(mark_close));
         uart_write_bytes(UART_NUM_0, "\n", 1);
         return ESP_OK;
@@ -47,17 +54,24 @@ esp_err_t csv_write_header(FILE* f) {
             return ESP_FAIL;
         }
         written = fwrite(header, 1, strlen(header), f);
-        return (written == strlen(header)) ? ESP_OK : ESP_FAIL;
+        if (written != strlen(header)) {
+            return ESP_FAIL;
+        }
+        written = fwrite(ble_header, 1, strlen(ble_header), f);
+        if (written != strlen(ble_header)) {
+            return ESP_FAIL;
+        }
+        return ESP_OK;
     }
 }
 
 void get_next_csv_file_name(char *file_name_buffer, const char* base_name) {
-    int next_index = get_next_csv_file_index(base_name);  // Modify this to be CSV specific
-    snprintf(file_name_buffer, MAX_FILE_NAME_LENGTH, "/mnt/ghostesp/gps/%s_%d.csv", base_name, next_index);
+    int next_index = get_next_csv_file_index(base_name);
+    snprintf(file_name_buffer, GPS_MAX_FILE_NAME_LENGTH, "/mnt/ghostesp/gps/%s_%d.csv", base_name, next_index);
 }
 
 esp_err_t csv_file_open(const char* base_file_name) {
-    char file_name[MAX_FILE_NAME_LENGTH];
+    char file_name[GPS_MAX_FILE_NAME_LENGTH];
 
 
     if (sd_card_exists("/mnt/ghostesp/gps"))
@@ -69,12 +83,14 @@ esp_err_t csv_file_open(const char* base_file_name) {
     esp_err_t ret = csv_write_header(csv_file);
     if (ret != ESP_OK) {
         printf("Failed to write CSV header.");
+        TERMINAL_VIEW_ADD_TEXT("Failed to write CSV header.");
         fclose(csv_file);
         csv_file = NULL;
         return ret;
     }
 
     printf("Storage: Created new log file: %s\n", file_name);
+    TERMINAL_VIEW_ADD_TEXT("Storage: Created new log file: %s\n", file_name);
     return ESP_OK;
 }
 
@@ -88,7 +104,6 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
     char timestamp[35];
     if (!is_valid_date(&gps->date) || 
         gps->tim.hour > 23 || gps->tim.minute > 59 || gps->tim.second > 59) {
-        // Use a fallback timestamp or return error
         ESP_LOGW(GPS_TAG, "Invalid date/time for CSV entry");
         return ESP_ERR_INVALID_STATE;
     }
@@ -100,27 +115,62 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
              gps->tim.thousand);
 
     char data_line[CSV_BUFFER_SIZE];
-    int len = snprintf(data_line, CSV_BUFFER_SIZE, 
-        "%s,%s,%s,%s,%d,%d,%d,%.6f,%.6f,%.1f,%.1f,WIFI\n",
-        data->bssid,                    // MAC
-        data->ssid,                     // SSID
-        data->encryption_type,          // AuthMode (WEP, WPA, etc)
-        timestamp,                      // FirstSeen
-        data->channel,                  // Channel
-        (2412 + (data->channel-1)*5),  // Frequency (MHz)
-        data->rssi,                     // RSSI
-        data->latitude,                 // CurrentLatitude
-        data->longitude,                // CurrentLongitude
-        data->altitude,                 // AltitudeMeters
-        data->accuracy                 // AccuracyMeters (HDOP * 5m)
-    );
+    int len;
 
-    if (buffer_offset + len > BUFFER_SIZE) {
-        printf("Buffer full, flushing to file.\n");
-        esp_err_t ret = csv_flush_buffer_to_file();
-        if (ret != ESP_OK) {
-            return ret;
+    if (data->ble_data.is_ble_device) {
+        // BLE device format - matches WiGLE Bluetooth format
+        len = snprintf(data_line, CSV_BUFFER_SIZE,
+            "%s,%s,%d,%s,%.6f,%.6f,%.1f,%.1f,%s\n",
+            data->ble_data.ble_mac,
+            data->ble_data.ble_name[0] ? data->ble_data.ble_name : "[Unknown]",
+            data->ble_data.ble_rssi,
+            timestamp,
+            data->latitude,
+            data->longitude,
+            data->altitude,
+            data->accuracy,
+            "BLE");  // Fixed type for BLE devices
+    } else {
+        // WiFi device format
+        int frequency = data->channel > 14 ? 
+            5000 + (data->channel * 5) : 2407 + (data->channel * 5);
+            
+        len = snprintf(data_line, CSV_BUFFER_SIZE,
+            "%s,%s,%s,%s,%d,%d,%d,%.6f,%.6f,%.1f,%.1f,WIFI\n",
+            data->bssid,
+            data->ssid,
+            data->encryption_type,
+            timestamp,
+            data->channel,
+            frequency,
+            data->rssi,
+            data->latitude,
+            data->longitude,
+            data->altitude,
+            data->accuracy);
+    }
+
+    if (len < 0 || len >= CSV_BUFFER_SIZE) {
+        ESP_LOGE(CSV_TAG, "Buffer overflow prevented");
+        return ESP_ERR_NO_MEM;
+    }
+
+    // Check if buffer needs flushing
+    if (buffer_offset + len >= BUFFER_SIZE) {
+        esp_err_t err = csv_flush_buffer_to_file();
+        if (err != ESP_OK) {
+            return err;
         }
+        buffer_offset = 0;
+    }
+
+    // For BLE entries, ensure we're past the headers
+    if (data->ble_data.is_ble_device && buffer_offset == 0) {
+        // Skip to Bluetooth section if this is the first entry after a flush
+        const char* ble_section = "# Bluetooth\n";
+        size_t section_len = strlen(ble_section);
+        memcpy(csv_buffer, ble_section, section_len);
+        buffer_offset = section_len;
     }
 
     memcpy(csv_buffer + buffer_offset, data_line, len);
@@ -131,7 +181,8 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
 
 esp_err_t csv_flush_buffer_to_file() {
     if (csv_file == NULL) {
-        printf("Storage: No SD card found, logging to serial\n");
+        printf("Storage: No open file.\n Starting new file.\n");
+        TERMINAL_VIEW_ADD_TEXT("Storage: No open file.\n Starting new file.\n");
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
 
@@ -147,10 +198,12 @@ esp_err_t csv_flush_buffer_to_file() {
     size_t written = fwrite(csv_buffer, 1, buffer_offset, csv_file);
     if (written != buffer_offset) {
         printf("Failed to write buffer to file.\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to write buffer to file.\n");
         return ESP_FAIL;
     }
 
     printf("Flushed %zu bytes to CSV file.\n", buffer_offset);
+    TERMINAL_VIEW_ADD_TEXT("Flushed %zu bytes to CSV file.\n", buffer_offset);
     buffer_offset = 0;
 
     return ESP_OK;
@@ -160,11 +213,13 @@ void csv_file_close() {
     if (csv_file != NULL) {
         if (buffer_offset > 0) {
             printf("Flushing remaining buffer before closing file.\n");
+            TERMINAL_VIEW_ADD_TEXT("Flushing remaining buffer before closing file.\n");
             csv_flush_buffer_to_file();
         }
         fclose(csv_file);
         csv_file = NULL;
         printf("CSV file closed.\n");
+        TERMINAL_VIEW_ADD_TEXT("CSV file closed.\n");
     }
 }
 
@@ -190,4 +245,149 @@ static bool is_valid_date(const gps_date_t* date) {
     if (date->day < 1 || date->day > days_in_month[date->month - 1]) return false;
     
     return true;
+}
+
+void populate_gps_quality_data(wardriving_data_t *data, const gps_t *gps) {
+    if (!data || !gps) return;
+    
+    data->gps_quality.satellites_used = gps->sats_in_use;
+    data->gps_quality.hdop = gps->dop_h;
+    data->gps_quality.speed = gps->speed;
+    data->gps_quality.course = gps->cog;
+    data->gps_quality.fix_quality = gps->fix;
+    data->gps_quality.magnetic_var = gps->variation;
+    data->gps_quality.has_valid_fix = gps->valid;
+    
+    // Calculate accuracy (existing method)
+    data->accuracy = gps->dop_h * 5.0;
+    
+    // Copy basic GPS data (existing fields)
+    data->latitude = gps->latitude;
+    data->longitude = gps->longitude;
+    data->altitude = gps->altitude;
+}
+
+const char* get_gps_quality_string(const wardriving_data_t *data) {
+    if (!data->gps_quality.has_valid_fix) {
+        return "No Fix";
+    }
+    
+    if (data->gps_quality.hdop <= 1.0) {
+        return "Excellent";
+    } else if (data->gps_quality.hdop <= 2.0) {
+        return "Good";
+    } else if (data->gps_quality.hdop <= 5.0) {
+        return "Moderate";
+    } else if (data->gps_quality.hdop <= 10.0) {
+        return "Fair";
+    } else {
+        return "Poor";
+    }
+}
+
+static const char* get_cardinal_direction(float course) {
+    const char* directions[] = {"N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                               "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"};
+    int index = (int)((course + 11.25f) / 22.5f) % 16;
+    return directions[index];
+}
+
+static const char* get_fix_type_str(uint8_t fix) {
+    switch(fix) {
+        case GPS_FIX_INVALID: return "No Fix";
+        case GPS_FIX_GPS: return "GPS";
+        case GPS_FIX_DGPS: return "DGPS";
+        default: return "Unknown";
+    }
+}
+
+static void format_coordinates(double lat, double lon, char* lat_str, char* lon_str) {
+    int lat_deg = (int)fabs(lat);
+    double lat_min = (fabs(lat) - lat_deg) * 60;
+    int lon_deg = (int)fabs(lon);
+    double lon_min = (fabs(lon) - lon_deg) * 60;
+    
+    sprintf(lat_str, "%d°%.4f'%c", lat_deg, lat_min, lat >= 0 ? 'N' : 'S');
+    sprintf(lon_str, "%d°%.4f'%c", lon_deg, lon_min, lon >= 0 ? 'E' : 'W');
+}
+
+float get_accuracy_percentage(float hdop) {
+    // HDOP ranges from 1 (best) to 20+ (worst)
+    // Let's consider HDOP of 1 as 100% and HDOP of 20 as 0%
+    
+    if (hdop <= 1.0f) return 100.0f;
+    if (hdop >= 20.0f) return 0.0f;
+    
+    // Linear interpolation between 1 and 20
+    return (20.0f - hdop) * (100.0f / 19.0f);
+}
+
+void gps_info_display_task(void *pvParameters) {
+    const TickType_t delay = pdMS_TO_TICKS(5000);
+    char output_buffer[512] = {0}; 
+    char lat_str[20] = {0}, lon_str[20] = {0};
+    static wardriving_data_t gps_data = {0};
+    
+    ESP_LOGI(GPS_TAG, "GPS info display task started");
+    
+    while(1) {
+        // Add null check for nmea_hdl
+        if (!nmea_hdl) {
+            ESP_LOGW(GPS_TAG, "NMEA handle is null");
+            vTaskDelay(delay);
+            continue;
+        }
+
+        ESP_LOGD(GPS_TAG, "Getting GPS structure");
+        gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
+        
+        if (!gps) {
+            ESP_LOGW(GPS_TAG, "GPS structure is null");
+            vTaskDelay(delay);
+            continue;
+        }
+        
+        // Only populate GPS data, don't trigger CSV operations
+        if (gps->valid) {
+            ESP_LOGD(GPS_TAG, "Populating GPS data");
+            populate_gps_quality_data(&gps_data, gps);
+        }
+        
+        // Build complete string before sending to terminal
+        if (!gps->valid || !is_valid_date(&gps->date)) {
+            ESP_LOGD(GPS_TAG, "GPS not valid, showing searching message");
+            strncpy(output_buffer, "Searching sats...\n", sizeof(output_buffer) - 1);
+            output_buffer[sizeof(output_buffer) - 1] = '\0';
+        } else {
+            ESP_LOGD(GPS_TAG, "Formatting GPS coordinates");
+            format_coordinates(gps_data.latitude, gps_data.longitude, lat_str, lon_str);
+            const char* direction = get_cardinal_direction(gps_data.gps_quality.course);
+            
+            // Use safer snprintf with size checking
+            int written = snprintf(output_buffer, sizeof(output_buffer),
+                    "GPS Info\n"
+                    "Sats: %d/%d\n"
+                    "Lat: %s\n"
+                    "Long: %s\n"
+                    "Direction: %d° %s\n",
+                    gps_data.gps_quality.satellites_used, 
+                    GPS_MAX_SATELLITES_IN_USE,
+                    lat_str,
+                    lon_str,
+                    (int)gps_data.gps_quality.course,
+                    direction ? direction : "Unknown");
+
+            // Verify the write was successful
+            if (written < 0 || written >= sizeof(output_buffer)) {
+                ESP_LOGE(GPS_TAG, "Buffer overflow prevented in GPS info formatting");
+                strncpy(output_buffer, "GPS Data Error\n", sizeof(output_buffer) - 1);
+                output_buffer[sizeof(output_buffer) - 1] = '\0';
+            }
+        }
+        
+        // Safely send to terminal with single call
+        terminal_view_add_text(output_buffer);
+        
+        vTaskDelay(delay);
+    }
 }

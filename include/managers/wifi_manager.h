@@ -6,7 +6,6 @@
 #include "esp_err.h"
 #include "esp_wifi_types.h"
 
-
 #define RANDOM_SSID_LEN 8
 #define BEACON_INTERVAL 0x0064  // 100 Time Units (TU)
 #define CAPABILITY_INFO 0x0411  // Capability information (ESS)
@@ -126,7 +125,7 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
 
 void wifi_manager_stop_evil_portal();
 
-void wifi_manager_start_evil_portal(const char* URL, const char* SSID, const char* Password, const char* ap_ssid, const char* domain);
+esp_err_t wifi_manager_start_evil_portal(const char* URL, const char* SSID, const char* Password, const char* ap_ssid, const char* domain);
 
 void screen_music_visualizer_task(void *pvParameters);
 

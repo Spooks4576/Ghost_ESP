@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include "esp_err.h"
 
+
 #define MAX_UUID16 10
 #define MAX_UUID32 5
 #define MAX_UUID128 3
@@ -37,6 +38,11 @@ void stop_ble_stack(void);
 void ble_start_airtag_scanner(void);
 void ble_start_raw_ble_packetscan(void);
 void ble_start_blespam_detector(void);
+void ble_start_capture(void);
+void ble_start_scanning(void);
+void ble_start_skimmer_detection(void);
+void ble_stop_skimmer_detection(void);
+
 
 #endif 
 #endif // BLE_MANAGER_H

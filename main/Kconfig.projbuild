@@ -107,7 +107,13 @@ menu "Ghost ESP Options"
         default n
         help
             Enable support for Sunton LCD.
-    
+
+    config JC3248W535EN_LCD
+        bool "Enable JC3248W535EN LCD"
+        default n
+        help
+            Enable support for JC3248W535EN LCD.
+
     config USE_ILI9341_2
         bool "Use ILI9341 2nd Display Driver"
         default n
@@ -266,7 +272,12 @@ menu "Ghost ESP Options"
         default n
         help
             Enable MMC support.
-    
+
+    config USING_MMC_1_BIT
+        bool "Enable MMC (1-bit mode)"
+        default n
+        help
+            Enable MMC support (1-bit mode).
     
     config SD_SPI_CS_PIN
         int "SD Card SPI CS Pin"
@@ -293,6 +304,27 @@ menu "Ghost ESP Options"
         int "SD Card SPI MOSI Pin"
         default 23
         depends on USING_SPI
+        help
+            Define the MOSI pin for SD Card SPI.
+
+    config SD_MMC_D0 
+        int "SD Card D0 Pin"
+        default 13
+        depends on USING_MMC_1_BIT
+        help
+            Define the MOSI pin for SD Card SPI.
+            
+    config SD_MMC_CLK
+        int "SD Card CLK Pin"
+        default 12
+        depends on USING_MMC_1_BIT
+        help
+            Define the MISO pin for SD Card SPI.
+            
+    config SD_MMC_CMD 
+        int "SD Card CMD Pin"
+        default 11
+        depends on USING_MMC_1_BIT
         help
             Define the MOSI pin for SD Card SPI.
     

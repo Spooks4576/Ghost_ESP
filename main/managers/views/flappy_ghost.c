@@ -295,11 +295,7 @@ void flappy_bird_view_create(void) {
 
     bool use_ghost_image = rand() % 2 == 0;
 
-    if (use_ghost_image) {
-        lv_img_set_src(bird, &ghost);
-    } else {
-        lv_img_set_src(bird, &yappy);
-    }
+    lv_img_set_src(bird, &ghost);
 
     lv_obj_set_size(bird, settings.bird_size, settings.bird_size);
     lv_obj_set_pos(bird, LV_HOR_RES / 4, bird_y_position);
