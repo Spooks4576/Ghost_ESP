@@ -181,8 +181,8 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
 
 esp_err_t csv_flush_buffer_to_file() {
     if (csv_file == NULL) {
-        printf("Storage: No SD card found, logging to serial\n");
-        TERMINAL_VIEW_ADD_TEXT("Storage: No SD card found, logging to serial\n");
+        printf("Storage: No open file.\n Starting new file.\n");
+        TERMINAL_VIEW_ADD_TEXT("Storage: No open file.\n Starting new file.\n");
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
 
