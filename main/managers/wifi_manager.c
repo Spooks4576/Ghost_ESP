@@ -1877,7 +1877,7 @@ void wifi_manager_stop_beacon()
         esp_wifi_set_mode(WIFI_MODE_AP);
         
         // Now restart services
-        ap_manager_start_services();
+        ap_manager_init();
     } else {
         printf("No beacon transmission is running.\n");
         TERMINAL_VIEW_ADD_TEXT("No beacon transmission is running.\n");
