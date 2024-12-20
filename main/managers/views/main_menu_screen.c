@@ -216,7 +216,7 @@ static void update_menu_item_styles(void) {
     for (int i = 0; i < num_items; i++) {
         lv_obj_t *menu_item = (lv_obj_t *)lv_obj_get_child(menu_container, i);
         if (i == selected_item_index) {
-            lv_obj_set_style_border_color(menu_item, lv_color_make(255, 255, 0), 0);
+            lv_obj_set_style_border_color(menu_item, lv_color_make(147, 51, 234), 0);  // purple
             lv_obj_set_style_border_width(menu_item, 4, 0);
         } else {
             lv_obj_set_style_border_color(menu_item, menu_items[i].border_color, 0);
@@ -241,10 +241,10 @@ static void select_menu_item(int index) {
  * @brief Creates the main menu screen view.
  */
 void main_menu_create(void) {  
-    menu_items[0].border_color = lv_color_make(0, 0, 255);
-    menu_items[1].border_color = lv_color_make(0, 255, 0);
-    menu_items[2].border_color = lv_color_make(255, 0, 0);
-    menu_items[3].border_color = lv_color_make(128, 128, 128);
+    menu_items[0].border_color = lv_color_make(178, 34, 34);
+    menu_items[1].border_color = lv_color_make(178, 34, 34);
+    menu_items[2].border_color = lv_color_make(178, 34, 34);
+    menu_items[3].border_color = lv_color_make(178, 34, 34);
 
     display_manager_fill_screen(lv_color_black());
 
@@ -303,6 +303,12 @@ void main_menu_create(void) {
                 lv_img_set_src(icon, menu_items[i].icon);
                 lv_obj_set_size(icon, icon_width, icon_height);
                 lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 0);
+                
+                // Pure black shadow
+                lv_obj_set_style_shadow_width(icon, 8, 0);
+                lv_obj_set_style_shadow_color(icon, lv_color_make(0, 0, 0), 0);  // Pure black
+                lv_obj_set_style_shadow_ofs_x(icon, 2, 0);
+                lv_obj_set_style_shadow_ofs_y(icon, 2, 0);
             }
         }
 
