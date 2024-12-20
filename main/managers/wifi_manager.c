@@ -962,13 +962,13 @@ void wifi_manager_start_monitor_mode(wifi_promiscuous_cb_t_t callback) {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous_rx_cb(callback));
 
     printf("WiFi monitor mode started.\n");
-    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode started.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode started.\n");
 }
 
 void wifi_manager_stop_monitor_mode() {
     ESP_ERROR_CHECK(esp_wifi_set_promiscuous(false));
     printf("WiFi monitor mode stopped.\n");
-    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.");
+    TERMINAL_VIEW_ADD_TEXT("WiFi monitor mode stopped.\n");
 }
 
 void wifi_manager_init(void) {
@@ -1035,11 +1035,11 @@ void wifi_manager_init(void) {
 
 void wifi_manager_start_scan() {
     ap_manager_stop_services();
-    TERMINAL_VIEW_ADD_TEXT("Stopped AP Manager...");
+    TERMINAL_VIEW_ADD_TEXT("Stopped AP Manager...\n");
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_start());
-    TERMINAL_VIEW_ADD_TEXT("Set Wifi Modes...");
+    TERMINAL_VIEW_ADD_TEXT("Set Wifi Modes...\n");
 
     
     wifi_scan_config_t scan_config = {
@@ -1064,7 +1064,7 @@ void wifi_manager_start_scan() {
 
     if (err != ESP_OK) {
         printf("WiFi scan failed to start: %s", esp_err_to_name(err));
-        TERMINAL_VIEW_ADD_TEXT("WiFi scan failed to start");
+        TERMINAL_VIEW_ADD_TEXT("WiFi scan failed to start\n");
         return;
     }
 

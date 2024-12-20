@@ -110,8 +110,8 @@ void handle_list(int argc, char **argv) {
     else if (argc > 1 && strcmp(argv[1], "-s") == 0)
     {
         wifi_manager_list_stations();
-        printf("Listed Stations...");
-        TERMINAL_VIEW_ADD_TEXT("Listed Stations...");
+        printf("Listed Stations...\n");
+        TERMINAL_VIEW_ADD_TEXT("Listed Stations...\n");
         return;
     }
     else {
@@ -157,23 +157,23 @@ void handle_beaconspam(int argc, char **argv) {
 void handle_stop_spam(int argc, char **argv)
 {
     wifi_manager_stop_beacon();
-    printf("Beacon Spam Stopped...");
-    TERMINAL_VIEW_ADD_TEXT("Beacon Spam Stopped...");
+    printf("Beacon Spam Stopped...\n");
+    TERMINAL_VIEW_ADD_TEXT("Beacon Spam Stopped...\n");
 }
 
 void handle_sta_scan(int argc, char **argv)
 {
     wifi_manager_start_monitor_mode(wifi_stations_sniffer_callback);
-    printf("Started Station Scan...");
-    TERMINAL_VIEW_ADD_TEXT("Started Station Scan...");
+    printf("Started Station Scan...\n");
+    TERMINAL_VIEW_ADD_TEXT("Started Station Scan...\n");
 }
 
 
 void handle_attack_cmd(int argc, char **argv)
 {
     if (argc > 1 && strcmp(argv[1], "-d") == 0) {
-        printf("Deauth Attack Starting...");
-        TERMINAL_VIEW_ADD_TEXT("Deauth Attack Starting...");
+        printf("Deauth Attack Starting...\n");
+        TERMINAL_VIEW_ADD_TEXT("Deauth Attack Starting...\n");
         wifi_manager_start_deauth();
         return;
     }
@@ -276,8 +276,8 @@ void handle_wifi_connection(int argc, char** argv) {
     }
 
     if (strlen(ssid) == 0) {
-        printf("SSID and password cannot be empty");
-        TERMINAL_VIEW_ADD_TEXT("SSID and password cannot be empty");
+        printf("SSID and password cannot be empty\n");
+        TERMINAL_VIEW_ADD_TEXT("SSID and password cannot be empty\n");
         return;
     }
 
@@ -343,8 +343,8 @@ void handle_ble_scan_cmd(int argc, char**argv)
         return;
     }
 
-    printf("Invalid Command Syntax...");
-    TERMINAL_VIEW_ADD_TEXT("Invalid Command Syntax...");
+    printf("Invalid Command Syntax...\n");
+    TERMINAL_VIEW_ADD_TEXT("Invalid Command Syntax...\n");
 }
 
 #endif
@@ -706,8 +706,8 @@ void handle_capture_scan(int argc, char** argv) {
     }
 
     if (strcmp(capturetype, "-skimmer") == 0) {
-            printf("Starting BLE\nSkimmer detection...");
-            TERMINAL_VIEW_ADD_TEXT("Starting BLE\nSkimmer detection...");
+            printf("Starting BLE\nSkimmer detection...\n");
+            TERMINAL_VIEW_ADD_TEXT("Starting BLE\nSkimmer detection...\n");
             int err = pcap_file_open("skimmer_scan", PCAP_CAPTURE_BLUETOOTH);
             if (err != ESP_OK) {
                 printf("Warning: PCAP capture failed to start\n");

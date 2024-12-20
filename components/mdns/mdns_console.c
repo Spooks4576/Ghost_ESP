@@ -505,6 +505,7 @@ static void register_mdns_query_svc(void)
 
 static struct {
     struct arg_str *hostname;
+    struct arg_str *instance;   
     struct arg_end *end;
 } mdns_init_args;
 
