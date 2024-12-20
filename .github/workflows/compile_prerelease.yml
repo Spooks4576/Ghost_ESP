@@ -157,7 +157,7 @@ jobs:
       - name: Upload All Artifacts to Cloudflare R2
         env:
           R2_BUCKET: "spooksapi"
-          R2_PATH: "GhostESPBins"
+          R2_PATH: "GhostESPBins/prerelease"
         run: |
           echo "Uploading artifacts to Cloudflare R2..."
           for file in flat_artifacts/*; do
