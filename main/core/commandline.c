@@ -694,11 +694,13 @@ void handle_capture_scan(int argc, char** argv) {
         printf("Stopping packet capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Stopping packet capture...\n");
         wifi_manager_stop_monitor_mode();
+#ifndef CONFIG_IDF_TARGET_ESP32S2
         ble_stop();
         ble_stop_skimmer_detection();
+#endif
         pcap_file_close();
     }
-
+#ifndef CONFIG_IDF_TARGET_ESP32S2
     if (strcmp(capturetype, "-ble") == 0) {
         printf("Starting BLE packet capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Starting BLE packet capture...\n");
@@ -719,6 +721,7 @@ void handle_capture_scan(int argc, char** argv) {
         // Start skimmer detection
         ble_start_skimmer_detection();
     }
+#endif
 }
 
 void stop_portal(int argc, char **argv)
@@ -981,12 +984,13 @@ void handle_capture(int argc, char **argv) {
         TERMINAL_VIEW_ADD_TEXT("Usage: capture [-probe|-beacon|-deauth|-raw|-ble]\n");
         return;
     }
-
+#ifndef CONFIG_IDF_TARGET_ESP32S2
     if (strcmp(argv[1], "-ble") == 0) {
         printf("Starting BLE packet capture...\n");
         TERMINAL_VIEW_ADD_TEXT("Starting BLE packet capture...\n");
         ble_start_capture();
     }
+#endif
 }
 
 void handle_gps_info(int argc, char **argv) {
@@ -1017,6 +1021,7 @@ void handle_gps_info(int argc, char **argv) {
     }
 }
 
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 void handle_ble_wardriving(int argc, char **argv) {
     bool stop_flag = false;
     
@@ -1052,7 +1057,7 @@ void handle_ble_wardriving(int argc, char **argv) {
         TERMINAL_VIEW_ADD_TEXT("BLE wardriving started.\n");
     }
 }
-
+#endif
 
 void register_commands() {
     register_command("help", handle_help);
