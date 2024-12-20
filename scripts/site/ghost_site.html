@@ -815,7 +815,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP vA1.4.4</h1>
+        <h1>Ghost ESP vA1.4.5</h1>
         <!-- Tab Navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
@@ -866,14 +866,6 @@
                         <span id="accent_color_hex" style="margin-left: 10px;">#ffffff</span>
                     </div>
 
-                    <div class="input-group">
-                        <label for="display_timeout">LilyGo T-Watch Display Timeout (ms)
-                            <span class="tooltip">?
-                                <span class="tooltiptext">Set how long before the display turns off when inactive (1000-60000 ms)</span>
-                            </span>
-                        </label>
-                        <input type="number" id="display_timeout" min="1000" max="60000" step="1000" placeholder="1000 - 60000 ms" required>
-                    </div>
                 </div>
                 <!-- Connect to WiFi Section (Disabled) -->
                 <div class="settings-section" id="connect-wifi-section">
@@ -1075,6 +1067,15 @@
                             <option value="JST-9">Japan Standard Time (JST)</option>
                             <option value="CST-8">China Standard Time (CST)</option>
                         </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="display_timeout">LilyGo T-Watch Display Timeout (ms)
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Set how long before the display turns off when inactive (1000-60000 ms)</span>
+                            </span>
+                        </label>
+                        <input type="number" id="display_timeout" min="1000" max="60000" step="1000" placeholder="1000 - 60000 ms" required>
                     </div>
                 </div>
             </div>
