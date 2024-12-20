@@ -1016,7 +1016,7 @@ void handle_gps_info(int argc, char **argv) {
         }
     }
 }
-
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 void handle_ble_wardriving(int argc, char **argv) {
     bool stop_flag = false;
     
@@ -1052,6 +1052,7 @@ void handle_ble_wardriving(int argc, char **argv) {
         TERMINAL_VIEW_ADD_TEXT("BLE wardriving started.\n");
     }
 }
+#endif
 
 void register_commands() {
     register_command("help", handle_help);
