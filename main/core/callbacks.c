@@ -399,10 +399,11 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     }
 }
 
-// Forward declare the callback function
+#ifndef CONFIG_IDF_TARGET_ESP32S2
+// Forward declare the struct and callback before use
+struct ble_hs_adv_field;
 static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void *arg);
 
-#ifndef CONFIG_IDF_TARGET_ESP32S2
 void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
     if (!event || event->type != BLE_GAP_EVENT_DISC) {
         return;
@@ -445,8 +446,8 @@ void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
         ESP_LOGD("BLE_WD", "Skipped logging entry - GPS data not ready");
     }
 }
-#endif
 
+// Move the callback implementation inside the ESP32S2 guard
 static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void *arg) {
     wardriving_data_t *data = (wardriving_data_t *)arg;
     
@@ -458,10 +459,11 @@ static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void
     
     return 0;
 }
+#endif
 
 static const char *SKIMMER_TAG = "SKIMMER_DETECT";
 
-// List of suspicious device names commonly used in skimmers
+// suspicious device names commonly used in skimmers
 static const char *suspicious_names[] = {
     "HC-03", "HC-05", "HC-06", "HC-08", 
     "BT-HC05", "JDY-31", "AT-09", "HM-10",
