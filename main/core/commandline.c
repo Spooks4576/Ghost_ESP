@@ -1082,8 +1082,10 @@ void register_commands() {
     register_command("reboot", handle_reboot);
     register_command("startwd", handle_startwd);
     register_command("gpsinfo", handle_gps_info);
+#ifndef CONFIG_IDF_TARGET_ESP32S2
     register_command("blescan", handle_ble_scan_cmd);
     register_command("blewardriving", handle_ble_wardriving);
+#endif
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif
