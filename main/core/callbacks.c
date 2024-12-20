@@ -461,6 +461,9 @@ static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void
 }
 #endif
 
+
+// wrap for esp32s2
+#ifndef CONFIG_IDF_TARGET_ESP32S2
 static const char *SKIMMER_TAG = "SKIMMER_DETECT";
 
 // suspicious device names commonly used in skimmers
@@ -470,8 +473,6 @@ static const char *suspicious_names[] = {
     "CC41-A", "MLT-BT05", "SPP-CA", "FFD0"
 };
 static const int suspicious_names_count = sizeof(suspicious_names) / sizeof(suspicious_names[0]);
-// wrap for esp32s2
-#ifndef CONFIG_IDF_TARGET_ESP32S2
 void ble_skimmer_scan_callback(struct ble_gap_event *event, void *arg) {
     if (!event || event->type != BLE_GAP_EVENT_DISC) {
         return;
