@@ -1,15 +1,21 @@
-// changelog.md 
+# Ghost ESP Changelog
 
-# 1.4.5
+## 1.4.6
 
-## 🛠️ Core Improvements
+### 🐛 Bug Fixes
+
+- Resolve issues with JC3248W535EN devices #116 - @i-am-shodan, @jaylikesbunda
+
+## 1.4.5
+
+### 🛠️ Core Improvements
 
 - Added starting logs to capture commands - @jaylikesbunda
 - Improved WiFi connection logic - @jaylikesbunda
 - Added support for variable display timeout on TWatch S3 - @jaylikesbunda
 - Revise stop command callbacks to be more consistent - @jaylikesbunda, @Spooks4576
 
-## 🌐 Network Features
+### 🌐 Network Features
 
 - Enhanced Deauth Attack with bidirectional frames, proper 802.11 sequencing, and rate limiting (thank you @SpacehuhnTech for amazing reference code) - @jaylikesbunda  
 - Added BLE Packet Capture support - @jaylikesbunda  
@@ -17,7 +23,7 @@
 - Added support for detecting and capturing packets from card skimmers - @jaylikesbunda  
 - Added "gpsinfo" command to retrieve and display GPS information - @jaylikesbunda
 
-## 🖥️ Interface & UI
+### 🖥️ Interface & UI
 
 - Added more terminal view logs - @jaylikesbunda, @Spooks4576  
 - Better access for shared lvgl thread for panels where other work needs to be performed - @i-am-shodan
@@ -26,7 +32,7 @@
 - Terminal_View_Add_Text queue system for adding text to the terminal view - @jaylikesbunda
 - Revise options screen styling - @jaylikesbunda
 
-## 🐛 Bug Fixes
+### 🐛 Bug Fixes
 
 - Fix GhostNet not coming back after stopping beacon - @Spooks4576
 - Fixed GPS buffer overflow issue that could cause logging to stop - @jaylikesbunda
@@ -34,7 +40,7 @@
 - Terminal View trunication and cleanup to prevent overflow - @jaylikesbunda
 - Fix and revise station scan command - @Spooks4576
 
-## 🔧 Other Improvements
+### 🔧 Other Improvements
 
 - Pulse LEDs Orange when Flipper is detected - @jaylikesbunda
 - Refine DNS handling to more consistently handle redirects - @jaylikesbunda
@@ -42,7 +48,7 @@
 - Miscellaneous fixes and improvements - @jaylikesbunda, @Spooks4576  
 - WebUI fixes for better functionality - @Spooks4576
 
-## 📦 External Updates
+### 📦 External Updates
 
 - New <https://ghostesp.net> website! - @jaylikesbunda
 - Ghost ESP Flipper App v1.1.8 - @jaylikesbunda
