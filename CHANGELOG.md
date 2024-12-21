@@ -5,6 +5,7 @@
 ### 🛠️ Core Improvements
 
 - Added RGB Pulse for AirTag and Card Skimmer detection - @jaylikesbunda
+- Improved BLE stack stability and ensure sync before use - @jaylikesbunda
 
 ### 🐛 Bug Fixes
 

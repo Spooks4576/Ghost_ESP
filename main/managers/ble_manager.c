@@ -6,6 +6,7 @@
 #ifndef CONFIG_IDF_TARGET_ESP32S2
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
+#include "host/util/util.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "host/ble_gap.h"
@@ -429,11 +430,42 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
     }
 }
 
+static bool wait_for_ble_ready(void) {
+    int rc;
+    int retry_count = 0;
+    const int max_retries = 50; // 5 seconds total timeout
+
+    while (!ble_hs_synced() && retry_count < max_retries) {
+        vTaskDelay(pdMS_TO_TICKS(100));  // Wait for 100ms
+        retry_count++;
+    }
+
+    if (retry_count >= max_retries) {
+        ESP_LOGE(TAG_BLE, "Timeout waiting for BLE stack sync");
+        return false;
+    }
+    
+    uint8_t own_addr_type;
+    rc = ble_hs_id_infer_auto(0, &own_addr_type);
+    if (rc != 0) {
+        ESP_LOGE(TAG_BLE, "Failed to set BLE address; rc=%d", rc);
+        return false;
+    }
+    
+    return true;
+}
+
 void ble_start_scanning(void) {
-    if (!ble_initialized)
-    {
+    if (!ble_initialized) {
         ble_init();
     }
+    
+    if (!wait_for_ble_ready()) {
+        ESP_LOGE(TAG_BLE, "BLE stack not ready");
+        TERMINAL_VIEW_ADD_TEXT("BLE stack not ready\n");
+        return;
+    }
+    
     struct ble_gap_disc_params disc_params = {0};
     disc_params.itvl = BLE_HCI_SCAN_ITVL_DEF;
     disc_params.window = BLE_HCI_SCAN_WINDOW_DEF;
@@ -490,16 +522,44 @@ esp_err_t ble_unregister_handler(ble_data_handler_t handler) {
 
 void ble_init(void) {
 #ifndef CONFIG_IDF_TARGET_ESP32S2
-if (!ble_initialized) {
-    nvs_flash_init();
-    nimble_port_init();
+    if (!ble_initialized) {
+        esp_err_t ret = nvs_flash_init();
+        if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            // NVS partition was truncated and needs to be erased
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            ret = nvs_flash_init();
+        }
+        ESP_ERROR_CHECK(ret);
 
-    nimble_port_freertos_init(nimble_host_task);
-    ble_initialized = true;
+        if (handlers == NULL) {
+            handlers = malloc(sizeof(ble_handler_t) * MAX_HANDLERS);
+            if (handlers == NULL) {
+                ESP_LOGE(TAG_BLE, "Failed to allocate handlers array");
+                return;
+            }
+            memset(handlers, 0, sizeof(ble_handler_t) * MAX_HANDLERS);
+            handler_count = 0;
+        }
 
-    ESP_LOGI(TAG_BLE, "BLE initialized");
-    TERMINAL_VIEW_ADD_TEXT("BLE initialized\n");
-}
+        ret = nimble_port_init();
+        if (ret != 0) {
+            ESP_LOGE(TAG_BLE, "Failed to init nimble port: %d", ret);
+            free(handlers);
+            handlers = NULL;
+            return;
+        }
+
+        // Configure and start the NimBLE host task
+        static StackType_t host_task_stack[4096];
+        static StaticTask_t host_task_buf;
+        
+        xTaskCreateStatic(nimble_host_task, "nimble_host", sizeof(host_task_stack) / sizeof(StackType_t),
+                         NULL, 5, host_task_stack, &host_task_buf);
+
+        ble_initialized = true;
+        ESP_LOGI(TAG_BLE, "BLE initialized");
+        TERMINAL_VIEW_ADD_TEXT("BLE initialized\n");
+    }
 #endif
 }
 
@@ -511,7 +571,14 @@ void ble_start_find_flippers(void)
 
 void ble_deinit(void) {
     if (ble_initialized) {
+        if (handlers != NULL) {
+            free(handlers);
+            handlers = NULL;
+            handler_count = 0;
+        }
+        
         nimble_port_stop();
+        nimble_port_deinit();
         ble_initialized = false;
         ESP_LOGI(TAG_BLE, "BLE deinitialized successfully.");
         TERMINAL_VIEW_ADD_TEXT("BLE deinitialized successfully.\n");
