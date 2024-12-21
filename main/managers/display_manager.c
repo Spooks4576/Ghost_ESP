@@ -31,6 +31,8 @@
 #endif
 
 #ifdef CONFIG_JC3248W535EN_LCD
+#include "axs15231b/lv_port.h"
+#include "axs15231b/esp_bsp.h"
 #include "vendor/drivers/axs15231b.h"
 #endif
 
@@ -403,6 +405,10 @@ bool display_manager_register_view(View *view) {
 void display_manager_switch_view(View *view) {
     if (view == NULL) return;
 
+#ifdef CONFIG_JC3248W535EN_LCD
+    bsp_display_lock(0);
+#endif
+
     if (xSemaphoreTake(dm.mutex, pdMS_TO_TICKS(MUTEX_TIMEOUT_MS)) == pdTRUE) {
         printf("Switching view from %s to %s\n", 
             dm.current_view ? dm.current_view->name : "NULL", 
@@ -435,6 +441,10 @@ void display_manager_switch_view(View *view) {
     } else {
         printf("Failed to acquire mutex for switching view\n");
     }
+
+#ifdef CONFIG_JC3248W535EN_LCD
+    bsp_display_unlock();
+#endif
 }
 
 void display_manager_destroy_current_view(void) {
