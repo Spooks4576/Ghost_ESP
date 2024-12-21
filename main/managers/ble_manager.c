@@ -361,7 +361,8 @@ void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
         if (spam_counter > MAX_PAYLOADS) {
             ESP_LOGW(TAG_BLE, "BLE Spam detected! Company ID: 0x%04X", current_company_id);
             TERMINAL_VIEW_ADD_TEXT("BLE Spam detected! Company ID: 0x%04X\n", current_company_id);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, true);
+            // pulse rgb purple once when spam is detected
+            pulse_once(&rgb_manager, 128, 0, 128);
             spam_counter = 0;
         }
     } else {
@@ -398,6 +399,9 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
         }
 
         if (patternFound) {
+            // pulse rgb blue once when air tag is found
+            pulse_once(&rgb_manager, 0, 0, 255);
+        
             char macAddress[18];
             snprintf(macAddress, sizeof(macAddress), "%02x:%02x:%02x:%02x:%02x:%02x",
                      event->disc.addr.val[0], event->disc.addr.val[1], event->disc.addr.val[2],

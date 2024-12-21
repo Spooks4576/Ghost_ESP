@@ -5,6 +5,7 @@
 #include "vendor/pcap.h"
 #include "vendor/GPS/gps_logger.h"
 #include "managers/gps_manager.h"
+#include "managers/rgb_manager.h"
 #define WPS_OUI 0x0050f204 
 #define TAG "WIFI_MONITOR"
 #define WPS_CONF_METHODS_PBC        0x0080
@@ -21,6 +22,7 @@ int detected_network_count = 0;
 esp_timer_handle_t stop_timer;
 int should_store_wps = 1;
 gps_t *gps = NULL;
+extern RGBManager_t rgb_manager;
 
 static void trim_trailing(char *str) {
     int i = strlen(str) - 1;
@@ -506,6 +508,9 @@ void ble_skimmer_scan_callback(struct ble_gap_event *event, void *arg) {
                 ESP_LOGW(SKIMMER_TAG, "Device Name: %s", device_name);
                 ESP_LOGW(SKIMMER_TAG, "MAC Address: %s", mac_addr);
                 ESP_LOGW(SKIMMER_TAG, "RSSI: %d dBm", event->disc.rssi);
+
+                // pulse rgb red once when skimmer is detected
+                pulse_once(&rgb_manager, 255, 0, 0);
 
                 // Create enhanced PCAP packet with metadata
                 if (pcap_file != NULL) {

@@ -225,7 +225,7 @@ void handle_hardware_button_press_options(InputEvent *event) {
     if (event->type == INPUT_TYPE_TOUCH) {
         lv_indev_data_t *data = &event->data.touch_data;
 
-        int screen_height = CONFIG_TFT_HEIGHT;
+        int screen_height = LV_VER_RES;
         int third_height = screen_height / 3;
 
         if (data->point.y < third_height) {
