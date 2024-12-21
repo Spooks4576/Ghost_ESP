@@ -2,6 +2,10 @@
 
 ## 1.4.6
 
+### 🛠️ Core Improvements
+
+- Added RGB Pulse for AirTag and Card Skimmer detection - @jaylikesbunda
+
 ### 🐛 Bug Fixes
 
 - Resolve issues with JC3248W535EN devices #116 - @i-am-shodan, @jaylikesbunda
