@@ -9,6 +9,7 @@
 
 ### 🐛 Bug Fixes
 
+- Fix BLE Crash on specific devices - @Spooks4576
 - Resolve issues with JC3248W535EN devices #116 - @i-am-shodan, @jaylikesbunda
 
 ## 1.4.5

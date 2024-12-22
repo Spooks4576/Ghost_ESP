@@ -117,6 +117,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # This ensures we have all commit history
+
       - name: Download All Artifacts
         uses: actions/download-artifact@v3
         with:
@@ -200,19 +205,51 @@ jobs:
             fi
           done
 
+      - name: Get Commit History
+        id: get_commits
+        run: |
+          # Get the hash of the last prerelease
+          last_release=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases" | \
+            jq -r '[.[] | select(.prerelease == true)] | .[0].target_commitish')
+          
+          # Get commit messages since last release
+          if [ ! -z "$last_release" ]; then
+            commits=$(git log --pretty=format:"- %s" $last_release..HEAD)
+          else
+            commits=$(git log --pretty=format:"- %s" -n 10)
+          fi
+          
+          # Escape newlines and quotes for JSON
+          commits="${commits//'%'/'%25'}"
+          commits="${commits//$'\n'/'\\n'}"
+          commits="${commits//$'\r'/'%0D'}"
+          commits="${commits//'"'/'\"'}"
+          
+          echo "commits=$commits" >> $GITHUB_OUTPUT
+
       - name: Notify Discord of Successful Upload
         if: success()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
+          # Get current date in different formats
+          BUILD_DATE=$(date -u +"%Y-%m-%d")
+          BUILD_VERSION=$(date -u +"%Y%m%d")
+          
           payload=$(cat <<EOF
           {
             "embeds": [
               {
-                "title": "🎉 New Build Artifacts Uploaded!",
-                "description": "All build artifacts have been successfully uploaded to Cloudflare R2 and GitHub Release.",
-                "color": 5814783,
-                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+                "title": "🚀 GhostESP Prerelease Build - $BUILD_DATE",
+                "description": "A new prerelease build has been uploaded to Cloudflare R2 and GitHub Release.\n\n**Version:** Pre-$BUILD_VERSION\n\n**Changes since last prerelease:**\n${{ steps.get_commits.outputs.commits }}\n\n**Flash your device:**\n🔗 [Flash using GhostESP Web Flasher](https://flasher.ghostesp.net)",
+                "color": 16750848,
+                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+                "footer": {
+                  "text": "GhostESP Prerelease Build $BUILD_VERSION"
+                }
               }
             ]
           }
