@@ -30,7 +30,7 @@ jobs:
           - { name: "MarauderV6&AwokDual", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip"}
           - { name: "AwokMini", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip"}
           - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer", zip_name: "ESP32-S3-Cardputer.zip"}
-          - { name: "LillyGoTWatch_S3", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.S3TWatch", zip_name: "lillygos3watch.zip"}
+          #- { name: "LillyGoTWatch_S3", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.S3TWatch", zip_name: "lillygos3watch.zip"}
 
 
           # CYD (Cheap Yellow Display) with touch screen
