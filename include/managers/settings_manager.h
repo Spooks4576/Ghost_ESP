@@ -74,6 +74,7 @@ typedef struct {
     char selected_hex_accent_color[25];
     int gps_rx_pin;
     uint32_t display_timeout_ms;  // Display timeout in milliseconds
+    bool rts_enabled;
 } FSettings;
 
 // Function declarations
@@ -95,6 +96,9 @@ uint16_t settings_get_broadcast_speed(const FSettings* settings);
 
 void settings_set_flappy_ghost_name(FSettings* settings, const char* Name);
 const char* settings_get_flappy_ghost_name(const FSettings* settings);
+
+void settings_set_rts_enabled(FSettings* settings, bool enabled);
+bool settings_get_rts_enabled(FSettings* settings);
 
 void settings_set_timezone_str(FSettings* settings, const char* Name);
 const char* settings_get_timezone_str(const FSettings* settings);

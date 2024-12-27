@@ -830,6 +830,18 @@
                     <h2>Miscellaneous Settings</h2>
 
                     <div class="input-group">
+                        <label for="rts_enabled">RTS Enabled 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">Toggle the Real Time Screen Streaming on Screen based devices</span>
+                            </span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="rts_enabled">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="input-group">
                         <label for="gps_rx_pin">GPS RX Pin
                             <span class="tooltip">?
                                 <span class="tooltiptext">Provide the GPS RX Pin For the Firmware. Only for those who have a working GPS Installed</span>
@@ -1513,6 +1525,8 @@
                     document.getElementById('accent_color_hex').textContent = data.hex_accent_color;
                     document.getElementById('timezone_select').value = data.timezone_str;
 
+                    document.getElementById('rts_enabled').checked = data.rts_enabled_bool;
+
                     if (data.station_ip) {
                         document.getElementById('station_ip').value = data.station_ip;
                     } else {
@@ -1557,7 +1571,8 @@
                 timezone_str: document.getElementById('timezone_select').value,
                 gps_rx_pin: parseInt(document.getElementById('gps_rx_pin').value),
                 display_timeout: parseInt(document.getElementById('display_timeout').value),
-            };
+                rts_enabled_bool: Number(document.getElementById('rts_enabled').checked), 
+            };  
 
             const validationErrors = validateSettings(settings);
             if (validationErrors.length > 0) {

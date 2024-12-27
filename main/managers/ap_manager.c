@@ -1274,6 +1274,11 @@ static esp_err_t api_settings_handler(httpd_req_t* req) {
         settings_set_accent_color_str(settings, hex_accent_color_str->valuestring);
     }
 
+    cJSON* rts_enabled_bool = cJSON_GetObjectItem(root, "rts_enabled");
+    if (rts_enabled_bool) {
+        settings_set_rts_enabled(settings, rts_enabled_bool->valueint != 0);
+    }
+
     cJSON* gps_rx_pin = cJSON_GetObjectItem(root, "gps_rx_pin");
     if (gps_rx_pin) {
         settings_set_gps_rx_pin(settings, gps_rx_pin->valueint);
@@ -1332,6 +1337,7 @@ static esp_err_t api_settings_get_handler(httpd_req_t* req) {
     cJSON_AddStringToObject(root, "timezone_str", settings_get_timezone_str(settings));
     cJSON_AddNumberToObject(root, "gps_rx_pin", settings_get_gps_rx_pin(settings));
     cJSON_AddNumberToObject(root, "display_timeout", settings_get_display_timeout(settings));
+    cJSON_AddNumberToObject(root, "rts_enabled_bool", settings_get_rts_enabled(settings));
     
     esp_netif_ip_info_t ip_info;
     esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");

@@ -35,6 +35,7 @@ static const char* NVS_TIMEZONE_NAME = "sel_tz";
 static const char* NVS_ACCENT_COLOR = "sel_ac";
 static const char* NVS_GPS_RX_PIN = "gps_rx_pin";
 static const char* NVS_DISPLAY_TIMEOUT_KEY = "disp_timeout";
+static const char* NVS_ENABLE_RTS_KEY = "rts_enable";
 
 extern lv_timer_t *time_update_timer;
 
@@ -87,6 +88,7 @@ void settings_set_defaults(FSettings* settings) {
     strcpy(settings->selected_timezone, "MST7MDT,M3.2.0,M11.1.0");
     settings->gps_rx_pin = 0;
     settings->display_timeout_ms = 10000; // Default 10 seconds
+    settings->rts_enabled = false;
 }
 
 void settings_load(FSettings* settings) {
@@ -228,6 +230,17 @@ void settings_load(FSettings* settings) {
         settings->display_timeout_ms = 10000; // Default 10 seconds if not found
     }
 
+    uint8_t rtsenabledvalue;
+    err = nvs_get_u8(nvsHandle, NVS_ENABLE_RTS_KEY, &rtsenabledvalue);
+    if (err == ESP_OK)
+    {
+        settings->rts_enabled = rtsenabledvalue;
+    }
+    else 
+    {
+        settings->rts_enabled = false;
+    }
+
     printf("Settings loaded from NVS.\n");
 }
 
@@ -272,6 +285,12 @@ void settings_save(const FSettings* settings) {
     err = nvs_set_u8(nvsHandle, NVS_RGB_SPEED_KEY, settings->rgb_speed);
     if (err != ESP_OK) {
         printf("Failed to save RGB Speed\n");
+    }
+
+    // Save RTS Enabled
+    err = nvs_set_u8(nvsHandle, NVS_ENABLE_RTS_KEY, settings->rts_enabled);
+    if (err != ESP_OK) {
+        printf("Failed to save RTS Enabled\n");
     }
 
     // Save Evil Portal settings
@@ -408,6 +427,16 @@ void settings_save(const FSettings* settings) {
 // Core Settings Getters and Setters
 void settings_set_rgb_mode(FSettings* settings, RGBMode mode) {
     settings->rgb_mode = mode;
+}
+
+
+void settings_set_rts_enabled(FSettings* settings, bool enabled) {
+    settings->rts_enabled = enabled;
+}
+
+
+bool settings_get_rts_enabled(FSettings* settings) {
+    return settings->rts_enabled;
 }
 
 RGBMode settings_get_rgb_mode(const FSettings* settings) {
