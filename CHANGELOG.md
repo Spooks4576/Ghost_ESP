@@ -6,6 +6,7 @@
 
 - Added RGB Pulse for AirTag and Card Skimmer detection - @jaylikesbunda
 - Added logs to tell if GPS module is connected correctly- @jaylikesbunda
+- Added WiFi Pineapple detection (requires PineAP to be in active mode) - @jaylikesbunda
 
 ### 🐛 Bug Fixes
 
