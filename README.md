@@ -58,7 +58,8 @@ Make sure to check out our [Discord](https://discord.gg/PkdjxqYKe4)
 ## What Makes this different than ESP32 Marauder 
 This table should explain the key differences between ghost esp and ESP32 Marauder
 
-![Ghost_VS_Marauder](https://github.com/user-attachments/assets/bbcf6b49-6641-45fc-bbcf-8073e76d9601)
+![Ghost_VS_Marauder](https://github.com/user-attachments/assets/84fde8b3-e17e-44d5-9321-04f1f1ae8541)
+
 
 
 ## Special Acknowledgments
