@@ -99,7 +99,8 @@ static void stop_all_operations(void) {
     simulateCommand("stopportal");   // Stops evil portal
     simulateCommand("gpsinfo -s");   // Stops GPS operations
     simulateCommand("blewardriving -s"); // Stops BLE operations
-    
+    simulateCommand("pineap -s");    // Stops PineAP detection
+
     display_manager_switch_view(&options_menu_view);
 }
 

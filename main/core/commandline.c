@@ -1,6 +1,7 @@
 // command.c
 
 #include "core/commandline.h"
+#include "core/callbacks.h"
 #include "managers/wifi_manager.h"
 #include "managers/rgb_manager.h"
 #include "managers/ap_manager.h"
@@ -10,7 +11,6 @@
 #include <string.h>
 #include <vendor/dial_client.h>
 #include "managers/dial_manager.h"
-#include "core/callbacks.h"
 #include <esp_timer.h>
 #include "vendor/pcap.h"
 #include <sys/socket.h>
@@ -976,6 +976,17 @@ void handle_help(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("    Usage: blewardriving [-s]\n");
     TERMINAL_VIEW_ADD_TEXT("    Arguments:\n");
     TERMINAL_VIEW_ADD_TEXT("        -s  : Stop BLE wardriving\n\n");
+
+    printf("pineap\n");
+    printf("    Description: Start/Stop PineAP detection\n");
+    printf("    Usage: pineap [-s]\n");
+    printf("    Arguments:\n");
+    printf("        -s  : Stop PineAP detection\n\n");
+    TERMINAL_VIEW_ADD_TEXT("pineap\n");
+    TERMINAL_VIEW_ADD_TEXT("    Description: Start/Stop PineAP detection\n");
+    TERMINAL_VIEW_ADD_TEXT("    Usage: pineap [-s]\n");
+    TERMINAL_VIEW_ADD_TEXT("    Arguments:\n");
+    TERMINAL_VIEW_ADD_TEXT("        -s  : Stop PineAP detection\n\n");
 }
 
 void handle_capture(int argc, char **argv) {
@@ -1065,6 +1076,34 @@ void handle_ble_wardriving(int argc, char **argv) {
 }
 #endif
 
+void handle_pineap_detection(int argc, char **argv) {
+    if (argc > 1 && strcmp(argv[1], "-s") == 0) {
+        printf("Stopping PineAP detection...\n");
+        TERMINAL_VIEW_ADD_TEXT("Stopping PineAP detection...\n");
+        stop_pineap_detection();
+        wifi_manager_stop_monitor_mode();
+        pcap_file_close();
+        return;
+    }
+
+    printf("Starting PineAP detection (scanning all channels)...\n");
+    TERMINAL_VIEW_ADD_TEXT("Starting PineAP detection (scanning all channels)...\n");
+    
+    // Open PCAP file for logging detections
+    int err = pcap_file_open("pineap_detection", PCAP_CAPTURE_WIFI);
+    if (err != ESP_OK) {
+        printf("Warning: Failed to open PCAP file for logging\n");
+        TERMINAL_VIEW_ADD_TEXT("Warning: Failed to open PCAP file for logging\n");
+    }
+    
+    // Start PineAP detection with channel hopping
+    start_pineap_detection();
+    wifi_manager_start_monitor_mode(wifi_pineap_detector_callback);
+    
+    printf("Monitoring for PineAP activity (Use 'pineap -s' to stop)...\n\n");
+    TERMINAL_VIEW_ADD_TEXT("Monitoring for PineAP activity (Use 'pineap -s' to stop)...\n\n");
+}
+
 void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
@@ -1095,6 +1134,7 @@ void register_commands() {
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging
 #endif
+    register_command("pineap", handle_pineap_detection);
     printf("Registered Commands\n");
     TERMINAL_VIEW_ADD_TEXT("Registered Commands\n");
 }

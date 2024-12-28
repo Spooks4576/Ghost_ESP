@@ -2,10 +2,15 @@
 #include "managers/wifi_manager.h"
 #include <esp_log.h>
 #include <string.h>
+#include <time.h>
+#include <ctype.h>
 #include "vendor/pcap.h"
 #include "vendor/GPS/gps_logger.h"
 #include "managers/gps_manager.h"
 #include "managers/rgb_manager.h"
+#include "esp_wifi.h"
+#include "managers/views/terminal_screen.h"
+
 #define WPS_OUI 0x0050f204 
 #define TAG "WIFI_MONITOR"
 #define WPS_CONF_METHODS_PBC        0x0080
@@ -17,12 +22,307 @@
 #define WIFI_PKT_PROBE_RESP 0x05 // Probe Response subtype
 #define WIFI_PKT_EAPOL 0x80
 #define ESP_WIFI_VENDOR_METADATA_LEN 8  // Channel(1) + RSSI(1) + Rate(1) + Timestamp(4) + Noise(1)
+
+#define MIN_SSIDS_FOR_DETECTION 2  // Minimum SSIDs needed to flag as PineAP
+
+// Structure to track blacklisted BSSIDs
+typedef struct {
+    uint8_t bssid[6];
+    time_t detection_time;
+} blacklisted_ap_t;
+
+static blacklisted_ap_t blacklist[MAX_PINEAP_NETWORKS];
+static int blacklist_count = 0;
+
+// Check if a BSSID is blacklisted
+static bool is_blacklisted(const uint8_t* bssid) {
+    for(int i = 0; i < blacklist_count; i++) {
+        if(memcmp(blacklist[i].bssid, bssid, 6) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Add BSSID to blacklist
+static void add_to_blacklist(const uint8_t* bssid) {
+    if(blacklist_count < MAX_PINEAP_NETWORKS) {
+        memcpy(blacklist[blacklist_count].bssid, bssid, 6);
+        blacklist[blacklist_count].detection_time = time(NULL);
+        blacklist_count++;
+    }
+}
+
+// Forward declarations
+static uint32_t hash_ssid(const char* ssid);
+static bool ssid_hash_exists(pineap_network_t* network, uint32_t hash);
+static void trim_trailing(char *str);
+static bool compare_bssid(const uint8_t *bssid1, const uint8_t *bssid2);
+static bool is_beacon_packet(const wifi_promiscuous_pkt_t *pkt);
+
 wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
 int detected_network_count = 0;
 esp_timer_handle_t stop_timer;
 int should_store_wps = 1;
 gps_t *gps = NULL;
 extern RGBManager_t rgb_manager;
+
+#define MAX_PINEAP_NETWORKS 50
+#define MAX_SSIDS_PER_BSSID 10
+#define MAX_WIFI_CHANNEL 13
+#define CHANNEL_HOP_INTERVAL_MS 200
+#define RECENT_SSID_COUNT 5  // Keep track of last 5 SSIDs
+#define LOG_DELAY_MS 5000  // 5 second delay between logs
+
+static pineap_network_t pineap_networks[MAX_PINEAP_NETWORKS];
+static int pineap_network_count = 0;
+static bool pineap_detection_active = false;
+static uint8_t current_channel = 1;
+static esp_timer_handle_t channel_hop_timer = NULL;
+
+static void channel_hop_timer_callback(void* arg) {
+    if (!pineap_detection_active) return;
+    
+    current_channel = (current_channel % MAX_WIFI_CHANNEL) + 1;
+    esp_wifi_set_channel(current_channel, WIFI_SECOND_CHAN_NONE);
+}
+
+static esp_err_t start_channel_hopping(void) {
+    esp_timer_create_args_t timer_args = {
+        .callback = channel_hop_timer_callback,
+        .name = "channel_hop"
+    };
+    
+    if (channel_hop_timer == NULL) {
+        ESP_ERROR_CHECK(esp_timer_create(&timer_args, &channel_hop_timer));
+    }
+    
+    // Start timer for channel hopping
+    return esp_timer_start_periodic(channel_hop_timer, CHANNEL_HOP_INTERVAL_MS * 1000);
+}
+
+static void stop_channel_hopping(void) {
+    if (channel_hop_timer) {
+        esp_timer_stop(channel_hop_timer);
+        esp_timer_delete(channel_hop_timer);
+        channel_hop_timer = NULL;
+    }
+}
+
+// Helper function to find or create network entry
+static pineap_network_t* find_or_create_network(const uint8_t* bssid) {
+    // First try to find existing network
+    for (int i = 0; i < pineap_network_count; i++) {
+        if (compare_bssid(pineap_networks[i].bssid, bssid)) {
+            return &pineap_networks[i];
+        }
+    }
+    
+    // If not found and we have space, create new entry
+    if (pineap_network_count < MAX_PINEAP_NETWORKS) {
+        pineap_network_t* network = &pineap_networks[pineap_network_count++];
+        memcpy(network->bssid, bssid, 6);
+        network->ssid_count = 0;
+        network->is_pineap = false;
+        network->first_seen = time(NULL);
+        return network;
+    }
+    
+    return NULL;
+}
+
+static uint32_t hash_ssid(const char* ssid) {
+    uint32_t hash = 5381;
+    int c;
+    while ((c = *ssid++))
+        hash = ((hash << 5) + hash) + c; // hash * 33 + c
+    return hash;
+}
+
+static bool ssid_hash_exists(pineap_network_t* network, uint32_t hash) {
+    for (int i = 0; i < network->ssid_count; i++) {
+        if (network->ssid_hashes[i] == hash) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void start_pineap_detection(void) {
+    pineap_detection_active = true;
+    pineap_network_count = 0;
+    memset(pineap_networks, 0, sizeof(pineap_networks));
+    current_channel = 1;
+    start_channel_hopping();
+}
+
+void stop_pineap_detection(void) {
+    pineap_detection_active = false;
+    stop_channel_hopping();
+}
+
+static void log_pineap_detection(void* arg) {
+    pineap_log_data_t* log_data = (pineap_log_data_t*)arg;
+    
+    char mac_str[18];
+    snprintf(mac_str, sizeof(mac_str), "%02x:%02x:%02x:%02x:%02x:%02x",
+            log_data->bssid[0], log_data->bssid[1], log_data->bssid[2],
+            log_data->bssid[3], log_data->bssid[4], log_data->bssid[5]);
+
+    // Build SSIDs string, filtering out empty SSIDs
+    char ssids_str[256] = {0};
+    int valid_ssid_count = 0;
+    for (int i = 0; i < log_data->ssid_count && i < RECENT_SSID_COUNT; i++) {
+        if (strlen(log_data->recent_ssids[i]) > 0) {  // Only include non-empty SSIDs
+            if (valid_ssid_count > 0) strcat(ssids_str, ", ");
+            strcat(ssids_str, log_data->recent_ssids[i]);
+            valid_ssid_count++;
+        }
+    }
+    
+    // Only log if we have at least 2 valid (non-empty) SSIDs
+    if (valid_ssid_count >= 2) {
+        // Log the detection with proper newlines
+        printf("\nPineapple detected!\n");
+        TERMINAL_VIEW_ADD_TEXT("\nPineapple detected!\n");
+        printf("BSSID: %s\n", mac_str);
+        TERMINAL_VIEW_ADD_TEXT("BSSID: %s\n", mac_str);
+        printf("Channel: %d\n", log_data->channel);
+        TERMINAL_VIEW_ADD_TEXT("Channel: %d\n", log_data->channel);
+        printf("RSSI: %d\n", log_data->rssi);
+        TERMINAL_VIEW_ADD_TEXT("RSSI: %d\n", log_data->rssi);
+        printf("SSIDs (%d): %s\n\n\n", valid_ssid_count, ssids_str);
+        TERMINAL_VIEW_ADD_TEXT("SSIDs (%d): %s\n\n", valid_ssid_count, ssids_str);
+    }
+
+    free(log_data);
+    vTaskDelete(NULL);
+}
+
+static void start_log_task(pineap_network_t* network, const char* new_ssid, int8_t channel, int8_t rssi) {
+    pineap_log_data_t* log_data = malloc(sizeof(pineap_log_data_t));
+    if (!log_data) return;
+
+    // Copy network data
+    memcpy(log_data->bssid, network->bssid, 6);
+    memcpy(log_data->recent_ssids, network->recent_ssids, sizeof(network->recent_ssids));
+    log_data->ssid_count = network->ssid_count;
+    log_data->channel = channel;
+    log_data->rssi = rssi;
+
+    // Create logging task
+    xTaskCreate(log_pineap_detection, "pineap_log", 4096, log_data, 1, &network->log_task_handle);
+}
+
+// Helper function to check if SSID is valid and unique
+static bool is_valid_unique_ssid(const char* new_ssid, pineap_network_t* network) {
+    // Check if SSID is empty or just whitespace
+    if (strlen(new_ssid) == 0) return false;
+    
+    bool all_whitespace = true;
+    for (const char* p = new_ssid; *p; p++) {
+        if (!isspace((unsigned char)*p)) {
+            all_whitespace = false;
+            break;
+        }
+    }
+    if (all_whitespace) return false;
+
+    // Check if this SSID is already in our recent list
+    for (int i = 0; i < network->ssid_count && i < RECENT_SSID_COUNT; i++) {
+        if (strcasecmp(network->recent_ssids[i], new_ssid) == 0) {
+            return false;  // SSID already exists (case insensitive)
+        }
+    }
+
+    return true;
+}
+
+void wifi_pineap_detector_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
+    if (!pineap_detection_active || type != WIFI_PKT_MGMT) return;
+
+    const wifi_promiscuous_pkt_t *ppkt = (wifi_promiscuous_pkt_t *)buf;
+    const wifi_ieee80211_packet_t *ipkt = (wifi_ieee80211_packet_t *)ppkt->payload;
+    const wifi_ieee80211_mac_hdr_t *hdr = &ipkt->hdr;
+
+    // Only process beacon frames
+    if (!is_beacon_packet(ppkt)) return;
+
+    // Find or create network
+    pineap_network_t* network = find_or_create_network(hdr->addr3);
+    if (!network) return;
+
+    // Extract SSID from beacon
+    const uint8_t *payload = ppkt->payload;
+    int len = ppkt->rx_ctrl.sig_len;
+    
+    // Skip fixed parameters (24 bytes header + 12 bytes fixed params)
+    int index = 36;
+    if (index + 2 > len) return;
+
+    // Look specifically for SSID element (ID = 0)
+    if (payload[index] != 0) return;
+    
+    uint8_t ie_len = payload[index + 1];
+    if (ie_len > 32 || index + 2 + ie_len > len) return;
+
+    // Get SSID
+    char ssid[33] = {0};
+    memcpy(ssid, &payload[index + 2], ie_len);
+    ssid[ie_len] = '\0';
+    trim_trailing(ssid);
+    
+    // Only proceed if this is a valid and unique SSID
+    if (!is_valid_unique_ssid(ssid, network)) return;
+    
+    uint32_t ssid_hash = hash_ssid(ssid);
+
+    // If this is a new SSID hash for this BSSID, add it
+    if (!ssid_hash_exists(network, ssid_hash) && network->ssid_count < MAX_SSIDS_PER_BSSID) {
+        network->ssid_hashes[network->ssid_count++] = ssid_hash;
+        
+        // Add to recent SSIDs circular buffer
+        strncpy(network->recent_ssids[network->recent_ssid_index], ssid, 32);
+        network->recent_ssid_index = (network->recent_ssid_index + 1) % RECENT_SSID_COUNT;
+
+        // If we detect multiple SSIDs from same BSSID, mark as potential Pineap
+        if (network->ssid_count >= MIN_SSIDS_FOR_DETECTION && !is_blacklisted(hdr->addr3)) {
+            network->is_pineap = true;
+            add_to_blacklist(hdr->addr3);
+            
+            // Format MAC address for display
+            char mac_str[18];
+            snprintf(mac_str, sizeof(mac_str), "%02x:%02x:%02x:%02x:%02x:%02x",
+                    hdr->addr3[0], hdr->addr3[1], hdr->addr3[2],
+                    hdr->addr3[3], hdr->addr3[4], hdr->addr3[5]);
+
+            // Build SSIDs string
+            char ssids_str[256] = {0};
+            for(int i = 0; i < network->ssid_count && i < MAX_SSIDS_PER_BSSID; i++) {
+                if(i > 0) strcat(ssids_str, ", ");
+                strcat(ssids_str, network->recent_ssids[i]);
+            }
+
+            // Log detection
+            printf("Pineapple detected!\n");
+            printf("BSSID: %s\n", mac_str);
+            printf("Channel: %d\n", ppkt->rx_ctrl.channel);
+            printf("RSSI: %d\n", ppkt->rx_ctrl.rssi);
+            printf("SSIDs (%d): %s\n\n\n", network->ssid_count, ssids_str);
+
+            TERMINAL_VIEW_ADD_TEXT("Pineapple detected!\n");
+            TERMINAL_VIEW_ADD_TEXT("BSSID: %s\n", mac_str);
+            TERMINAL_VIEW_ADD_TEXT("Channel: %d\n", ppkt->rx_ctrl.channel);
+            TERMINAL_VIEW_ADD_TEXT("RSSI: %d\n", ppkt->rx_ctrl.rssi);
+            TERMINAL_VIEW_ADD_TEXT("SSIDs (%d): %s\n\n\n", network->ssid_count, ssids_str);
+            
+            // Write to PCAP if capture is active
+            if (pcap_file != NULL) {
+                pcap_write_packet_to_buffer(ppkt->payload, ppkt->rx_ctrl.sig_len, PCAP_CAPTURE_WIFI);
+            }
+        }
+    }
+}
 
 static void trim_trailing(char *str) {
     int i = strlen(str) - 1;

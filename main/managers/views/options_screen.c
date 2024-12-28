@@ -52,6 +52,7 @@ static const char *wifi_options[] = {
     "TV Cast (Dial Connect)",
     "Power Printer",
     "TP Link Test",
+    "PineAP Detection",
     "Go Back",
     NULL
 };
@@ -529,6 +530,12 @@ if (strcmp(Selected_Option, "Find Flippers") == 0) {
 #else 
     error_popup_create("Device Does not Support Bluetooth...");
 #endif
+    }
+
+    if (strcmp(Selected_Option, "PineAP Detection") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("pineap");
     }
 }
 
