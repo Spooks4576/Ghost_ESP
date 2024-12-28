@@ -217,6 +217,9 @@ static void log_pineap_detection(void* arg) {
 
     // Only log if we have valid SSIDs
     if (valid_ssid_count >= MIN_SSIDS_FOR_DETECTION) {
+        // Pulse RGB purple (red + blue) to indicate Pineapple detection
+        pulse_once(&rgb_manager, 255, 0, 255);
+
         printf("\nPineapple detected!\n");
         printf("BSSID: %s\n", mac_str);
         printf("Channel: %d\n", network->last_channel);
