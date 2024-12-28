@@ -24,6 +24,8 @@ static FILE *csv_file = NULL;
 static char csv_buffer[BUFFER_SIZE];
 static size_t buffer_offset = 0;
 
+static bool gps_connection_logged = false;
+
 esp_err_t csv_write_header(FILE* f) {
     // Wigle pre-header
     const char* pre_header = "WigleWifi-1.6,appRelease=1.0,model=ESP32,release=1.0,device=GhostESP,"
@@ -328,65 +330,93 @@ void gps_info_display_task(void *pvParameters) {
     char lat_str[20] = {0}, lon_str[20] = {0};
     static wardriving_data_t gps_data = {0};
     
-    ESP_LOGI(GPS_TAG, "GPS info display task started");
+    printf("GPS info display task started\n");
+    TERMINAL_VIEW_ADD_TEXT("GPS info display task started\n");
     
     while(1) {
         // Add null check for nmea_hdl
         if (!nmea_hdl) {
-            ESP_LOGW(GPS_TAG, "NMEA handle is null");
+            if (gps_connection_logged) {
+                printf("GPS Module Disconnected\n");
+                TERMINAL_VIEW_ADD_TEXT("GPS Module Disconnected\n");
+                gps_connection_logged = false;
+            }
             vTaskDelay(delay);
             continue;
         }
 
-        ESP_LOGD(GPS_TAG, "Getting GPS structure");
         gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
         
         if (!gps) {
-            ESP_LOGW(GPS_TAG, "GPS structure is null");
+            if (gps_connection_logged) {
+                printf("GPS Module Disconnected\n");
+                TERMINAL_VIEW_ADD_TEXT("GPS Module Disconnected\n");
+                gps_connection_logged = false;
+            }
             vTaskDelay(delay);
             continue;
         }
-        
-        // Only populate GPS data, don't trigger CSV operations
-        if (gps->valid) {
-            ESP_LOGD(GPS_TAG, "Populating GPS data");
-            populate_gps_quality_data(&gps_data, gps);
-        }
-        
+
         // Build complete string before sending to terminal
-        if (!gps->valid || !is_valid_date(&gps->date)) {
-            ESP_LOGD(GPS_TAG, "GPS not valid, showing searching message");
-            strncpy(output_buffer, "Searching sats...\n", sizeof(output_buffer) - 1);
-            output_buffer[sizeof(output_buffer) - 1] = '\0';
+        if (!gps->valid || 
+            gps->fix < GPS_FIX_GPS || 
+            gps->fix_mode < GPS_MODE_2D || 
+            gps->sats_in_use < 3 || 
+            gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE) {
+            
+            printf("Searching satellites...\nSats: %d/%d\n", 
+                    gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE ? 0 : gps->sats_in_use,
+                    GPS_MAX_SATELLITES_IN_USE);
+            TERMINAL_VIEW_ADD_TEXT("Searching satellites...\nSats: %d/%d\n", 
+                    gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE ? 0 : gps->sats_in_use,
+                    GPS_MAX_SATELLITES_IN_USE);
+            
         } else {
-            ESP_LOGD(GPS_TAG, "Formatting GPS coordinates");
+            // Only populate GPS data if we have a valid fix
+            populate_gps_quality_data(&gps_data, gps);
             format_coordinates(gps_data.latitude, gps_data.longitude, lat_str, lon_str);
             const char* direction = get_cardinal_direction(gps_data.gps_quality.course);
             
-            // Use safer snprintf with size checking
-            int written = snprintf(output_buffer, sizeof(output_buffer),
-                    "GPS Info\n"
-                    "Sats: %d/%d\n"
-                    "Lat: %s\n"
-                    "Long: %s\n"
-                    "Direction: %d° %s\n",
-                    gps_data.gps_quality.satellites_used, 
-                    GPS_MAX_SATELLITES_IN_USE,
-                    lat_str,
-                    lon_str,
-                    (int)gps_data.gps_quality.course,
-                    direction ? direction : "Unknown");
-
-            // Verify the write was successful
-            if (written < 0 || written >= sizeof(output_buffer)) {
-                ESP_LOGE(GPS_TAG, "Buffer overflow prevented in GPS info formatting");
-                strncpy(output_buffer, "GPS Data Error\n", sizeof(output_buffer) - 1);
-                output_buffer[sizeof(output_buffer) - 1] = '\0';
-            }
+            printf("GPS Info\n"
+                   "Fix: %s\n"
+                   "Sats: %d/%d\n"
+                   "Lat: %s\n"
+                   "Long: %s\n"
+                   "Alt: %.1fm\n"
+                   "Speed: %.1f km/h\n"
+                   "Direction: %d° %s\n"
+                   "HDOP: %.1f\n",
+                   gps->fix_mode == GPS_MODE_3D ? "3D" : "2D",
+                   gps_data.gps_quality.satellites_used, 
+                   GPS_MAX_SATELLITES_IN_USE,
+                   lat_str,
+                   lon_str,
+                   gps->altitude,
+                   gps->speed * 3.6,  // Convert m/s to km/h
+                   (int)gps_data.gps_quality.course,
+                   direction ? direction : "Unknown",
+                   gps->dop_h);
+            
+            TERMINAL_VIEW_ADD_TEXT("GPS Info\n"
+                                 "Fix: %s\n"
+                                 "Sats: %d/%d\n"
+                                 "Lat: %s\n"
+                                 "Long: %s\n"
+                                 "Alt: %.1fm\n"
+                                 "Speed: %.1f km/h\n"
+                                 "Direction: %d° %s\n"
+                                 "HDOP: %.1f\n",
+                                 gps->fix_mode == GPS_MODE_3D ? "3D" : "2D",
+                                 gps_data.gps_quality.satellites_used, 
+                                 GPS_MAX_SATELLITES_IN_USE,
+                                 lat_str,
+                                 lon_str,
+                                 gps->altitude,
+                                 gps->speed * 3.6,
+                                 (int)gps_data.gps_quality.course,
+                                 direction ? direction : "Unknown",
+                                 gps->dop_h);
         }
-        
-        // Safely send to terminal with single call
-        terminal_view_add_text(output_buffer);
         
         vTaskDelay(delay);
     }

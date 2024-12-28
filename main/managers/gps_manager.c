@@ -16,11 +16,14 @@
 #include "soc/io_mux_reg.h"
 
 static const char *GPS_TAG = "GPS";
+static bool has_valid_cached_date = false;
+static bool gps_connection_logged = false;
+static TaskHandle_t gps_check_task_handle = NULL;
+static void check_gps_connection_task(void *pvParameters);
 
 nmea_parser_handle_t nmea_hdl;
 
 gps_date_t cacheddate = {0};
-static bool has_valid_cached_date = false;
 
 static bool is_valid_date(const gps_date_t* date) {
     if (!date) return false;
@@ -47,6 +50,15 @@ static bool is_valid_date(const gps_date_t* date) {
 }
 
 void gps_manager_init(GPSManager* manager) {
+    // If there's an existing check task, delete it
+    if (gps_check_task_handle != NULL) {
+        vTaskDelete(gps_check_task_handle);
+        gps_check_task_handle = NULL;
+    }
+    
+    // Reset connection logged state
+    gps_connection_logged = false;
+
     nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
     uint8_t current_rx_pin = settings_get_gps_rx_pin(&G_Settings);
 
@@ -77,13 +89,61 @@ void gps_manager_init(GPSManager* manager) {
     nmea_hdl = nmea_parser_init(&config);
     nmea_parser_add_handler(nmea_hdl, gps_event_handler, NULL);
     manager->isinitilized = true;
+
+    // Create a new check task
+    xTaskCreate(check_gps_connection_task, "gps_check", 4096, NULL, 1, &gps_check_task_handle);
+}
+
+static void check_gps_connection_task(void *pvParameters) {
+    const TickType_t timeout = pdMS_TO_TICKS(10000); // 10 second timeout
+    TickType_t start_time = xTaskGetTickCount();
+
+    while (xTaskGetTickCount() - start_time < timeout) {
+        if (!nmea_hdl) {
+            vTaskDelay(pdMS_TO_TICKS(500));
+            continue;
+        }
+
+        gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
+        
+        if (!gps) {
+            vTaskDelay(pdMS_TO_TICKS(500));
+            continue;
+        }
+
+        // Check if we're receiving valid GPS data
+        if (!gps_connection_logged && (gps->tim.hour != 0 || gps->tim.minute != 0 || gps->tim.second != 0 || 
+            gps->latitude != 0 || gps->longitude != 0)) {
+            printf("GPS Module Connected\nReceiving Data\n");
+            TERMINAL_VIEW_ADD_TEXT("GPS Module Connected\nReceiving Data\n");
+            gps_connection_logged = true;
+            gps_check_task_handle = NULL;
+            vTaskDelete(NULL);
+            return;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
+    // If we reach here, connection check timed out
+    printf("GPS Module Connection Timeout\nCheck your connections\n");
+    TERMINAL_VIEW_ADD_TEXT("GPS Module Connection Timeout\nCheck your connections\n");
+    gps_check_task_handle = NULL;
+    vTaskDelete(NULL);
 }
 
 void gps_manager_deinit(GPSManager* manager) {
     if (manager->isinitilized) {
+        // If there's an existing check task, delete it
+        if (gps_check_task_handle != NULL) {
+            vTaskDelete(gps_check_task_handle);
+            gps_check_task_handle = NULL;
+        }
+        
         nmea_parser_remove_handler(nmea_hdl, gps_event_handler);
         nmea_parser_deinit(nmea_hdl);
         manager->isinitilized = false;
+        gps_connection_logged = false;
     }
 }
 

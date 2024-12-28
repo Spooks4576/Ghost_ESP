@@ -1008,12 +1008,18 @@ void handle_gps_info(int argc, char **argv) {
         if (gps_info_task_handle != NULL) {
             vTaskDelete(gps_info_task_handle);
             gps_info_task_handle = NULL;
+            gps_manager_deinit(&g_gpsManager);
             printf("GPS info display stopped.\n");
             TERMINAL_VIEW_ADD_TEXT("GPS info display stopped.\n");
         }
     } else {
         if (gps_info_task_handle == NULL) {
             gps_manager_init(&g_gpsManager);
+            
+            // Wait a brief moment for GPS initialization
+            vTaskDelay(pdMS_TO_TICKS(100));
+            
+            // Start the info display task
             xTaskCreate(gps_info_display_task, "gps_info", 4096, NULL, 1, &gps_info_task_handle);
             printf("GPS info display started.\n");
             TERMINAL_VIEW_ADD_TEXT("GPS info display started.\n");
