@@ -30,13 +30,14 @@ typedef struct {
     int8_t last_rssi;
 } pineap_network_t;
 
-// Structure to pass to logging task
+// Structure for passing data to logging task
 typedef struct {
     uint8_t bssid[6];
     char recent_ssids[RECENT_SSID_COUNT][33];
-    uint8_t ssid_count;
+    int ssid_count;
     int8_t channel;
     int8_t rssi;
+    struct pineap_network_t* network;  // Add network pointer
 } pineap_log_data_t;
 
 // PineAP detection control functions

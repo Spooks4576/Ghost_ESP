@@ -1085,10 +1085,6 @@ void handle_pineap_detection(int argc, char **argv) {
         pcap_file_close();
         return;
     }
-
-    printf("Starting PineAP detection (scanning all channels)...\n");
-    TERMINAL_VIEW_ADD_TEXT("Starting PineAP detection (scanning all channels)...\n");
-    
     // Open PCAP file for logging detections
     int err = pcap_file_open("pineap_detection", PCAP_CAPTURE_WIFI);
     if (err != ESP_OK) {
@@ -1100,8 +1096,8 @@ void handle_pineap_detection(int argc, char **argv) {
     start_pineap_detection();
     wifi_manager_start_monitor_mode(wifi_pineap_detector_callback);
     
-    printf("Monitoring for PineAP activity (Use 'pineap -s' to stop)...\n\n");
-    TERMINAL_VIEW_ADD_TEXT("Monitoring for PineAP activity (Use 'pineap -s' to stop)...\n\n");
+    printf("Monitoring for PineAP\n activity\n\n");
+    TERMINAL_VIEW_ADD_TEXT("Monitoring for PineAP\n activity\n\n");
 }
 
 void register_commands() {
