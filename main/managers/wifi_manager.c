@@ -1580,7 +1580,7 @@ void animate_led_based_on_amplitude(void *pvParameters)
 #define HOST_TIMEOUT_MS 100    
 #define WIFI_CONNECTED_BIT BIT0
 #define WIFI_FAIL_BIT      BIT1
-#define MAX_OPEN_PORTS 206
+#define MAX_OPEN_PORTS 64
 
 
 uint16_t calculate_checksum(uint16_t *addr, int len) {
@@ -1960,8 +1960,21 @@ bool scan_ip_port_range(const char* target_ip, uint16_t start_port, uint16_t end
     printf("Scanning %s ports %d-%d\n", target_ip, start_port, end_port);
     TERMINAL_VIEW_ADD_TEXT("Scanning %s ports %d-%d\n", target_ip, start_port, end_port);
 
+    uint16_t ports_scanned = 0;
+    uint16_t total_ports = end_port - start_port + 1;
+
     for (uint16_t port = start_port; port <= end_port; port++) {
         if (result->num_open_ports >= MAX_OPEN_PORTS) break;
+
+        ports_scanned++;
+        if (ports_scanned % 100 == 0) {
+            printf("Progress: %d/%d ports scanned (%.1f%%)\n", 
+                   ports_scanned, total_ports, 
+                   (float)ports_scanned / total_ports * 100);
+            TERMINAL_VIEW_ADD_TEXT("Progress: %d/%d ports scanned (%.1f%%)\n", 
+                                 ports_scanned, total_ports, 
+                                 (float)ports_scanned / total_ports * 100);
+        }
 
         int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (sock < 0) continue;
