@@ -53,6 +53,7 @@ static const char *wifi_options[] = {
     "Power Printer",
     "TP Link Test",
     "PineAP Detection",
+    "Scan Open Ports",
     "Go Back",
     NULL
 };
@@ -536,6 +537,12 @@ if (strcmp(Selected_Option, "Find Flippers") == 0) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("pineap");
+    }
+
+    if (strcmp(Selected_Option, "Scan Open Ports") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("ScanLocPort -C L"); // Needs a random 3rd parameter to bypass checks
     }
 }
 

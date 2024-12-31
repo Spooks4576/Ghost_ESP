@@ -7,8 +7,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "esp_wifi.h"
-#include "esp_log.h"
 #include "esp_event.h"
+#include "esp_log.h"
 #include "nvs_flash.h"
 #include <sys/time.h>
 #include <string.h>
@@ -16,6 +16,7 @@
 #include "esp_timer.h"
 #include <ctype.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <mdns.h>
 #include <math.h>
 #include <dhcpserver/dhcpserver.h>
@@ -1572,6 +1573,446 @@ void animate_led_based_on_amplitude(void *pvParameters)
         close(sock);
     }
 }
+
+#define START_HOST 1
+#define END_HOST 254
+#define SCAN_TIMEOUT_MS 100
+#define HOST_TIMEOUT_MS 100    
+#define WIFI_CONNECTED_BIT BIT0
+#define WIFI_FAIL_BIT      BIT1
+#define MAX_OPEN_PORTS 206
+
+
+uint16_t calculate_checksum(uint16_t *addr, int len) {
+    int nleft = len;
+    uint32_t sum = 0;
+    uint16_t *w = addr;
+    uint16_t answer = 0;
+
+    while (nleft > 1) {
+        sum += *w++;
+        nleft -= 2;
+    }
+
+    if (nleft == 1) {
+        *(unsigned char *)(&answer) = *(unsigned char *)w;
+        sum += answer;
+    }
+
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    answer = ~sum;
+    return answer;
+}
+
+bool get_subnet_prefix(scanner_ctx_t* ctx) {
+    esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (!netif) {
+        printf("Failed to get WiFi interface\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to get WiFi interface\n");
+        return false;
+    }
+
+    // Check if WiFi is connected
+    wifi_ap_record_t ap_info;
+    if (esp_wifi_sta_get_ap_info(&ap_info) != ESP_OK) {
+        printf("WiFi is not connected\n");
+        TERMINAL_VIEW_ADD_TEXT("WiFi is not connected\n");
+        return false;
+    }
+
+    // Get IP info
+    esp_netif_ip_info_t ip_info;
+    if (esp_netif_get_ip_info(netif, &ip_info) != ESP_OK) {
+        printf("Failed to get IP info\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to get IP info\n");
+        return false;
+    }
+
+    uint32_t network = ip_info.ip.addr & ip_info.netmask.addr;
+    struct in_addr network_addr;
+    network_addr.s_addr = network;
+    
+    char* network_str = inet_ntoa(network_addr);
+    char* last_dot = strrchr(network_str, '.');
+    if (last_dot == NULL) {
+        printf("Invalid network address format\n");
+        TERMINAL_VIEW_ADD_TEXT("Invalid network address format\n");
+        return false;
+    }
+    
+    size_t prefix_len = last_dot - network_str + 1;
+    memcpy(ctx->subnet_prefix, network_str, prefix_len);
+    ctx->subnet_prefix[prefix_len] = '\0';
+    
+    printf("Determined subnet prefix: %s\n", ctx->subnet_prefix);
+    TERMINAL_VIEW_ADD_TEXT("Determined subnet prefix: %s\n", ctx->subnet_prefix);
+    return true;
+}
+
+
+bool is_host_active(const char* ip_addr) {
+    struct sockaddr_in addr;
+    int sock;
+    struct timeval timeout;
+    fd_set readset;
+    uint8_t buf[sizeof(icmp_packet_t)];
+    bool is_active = false;
+
+    sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+    if (sock < 0) return false;
+
+    // Prepare ICMP packet
+    icmp_packet_t* icmp = (icmp_packet_t*)buf;
+    icmp->type = 8; // ICMP Echo Request
+    icmp->code = 0;
+    icmp->checksum = 0;
+    icmp->id = 0xAFAF;
+    icmp->seqno = htons(1);
+    icmp->checksum = calculate_checksum((uint16_t*)icmp, sizeof(icmp_packet_t));
+
+    addr.sin_family = AF_INET;
+    inet_pton(AF_INET, ip_addr, &addr.sin_addr.s_addr);
+
+    sendto(sock, buf, sizeof(icmp_packet_t), 0, 
+           (struct sockaddr*)&addr, sizeof(addr));
+
+    timeout.tv_sec = HOST_TIMEOUT_MS / 1000;
+    timeout.tv_usec = (HOST_TIMEOUT_MS % 1000) * 1000;
+
+    FD_ZERO(&readset);
+    FD_SET(sock, &readset);
+
+    if (select(sock + 1, &readset, NULL, NULL, &timeout) > 0) {
+        is_active = true;
+    }
+
+    close(sock);
+    return is_active;
+}
+
+
+scanner_ctx_t* scanner_init(void) {
+    scanner_ctx_t* ctx = malloc(sizeof(scanner_ctx_t));
+    if (!ctx) return NULL;
+
+    ctx->results = malloc(sizeof(host_result_t) * END_HOST);
+    if (!ctx->results) {
+        free(ctx);
+        return NULL;
+    }
+
+    ctx->max_results = END_HOST;
+    ctx->num_active_hosts = 0;
+    ctx->subnet_prefix[0] = '\0';
+
+    return ctx;
+}
+
+void scan_ports_on_host(const char* target_ip, host_result_t* result) {
+    struct sockaddr_in server_addr;
+    int sock;
+    int scan_result;
+    struct timeval timeout;
+    fd_set fdset;
+    int flags;
+
+    strcpy(result->ip, target_ip);
+    result->num_open_ports = 0;
+
+    server_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, target_ip, &server_addr.sin_addr.s_addr);
+
+    printf("Scanning host: %s\n", target_ip);
+    TERMINAL_VIEW_ADD_TEXT("Scanning host: %s\n", target_ip);
+
+    for (size_t i = 0; i < NUM_PORTS; i++) {
+        if (result->num_open_ports >= MAX_OPEN_PORTS) break;
+
+        uint16_t port = COMMON_PORTS[i];
+        sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (sock < 0) continue;
+
+        flags = fcntl(sock, F_GETFL, 0);
+        fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+
+        server_addr.sin_port = htons(port);
+        scan_result = connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+        if (scan_result < 0 && errno == EINPROGRESS) {
+            timeout.tv_sec = SCAN_TIMEOUT_MS / 1000;
+            timeout.tv_usec = (SCAN_TIMEOUT_MS % 1000) * 1000;
+
+            FD_ZERO(&fdset);
+            FD_SET(sock, &fdset);
+
+            scan_result = select(sock + 1, NULL, &fdset, NULL, &timeout);
+
+            if (scan_result > 0) {
+                int error = 0;
+                socklen_t len = sizeof(error);
+                if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len) >= 0 && error == 0) {
+                    result->open_ports[result->num_open_ports++] = port;
+                    printf("%s - Port %d is OPEN\n", target_ip, port);
+                    TERMINAL_VIEW_ADD_TEXT("%s - Port %d is OPEN\n", target_ip, port);
+                }
+            }
+        }
+
+        close(sock);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
+void scanner_cleanup(scanner_ctx_t* ctx) {
+    if (ctx) {
+        if (ctx->results) {
+            free(ctx->results);
+        }
+        free(ctx);
+    }
+}
+
+bool wifi_manager_scan_subnet() {
+    scanner_ctx_t* ctx = scanner_init();
+    if (!ctx) {
+        printf("Failed to initialize scanner context\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to initialize scanner context\n");
+        return false;
+    }
+
+    if (!get_subnet_prefix(ctx)) {
+        printf("Failed to get network information. Make sure WiFi is connected.\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to get network information. Make sure WiFi is connected.\n");
+        scanner_cleanup(ctx);
+        return false;
+    }
+
+    char current_ip[26];
+    ctx->num_active_hosts = 0;
+
+    printf("Starting subnet scan on %s0/24\n", ctx->subnet_prefix);
+    TERMINAL_VIEW_ADD_TEXT("Starting subnet scan on %s0/24\n", ctx->subnet_prefix);
+
+    for (int host = START_HOST; host <= END_HOST; host++) {
+        snprintf(current_ip, sizeof(current_ip), "%s%d", ctx->subnet_prefix, host);
+        
+        if (is_host_active(current_ip)) {
+            printf("Found active host: %s\n", current_ip);
+            TERMINAL_VIEW_ADD_TEXT("Found active host: %s\n", current_ip);
+            scan_ports_on_host(current_ip, &ctx->results[ctx->num_active_hosts]);
+            ctx->num_active_hosts++;
+        }
+    }
+
+    printf("Scan completed. Found %d active hosts:\n", ctx->num_active_hosts);
+    TERMINAL_VIEW_ADD_TEXT("Scan completed. Found %d active hosts:\n", ctx->num_active_hosts);
+    
+    for (size_t i = 0; i < ctx->num_active_hosts; i++) {
+        if (ctx->results[i].num_open_ports > 0) {
+            printf("Host %s has %d open ports:\n", 
+                    ctx->results[i].ip, ctx->results[i].num_open_ports);
+            TERMINAL_VIEW_ADD_TEXT("Host %s has %d open ports:\n", 
+                    ctx->results[i].ip, ctx->results[i].num_open_ports);
+                    
+            printf("Possible services/devices:\n");
+            TERMINAL_VIEW_ADD_TEXT("Possible services/devices:\n");
+            
+            for (uint8_t j = 0; j < ctx->results[i].num_open_ports; j++) {
+                uint16_t port = ctx->results[i].open_ports[j];
+                printf("  - Port %d: ", port);
+                TERMINAL_VIEW_ADD_TEXT("  - Port %d: ", port);
+                
+                
+                switch(port) {
+                    case 20:
+                    case 21:
+                        printf("FTP Server\n");
+                        TERMINAL_VIEW_ADD_TEXT("FTP Server\n");
+                        break;
+                    case 22:
+                    case 2222:
+                        printf("SSH Server\n");
+                        TERMINAL_VIEW_ADD_TEXT("SSH Server\n");
+                        break;
+                    case 23:
+                        printf("Telnet Server\n");
+                        TERMINAL_VIEW_ADD_TEXT("Telnet Server\n");
+                        break;
+                    case 80:
+                    case 8080:
+                    case 8443:
+                    case 443:
+                        printf("Web Server\n");
+                        TERMINAL_VIEW_ADD_TEXT("Web Server\n");
+                        break;
+                    case 445:
+                    case 139:
+                        printf("Windows File Share/Domain Controller\n");
+                        TERMINAL_VIEW_ADD_TEXT("Windows File Share/Domain Controller\n");
+                        break;
+                    case 3389:
+                        printf("Windows Remote Desktop\n");
+                        TERMINAL_VIEW_ADD_TEXT("Windows Remote Desktop\n");
+                        break;
+                    case 5900:
+                    case 5901:
+                    case 5902:
+                        printf("VNC Remote Access\n");
+                        TERMINAL_VIEW_ADD_TEXT("VNC Remote Access\n");
+                        break;
+                    case 1521:
+                        printf("Oracle Database\n");
+                        TERMINAL_VIEW_ADD_TEXT("Oracle Database\n");
+                        break;
+                    case 3306:
+                        printf("MySQL Database\n");
+                        TERMINAL_VIEW_ADD_TEXT("MySQL Database\n");
+                        break;
+                    case 5432:
+                        printf("PostgreSQL Database\n");
+                        TERMINAL_VIEW_ADD_TEXT("PostgreSQL Database\n");
+                        break;
+                    case 27017:
+                        printf("MongoDB Database\n");
+                        TERMINAL_VIEW_ADD_TEXT("MongoDB Database\n");
+                        break;
+                    case 9100:
+                        printf("Network Printer\n");
+                        TERMINAL_VIEW_ADD_TEXT("Network Printer\n");
+                        break;
+                    case 32400:
+                        printf("Plex Media Server\n");
+                        TERMINAL_VIEW_ADD_TEXT("Plex Media Server\n");
+                        break;
+                    case 2082:
+                    case 2083:
+                    case 2086:
+                    case 2087:
+                        printf("Web Hosting Control Panel\n");
+                        TERMINAL_VIEW_ADD_TEXT("Web Hosting Control Panel\n");
+                        break;
+                    case 6379:
+                        printf("Redis Server\n");
+                        TERMINAL_VIEW_ADD_TEXT("Redis Server\n");
+                        break;
+                    case 1883:
+                    case 8883:
+                        printf("IoT Device (MQTT)\n");
+                        TERMINAL_VIEW_ADD_TEXT("IoT Device (MQTT)\n");
+                        break;
+                    default:
+                        printf("Unknown Service\n");
+                        TERMINAL_VIEW_ADD_TEXT("Unknown Service\n");
+                }
+            }
+            
+            
+            bool has_web = false;
+            bool has_db = false;
+            bool has_file_sharing = false;
+            
+            for (uint8_t j = 0; j < ctx->results[i].num_open_ports; j++) {
+                uint16_t port = ctx->results[i].open_ports[j];
+                if (port == 80 || port == 443 || port == 8080 || port == 8443) has_web = true;
+                if (port == 3306 || port == 5432 || port == 1521 || port == 27017) has_db = true;
+                if (port == 445 || port == 139) has_file_sharing = true;
+            }
+            
+            printf("\nPossible device type:\n");
+            TERMINAL_VIEW_ADD_TEXT("\nPossible device type:\n");
+            
+            if (has_web && has_db) {
+                printf("- Web Application Server\n");
+                TERMINAL_VIEW_ADD_TEXT("- Web Application Server\n");
+            }
+            if (has_file_sharing) {
+                printf("- Windows Server\n");
+                TERMINAL_VIEW_ADD_TEXT("- Windows Server\n");
+            }
+            printf("\n");
+            TERMINAL_VIEW_ADD_TEXT("\n");
+        }
+    }
+
+    scanner_cleanup(ctx);
+    return true;
+}
+
+
+bool scan_ip_port_range(const char* target_ip, uint16_t start_port, uint16_t end_port) {
+    scanner_ctx_t* ctx = scanner_init();
+    if (!ctx) {
+        printf("Failed to initialize scanner context\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to initialize scanner context\n");
+        return false;
+    }
+
+    ctx->num_active_hosts = 1;
+    host_result_t* result = &ctx->results[0];
+    strcpy(result->ip, target_ip);
+    result->num_open_ports = 0;
+
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    inet_pton(AF_INET, target_ip, &server_addr.sin_addr.s_addr);
+
+    printf("Scanning %s ports %d-%d\n", target_ip, start_port, end_port);
+    TERMINAL_VIEW_ADD_TEXT("Scanning %s ports %d-%d\n", target_ip, start_port, end_port);
+
+    for (uint16_t port = start_port; port <= end_port; port++) {
+        if (result->num_open_ports >= MAX_OPEN_PORTS) break;
+
+        int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (sock < 0) continue;
+
+        int flags = fcntl(sock, F_GETFL, 0);
+        fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+
+        server_addr.sin_port = htons(port);
+        int scan_result = connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+        if (scan_result < 0 && errno == EINPROGRESS) {
+            struct timeval timeout = {.tv_sec = SCAN_TIMEOUT_MS / 1000, 
+                                   .tv_usec = (SCAN_TIMEOUT_MS % 1000) * 1000};
+            fd_set fdset;
+            FD_ZERO(&fdset);
+            FD_SET(sock, &fdset);
+
+            if (select(sock + 1, NULL, &fdset, NULL, &timeout) > 0) {
+                int error = 0;
+                socklen_t len = sizeof(error);
+                if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len) >= 0 && error == 0) {
+                    result->open_ports[result->num_open_ports++] = port;
+                    printf("%s - Port %d is OPEN\n", target_ip, port);
+                    TERMINAL_VIEW_ADD_TEXT("%s - Port %d is OPEN\n", target_ip, port);
+                }
+            }
+        }
+        close(sock);
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+
+    
+    for (size_t i = 0; i < ctx->num_active_hosts; i++) {
+        if (ctx->results[i].num_open_ports > 0) {
+            printf("Host %s has %d open ports:\n", 
+                    ctx->results[i].ip, ctx->results[i].num_open_ports);
+            TERMINAL_VIEW_ADD_TEXT("Host %s has %d open ports:\n", 
+                    ctx->results[i].ip, ctx->results[i].num_open_ports);
+        }
+    }
+
+    scanner_cleanup(ctx);
+    return true;
+}
+
+
+void wifi_manager_scan_for_open_ports()
+{
+    wifi_manager_scan_subnet();
+}
+
 
 void rgb_visualizer_server_task(void *pvParameters) {
     char rx_buffer[MAX_PAYLOAD];

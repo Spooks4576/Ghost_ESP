@@ -763,6 +763,47 @@ void handle_startwd(int argc, char **argv) {
 }
 
 
+void handle_scan_ports(int argc, char **argv) {
+   if (argc < 3) {
+       printf("Usage:\n");
+       printf("ScanPubPort [IP] [-C/-A/start_port-end_port]\n");
+       printf("ScanLocPort [-C/-A/start_port-end_port]\n");
+       return;
+   }
+
+   bool is_local = strcmp(argv[0], "ScanLocPort") == 0;
+   const char* target_ip = is_local ? NULL : argv[1];
+   const char* port_arg = is_local ? argv[1] : argv[2];
+
+   if (is_local) {
+       wifi_manager_scan_subnet();
+       return;
+   }
+
+   host_result_t result;
+   if (strcmp(port_arg, "-C") == 0) {
+       scan_ports_on_host(target_ip, &result);
+       if (result.num_open_ports > 0) {
+           printf("Open ports on %s:\n", target_ip);
+           for (int i = 0; i < result.num_open_ports; i++) {
+               printf("Port %d\n", result.open_ports[i]);
+           }
+       }
+   } else {
+       int start_port, end_port;
+       if (strcmp(port_arg, "-A") == 0) {
+           start_port = 1;
+           end_port = 65535;
+       } else if (sscanf(port_arg, "%d-%d", &start_port, &end_port) != 2 || 
+                  start_port < 1 || end_port > 65535 || start_port > end_port) {
+           printf("Invalid port range\n");
+           return;
+       }
+       scan_ip_port_range(target_ip, start_port, end_port);
+   }
+}
+
+
 void handle_crash(int argc, char **argv)
 {
     int *ptr = NULL;
@@ -977,16 +1018,22 @@ void handle_help(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("    Arguments:\n");
     TERMINAL_VIEW_ADD_TEXT("        -s  : Stop BLE wardriving\n\n");
 
-    printf("pineap\n");
-    printf("    Description: Start/Stop PineAP detection\n");
-    printf("    Usage: pineap [-s]\n");
+    printf("Port Scanners\n");
+    printf("    Description: Scan ports on local subnet or specific IP\n");
+    printf("    Usage: ScanLocPort [-C/-A/start_port-end_port]\n");
+    printf("           ScanPubPort [IP] [-C/-A/start_port-end_port]\n"); 
     printf("    Arguments:\n");
-    printf("        -s  : Stop PineAP detection\n\n");
-    TERMINAL_VIEW_ADD_TEXT("pineap\n");
-    TERMINAL_VIEW_ADD_TEXT("    Description: Start/Stop PineAP detection\n");
-    TERMINAL_VIEW_ADD_TEXT("    Usage: pineap [-s]\n");
+    printf("        -C  : Scan common ports only\n");
+    printf("        -A  : Scan all ports (1-65535)\n");
+    printf("        start_port-end_port : Custom port range (e.g. 80-443)\n\n");
+    TERMINAL_VIEW_ADD_TEXT("Port Scanners\n");
+    TERMINAL_VIEW_ADD_TEXT("    Description: Scan ports on local subnet or specific IP\n");
+    TERMINAL_VIEW_ADD_TEXT("    Usage: ScanLocPort [-C/-A/start_port-end_port]\n");
+    TERMINAL_VIEW_ADD_TEXT("           ScanPubPort [IP] [-C/-A/start_port-end_port]\n");
     TERMINAL_VIEW_ADD_TEXT("    Arguments:\n");
-    TERMINAL_VIEW_ADD_TEXT("        -s  : Stop PineAP detection\n\n");
+    TERMINAL_VIEW_ADD_TEXT("        -C  : Scan common ports only\n");
+    TERMINAL_VIEW_ADD_TEXT("        -A  : Scan all ports (1-65535)\n");
+    TERMINAL_VIEW_ADD_TEXT("        start_port-end_port : Custom port range (e.g. 80-443)\n\n");
 }
 
 void handle_capture(int argc, char **argv) {
@@ -1123,6 +1170,8 @@ void register_commands() {
     register_command("reboot", handle_reboot);
     register_command("startwd", handle_startwd);
     register_command("gpsinfo", handle_gps_info);
+    register_command("ScanPubPort", handle_scan_ports);
+    register_command("ScanLocPort", handle_scan_ports);
 #ifndef CONFIG_IDF_TARGET_ESP32S2
     register_command("blescan", handle_ble_scan_cmd);
     register_command("blewardriving", handle_ble_wardriving);
