@@ -2,16 +2,17 @@
 
 ## 1.4.6
 
-### ❤️ Core Improvements
+### ❤️ New Features
 
 - Added WiFi Pineapple detection (requires PineAP to be in active mode) - @jaylikesbunda
+- Added Local Network Port Scanning - @Spooks4576
 
 ### 🐛 Bug Fixes
 
 - Fixed BLE Crash on specific devices! - @Spooks4576
 - Resolve issues with JC3248W535EN devices #116 - @i-am-shodan, @jaylikesbunda
 
-### 🤏 Minor Tweaks
+### 🤏 Tweaks
 
 - Revised 'gpsinfo' logs to be more helpful and consistent - @jaylikesbunda
 - Sync BLE before use - @jaylikesbunda
