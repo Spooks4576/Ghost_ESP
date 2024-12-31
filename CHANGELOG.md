@@ -15,7 +15,6 @@
 ### 🤏 Tweaks
 
 - Revised 'gpsinfo' logs to be more helpful and consistent - @jaylikesbunda
-- Sync BLE before use - @jaylikesbunda
 - Added logs to tell if GPS module is connected correctly- @jaylikesbunda
 - Added RGB Pulse for AirTag and Card Skimmer detection - @jaylikesbunda
 
