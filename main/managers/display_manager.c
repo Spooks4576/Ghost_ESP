@@ -63,7 +63,7 @@ bool display_manager_init_success = false;
 #define DEFAULT_DISPLAY_TIMEOUT_MS 10000
 
 // Global variable to hold the configurable timeout duration
-static uint32_t display_timeout_ms = DEFAULT_DISPLAY_TIMEOUT_MS;
+uint32_t display_timeout_ms = DEFAULT_DISPLAY_TIMEOUT_MS;
 
 // Function to set the display timeout duration
 void set_display_timeout(uint32_t timeout_ms) {
@@ -321,8 +321,8 @@ void display_manager_init(void) {
 #endif //CONFIG_JC3248W535EN_LCD
 
 #if !defined(CONFIG_USE_7_INCHER) && !defined(CONFIG_JC3248W535EN_LCD)
-    static lv_color_t buf1[CONFIG_TFT_WIDTH * 20] __attribute__((aligned(4)));
-    static lv_color_t buf2[CONFIG_TFT_WIDTH * 20] __attribute__((aligned(4)));
+    static lv_color_t buf1[CONFIG_TFT_WIDTH * 10] __attribute__((aligned(4)));
+    static lv_color_t buf2[CONFIG_TFT_WIDTH * 10] __attribute__((aligned(4)));
     static lv_disp_draw_buf_t disp_buf;
     lv_disp_draw_buf_init(&disp_buf, buf1, buf2, CONFIG_TFT_WIDTH * 20);
 
@@ -479,8 +479,6 @@ void set_backlight_brightness(uint8_t percentage) {
 
     gpio_set_level(CONFIG_LV_DISP_PIN_BCKL, percentage);
 }
-
-static const char* TAG = "DisplayManager";
 
 void hardware_input_task(void *pvParameters) {
     const TickType_t tick_interval = pdMS_TO_TICKS(10);
