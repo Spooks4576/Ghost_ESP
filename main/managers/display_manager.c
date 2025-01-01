@@ -321,10 +321,10 @@ void display_manager_init(void) {
 #endif //CONFIG_JC3248W535EN_LCD
 
 #if !defined(CONFIG_USE_7_INCHER) && !defined(CONFIG_JC3248W535EN_LCD)
-    static lv_color_t buf1[CONFIG_TFT_WIDTH * 10] __attribute__((aligned(4)));
-    static lv_color_t buf2[CONFIG_TFT_WIDTH * 10] __attribute__((aligned(4)));
+    static lv_color_t buf1[CONFIG_TFT_WIDTH * 5] __attribute__((aligned(4)));
+    static lv_color_t buf2[CONFIG_TFT_WIDTH * 5] __attribute__((aligned(4)));
     static lv_disp_draw_buf_t disp_buf;
-    lv_disp_draw_buf_init(&disp_buf, buf1, buf2, CONFIG_TFT_WIDTH * 20);
+    lv_disp_draw_buf_init(&disp_buf, buf1, buf2, CONFIG_TFT_WIDTH * 5);
 
     /* Initialize the display */
     static lv_disp_drv_t disp_drv;
@@ -653,7 +653,7 @@ void processEvent()
 
 void lvgl_tick_task(void *arg) {
 
-    const TickType_t tick_interval = pdMS_TO_TICKS(5);
+    const TickType_t tick_interval = pdMS_TO_TICKS(10);
 
     int tick_increment;
     

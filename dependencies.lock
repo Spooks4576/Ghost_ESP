@@ -48,5 +48,5 @@ direct_dependencies:
 - espressif/esp_lcd_axs15231b
 - idf
 manifest_hash: ff817fc280f015bca9d71c816c393634a501cf5849e39e409281527a1e3b60d4
-target: esp32s3
+target: esp32
 version: 2.0.0
