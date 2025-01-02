@@ -321,8 +321,14 @@ void display_manager_init(void) {
 #endif //CONFIG_JC3248W535EN_LCD
 
 #if !defined(CONFIG_USE_7_INCHER) && !defined(CONFIG_JC3248W535EN_LCD)
-    static lv_color_t buf1[CONFIG_TFT_WIDTH * 5] __attribute__((aligned(4)));
-    static lv_color_t buf2[CONFIG_TFT_WIDTH * 5] __attribute__((aligned(4)));
+#ifdef CONFIG_IDF_TARGET_ESP32
+    static lv_color_t buf1[CONFIG_TFT_WIDTH * 5] __attribute__((aligned(4))); // We do this due to Dram Memory Constraints on ESP32 WROOM Modules
+    static lv_color_t buf2[CONFIG_TFT_WIDTH * 5] __attribute__((aligned(4))); // Any other devices like ESP32S3 Etc Should be able to handle the * 20 Double Buffer
+#else
+    static lv_color_t buf1[CONFIG_TFT_WIDTH * 20] __attribute__((aligned(4)));
+    static lv_color_t buf2[CONFIG_TFT_WIDTH * 20] __attribute__((aligned(4)));
+#endif
+
     static lv_disp_draw_buf_t disp_buf;
     lv_disp_draw_buf_init(&disp_buf, buf1, buf2, CONFIG_TFT_WIDTH * 5);
 
