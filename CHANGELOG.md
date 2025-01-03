@@ -6,6 +6,7 @@
 
 - Added WiFi Pineapple detection (requires PineAP to be in active mode) - @jaylikesbunda
 - Added Local Network Port Scanning - @Spooks4576
+- Added board support for New CYD Model 2432S024C - @Spooks4576
 
 ### 🐛 Bug Fixes
 
