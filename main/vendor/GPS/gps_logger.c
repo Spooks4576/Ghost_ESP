@@ -326,7 +326,7 @@ float get_accuracy_percentage(float hdop) {
 
 void gps_info_display_task(void *pvParameters) {
     const TickType_t delay = pdMS_TO_TICKS(5000);
-    char output_buffer[512] = {0}; 
+    static char output_buffer[256] = {0}; 
     char lat_str[20] = {0}, lon_str[20] = {0};
     static wardriving_data_t gps_data = {0};
     

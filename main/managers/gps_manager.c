@@ -91,7 +91,7 @@ void gps_manager_init(GPSManager* manager) {
     manager->isinitilized = true;
 
     // Create a new check task
-    xTaskCreate(check_gps_connection_task, "gps_check", 4096, NULL, 1, &gps_check_task_handle);
+    xTaskCreate(check_gps_connection_task, "gps_check", 2048, NULL, 1, &gps_check_task_handle);
 }
 
 static void check_gps_connection_task(void *pvParameters) {
