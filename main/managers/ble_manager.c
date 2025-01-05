@@ -82,13 +82,13 @@ void stop_ble_stack() {
     
     rc = ble_gap_adv_stop();
     if (rc != 0) {
-        ESP_LOGE(TAG_BLE, "Error stopping advertisement; rc=%d", rc);
+        ESP_LOGE(TAG_BLE, "Error stopping advertisement");
     }
 
     
     rc = nimble_port_stop();
     if (rc != 0) {
-        ESP_LOGE(TAG_BLE, "Error stopping NimBLE port; rc=%d", rc);
+        ESP_LOGE(TAG_BLE, "Error stopping NimBLE port");
         return;
     }
 
@@ -139,8 +139,8 @@ void ble_stop_skimmer_detection(void) {
         printf("BLE scanning was not active.\n");
         TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
     } else {
-        printf("Failed to stop BLE scanning; rc=%d\n", rc);
-        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning; rc=%d\n", rc);
+        printf("Failed to stop BLE scanning\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning\n");
     }
 }
 
@@ -448,7 +448,7 @@ static bool wait_for_ble_ready(void) {
     uint8_t own_addr_type;
     rc = ble_hs_id_infer_auto(0, &own_addr_type);
     if (rc != 0) {
-        ESP_LOGE(TAG_BLE, "Failed to set BLE address; rc=%d", rc);
+        ESP_LOGE(TAG_BLE, "Failed to set BLE address");
         return false;
     }
     
@@ -474,8 +474,8 @@ void ble_start_scanning(void) {
     // Start a new BLE scan
     int rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, ble_gap_event_general, NULL);
     if (rc != 0) {
-        ESP_LOGE(TAG_BLE, "Error starting BLE scan; rc=%d", rc);
-        TERMINAL_VIEW_ADD_TEXT("Error starting BLE scan; rc=%d\n", rc);
+        ESP_LOGE(TAG_BLE, "Error starting BLE scan");
+        TERMINAL_VIEW_ADD_TEXT("Error starting BLE scan\n");
     } else {
         ESP_LOGI(TAG_BLE, "Scanning started...");
         TERMINAL_VIEW_ADD_TEXT("Scanning started...\n");
@@ -615,8 +615,8 @@ void ble_stop(void) {
         printf("BLE scanning was not active.\n");
         TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
     } else {
-        printf("Failed to stop BLE scanning; rc=%d\n", rc);
-        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning; rc=%d\n", rc);
+        printf("Failed to stop BLE scanning\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning\n");
     }
 }
 
@@ -699,7 +699,7 @@ void ble_start_capture(void) {
     // Open PCAP file first
     esp_err_t err = pcap_file_open("ble_capture", PCAP_CAPTURE_BLUETOOTH);
     if (err != ESP_OK) {
-        ESP_LOGE("BLE_PCAP", "Failed to open PCAP file: %d", err);
+        ESP_LOGE("BLE_PCAP", "Failed to open PCAP file");
         return;
     }
     
