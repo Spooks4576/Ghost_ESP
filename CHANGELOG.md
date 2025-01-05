@@ -13,6 +13,7 @@
 - Fixed BLE Crash on some devices! - @Spooks4576
 - retry deauth channel switch + vtaskdelays - @jaylikesbunda
 - Resolve issues with JC3248W535EN devices #116 - @i-am-shodan, @jaylikesbunda
+- Remove Incorrect PCAP log spam message - @jaylikesbunda
 
 ### 🤏 Tweaks
 
@@ -20,6 +21,8 @@
 - Revised 'gpsinfo' logs to be more helpful and consistent - @jaylikesbunda
 - Added logs to tell if GPS module is connected correctly- @jaylikesbunda
 - Added RGB Pulse for AirTag and Card Skimmer detection - @jaylikesbunda
+- Log Cleanup - @jaylikesbunda
+- Miscellaneous fixes and improvements - @Spooks4576, @jaylikesbunda
 
 ## 1.4.5
 
