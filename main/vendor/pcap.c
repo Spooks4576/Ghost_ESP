@@ -98,6 +98,9 @@ esp_err_t pcap_file_open(const char* base_file_name, pcap_capture_type_t capture
     {
         get_next_pcap_file_name(file_name, base_file_name);
         pcap_file = fopen(file_name, "wb");
+        if (!pcap_file) {
+            printf("PCAP file is not open. Flushing to Serial...");
+        }
     }
     
     esp_err_t ret = pcap_write_global_header(pcap_file, capture_type);
@@ -440,7 +443,6 @@ esp_err_t pcap_flush_buffer_to_file() {
     esp_err_t ret = ESP_OK;
     
     if (pcap_file == NULL) {
-        printf("PCAP file is not open. Flushing to Serial...\n");
         const char* mark_begin = "[BUF/BEGIN]";
         const size_t mark_begin_len = strlen(mark_begin);
         const char* mark_close = "[BUF/CLOSE]";
@@ -449,7 +451,6 @@ esp_err_t pcap_flush_buffer_to_file() {
         uart_write_bytes(UART_NUM_0, mark_begin, mark_begin_len);
         uart_write_bytes(UART_NUM_0, (const char*)pcap_buffer, buffer_offset);
         uart_write_bytes(UART_NUM_0, mark_close, mark_close_len);
-        uart_write_bytes(UART_NUM_0, "\n", 1);
         
         buffer_offset = 0;
         goto exit;
