@@ -128,24 +128,21 @@ void terminal_view_create(void) {
 
     terminal_textarea = lv_textarea_create(terminal_view.root);
     
-    // Improved text area configuration
+    // text
     lv_obj_set_style_bg_color(terminal_textarea, lv_color_black(), 0);
     lv_obj_set_style_bg_opa(terminal_textarea, LV_OPA_TRANSP, 0);  // Make background transparent
     lv_textarea_set_one_line(terminal_textarea, false);
     lv_textarea_set_text(terminal_textarea, "");
     lv_obj_set_size(terminal_textarea, LV_HOR_RES, LV_VER_RES);
-    
-    // Scrolling behavior
-    lv_obj_set_scrollbar_mode(terminal_textarea, LV_SCROLLBAR_MODE_AUTO);
-    lv_obj_set_scroll_snap_y(terminal_textarea, LV_SCROLL_SNAP_NONE);
-    lv_obj_set_style_anim_time(terminal_textarea, 150, 0);
-    
-    // Text appearance
     lv_obj_set_style_text_color(terminal_textarea, lv_color_hex(0x00FF00), 0);
     lv_obj_set_style_text_font(terminal_textarea, &lv_font_montserrat_10, 0);
     lv_obj_set_style_border_width(terminal_textarea, 0, 0);
-    
-    // Additional robustness settings
+
+    // scrolling
+    lv_obj_set_scrollbar_mode(terminal_textarea, LV_SCROLLBAR_MODE_AUTO);
+    lv_obj_set_scroll_snap_y(terminal_textarea, LV_SCROLL_SNAP_NONE);
+    lv_obj_set_style_anim_time(terminal_textarea, 150, 0);
+
     lv_textarea_set_text_selection(terminal_textarea, false);
     lv_textarea_set_password_mode(terminal_textarea, false);
     lv_textarea_set_cursor_click_pos(terminal_textarea, false);  // Disable cursor positioning

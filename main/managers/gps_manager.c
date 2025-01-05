@@ -157,11 +157,7 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     if (!data || !nmea_hdl) {
         return ESP_ERR_INVALID_ARG;
     }
-    
-    // Get the GPS data from the parser handle
     gps_t* gps = &((esp_gps_t*)nmea_hdl)->parent;
-    
-    // For WiFi entries, keep original validation
     if (!data->ble_data.is_ble_device) {
         if (!gps->valid || strlen(data->ssid) <= 2) {
             return ESP_ERR_INVALID_ARG;
@@ -286,40 +282,22 @@ esp_err_t gps_manager_log_wardriving_data(wardriving_data_t* data) {
     // Update display periodically
     if (rand() % GPS_UPDATE_INTERVAL == 0) {
         // Determine GPS fix status
-        char fix_status[10];
-        if (!gps->valid || gps->fix == GPS_FIX_INVALID) {
-            strcpy(fix_status, "No Fix");
-        } else if (gps->fix_mode == GPS_MODE_2D) {
-            strcpy(fix_status, "Basic");
-        } else if (gps->fix_mode == GPS_MODE_3D) {
-            strcpy(fix_status, "Locked");
-        } else {
-            strcpy(fix_status, "Unknown");
-        }
+        const char* fix_status = 
+            (!gps->valid || gps->fix == GPS_FIX_INVALID) ? "No Fix" :
+            (gps->fix_mode == GPS_MODE_2D) ? "Basic" :
+            (gps->fix_mode == GPS_MODE_3D) ? "Locked" : "Unknown";
 
-        // Validate satellite counts
-        uint8_t sats_in_use = gps->sats_in_use;
-
-        // Ensure count is non-negative and within limits
-        if (sats_in_use > GPS_MAX_SATELLITES_IN_USE || sats_in_use < 0) {
-            sats_in_use = 0;
-        }
+        // Validate satellite counts (clamp between 0 and max)
+        uint8_t sats_in_use = (gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE) ? 
+            0 : gps->sats_in_use;
 
         // Determine accuracy based on HDOP
-        char accuracy[10];
-        if (gps->dop_h < 0.0 || gps->dop_h > 50.0) {
-            strcpy(accuracy, "Invalid");
-        } else if (gps->dop_h <= 1.0) {
-            strcpy(accuracy, "Perfect");
-        } else if (gps->dop_h <= 2.0) {
-            strcpy(accuracy, "High");
-        } else if (gps->dop_h <= 5.0) {
-            strcpy(accuracy, "Good");
-        } else if (gps->dop_h <= 10.0) {
-            strcpy(accuracy, "Okay");
-        } else {
-            strcpy(accuracy, "Poor");
-        }
+        const char* accuracy = 
+            (gps->dop_h < 0.0 || gps->dop_h > 50.0) ? "Invalid" :
+            (gps->dop_h <= 1.0) ? "Perfect" :
+            (gps->dop_h <= 2.0) ? "High" :
+            (gps->dop_h <= 5.0) ? "Good" :
+            (gps->dop_h <= 10.0) ? "Okay" : "Poor";
 
         // Convert speed from m/s to km/h for display with validation
         float speed_kmh = 0.0;
