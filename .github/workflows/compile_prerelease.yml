@@ -208,18 +208,26 @@ jobs:
       - name: Get Commit History
         id: get_commits
         run: |
-          # Get the hash of the last prerelease
+          # Get the hash of the last main release
           last_release=$(curl -s \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/releases" | \
-            jq -r '[.[] | select(.prerelease == true)] | .[0].target_commitish')
+            jq -r '[.[] | select(.prerelease == false)] | .[0].target_commitish // empty')
           
-          # Get commit messages since last release
-          if [ ! -z "$last_release" ]; then
+          # Get commit messages since last main release or last 10 commits if no previous release
+          commits=""
+          if [ ! -z "$last_release" ] && [ "$last_release" != "null" ]; then
+            echo "Found previous main release at $last_release"
             commits=$(git log --pretty=format:"- %s" $last_release..HEAD)
           else
+            echo "No previous main release found, getting last 10 commits"
             commits=$(git log --pretty=format:"- %s" -n 10)
+          fi
+          
+          # Handle empty commits case
+          if [ -z "$commits" ]; then
+            commits="- Initial prerelease build"
           fi
           
           # Escape newlines and quotes for JSON
@@ -229,6 +237,7 @@ jobs:
           commits="${commits//'"'/'\"'}"
           
           echo "commits=$commits" >> $GITHUB_OUTPUT
+
 
       - name: Notify Discord of Successful Upload
         if: success()
