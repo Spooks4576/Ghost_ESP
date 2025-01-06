@@ -259,3 +259,129 @@ jobs:
             -H "Content-Type: application/json" \
             -d "$payload" \
             "$DISCORD_WEBHOOK_URL"
+
+      - name: Generate Boards JSON
+        run: |
+          cat > boards.json << 'EOF'
+          {
+            "boards": {
+              "ESP32": {
+                "generic": {
+                  "name": "ESP32 Generic",
+                  "zip_file": "esp32-generic.zip",
+                  "chip_type": "ESP32"
+                },
+                "marauderv4": {
+                  "name": "MarauderV4 FlipperHub",
+                  "zip_file": "MarauderV4_FlipperHub.zip",
+                  "chip_type": "ESP32"
+                },
+                "marauderv6": {
+                  "name": "MarauderV6 & AwokDual",
+                  "zip_file": "MarauderV6_AwokDual.zip",
+                  "chip_type": "ESP32"
+                },
+                "awokmini": {
+                  "name": "AwokMini",
+                  "zip_file": "AwokMini.zip",
+                  "chip_type": "ESP32"
+                },
+                "cyd2usb": {
+                  "name": "CYD2USB",
+                  "zip_file": "CYD2USB.zip",
+                  "chip_type": "ESP32"
+                },
+                "cydmicrousb": {
+                  "name": "CYDMicroUSB",
+                  "zip_file": "CYDMicroUSB.zip",
+                  "chip_type": "ESP32"
+                },
+                "cyddualusb": {
+                  "name": "CYDDualUSB",
+                  "zip_file": "CYDDualUSB.zip",
+                  "chip_type": "ESP32"
+                },
+                "cyd2usb24inch": {
+                  "name": "CYD2USB 2.4 Inch",
+                  "zip_file": "CYD2USB2.4Inch.zip",
+                  "chip_type": "ESP32"
+                }
+              },
+              "ESP32S2": {
+                "generic": {
+                  "name": "ESP32-S2 Generic",
+                  "zip_file": "esp32s2-generic.zip",
+                  "chip_type": "ESP32-S2"
+                },
+                "awokv5": {
+                  "name": "Awok V5",
+                  "zip_file": "esp32v5_awok.zip",
+                  "chip_type": "ESP32-S2"
+                }
+              },
+              "ESP32S3": {
+                "generic": {
+                  "name": "ESP32-S3 Generic",
+                  "zip_file": "esp32s3-generic.zip",
+                  "chip_type": "ESP32-S3"
+                },
+                "cardputer": {
+                  "name": "ESP32-S3-Cardputer",
+                  "zip_file": "ESP32-S3-Cardputer.zip",
+                  "chip_type": "ESP32-S3"
+                },
+                "waveshare": {
+                  "name": "Waveshare LCD",
+                  "zip_file": "Waveshare_LCD.zip",
+                  "chip_type": "ESP32-S3"
+                },
+                "crowtech": {
+                  "name": "Crowtech LCD",
+                  "zip_file": "Crowtech_LCD.zip",
+                  "chip_type": "ESP32-S3"
+                }
+              },
+              "ESP32C3": {
+                "generic": {
+                  "name": "ESP32-C3 Generic",
+                  "zip_file": "esp32c3-generic.zip",
+                  "chip_type": "ESP32-C3"
+                },
+                "devkit": {
+                  "name": "ESP32-C3 DevKit",
+                  "zip_file": "esp32c3-devkit.zip",
+                  "chip_type": "ESP32-C3"
+                }
+              },
+              "ESP32C6": {
+                "generic": {
+                  "name": "ESP32-C6 Generic",
+                  "zip_file": "esp32c6-generic.zip",
+                  "chip_type": "ESP32-C6"
+                },
+                "devkit": {
+                  "name": "ESP32-C6 DevKit",
+                  "zip_file": "esp32c6-devkit.zip",
+                  "chip_type": "ESP32-C6"
+                },
+                "ghostboard": {
+                  "name": "GhostBoard",
+                  "zip_file": "ghostboard.zip",
+                  "chip_type": "ESP32-C6"
+                }
+              }
+            },
+            "version": "${{ github.sha }}",
+            "build_date": "$(date -u +"%Y-%m-%d")",
+            "build_number": "$(date -u +"%Y%m%d")"
+          }
+          EOF
+          echo "Generated boards.json with target information"
+
+      - name: Upload boards.json to Cloudflare R2
+        env:
+          R2_BUCKET: "spooksapi"
+          R2_PATH: "GhostESPBins/prerelease"
+        run: |
+          echo "Uploading boards.json to Cloudflare R2..."
+          rclone copy "boards.json" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress --s3-no-check-bucket
