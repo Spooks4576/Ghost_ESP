@@ -46,7 +46,7 @@
 
 
 #define LVGL_TASK_PERIOD_MS 5
-
+static const char *TAG = "DisplayManager";
 DisplayManager dm = { .current_view = NULL, .previous_view = NULL };
 
 lv_obj_t *status_bar;
@@ -682,3 +682,4 @@ void lvgl_tick_task(void *arg) {
 
     vTaskDelete(NULL);
 }
+
