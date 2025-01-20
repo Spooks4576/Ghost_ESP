@@ -222,10 +222,10 @@ static void log_pineap_detection(void *arg) {
         for (int i = 0; i < pineap_network_count; i++) {
             if (i != (network - pineap_networks) && // Skip self
                 strcasecmp(network->recent_ssids[0], pineap_networks[i].recent_ssids[0]) == 0) {
-                printf("Evil Twin Detected:\nSame SSID '%s'\nfrom BSSID %s and\n%s\n",
+                printf("Evil Twin Detected:\nSame SSID '%.100s'\nfrom BSSID %.17s and\n%.100s\n",
                        network->recent_ssids[0], mac_str, pineap_networks[i].bssid);
                 TERMINAL_VIEW_ADD_TEXT(
-                    "Evil Twin Detected:\nSame SSID '%s'\nfrom BSSID %s and\n%s\n",
+                    "Evil Twin Detected:\nSame SSID '%.100s'\nfrom BSSID %.17s and\n%.100s\n",
                     network->recent_ssids[0], mac_str, pineap_networks[i].bssid);
             }
         }
