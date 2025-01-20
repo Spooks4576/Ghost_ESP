@@ -586,6 +586,15 @@ void ble_deinit(void) {
 }
 
 void ble_stop(void) {
+    if (!ble_initialized) {
+        // comment out for now because it will this print out every time the user sends stop on flipper app and it's not 100% needed
+        // but it's good to have it for debugging
+        
+/*         printf("BLE not initialized.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE not initialized.\n"); */
+        return;
+    }
+
     if (last_company_id != NULL) {
         free(last_company_id);
         last_company_id = NULL;
@@ -608,15 +617,34 @@ void ble_stop(void) {
     
     int rc = ble_gap_disc_cancel();
 
-    if (rc == 0) {
-        printf("BLE scanning stopped successfully.\n");
-        TERMINAL_VIEW_ADD_TEXT("BLE scanning stopped successfully.\n");
-    } else if (rc == BLE_HS_EALREADY) {
-        printf("BLE scanning was not active.\n");
-        TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
-    } else {
-        printf("Failed to stop BLE scanning\n");
-        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning\n");
+    switch (rc) {
+        case 0:
+            printf("BLE scanning stopped successfully.\n");
+            TERMINAL_VIEW_ADD_TEXT("BLE scanning stopped successfully.\n");
+            break;
+        case BLE_HS_EALREADY:
+            printf("BLE scanning was not active.\n");
+            TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
+            break;
+        case BLE_HS_EBUSY:
+            printf("BLE scanning is busy\n");
+            TERMINAL_VIEW_ADD_TEXT("BLE scanning is busy\n");
+            break;
+        case BLE_HS_ETIMEOUT:
+            printf("BLE operation timed out.\n");
+            TERMINAL_VIEW_ADD_TEXT("BLE operation timed out.\n");
+            break;
+        case BLE_HS_ENOTCONN:
+            printf("BLE not connected.\n");
+            TERMINAL_VIEW_ADD_TEXT("BLE not connected.\n");
+            break;
+        case BLE_HS_EINVAL:
+            printf("BLE invalid parameter.\n");
+            TERMINAL_VIEW_ADD_TEXT("BLE invalid parameter.\n");
+            break;
+        default:
+            printf("Error stopping BLE scan: %d\n", rc);
+            TERMINAL_VIEW_ADD_TEXT("Error stopping BLE scan: %d\n", rc);
     }
 }
 
@@ -683,13 +711,8 @@ static void ble_pcap_callback(struct ble_gap_event *event, size_t len) {
         
         hci_len = 15 + event->disc.length_data;  // Total length
         
-        // Debug logging
-        ESP_LOGI("BLE_PCAP", "HCI Event: type=0x04, meta=0x3E, len=%d", hci_len);
-        printf("Packet: ");
-        for (int i = 0; i < hci_len; i++) {
-            printf("%02x ", hci_buffer[i]);
-        }
-        printf("\n");
+        // packet logging (don't print to display terminal to prevent overwhelming)
+        printf("BLE Packet Received:\nType: 0x04 (HCI Event)\nMeta: 0x3E (LE)\nLength: %d\n", hci_len);
         
         pcap_write_packet_to_buffer(hci_buffer, hci_len, PCAP_CAPTURE_BLUETOOTH);
     }

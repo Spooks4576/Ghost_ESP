@@ -247,7 +247,9 @@ void handle_stop_flipper(int argc, char** argv)
 #ifndef CONFIG_IDF_TARGET_ESP32S2
     ble_stop();
 #endif
-    csv_flush_buffer_to_file();  // Ensure any buffered data is written
+    if (buffer_offset > 0) {  // Only flush if there's data in buffer
+        csv_flush_buffer_to_file();
+    }
     csv_file_close();           // Close any open CSV files
     gps_manager_deinit(&g_gpsManager);  // Clean up GPS if active
     wifi_manager_stop_monitor_mode();    // Stop any active monitoring
@@ -1115,7 +1117,9 @@ void handle_ble_wardriving(int argc, char **argv) {
     if (stop_flag) {
         ble_stop();
         gps_manager_deinit(&g_gpsManager);
-        csv_flush_buffer_to_file();
+        if (buffer_offset > 0) {  // Only flush if there's data in buffer
+            csv_flush_buffer_to_file();
+        }
         csv_file_close();
         printf("BLE wardriving stopped.\n");
         TERMINAL_VIEW_ADD_TEXT("BLE wardriving stopped.\n");

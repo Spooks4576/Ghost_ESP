@@ -158,7 +158,7 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
     }
 
     // Check if buffer needs flushing
-    if (buffer_offset + len >= BUFFER_SIZE) {
+    if (buffer_offset + len >= BUFFER_SIZE && csv_file != NULL) {
         esp_err_t err = csv_flush_buffer_to_file();
         if (err != ESP_OK) {
             return err;
@@ -182,9 +182,14 @@ esp_err_t csv_write_data_to_buffer(wardriving_data_t *data) {
 }
 
 esp_err_t csv_flush_buffer_to_file() {
+    // Don't flush if there's no data in buffer
+    if (buffer_offset == 0) {
+        return ESP_OK;
+    }
+
     if (csv_file == NULL) {
-        printf("Storage: No open file.\n Starting new file.\n");
-        TERMINAL_VIEW_ADD_TEXT("Storage: No open file.\n Starting new file.\n");
+        printf("Storage:\nStarting new file.\n");
+        TERMINAL_VIEW_ADD_TEXT("Storage:\nStarting new file.\n");
         const char* mark_begin = "[BUF/BEGIN]";
         const char* mark_close = "[BUF/CLOSE]";
 

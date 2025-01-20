@@ -7,3 +7,5 @@ build
 .devcontainer
 .vscode
 /managed_components
+.clang-tidy
+checks.json
