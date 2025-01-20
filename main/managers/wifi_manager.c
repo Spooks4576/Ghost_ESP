@@ -212,17 +212,19 @@ const char *actiontec_ouis[] = {"000FB3", "001505", "001801", "001EA7", "001F90"
                                 "5C35FC", "7058A4", "70F196", "70F220", "84E892", "941C56",
                                 "9C1E95", "A0A3E2", "A83944", "E86FF2", "F8E4FB", "FC2BB2"};
 
-// WiFi event handler (same as before)
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
                                void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        printf("WiFi started\nready to scan.\n");
+        printf("WiFi started.\nReady to scan.\n");
+        TERMINAL_VIEW_ADD_TEXT("WiFi started.\nReady to scan.\n");
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
         printf("WiFi disconnected\n");
+        TERMINAL_VIEW_ADD_TEXT("WiFi disconnected\n");
         xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         printf("Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
+        TERMINAL_VIEW_ADD_TEXT("Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
         xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
     }
 }
@@ -262,7 +264,8 @@ static void add_station_ap_pair(const uint8_t *station_mac, const uint8_t *ap_bs
         // Print formatted MAC addresses
 
     } else {
-        printf("Station list full\ncan't add more stations.\n");
+        printf("Station list full\nCan't add more stations.\n");
+        TERMINAL_VIEW_ADD_TEXT("Station list full\nCan't add more stations.\n");
     }
 }
 
@@ -1998,9 +2001,11 @@ void wifi_auto_deauth_task(void *Parameter) {
             }
 
             ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&ap_count, scanned_aps));
-            printf("Found %d access points\n", ap_count);
+            printf("\nFound %d access points\n", ap_count);
+            TERMINAL_VIEW_ADD_TEXT("\nFound %d access points\n", ap_count);
         } else {
-            printf("No access points found\n");
+            printf("\nNo access points found\n");
+            TERMINAL_VIEW_ADD_TEXT("\nNo access points found\n");
             vTaskDelay(pdMS_TO_TICKS(1000)); // Wait before retrying if no APs found
             continue;
         }
@@ -2064,8 +2069,8 @@ void wifi_manager_stop_deauth() {
             ap_manager_start_services();
         }
     } else {
-        printf("No deauth transmission running.\n");
-        TERMINAL_VIEW_ADD_TEXT("No deauth transmission running.\n");
+        printf("No deauth transmission\nis running.\n");
+        TERMINAL_VIEW_ADD_TEXT("No deauth transmission\nis running.\n");
     }
 }
 
@@ -2076,8 +2081,6 @@ void wifi_manager_print_scan_results_with_oui() {
         TERMINAL_VIEW_ADD_TEXT("AP information not available\n");
         return;
     }
-
-    printf("Found %u access points:\n", ap_count);
 
     for (uint16_t i = 0; i < ap_count; i++) {
         char ssid_temp[33];

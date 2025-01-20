@@ -212,8 +212,8 @@ void discover_task(void *pvParameter) {
 
         dial_client_deinit(&client);
     } else {
-        printf("Failed to initialize DIAL client.\n");
-        TERMINAL_VIEW_ADD_TEXT("Failed to initialize DIAL client.\n");
+        printf("Failed to init DIAL client.\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to init DIAL client.\n");
     }
 
     vTaskDelete(NULL);
@@ -253,8 +253,8 @@ void handle_wifi_connection(int argc, char **argv) {
     }
 
     if (strlen(ssid) == 0) {
-        printf("SSID and password cannot be empty\n");
-        TERMINAL_VIEW_ADD_TEXT("SSID and password cannot be empty\n");
+        printf("SSID and PSK cannot be empty\n");
+        TERMINAL_VIEW_ADD_TEXT("SSID and PSK cannot be empty\n");
         return;
     }
 
@@ -282,22 +282,22 @@ void handle_wifi_connection(int argc, char **argv) {
 
 void handle_ble_scan_cmd(int argc, char **argv) {
     if (argc > 1 && strcmp(argv[1], "-f") == 0) {
-        printf("Starting Find the Flippers...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting Find the Flippers...\n");
+        printf("Starting Find the Flippers.\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting Find the Flippers.\n");
         ble_start_find_flippers();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-ds") == 0) {
-        printf("Starting BLE Spam Detector...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting BLE Spam Detector...\n");
+        printf("Starting BLE Spam Detector.\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting BLE Spam Detector.\n");
         ble_start_blespam_detector();
         return;
     }
 
     if (argc > 1 && strcmp(argv[1], "-a") == 0) {
-        printf("Starting AirTag Scanner...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting AirTag Scanner...\n");
+        printf("Starting AirTag Scanner.\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting AirTag Scanner.\n");
         ble_start_airtag_scanner();
         return;
     }
@@ -310,14 +310,14 @@ void handle_ble_scan_cmd(int argc, char **argv) {
     }
 
     if (argc > 1 && strcmp(argv[1], "-s") == 0) {
-        printf("Stopping BLE Scan...\n");
-        TERMINAL_VIEW_ADD_TEXT("Stopping BLE Scan...\n");
+        printf("Stopping BLE Scan.\n");
+        TERMINAL_VIEW_ADD_TEXT("Stopping BLE Scan.\n");
         ble_stop();
         return;
     }
 
-    printf("Invalid Command Syntax...\n");
-    TERMINAL_VIEW_ADD_TEXT("Invalid Command Syntax...\n");
+    printf("Invalid Command Syntax.\n");
+    TERMINAL_VIEW_ADD_TEXT("Invalid Command Syntax.\n");
 }
 
 #endif
@@ -557,8 +557,8 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-probe") == 0) {
-        printf("Starting probe request capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting probe request capture...\n");
+        printf("Starting probe request\npacket capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting probe request\npacket capture...\n");
         int err = pcap_file_open("probescan", PCAP_CAPTURE_WIFI);
 
         if (err != ESP_OK) {
@@ -570,8 +570,8 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-deauth") == 0) {
-        printf("Starting deauth packet capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting deauth packet capture...\n");
+        printf("Starting deauth\npacket capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting deauth\npacket capture...\n");
         int err = pcap_file_open("deauthscan", PCAP_CAPTURE_WIFI);
 
         if (err != ESP_OK) {
@@ -583,8 +583,8 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-beacon") == 0) {
-        printf("Starting beacon packet capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting beacon packet capture...\n");
+        printf("Starting beacon\npacket capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting beacon\npacket capture...\n");
         int err = pcap_file_open("beaconscan", PCAP_CAPTURE_WIFI);
 
         if (err != ESP_OK) {
@@ -596,8 +596,8 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-raw") == 0) {
-        printf("Starting raw packet capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting raw packet capture...\n");
+        printf("Starting raw\npacket capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting raw\npacket capture...\n");
         int err = pcap_file_open("rawscan", PCAP_CAPTURE_WIFI);
 
         if (err != ESP_OK) {
@@ -609,8 +609,8 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-eapol") == 0) {
-        printf("Starting EAPOL packet capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting EAPOL packet capture...\n");
+        printf("Starting EAPOL\npacket capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting EAPOL\npacket capture...\n");
         int err = pcap_file_open("eapolscan", PCAP_CAPTURE_WIFI);
 
         if (err != ESP_OK) {
@@ -622,8 +622,8 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-pwn") == 0) {
-        printf("Starting PWN packet capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting PWN packet capture...\n");
+        printf("Starting PWN\npacket capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting PWN\npacket capture...\n");
         int err = pcap_file_open("pwnscan", PCAP_CAPTURE_WIFI);
 
         if (err != ESP_OK) {
@@ -635,8 +635,8 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-wps") == 0) {
-        printf("Starting WPS packet capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting WPS packet capture...\n");
+        printf("Starting WPS\npacket capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting WPS\npacket capture...\n");
         int err = pcap_file_open("wpsscan", PCAP_CAPTURE_WIFI);
 
         should_store_wps = 0;

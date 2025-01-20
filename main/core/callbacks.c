@@ -693,17 +693,15 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         uint16_t config_methods =
                             (payload[attr_index + 4] << 8) | payload[attr_index + 5];
 
-                        printf("Configuration Methods found: 0x%04x", config_methods);
+                        printf("Configuration Methods found: 0x%04x\n", config_methods);
 
                         if (config_methods & WPS_CONF_METHODS_PBC) {
-                            printf("WPS Push Button detected for network: %s", ssid);
+                            printf("WPS Push Button detected:\n%s\n", ssid);
+                            TERMINAL_VIEW_ADD_TEXT("WPS Push Button detected:\n%s\n", ssid);
                         } else if (config_methods &
                                    (WPS_CONF_METHODS_PIN_DISPLAY | WPS_CONF_METHODS_PIN_KEYPAD)) {
-                            printf("WPS PIN detected for network: %s", ssid);
-                        } else {
-                            printf("WPS mode not detected\n(unknown config method) for "
-                                   "network: %s",
-                                   ssid);
+                            printf("WPS PIN detected:\n%s\n", ssid);
+                            TERMINAL_VIEW_ADD_TEXT("WPS PIN detected:\n%s\n", ssid);
                         }
 
                         if (should_store_wps == 1) {
@@ -725,8 +723,11 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         }
 
                         if (detected_network_count >= MAX_WPS_NETWORKS) {
-                            printf(
-                                "Maximum number of WPS networks detected\nStopping monitor mode.");
+                            printf("Maximum number of WPS networks detected\nStopping monitor "
+                                   "mode.\n");
+                            TERMINAL_VIEW_ADD_TEXT(
+                                "Maximum number of WPS networks detected\nStopping "
+                                "monitor mode.\n");
                             wifi_manager_stop_monitor_mode();
                         }
                     }
