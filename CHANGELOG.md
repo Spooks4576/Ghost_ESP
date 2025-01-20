@@ -4,24 +4,24 @@
 
 ### ❤️ New Features
 
-- Added WiFi Pineapple detection (requires PineAP to be in active mode) - @jaylikesbunda
 - Added Local Network Port Scanning - @Spooks4576
 - Added support for New CYD Model (2432S024C) - @Spooks4576
+- Added WiFi Pineapple detection (requires PineAP to be in active mode) - @jaylikesbunda
 
 ### 🐛 Bug Fixes
 
 - Fixed BLE Crash on some devices! - @Spooks4576
+- Remove Incorrect PCAP log spam message - @jaylikesbunda
 - retry deauth channel switch + vtaskdelays - @jaylikesbunda
 - Resolve issues with JC3248W535EN devices #116 - @i-am-shodan, @jaylikesbunda
-- Remove Incorrect PCAP log spam message - @jaylikesbunda
 
-### 🤏 Tweaks
+### 🤏 Tweaks and Improvements
 
+- Log Cleanup - @jaylikesbunda
 - Added a IFDEF for Larger Display Buffers On Non ESP32 Devices - @Spooks4576
 - Revised 'gpsinfo' logs to be more helpful and consistent - @jaylikesbunda
 - Added logs to tell if GPS module is connected correctly- @jaylikesbunda
 - Added RGB Pulse for AirTag and Card Skimmer detection - @jaylikesbunda
-- Log Cleanup - @jaylikesbunda
 - Miscellaneous fixes and improvements - @Spooks4576, @jaylikesbunda
 
 ## 1.4.5

@@ -357,18 +357,17 @@ void gps_info_display_task(void *pvParameters) {
             continue;
         }
 
-        // Build complete string before sending to terminal
         if (!gps->valid || gps->fix < GPS_FIX_GPS || gps->fix_mode < GPS_MODE_2D ||
             gps->sats_in_use < 3 || gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE) {
-
-            printf("Searching satellites...\nSats: %d/%d\n",
-                   gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE ? 0 : gps->sats_in_use,
-                   GPS_MAX_SATELLITES_IN_USE);
-            TERMINAL_VIEW_ADD_TEXT("Searching satellites...\nSats: %d/%d\n",
-                                   gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE ? 0
-                                                                                : gps->sats_in_use,
-                                   GPS_MAX_SATELLITES_IN_USE);
-
+            if (!gps_is_timeout_detected()) {
+                printf("Searching satellites...\nSats: %d/%d\n",
+                       gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE ? 0 : gps->sats_in_use,
+                       GPS_MAX_SATELLITES_IN_USE);
+                TERMINAL_VIEW_ADD_TEXT(
+                    "Searching satellites...\nSats: %d/%d\n",
+                    gps->sats_in_use > GPS_MAX_SATELLITES_IN_USE ? 0 : gps->sats_in_use,
+                    GPS_MAX_SATELLITES_IN_USE);
+            }
         } else {
             // Only populate GPS data if we have a valid fix
             populate_gps_quality_data(&gps_data, gps);

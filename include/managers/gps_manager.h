@@ -11,14 +11,14 @@ extern gps_date_t cacheddate;
 
 // Struct definition for GPSManager
 typedef struct {
-  bool isinitilized;
+    bool isinitilized;
 } GPSManager;
 
 // Function prototypes
 void gps_manager_init(GPSManager *manager);
 void gps_manager_deinit(GPSManager *manager);
 esp_err_t gps_manager_log_wardriving_data(wardriving_data_t *data);
-
+bool gps_is_timeout_detected(void);
 GPSManager g_gpsManager;
 
 #endif // GPSMANAGER_H
