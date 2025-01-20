@@ -218,6 +218,18 @@ static void log_pineap_detection(void *arg) {
         printf("RSSI: %d\n", network->last_rssi);
         printf("SSIDs (%d): %s\n", valid_ssid_count, ssids_str);
 
+        // Evil Twin Detection: Check for same SSID from different BSSIDs
+        for (int i = 0; i < pineap_network_count; i++) {
+            if (i != (network - pineap_networks) && // Skip self
+                strcasecmp(network->recent_ssids[0], pineap_networks[i].recent_ssids[0]) == 0) {
+                printf("Evil Twin Detected:\nSame SSID '%s'\nfrom BSSID %s and\n%s\n",
+                       network->recent_ssids[0], mac_str, pineap_networks[i].bssid);
+                TERMINAL_VIEW_ADD_TEXT(
+                    "Evil Twin Detected:\nSame SSID '%s'\nfrom BSSID %s and\n%s\n",
+                    network->recent_ssids[0], mac_str, pineap_networks[i].bssid);
+            }
+        }
+
         TERMINAL_VIEW_ADD_TEXT("\nPineapple detected!\n");
         TERMINAL_VIEW_ADD_TEXT("BSSID: %s\n", mac_str);
         TERMINAL_VIEW_ADD_TEXT("Channel: %d\n", network->last_channel);
