@@ -6,7 +6,7 @@
 
 - Added Local Network Port Scanning - @Spooks4576
 - Added support for New CYD Model (2432S024C) - @Spooks4576
-- Added WiFi Pineapple detection (requires PineAP to be in active mode) - @jaylikesbunda
+- Added WiFi Pineapple/Evil Twin detection - @jaylikesbunda
 
 ### 🐛 Bug Fixes
 
@@ -17,12 +17,13 @@
 
 ### 🤏 Tweaks and Improvements
 
-- Log Cleanup - @jaylikesbunda
+- Overall Log Cleanup - @jaylikesbunda
 - Added a IFDEF for Larger Display Buffers On Non ESP32 Devices - @Spooks4576
 - Revised 'gpsinfo' logs to be more helpful and consistent - @jaylikesbunda
 - Added logs to tell if GPS module is connected correctly- @jaylikesbunda
 - Added RGB Pulse for AirTag and Card Skimmer detection - @jaylikesbunda
 - Miscellaneous fixes and improvements - @Spooks4576, @jaylikesbunda
+- Clang-Format main and include folders for better code readability - @jaylikesbunda
 
 ## 1.4.5
 
