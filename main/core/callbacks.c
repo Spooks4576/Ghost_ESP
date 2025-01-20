@@ -29,13 +29,12 @@
 typedef struct {
     uint8_t bssid[6];
     time_t detection_time;
-    time_t last_update_time; // Track last update
+    time_t last_update_time;
 } blacklisted_ap_t;
 
 static blacklisted_ap_t blacklist[MAX_PINEAP_NETWORKS];
 static int blacklist_count = 0;
 
-// Check if a BSSID is blacklisted
 static bool is_blacklisted(const uint8_t *bssid) {
     for (int i = 0; i < blacklist_count; i++) {
         if (memcmp(blacklist[i].bssid, bssid, 6) == 0) {
@@ -45,7 +44,6 @@ static bool is_blacklisted(const uint8_t *bssid) {
     return false;
 }
 
-// Update blacklist check to allow updates after a timeout
 static bool should_update_blacklisted(const uint8_t *bssid) {
     for (int i = 0; i < blacklist_count; i++) {
         if (memcmp(blacklist[i].bssid, bssid, 6) == 0) {
@@ -61,7 +59,6 @@ static bool should_update_blacklisted(const uint8_t *bssid) {
     return false;
 }
 
-// Update the add_to_blacklist function
 static void add_to_blacklist(const uint8_t *bssid) {
     time_t current_time = time(NULL);
 
@@ -82,7 +79,6 @@ static void add_to_blacklist(const uint8_t *bssid) {
     }
 }
 
-// Forward declarations
 static uint32_t hash_ssid(const char *ssid);
 static bool ssid_hash_exists(pineap_network_t *network, uint32_t hash);
 static void trim_trailing(char *str);
@@ -100,8 +96,8 @@ extern RGBManager_t rgb_manager;
 #define MAX_SSIDS_PER_BSSID 10
 #define MAX_WIFI_CHANNEL 13
 #define CHANNEL_HOP_INTERVAL_MS 200
-#define RECENT_SSID_COUNT 5 // Keep track of last 5 SSIDs
-#define LOG_DELAY_MS 5000   // 5 second delay between logs
+#define RECENT_SSID_COUNT 5
+#define LOG_DELAY_MS 5000
 
 static pineap_network_t pineap_networks[MAX_PINEAP_NETWORKS];
 static int pineap_network_count = 0;
@@ -125,7 +121,6 @@ static esp_err_t start_channel_hopping(void) {
         ESP_ERROR_CHECK(esp_timer_create(&timer_args, &channel_hop_timer));
     }
 
-    // Start timer for channel hopping
     return esp_timer_start_periodic(channel_hop_timer, CHANNEL_HOP_INTERVAL_MS * 1000);
 }
 
@@ -137,9 +132,7 @@ static void stop_channel_hopping(void) {
     }
 }
 
-// Helper function to find or create network entry
 static pineap_network_t *find_or_create_network(const uint8_t *bssid) {
-    // First try to find existing network
     for (int i = 0; i < pineap_network_count; i++) {
         if (compare_bssid(pineap_networks[i].bssid, bssid)) {
             return &pineap_networks[i];
@@ -193,8 +186,7 @@ static void log_pineap_detection(void *arg) {
     pineap_log_data_t *log_data = (pineap_log_data_t *)arg;
     pineap_network_t *network = log_data->network;
 
-    // Add delay before logging to allow collection of multiple SSIDs
-    vTaskDelay(pdMS_TO_TICKS(5000)); // 5 second delay
+    vTaskDelay(pdMS_TO_TICKS(5000));
 
     char mac_str[18];
     snprintf(mac_str, sizeof(mac_str), "%02x:%02x:%02x:%02x:%02x:%02x", log_data->bssid[0],
@@ -233,7 +225,6 @@ static void log_pineap_detection(void *arg) {
         TERMINAL_VIEW_ADD_TEXT("SSIDs (%d): %s\n", valid_ssid_count, ssids_str);
     }
 
-    // Clean up
     free(log_data);
     network->log_task_handle = NULL; // Clear handle before deletion
     vTaskDelete(NULL);
@@ -258,13 +249,10 @@ static void start_log_task(pineap_network_t *network, const char *new_ssid, int8
     log_data->ssid_count = network->ssid_count;
     log_data->channel = channel;
     log_data->rssi = rssi;
-    log_data->network = network; // Store network pointer for cleanup
-
-    // Create logging task
+    log_data->network = network;
     BaseType_t result = xTaskCreate(log_pineap_detection, "pineap_log", 4096, log_data, 1,
                                     &network->log_task_handle);
     if (result != pdPASS) {
-        // Task creation failed
         free(log_data);
         network->log_task_handle = NULL;
     }
