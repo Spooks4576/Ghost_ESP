@@ -5,9 +5,9 @@
  */
 #pragma once
 
-#include <stdint.h>
 #include "driver/rmt_encoder.h"
 #include "led_strip_types.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,8 +17,8 @@ extern "C" {
  * @brief Type of led strip encoder configuration
  */
 typedef struct {
-    uint32_t resolution;   /*!< Encoder resolution, in Hz */
-    led_model_t led_model; /*!< LED model */
+  uint32_t resolution;   /*!< Encoder resolution, in Hz */
+  led_model_t led_model; /*!< LED model */
 } led_strip_encoder_config_t;
 
 /**
@@ -31,7 +31,8 @@ typedef struct {
  *      - ESP_ERR_NO_MEM out of memory when creating led strip encoder
  *      - ESP_OK if creating encoder successfully
  */
-esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config, rmt_encoder_handle_t *ret_encoder);
+esp_err_t rmt_new_led_strip_encoder(const led_strip_encoder_config_t *config,
+                                    rmt_encoder_handle_t *ret_encoder);
 
 #ifdef __cplusplus
 }

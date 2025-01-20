@@ -1,8 +1,8 @@
 #ifndef APPS_MENU_SCREEN_H
 #define APPS_MENU_SCREEN_H
 
-#include "managers/display_manager.h"
 #include "lvgl.h"
+#include "managers/display_manager.h"
 
 void apps_menu_create(void);
 void apps_menu_destroy(void);

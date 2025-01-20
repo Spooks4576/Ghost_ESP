@@ -10,9 +10,9 @@
 typedef void (*CommandFunction)(int argc, char **argv);
 
 typedef struct Command {
-    char *name;
-    CommandFunction function;
-    struct Command *next;
+  char *name;
+  CommandFunction function;
+  struct Command *next;
 } Command;
 
 // Functions to manage commands

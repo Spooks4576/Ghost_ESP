@@ -394,20 +394,19 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         return ESP_OK;
     } else {
         // Proceed with HTTP request if not an SD card file
-        esp_http_client_config_t config =
-            {
-                .url = url,
-                .timeout_ms = 5000,
-                .crt_bundle_attach = esp_crt_bundle_attach,
-                .transport_type = HTTP_TRANSPORT_OVER_SSL,
-                .user_agent = "Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) "
-                              "AppleWebKit/537.36 (KHTML, like "
-                              "Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile "
-                              "Safari/537.36", // Browser-like
-                                               // User-Agent
-                                               // string
-                .disable_auto_redirect = false,
-            };
+        esp_http_client_config_t config = {
+            .url = url,
+            .timeout_ms = 5000,
+            .crt_bundle_attach = esp_crt_bundle_attach,
+            .transport_type = HTTP_TRANSPORT_OVER_SSL,
+            .user_agent = "Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) "
+                          "AppleWebKit/537.36 (KHTML, like "
+                          "Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile "
+                          "Safari/537.36", // Browser-like
+                                           // User-Agent
+                                           // string
+            .disable_auto_redirect = false,
+        };
 
         esp_http_client_handle_t client = esp_http_client_init(&config);
         if (client == NULL) {
@@ -969,7 +968,7 @@ void wifi_manager_stop_scan() {
     esp_err_t err;
 
     err = esp_wifi_scan_stop();
-    if (err == ESP_ERR_NOT_STARTED) {
+    if (err == ESP_ERR_WIFI_NOT_STARTED) {
 
         // commented out for now because it's cleaner without and stop commands send this when not
         // really needed

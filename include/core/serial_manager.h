@@ -14,13 +14,12 @@ void serial_task(void *pvParameter);
 
 int handle_serial_command(const char *input);
 
-void simulateCommand(const char* commandString);
+void simulateCommand(const char *commandString);
 
 QueueHandle_tt commandQueue;
 
 typedef struct {
-    char command[1024];
+  char command[1024];
 } SerialCommand;
-
 
 #endif // SERIAL_MANAGER_H
