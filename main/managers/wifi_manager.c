@@ -115,7 +115,7 @@ void configure_hidden_ap() {
     if (err != ESP_OK) {
         printf("Failed to set Wi-Fi config: %s\n", esp_err_to_name(err));
     } else {
-        printf("Wi-Fi AP SSID is now hidden.\n");
+        printf("Wi-Fi AP SSID hidden.\n");
     }
 }
 
@@ -140,7 +140,7 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
             esp_wifi_connect();
             break;
         case WIFI_EVENT_STA_DISCONNECTED:
-            printf("Disconnected from Wi-Fi, retrying...\n");
+            printf("Disconnected from Wi-Fi\nRetrying...\n");
             esp_wifi_connect();
             break;
         default:
@@ -216,9 +216,9 @@ const char *actiontec_ouis[] = {"000FB3", "001505", "001801", "001EA7", "001F90"
 static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
                                void *event_data) {
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-        printf("WiFi started, ready to scan.\n");
+        printf("WiFi started\nready to scan.\n");
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
-        printf("Disconnected from WiFi\n");
+        printf("WiFi disconnected\n");
         xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
@@ -262,7 +262,7 @@ static void add_station_ap_pair(const uint8_t *station_mac, const uint8_t *ap_bs
         // Print formatted MAC addresses
 
     } else {
-        printf("Station list is full, can't add more stations.\n");
+        printf("Station list full\ncan't add more stations.\n");
     }
 }
 
@@ -379,7 +379,7 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         }
 
         if (feof(file)) {
-            printf("Finished reading all data from file\n");
+            printf("Finished reading data from file\n");
         } else if (ferror(file)) {
             printf("Error reading file\n");
         }
@@ -425,7 +425,7 @@ esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *c
         printf("Final HTTP Status code: %d\n", http_status);
 
         if (http_status == 200) {
-            printf("Received 200 OK. Re-opening connection for manual streaming...\n");
+            printf("Received 200 OK\nRe-opening connection for manual streaming...\n");
 
             err = esp_http_client_open(client, 0);
             if (err != ESP_OK) {
@@ -2064,7 +2064,8 @@ void wifi_manager_stop_deauth() {
             ap_manager_start_services();
         }
     } else {
-        printf("No deauth transmission is running.\n");
+        printf("No deauth transmission running.\n");
+        TERMINAL_VIEW_ADD_TEXT("No deauth transmission running.\n");
     }
 }
 
@@ -2235,8 +2236,8 @@ void wifi_manager_stop_beacon() {
         // Now restart services
         ap_manager_init();
     } else {
-        printf("No beacon transmission is running.\n");
-        TERMINAL_VIEW_ADD_TEXT("No beacon transmission is running.\n");
+        printf("No beacon transmission running.\n");
+        TERMINAL_VIEW_ADD_TEXT("No beacon transmission running.\n");
     }
 }
 
@@ -2251,8 +2252,8 @@ void wifi_manager_start_ip_lookup() {
     esp_netif_ip_info_t ip_info;
     if (esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info) ==
         ESP_OK) {
-        printf("Connected. Proceeding with IP lookup...\n");
-        TERMINAL_VIEW_ADD_TEXT("Connected. Proceeding with IP lookup...\n");
+        printf("Connected.\nProceeding with IP lookup...\n");
+        TERMINAL_VIEW_ADD_TEXT("Connected.\nProceeding with IP lookup...\n");
 
         int device_count = 0;
         struct DeviceInfo devices[MAX_DEVICES];
@@ -2308,8 +2309,8 @@ void wifi_manager_start_ip_lookup() {
             }
         }
     } else {
-        printf("Could not get network interface info.\n");
-        TERMINAL_VIEW_ADD_TEXT("Could not get network interface info.\n");
+        printf("Can't recieve network interface info.\n");
+        TERMINAL_VIEW_ADD_TEXT("Can't recieve network interface info.\n");
     }
 
     printf("IP Scan Done.\n");
@@ -2345,15 +2346,16 @@ void wifi_manager_connect_wifi(const char *ssid, const char *password) {
     bool connected = false;
 
     while (retry_count < max_retries && !connected) {
-        printf("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n", retry_count + 1, max_retries);
-        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi (Attempt %d/%d)...\n",
+        printf("Attempting to connect to Wi-Fi\n(Attempt %d/%d)...\n", retry_count + 1,
+               max_retries);
+        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi\n(Attempt %d/%d)...\n",
                                retry_count + 1, max_retries);
 
         esp_err_t ret = esp_wifi_connect();
         if (ret == ESP_ERR_WIFI_CONN) {
             // If already connecting, wait for result instead of treating as error
-            printf("Connection already in progress, waiting for result...\n");
-            TERMINAL_VIEW_ADD_TEXT("Connection already in progress, waiting for result...\n");
+            printf("Connection already in progress\nwaiting for result...\n");
+            TERMINAL_VIEW_ADD_TEXT("Connection already in progress\nwaiting for result...\n");
             ret = ESP_OK;
         }
 
@@ -2367,8 +2369,8 @@ void wifi_manager_connect_wifi(const char *ssid, const char *password) {
                 // Double check connection status
                 wifi_ap_record_t ap_info;
                 if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-                    printf("Successfully connected to Wi-Fi network: %s\n", ap_info.ssid);
-                    TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network: %s\n",
+                    printf("Successfully connected to Wi-Fi network:\n%s\n", ap_info.ssid);
+                    TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network:\n%s\n",
                                            ap_info.ssid);
                     connected = true;
                     break;
@@ -2376,8 +2378,9 @@ void wifi_manager_connect_wifi(const char *ssid, const char *password) {
             }
         } else {
             // Only treat as failed attempt if it's not ESP_ERR_WIFI_CONN
-            printf("Connection attempt %d failed: %s\n", retry_count + 1, esp_err_to_name(ret));
-            TERMINAL_VIEW_ADD_TEXT("Connection attempt %d failed\n", retry_count + 1);
+            printf("Connection attempt %d failed:\n%s\n", retry_count + 1, esp_err_to_name(ret));
+            TERMINAL_VIEW_ADD_TEXT("Connection attempt %d failed:\n%s\n", retry_count + 1,
+                                   esp_err_to_name(ret));
         }
 
         // If we get here and not connected, prepare for retry

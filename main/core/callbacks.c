@@ -701,7 +701,7 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                                    (WPS_CONF_METHODS_PIN_DISPLAY | WPS_CONF_METHODS_PIN_KEYPAD)) {
                             printf("WPS PIN detected for network: %s", ssid);
                         } else {
-                            printf("WPS mode not detected (unknown config method) for "
+                            printf("WPS mode not detected\n(unknown config method) for "
                                    "network: %s",
                                    ssid);
                         }
@@ -725,8 +725,8 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         }
 
                         if (detected_network_count >= MAX_WPS_NETWORKS) {
-                            printf("Maximum number of WPS networks detected. Stopping "
-                                   "monitor mode.");
+                            printf(
+                                "Maximum number of WPS networks detected\nStopping monitor mode.");
                             wifi_manager_stop_monitor_mode();
                         }
                     }
@@ -781,7 +781,7 @@ void ble_wardriving_callback(struct ble_gap_event *event, void *arg) {
     // Use GPS manager to log data
     esp_err_t err = gps_manager_log_wardriving_data(&wardriving_data);
     if (err != ESP_OK) {
-        ESP_LOGD("BLE_WD", "Skipped logging entry - GPS data not ready");
+        ESP_LOGD("BLE_WD", "Skipped logging entry\nGPS data not ready");
     }
 }
 
@@ -855,13 +855,13 @@ void ble_skimmer_scan_callback(struct ble_gap_event *event, void *arg) {
                 TERMINAL_VIEW_ADD_TEXT(rssi_str);
                 TERMINAL_VIEW_ADD_TEXT(" dBm\n");
 
-                printf("Reason: Matched known skimmer pattern: %s\n", suspicious_names[i]);
-                TERMINAL_VIEW_ADD_TEXT("Reason: Matched known skimmer pattern: ");
+                printf("Reason:\nMatched known skimmer pattern: %s\n", suspicious_names[i]);
+                TERMINAL_VIEW_ADD_TEXT("Reason:\nMatched known skimmer pattern: ");
                 TERMINAL_VIEW_ADD_TEXT(suspicious_names[i]);
                 TERMINAL_VIEW_ADD_TEXT("\n");
 
-                printf("Please verify manually before taking action.\n\n");
-                TERMINAL_VIEW_ADD_TEXT("Please verify manually before taking action.\n\n");
+                printf("Please verify before taking action.\n\n");
+                TERMINAL_VIEW_ADD_TEXT("Please verify before taking action.\n\n");
 
                 // pulse rgb red once when skimmer is detected
                 pulse_once(&rgb_manager, 255, 0, 0);
