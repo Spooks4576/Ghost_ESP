@@ -7,6 +7,7 @@
 - Added Local Network Port Scanning - @Spooks4576
 - Added support for New CYD Model (2432S024C) - @Spooks4576
 - Added WiFi Pineapple/Evil Twin detection - @jaylikesbunda
+- Added 'apcred' command to change or reset GhostNet AP credentials - @jaylikesbunda
 
 ### 🐛 Bug Fixes
 
