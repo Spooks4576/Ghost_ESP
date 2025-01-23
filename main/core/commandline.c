@@ -1009,6 +1009,23 @@ void handle_help(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("        -C  : Scan common ports only\n");
     TERMINAL_VIEW_ADD_TEXT("        -A  : Scan all ports (1-65535)\n");
     TERMINAL_VIEW_ADD_TEXT("        start_port-end_port : Custom port range (e.g. 80-443)\n\n");
+
+    printf("apcred\n");
+    printf("    Description: Change or reset the GhostNet AP credentials\n");
+    printf("    Usage: apcred <ssid> <password>\n");
+    printf("           apcred -r (reset to defaults)\n");
+    printf("    Arguments:\n");
+    printf("        <ssid>     : New SSID for the AP\n");
+    printf("        <password> : New password (min 8 characters)\n");
+    printf("        -r        : Reset to default (GhostNet/GhostNet)\n\n");
+    TERMINAL_VIEW_ADD_TEXT("apcred\n");
+    TERMINAL_VIEW_ADD_TEXT("    Description: Change or reset the GhostNet AP credentials\n");
+    TERMINAL_VIEW_ADD_TEXT("    Usage: apcred <ssid> <password>\n");
+    TERMINAL_VIEW_ADD_TEXT("           apcred -r (reset to defaults)\n");
+    TERMINAL_VIEW_ADD_TEXT("    Arguments:\n");
+    TERMINAL_VIEW_ADD_TEXT("        <ssid>     : New SSID for the AP\n");
+    TERMINAL_VIEW_ADD_TEXT("        <password> : New password (min 8 characters)\n");
+    TERMINAL_VIEW_ADD_TEXT("        -r        : Reset to default (GhostNet/GhostNet)\n\n");
 }
 
 void handle_capture(int argc, char **argv) {
@@ -1124,6 +1141,72 @@ void handle_pineap_detection(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("Monitoring for PineAP\n activity\n\n");
 }
 
+void handle_apcred(int argc, char **argv) {
+    if (argc < 2) {
+        printf("Usage: apcred <ssid> <password>\n");
+        printf("       apcred -r (reset to defaults)\n");
+        TERMINAL_VIEW_ADD_TEXT("Usage:\napcred <ssid> <password>\n");
+        TERMINAL_VIEW_ADD_TEXT("apcred -r\n");
+        return;
+    }
+                
+    // Check for reset flag
+    if (argc == 2 && strcmp(argv[1], "-r") == 0) {
+        // Set empty strings to trigger default values
+        settings_set_ap_ssid(&G_Settings, "");
+        settings_set_ap_password(&G_Settings, "");
+        settings_save(&G_Settings);
+        ap_manager_stop_services();
+        esp_err_t err = ap_manager_start_services();
+        if (err != ESP_OK) {
+            printf("Error resetting AP: %s\n", esp_err_to_name(err));
+            TERMINAL_VIEW_ADD_TEXT("Error resetting AP:\n%s\n", esp_err_to_name(err));
+            return;
+        }
+
+        printf("AP credentials reset to defaults (SSID: GhostNet, Password: GhostNet)\n");
+        TERMINAL_VIEW_ADD_TEXT("AP reset to defaults:\nSSID: GhostNet\nPSK: GhostNet\n");
+        return;
+    }
+
+    if (argc != 3) {
+        printf("Error: Incorrect number of arguments.\n");
+        TERMINAL_VIEW_ADD_TEXT("Error: Bad args\n");
+        return;
+    }
+
+    const char *new_ssid = argv[1];
+    const char *new_password = argv[2];
+
+    if (strlen(new_password) < 8) {
+        printf("Error: Password must be at least 8 characters\n");
+        TERMINAL_VIEW_ADD_TEXT("Error: Password must\nbe 8+ chars\n");
+        return;
+    }
+
+    settings_set_ap_ssid(&G_Settings, new_ssid);
+    settings_set_ap_password(&G_Settings, new_password);
+    settings_save(&G_Settings);
+    const char *saved_ssid = settings_get_ap_ssid(&G_Settings);
+    const char *saved_password = settings_get_ap_password(&G_Settings);
+    if (strcmp(saved_ssid, new_ssid) != 0 || strcmp(saved_password, new_password) != 0) {
+        printf("Error: Failed to save AP credentials\n");
+        TERMINAL_VIEW_ADD_TEXT("Error: Failed to\nsave credentials\n");
+        return;
+    }
+
+    ap_manager_stop_services();
+    esp_err_t err = ap_manager_start_services();
+    if (err != ESP_OK) {
+        printf("Error restarting AP: %s\n", esp_err_to_name(err));
+        TERMINAL_VIEW_ADD_TEXT("Error restart AP:\n%s\n", esp_err_to_name(err));
+        return;
+    }
+
+    printf("AP credentials updated - SSID: %s, Password: %s\n", saved_ssid, saved_password);
+    TERMINAL_VIEW_ADD_TEXT("AP updated:\nSSID: %s\n", saved_ssid);
+}
+
 void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
@@ -1156,6 +1239,7 @@ void register_commands() {
     register_command("crash", handle_crash); // For Debugging
 #endif
     register_command("pineap", handle_pineap_detection);
+    register_command("apcred", handle_apcred);
     printf("Registered Commands\n");
     TERMINAL_VIEW_ADD_TEXT("Registered Commands\n");
 }
