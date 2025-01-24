@@ -503,7 +503,7 @@ void option_event_cb(lv_event_t *e) {
     if (strcmp(Selected_Option, "Scan Open Ports") == 0) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
-        simulateCommand("ScanLocPort -C L"); // Needs a random 3rd parameter to bypass checks
+        simulateCommand("scanports local -C");
     }
 }
 
