@@ -53,6 +53,7 @@ static const char *wifi_options[] = {"Scan Access Points",
                                      "TP Link Test",
                                      "PineAP Detection",
                                      "Scan Open Ports",
+                                     "Reset AP Credentials",
                                      "Go Back",
                                      NULL};
 
@@ -504,6 +505,12 @@ void option_event_cb(lv_event_t *e) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("scanports local -C");
+    }
+
+    if (strcmp(Selected_Option, "Reset AP Credentials") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("apcred -r");
     }
 }
 
