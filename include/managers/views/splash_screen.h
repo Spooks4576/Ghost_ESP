@@ -1,8 +1,8 @@
 #ifndef SPLASH_SCREEN_H
 #define SPLASH_SCREEN_H
 
-#include "managers/display_manager.h"
 #include "lvgl.h"
+#include "managers/display_manager.h"
 
 /**
  * @brief Creates the splash screen view.

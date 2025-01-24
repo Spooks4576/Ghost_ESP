@@ -12,7 +12,6 @@ int flappy_bird_check_collision(lv_obj_t *bird, lv_obj_t *pipe);
 void flappy_bird_game_over();
 void flappy_bird_restart();
 
-
 extern View flappy_bird_view;
 
 #endif // FLAPPY_BIRD_SCREEN_H

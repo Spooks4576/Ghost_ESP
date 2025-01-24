@@ -14,7 +14,12 @@
 extern "C" {
 #endif
 
-#define CST820_I2C_SLAVE_ADDR   0x15
+#define I2C_ADDR_CST820 0x15
+
+#define CYD28_TouchC_SDA 33
+#define CYD28_TouchC_SCL 32
+#define CYD28_TouchC_INT 21
+#define CYD28_TouchC_RST 25
 
 enum GESTURE
 {
@@ -33,7 +38,7 @@ enum GESTURE
   * @param  dev_addr: Device address on communication Bus (I2C slave address of GT911).
   * @retval None
   */
-void cst820_init(uint8_t dev_addr);
+void cst820_init(void);
 
 /**
   * @brief  Get the touch screen X and Y positions values. Ignores multi touch

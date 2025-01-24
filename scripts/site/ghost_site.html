@@ -815,7 +815,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP vA1.4.5</h1>
+        <h1>Ghost ESP vA1.4.6</h1>
         <!-- Tab Navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
@@ -1134,20 +1134,20 @@
                             <strong>Usage:</strong> <code>stopdeauth</code>
                         </li>
                         <li>
-                            <strong>select</strong>: Select an access point by index from the scan results.<br>
+                            <strong>select</strong>: Select an access point by index from scan results.<br>
                             <strong>Usage:</strong> <code>select -a &lt;number&gt;</code><br>
                             <strong>Arguments:</strong><br>
                             <code>-a</code>: AP selection index (must be a valid number)
                         </li>
                         <li>
-                            <strong>startportal</strong>: Start a portal with specified SSID and password.<br>
+                            <strong>startportal</strong>: Start a portal with specified parameters.<br>
                             <strong>Usage:</strong> <code>startportal &lt;URL&gt; &lt;SSID&gt; &lt;Password&gt; &lt;AP_ssid&gt; &lt;Domain&gt;</code><br>
                             <strong>Arguments:</strong><br>
                             <code>&lt;URL&gt;</code>: URL for the portal<br>
                             <code>&lt;SSID&gt;</code>: Wi-Fi SSID for the portal<br>
                             <code>&lt;Password&gt;</code>: Wi-Fi password for the portal<br>
                             <code>&lt;AP_ssid&gt;</code>: SSID for the access point<br>
-                            <code>&lt;Domain&gt;</code>: Custom domain to spoof in the address bar<br>
+                            <code>&lt;Domain&gt;</code>: Custom domain to spoof in address bar<br>
                             <em>OR</em><br>
                             <strong>Offline Usage:</strong> <code>startportal &lt;FilePath&gt; &lt;AP_ssid&gt; &lt;Domain&gt;</code>
                         </li>
@@ -1166,7 +1166,7 @@
                             <code>-s</code>: Stop BLE scanning
                         </li>
                         <li>
-                            <strong>capture</strong>: Start a Wi-Fi capture (requires SD card or Flipper device).<br>
+                            <strong>capture</strong>: Start a Wi-Fi capture (requires SD card or Flipper).<br>
                             <strong>Usage:</strong> <code>capture [OPTION]</code><br>
                             <strong>Arguments:</strong><br>
                             <code>-probe</code>: Start capturing probe packets<br>
@@ -1182,13 +1182,28 @@
                             <strong>Usage:</strong> <code>connect &lt;SSID&gt; &lt;Password&gt;</code>
                         </li>
                         <li>
-                            <strong>dialconnect</strong>: Cast a random YouTube video on all smart TVs on your LAN (requires you to run <code>connect</code> first).<br>
+                            <strong>dialconnect</strong>: Cast a random YouTube video on all smart TVs on LAN.<br>
                             <strong>Usage:</strong> <code>dialconnect</code>
                         </li>
                         <li>
-                            <strong>powerprinter</strong>: Print custom text to a printer on your LAN (requires you to run <code>connect</code> first).<br>
+                            <strong>powerprinter</strong>: Print custom text to a printer on LAN.<br>
                             <strong>Usage:</strong> <code>powerprinter &lt;Printer IP&gt; &lt;Text&gt; &lt;FontSize&gt; &lt;Alignment&gt;</code><br>
                             <strong>Alignment options:</strong> CM = Center Middle, TL = Top Left, TR = Top Right, BR = Bottom Right, BL = Bottom Left
+                        </li>
+                        <li>
+                            <strong>blewardriving</strong>: Start/Stop BLE wardriving with GPS logging.<br>
+                            <strong>Usage:</strong> <code>blewardriving [-s]</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>-s</code>: Stop BLE wardriving
+                        </li>
+                        <li>
+                            <strong>scanports</strong>: Scan ports on local subnet or specific IP.<br>
+                            <strong>Usage:</strong> <code>scanports local [-C/-A/start_port-end_port]</code><br>
+                            <code>scanports [IP] [-C/-A/start_port-end_port]</code><br>
+                            <strong>Arguments:</strong><br>
+                            <code>-C</code>: Scan common ports only<br>
+                            <code>-A</code>: Scan all ports (1-65535)<br>
+                            <code>start_port-end_port</code>: Custom port range (e.g. 80-443)
                         </li>
                     </ul>
                 </div>
@@ -1557,7 +1572,7 @@
                 timezone_str: document.getElementById('timezone_select').value,
                 gps_rx_pin: parseInt(document.getElementById('gps_rx_pin').value),
                 display_timeout: parseInt(document.getElementById('display_timeout').value),
-            };
+            };  
 
             const validationErrors = validateSettings(settings);
             if (validationErrors.length > 0) {

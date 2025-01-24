@@ -23,7 +23,7 @@ void touch_driver_init(void)
 #elif defined (CONFIG_LV_TOUCH_CONTROLLER_GT911)
     gt911_init(GT911_I2C_SLAVE_ADDR);
 #elif defined (CONFIG_LV_TOUCH_CONTROLLER_CST820)
-    cst820_init(CST820_I2C_SLAVE_ADDR);
+    cst820_init();
 #endif
 }
 

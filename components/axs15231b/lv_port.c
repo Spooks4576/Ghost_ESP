@@ -575,8 +575,7 @@ static void lvgl_port_flush_callback(lv_disp_drv_t *drv, const lv_area_t *area, 
 }
 
 #ifdef ESP_LVGL_PORT_TOUCH_COMPONENT
-
-lv_indev_data_t lastTouchData = {0};
+static lv_indev_data_t lastTouchData = {0};
 
 static void lvgl_port_touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
 {
@@ -601,6 +600,12 @@ static void lvgl_port_touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *
         if (touchpad_pressed && touchpad_cnt > 0) {
             data->point.x = touchpad_x[0];
             data->point.y = touchpad_y[0];
+
+            // in my testing the i2c touch panel doesn't cover the entire display, this rescales it so the rest
+            // of the UI works correctly.
+            data->point.x *= 1.04;
+            data->point.y *= 1.04;
+
             data->state = LV_INDEV_STATE_PRESSED;
             //esp_rom_printf("Touchpad pressed: x=%d, y=%d\n", data->point.x, data->point.y);
 
@@ -622,6 +627,7 @@ void touch_driver_read_axs15231b(lv_indev_drv_t *drv, lv_indev_data_t *data)
 
     memcpy((void*)data, (void*)&lastTouchData, sizeof(lv_indev_data_t));
 
+    lastTouchData.state = LV_INDEV_STATE_RELEASED;
     drv = NULL;
 }
 

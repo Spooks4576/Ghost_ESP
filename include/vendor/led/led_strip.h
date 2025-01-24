@@ -5,10 +5,10 @@
  */
 #pragma once
 
-#include <stdint.h>
 #include "esp_err.h"
-#include "led_strip_rmt.h"
 #include "esp_idf_version.h"
+#include "led_strip_rmt.h"
+#include <stdint.h>
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0)
 #include "led_strip_spi.h"
@@ -29,16 +29,21 @@ extern "C" {
  *
  * @return
  *      - ESP_OK: Set RGB for a specific pixel successfully
- *      - ESP_ERR_INVALID_ARG: Set RGB for a specific pixel failed because of invalid parameters
- *      - ESP_FAIL: Set RGB for a specific pixel failed because other error occurred
+ *      - ESP_ERR_INVALID_ARG: Set RGB for a specific pixel failed because of
+ * invalid parameters
+ *      - ESP_FAIL: Set RGB for a specific pixel failed because other error
+ * occurred
  */
-esp_err_t led_strip_set_pixel(led_strip_handle_t strip, uint32_t index, uint32_t red, uint32_t green, uint32_t blue);
+esp_err_t led_strip_set_pixel(led_strip_handle_t strip, uint32_t index,
+                              uint32_t red, uint32_t green, uint32_t blue);
 
 /**
  * @brief Set RGBW for a specific pixel
  *
- * @note Only call this function if your led strip does have the white component (e.g. SK6812-RGBW)
- * @note Also see `led_strip_set_pixel` if you only want to specify the RGB part of the color and bypass the white component
+ * @note Only call this function if your led strip does have the white component
+ * (e.g. SK6812-RGBW)
+ * @note Also see `led_strip_set_pixel` if you only want to specify the RGB part
+ * of the color and bypass the white component
  *
  * @param strip: LED strip
  * @param index: index of pixel to set
@@ -49,10 +54,14 @@ esp_err_t led_strip_set_pixel(led_strip_handle_t strip, uint32_t index, uint32_t
  *
  * @return
  *      - ESP_OK: Set RGBW color for a specific pixel successfully
- *      - ESP_ERR_INVALID_ARG: Set RGBW color for a specific pixel failed because of an invalid argument
- *      - ESP_FAIL: Set RGBW color for a specific pixel failed because other error occurred
+ *      - ESP_ERR_INVALID_ARG: Set RGBW color for a specific pixel failed
+ * because of an invalid argument
+ *      - ESP_FAIL: Set RGBW color for a specific pixel failed because other
+ * error occurred
  */
-esp_err_t led_strip_set_pixel_rgbw(led_strip_handle_t strip, uint32_t index, uint32_t red, uint32_t green, uint32_t blue, uint32_t white);
+esp_err_t led_strip_set_pixel_rgbw(led_strip_handle_t strip, uint32_t index,
+                                   uint32_t red, uint32_t green, uint32_t blue,
+                                   uint32_t white);
 
 /**
  * @brief Set HSV for a specific pixel
@@ -60,15 +69,21 @@ esp_err_t led_strip_set_pixel_rgbw(led_strip_handle_t strip, uint32_t index, uin
  * @param strip: LED strip
  * @param index: index of pixel to set
  * @param hue: hue part of color (0 - 360)
- * @param saturation: saturation part of color (0 - 255, rescaled from 0 - 1. e.g. saturation = 0.5, rescaled to 127)
- * @param value: value part of color (0 - 255, rescaled from 0 - 1. e.g. value = 0.5, rescaled to 127)
+ * @param saturation: saturation part of color (0 - 255, rescaled from 0 - 1.
+ * e.g. saturation = 0.5, rescaled to 127)
+ * @param value: value part of color (0 - 255, rescaled from 0 - 1. e.g. value =
+ * 0.5, rescaled to 127)
  *
  * @return
  *      - ESP_OK: Set HSV color for a specific pixel successfully
- *      - ESP_ERR_INVALID_ARG: Set HSV color for a specific pixel failed because of an invalid argument
- *      - ESP_FAIL: Set HSV color for a specific pixel failed because other error occurred
+ *      - ESP_ERR_INVALID_ARG: Set HSV color for a specific pixel failed because
+ * of an invalid argument
+ *      - ESP_FAIL: Set HSV color for a specific pixel failed because other
+ * error occurred
  */
-esp_err_t led_strip_set_pixel_hsv(led_strip_handle_t strip, uint32_t index, uint16_t hue, uint8_t saturation, uint8_t value);
+esp_err_t led_strip_set_pixel_hsv(led_strip_handle_t strip, uint32_t index,
+                                  uint16_t hue, uint8_t saturation,
+                                  uint8_t value);
 
 /**
  * @brief Refresh memory colors to LEDs
@@ -80,7 +95,8 @@ esp_err_t led_strip_set_pixel_hsv(led_strip_handle_t strip, uint32_t index, uint
  *      - ESP_FAIL: Refresh failed because some other error occurred
  *
  * @note:
- *      After updating the LED colors in the memory, a following invocation of this API is needed to flush colors to strip.
+ *      After updating the LED colors in the memory, a following invocation of
+ * this API is needed to flush colors to strip.
  */
 esp_err_t led_strip_refresh(led_strip_handle_t strip);
 

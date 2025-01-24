@@ -1,23 +1,23 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #ifndef CONFIG_IDF_TARGET_ESP32S2
-#include "nimble/ble.h"
+#include "core/callbacks.h"
+#include "esp_random.h"
+#include "host/ble_gap.h"
 #include "host/ble_hs.h"
+#include "host/util/util.h"
+#include "managers/ble_manager.h"
+#include "managers/views/terminal_screen.h"
+#include "nimble/ble.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
-#include "host/ble_gap.h"
-#include "managers/ble_manager.h"
-#include "esp_random.h"
+#include "vendor/pcap.h"
 #include <esp_mac.h>
 #include <managers/rgb_manager.h>
 #include <managers/settings_manager.h>
-#include "managers/views/terminal_screen.h"
-#include "vendor/pcap.h"
-#include "core/callbacks.h"
-
 
 #define MAX_DEVICES 30
 #define MAX_HANDLERS 10
@@ -32,12 +32,11 @@ typedef struct {
     ble_data_handler_t handler;
 } ble_handler_t;
 
-
 static ble_handler_t *handlers = NULL;
 static int handler_count = 0;
 static int spam_counter = 0;
 static uint16_t *last_company_id = NULL;
-static TickType_t last_detection_time = 0;  
+static TickType_t last_detection_time = 0;
 static void ble_pcap_callback(struct ble_gap_event *event, size_t len);
 
 static void notify_handlers(struct ble_gap_event *event, int len) {
@@ -53,9 +52,7 @@ void nimble_host_task(void *param) {
     nimble_port_freertos_deinit();
 }
 
-static int8_t generate_random_rssi() {
-    return (esp_random() % 121) - 100;
-}
+static int8_t generate_random_rssi() { return (esp_random() % 121) - 100; }
 
 static void generate_random_name(char *name, size_t max_len) {
     static const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -78,20 +75,17 @@ static void generate_random_mac(uint8_t *mac_addr) {
 void stop_ble_stack() {
     int rc;
 
-    
     rc = ble_gap_adv_stop();
     if (rc != 0) {
-        ESP_LOGE(TAG_BLE, "Error stopping advertisement; rc=%d", rc);
+        ESP_LOGE(TAG_BLE, "Error stopping advertisement");
     }
 
-    
     rc = nimble_port_stop();
     if (rc != 0) {
-        ESP_LOGE(TAG_BLE, "Error stopping NimBLE port; rc=%d", rc);
+        ESP_LOGE(TAG_BLE, "Error stopping NimBLE port");
         return;
     }
 
-    
     nimble_port_deinit();
 
     ESP_LOGI(TAG_BLE, "NimBLE stack and task deinitialized.");
@@ -123,23 +117,23 @@ static bool extract_company_id(const uint8_t *payload, size_t length, uint16_t *
 void ble_stop_skimmer_detection(void) {
     ESP_LOGI("BLE", "Stopping skimmer detection scan...");
     TERMINAL_VIEW_ADD_TEXT("Stopping skimmer detection scan...\n");
-    
+
     // Unregister the skimmer detection callback
     ble_unregister_handler(ble_skimmer_scan_callback);
     pcap_flush_buffer_to_file(); // Final flush
-    pcap_file_close(); // Close the file after final flush
-    
+    pcap_file_close();           // Close the file after final flush
+
     int rc = ble_gap_disc_cancel();
 
     if (rc == 0) {
         printf("BLE skimmer detection stopped successfully.\n");
         TERMINAL_VIEW_ADD_TEXT("BLE skimmer detection stopped successfully.\n");
     } else if (rc == BLE_HS_EALREADY) {
-        printf("BLE scanning was not active.\n");
-        TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
+        printf("BLE scanning wasn't active.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE scanning wasn't active.\n");
     } else {
-        printf("Failed to stop BLE scanning; rc=%d\n", rc);
-        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning; rc=%d\n", rc);
+        printf("Failed to stop BLE scanning\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning\n");
     }
 }
 
@@ -153,21 +147,19 @@ static void parse_device_name(const uint8_t *data, uint8_t data_len, char *name,
         }
         uint8_t type = data[index + 1];
 
-        
         if (type == BLE_HS_ADV_TYPE_COMP_NAME) {
             int name_len = length - 1;
             if (name_len > name_size - 1) {
                 name_len = name_size - 1;
             }
             strncpy(name, (const char *)&data[index + 2], name_len);
-            name[name_len] = '\0'; 
+            name[name_len] = '\0';
             return;
         }
 
-        index += length + 1; 
+        index += length + 1;
     }
 
-    
     strncpy(name, "Unknown", name_size);
 }
 
@@ -182,7 +174,8 @@ static void parse_service_uuids(const uint8_t *data, uint8_t data_len, ble_servi
         uint8_t type = data[index + 1];
 
         // Check for 16-bit UUIDs
-        if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS16 || type == BLE_HS_ADV_TYPE_INCOMP_UUIDS16) && uuids->uuid16_count < MAX_UUID16) {
+        if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS16 || type == BLE_HS_ADV_TYPE_INCOMP_UUIDS16) &&
+            uuids->uuid16_count < MAX_UUID16) {
             for (int i = 0; i < length - 1; i += 2) {
                 uint16_t uuid16 = data[index + 2 + i] | (data[index + 3 + i] << 8);
                 uuids->uuid16[uuids->uuid16_count++] = uuid16;
@@ -190,17 +183,23 @@ static void parse_service_uuids(const uint8_t *data, uint8_t data_len, ble_servi
         }
 
         // Check for 32-bit UUIDs
-        else if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS32 || type == BLE_HS_ADV_TYPE_INCOMP_UUIDS32) && uuids->uuid32_count < MAX_UUID32) {
+        else if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS32 || type == BLE_HS_ADV_TYPE_INCOMP_UUIDS32) &&
+                 uuids->uuid32_count < MAX_UUID32) {
             for (int i = 0; i < length - 1; i += 4) {
-                uint32_t uuid32 = data[index + 2 + i] | (data[index + 3 + i] << 8) | (data[index + 4 + i] << 16) | (data[index + 5 + i] << 24);
+                uint32_t uuid32 = data[index + 2 + i] | (data[index + 3 + i] << 8) |
+                                  (data[index + 4 + i] << 16) | (data[index + 5 + i] << 24);
                 uuids->uuid32[uuids->uuid32_count++] = uuid32;
             }
         }
 
         // Check for 128-bit UUIDs
-        else if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS128 || type == BLE_HS_ADV_TYPE_INCOMP_UUIDS128) && uuids->uuid128_count < MAX_UUID128) {
-            snprintf(uuids->uuid128[uuids->uuid128_count], sizeof(uuids->uuid128[uuids->uuid128_count]),
-                     "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+        else if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS128 ||
+                  type == BLE_HS_ADV_TYPE_INCOMP_UUIDS128) &&
+                 uuids->uuid128_count < MAX_UUID128) {
+            snprintf(uuids->uuid128[uuids->uuid128_count],
+                     sizeof(uuids->uuid128[uuids->uuid128_count]),
+                     "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%"
+                     "02x%02x",
                      data[index + 17], data[index + 16], data[index + 15], data[index + 14],
                      data[index + 13], data[index + 12], data[index + 11], data[index + 10],
                      data[index + 9], data[index + 8], data[index + 7], data[index + 6],
@@ -212,105 +211,117 @@ static void parse_service_uuids(const uint8_t *data, uint8_t data_len, ble_servi
     }
 }
 
-
 static int ble_gap_event_general(struct ble_gap_event *event, void *arg) {
     switch (event->type) {
-        case BLE_GAP_EVENT_DISC:
-            notify_handlers(event, event->disc.length_data);
+    case BLE_GAP_EVENT_DISC:
+        notify_handlers(event, event->disc.length_data);
 
-            break;
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     return 0;
 }
 
-
 void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
     int advertisementRssi = event->disc.rssi;
-
 
     char advertisementMac[18];
     snprintf(advertisementMac, sizeof(advertisementMac), "%02x:%02x:%02x:%02x:%02x:%02x",
              event->disc.addr.val[0], event->disc.addr.val[1], event->disc.addr.val[2],
              event->disc.addr.val[3], event->disc.addr.val[4], event->disc.addr.val[5]);
 
-
     char advertisementName[32];
-    parse_device_name(event->disc.data, event->disc.length_data, advertisementName, sizeof(advertisementName));
-
+    parse_device_name(event->disc.data, event->disc.length_data, advertisementName,
+                      sizeof(advertisementName));
 
     ble_service_uuids_t uuids = {0};
     parse_service_uuids(event->disc.data, event->disc.length_data, &uuids);
 
     for (int i = 0; i < uuids.uuid16_count; i++) {
         if (uuids.uuid16[i] == 0x3082) {
-            printf("Found White Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found White Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (uuids.uuid16[i] == 0x3081) {
-            printf("Found Black Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Black Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (uuids.uuid16[i] == 0x3083) {
-            printf("Found Transparent Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Transparent Flipper Device: \nMAC: %s, \nName: %s, \nRSSI: "
+                   "%d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
     }
     for (int i = 0; i < uuids.uuid32_count; i++) {
         if (uuids.uuid32[i] == 0x3082) {
-            printf("Found White Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found White Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, "
+                   "\nRSSI: %d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (uuids.uuid32[i] == 0x3081) {
-            printf("Found Black Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Black Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, "
+                   "\nRSSI: %d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (uuids.uuid32[i] == 0x3083) {
-            printf("Found Transparent Flipper Device (32-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Transparent Flipper Device (32-bit UUID): \nMAC: %s, "
+                   "\nName: %s, \nRSSI: %d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
     }
     for (int i = 0; i < uuids.uuid128_count; i++) {
         if (strstr(uuids.uuid128[i], "3082") != NULL) {
-            printf("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found White Flipper Device (128-bit UUID): \nMAC: %s, \nName: "
+                   "%s, \nRSSI: %d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found White Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (strstr(uuids.uuid128[i], "3081") != NULL) {
-            printf("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Black Flipper Device (128-bit UUID): \nMAC: %s, \nName: "
+                   "%s, \nRSSI: %d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Black Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
         if (strstr(uuids.uuid128[i], "3083") != NULL) {
-            printf("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                advertisementMac, advertisementName, advertisementRssi);
-            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, \nName: %s, \nRSSI: %d\n", 
-                                advertisementMac, advertisementName, advertisementRssi);
+            printf("Found Transparent Flipper Device (128-bit UUID): \nMAC: %s, "
+                   "\nName: %s, \nRSSI: %d\n",
+                   advertisementMac, advertisementName, advertisementRssi);
+            TERMINAL_VIEW_ADD_TEXT("Found Transparent Flipper Device (128-bit UUID): "
+                                   "\nMAC: %s, \nName: %s, \nRSSI: %d\n",
+                                   advertisementMac, advertisementName, advertisementRssi);
             pulse_once(&rgb_manager, 255, 165, 0);
         }
     }
@@ -326,12 +337,15 @@ void ble_print_raw_packet_callback(struct ble_gap_event *event, size_t len) {
 
     // stop logging raw advertisement data
     //
-    // printf("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
-    // TERMINAL_VIEW_ADD_TEXT("Received BLE Advertisement from MAC: %s, RSSI: %d\n", advertisementMac, advertisementRssi);
-    
+    // printf("Received BLE Advertisement from MAC: %s, RSSI: %d\n",
+    // advertisementMac, advertisementRssi); TERMINAL_VIEW_ADD_TEXT("Received BLE
+    // Advertisement from MAC: %s, RSSI: %d\n", advertisementMac,
+    // advertisementRssi);
+
     // printf("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
-    // TERMINAL_VIEW_ADD_TEXT("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
-    // for (size_t i = 0; i < event->disc.length_data; i++) {
+    // TERMINAL_VIEW_ADD_TEXT("Raw Advertisement Data (len=%zu): ",
+    // event->disc.length_data); for (size_t i = 0; i < event->disc.length_data;
+    // i++) {
     //     printf("%02x ", event->disc.data[i]);
     // }
     // printf("\n");
@@ -345,10 +359,9 @@ void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
     TickType_t current_time = xTaskGetTickCount();
     TickType_t time_elapsed = current_time - last_detection_time;
 
-
     uint16_t current_company_id;
     if (!extract_company_id(event->disc.data, length, &current_company_id)) {
-        return; 
+        return;
     }
 
     if (time_elapsed > pdMS_TO_TICKS(TIME_WINDOW_MS)) {
@@ -357,11 +370,12 @@ void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
 
     if (last_company_id != NULL && *last_company_id == current_company_id) {
         spam_counter++;
-        
+
         if (spam_counter > MAX_PAYLOADS) {
             ESP_LOGW(TAG_BLE, "BLE Spam detected! Company ID: 0x%04X", current_company_id);
             TERMINAL_VIEW_ADD_TEXT("BLE Spam detected! Company ID: 0x%04X\n", current_company_id);
-            rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, true);
+            // pulse rgb purple once when spam is detected
+            pulse_once(&rgb_manager, 128, 0, 128);
             spam_counter = 0;
         }
     } else {
@@ -371,18 +385,17 @@ void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
 
         if (last_company_id != NULL) {
             *last_company_id = current_company_id;
-            spam_counter = 1;               
+            spam_counter = 1;
         }
     }
 
     last_detection_time = current_time;
 }
 
-
 void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
     if (event->type == BLE_GAP_EVENT_DISC) {
         if (!event->disc.data || event->disc.length_data < 4) {
-            return; 
+            return;
         }
 
         const uint8_t *payload = event->disc.data;
@@ -390,14 +403,19 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
 
         bool patternFound = false;
         for (size_t i = 0; i <= payloadLength - 4; i++) {
-            if ((payload[i] == 0x1E && payload[i + 1] == 0xFF && payload[i + 2] == 0x4C && payload[i + 3] == 0x00) ||
-                (payload[i] == 0x4C && payload[i + 1] == 0x00 && payload[i + 2] == 0x12 && payload[i + 3] == 0x19)) {
+            if ((payload[i] == 0x1E && payload[i + 1] == 0xFF && payload[i + 2] == 0x4C &&
+                 payload[i + 3] == 0x00) ||
+                (payload[i] == 0x4C && payload[i + 1] == 0x00 && payload[i + 2] == 0x12 &&
+                 payload[i + 3] == 0x19)) {
                 patternFound = true;
                 break;
             }
         }
 
         if (patternFound) {
+            // pulse rgb blue once when air tag is found
+            pulse_once(&rgb_manager, 0, 0, 255);
+
             char macAddress[18];
             snprintf(macAddress, sizeof(macAddress), "%02x:%02x:%02x:%02x:%02x:%02x",
                      event->disc.addr.val[0], event->disc.addr.val[1], event->disc.addr.val[2],
@@ -425,31 +443,63 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
     }
 }
 
+static bool wait_for_ble_ready(void) {
+    int rc;
+    int retry_count = 0;
+    const int max_retries = 50; // 5 seconds total timeout
+
+    while (!ble_hs_synced() && retry_count < max_retries) {
+        vTaskDelay(pdMS_TO_TICKS(100)); // Wait for 100ms
+        retry_count++;
+    }
+
+    if (retry_count >= max_retries) {
+        ESP_LOGE(TAG_BLE, "Timeout waiting for BLE stack sync");
+        return false;
+    }
+
+    uint8_t own_addr_type;
+    rc = ble_hs_id_infer_auto(0, &own_addr_type);
+    if (rc != 0) {
+        ESP_LOGE(TAG_BLE, "Failed to set BLE address");
+        return false;
+    }
+
+    return true;
+}
+
 void ble_start_scanning(void) {
-    if (!ble_initialized)
-    {
+    if (!ble_initialized) {
         ble_init();
     }
+
+    if (!wait_for_ble_ready()) {
+        ESP_LOGE(TAG_BLE, "BLE stack not ready");
+        TERMINAL_VIEW_ADD_TEXT("BLE stack not ready\n");
+        return;
+    }
+
     struct ble_gap_disc_params disc_params = {0};
     disc_params.itvl = BLE_HCI_SCAN_ITVL_DEF;
     disc_params.window = BLE_HCI_SCAN_WINDOW_DEF;
     disc_params.filter_duplicates = 1;
 
     // Start a new BLE scan
-    int rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, ble_gap_event_general, NULL);
+    int rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, ble_gap_event_general,
+                          NULL);
     if (rc != 0) {
-        ESP_LOGE(TAG_BLE, "Error starting BLE scan; rc=%d", rc);
-        TERMINAL_VIEW_ADD_TEXT("Error starting BLE scan; rc=%d\n", rc);
+        ESP_LOGE(TAG_BLE, "Error starting BLE scan");
+        TERMINAL_VIEW_ADD_TEXT("Error starting BLE scan\n");
     } else {
         ESP_LOGI(TAG_BLE, "Scanning started...");
         TERMINAL_VIEW_ADD_TEXT("Scanning started...\n");
     }
 }
 
-
 esp_err_t ble_register_handler(ble_data_handler_t handler) {
     if (handler_count < MAX_HANDLERS) {
-        ble_handler_t *new_handlers = realloc(handlers, (handler_count + 1) * sizeof(ble_handler_t));
+        ble_handler_t *new_handlers =
+            realloc(handlers, (handler_count + 1) * sizeof(ble_handler_t));
         if (!new_handlers) {
             ESP_LOGE(TAG_BLE, "Failed to allocate memory for handlers");
             return ESP_ERR_NO_MEM;
@@ -463,7 +513,6 @@ esp_err_t ble_register_handler(ble_data_handler_t handler) {
 
     return ESP_ERR_NO_MEM;
 }
-
 
 esp_err_t ble_unregister_handler(ble_data_handler_t handler) {
     for (int i = 0; i < handler_count; i++) {
@@ -486,28 +535,63 @@ esp_err_t ble_unregister_handler(ble_data_handler_t handler) {
 
 void ble_init(void) {
 #ifndef CONFIG_IDF_TARGET_ESP32S2
-if (!ble_initialized) {
-    nvs_flash_init();
-    nimble_port_init();
+    if (!ble_initialized) {
+        esp_err_t ret = nvs_flash_init();
+        if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+            // NVS partition was truncated and needs to be erased
+            ESP_ERROR_CHECK(nvs_flash_erase());
+            ret = nvs_flash_init();
+        }
+        ESP_ERROR_CHECK(ret);
 
-    nimble_port_freertos_init(nimble_host_task);
-    ble_initialized = true;
+        if (handlers == NULL) {
+            handlers = malloc(sizeof(ble_handler_t) * MAX_HANDLERS);
+            if (handlers == NULL) {
+                ESP_LOGE(TAG_BLE, "Failed to allocate handlers array");
+                return;
+            }
+            memset(handlers, 0, sizeof(ble_handler_t) * MAX_HANDLERS);
+            handler_count = 0;
+        }
 
-    ESP_LOGI(TAG_BLE, "BLE initialized");
-    TERMINAL_VIEW_ADD_TEXT("BLE initialized\n");
-}
+        ret = nimble_port_init();
+        if (ret != 0) {
+            ESP_LOGE(TAG_BLE, "Failed to init nimble port: %d", ret);
+            free(handlers);
+            handlers = NULL;
+            return;
+        }
+
+        // Configure and start the NimBLE host task
+        static StackType_t host_task_stack[4096];
+        static StaticTask_t host_task_buf;
+
+        xTaskCreateStatic(nimble_host_task, "nimble_host",
+                          sizeof(host_task_stack) / sizeof(StackType_t), NULL, 5, host_task_stack,
+                          &host_task_buf);
+
+        ble_initialized = true;
+        ESP_LOGI(TAG_BLE, "BLE initialized");
+        TERMINAL_VIEW_ADD_TEXT("BLE initialized\n");
+    }
 #endif
 }
 
-void ble_start_find_flippers(void)
-{
+void ble_start_find_flippers(void) {
     ble_register_handler(ble_findtheflippers_callback);
     ble_start_scanning();
 }
 
 void ble_deinit(void) {
     if (ble_initialized) {
+        if (handlers != NULL) {
+            free(handlers);
+            handlers = NULL;
+            handler_count = 0;
+        }
+
         nimble_port_stop();
+        nimble_port_deinit();
         ble_initialized = false;
         ESP_LOGI(TAG_BLE, "BLE deinitialized successfully.");
         TERMINAL_VIEW_ADD_TEXT("BLE deinitialized successfully.\n");
@@ -515,6 +599,16 @@ void ble_deinit(void) {
 }
 
 void ble_stop(void) {
+    if (!ble_initialized) {
+        // comment out for now because it will this print out every time the user
+        // sends stop on flipper app and it's not 100% needed but it's good to have
+        // it for debugging
+
+        /*         printf("BLE not initialized.\n");
+                TERMINAL_VIEW_ADD_TEXT("BLE not initialized.\n"); */
+        return;
+    }
+
     if (last_company_id != NULL) {
         free(last_company_id);
         last_company_id = NULL;
@@ -526,100 +620,115 @@ void ble_stop(void) {
         esp_timer_delete(flush_timer);
         flush_timer = NULL;
     }
-    
+
     rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
     ble_unregister_handler(ble_findtheflippers_callback);
     ble_unregister_handler(airtag_scanner_callback);
     ble_unregister_handler(ble_print_raw_packet_callback);
     ble_unregister_handler(detect_ble_spam_callback);
     pcap_flush_buffer_to_file(); // Final flush
-    pcap_file_close(); // Close the file after final flush
-    
+    pcap_file_close();           // Close the file after final flush
+
     int rc = ble_gap_disc_cancel();
 
-    if (rc == 0) {
+    switch (rc) {
+    case 0:
         printf("BLE scanning stopped successfully.\n");
         TERMINAL_VIEW_ADD_TEXT("BLE scanning stopped successfully.\n");
-    } else if (rc == BLE_HS_EALREADY) {
+        break;
+    case BLE_HS_EALREADY:
         printf("BLE scanning was not active.\n");
         TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
-    } else {
-        printf("Failed to stop BLE scanning; rc=%d\n", rc);
-        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning; rc=%d\n", rc);
+        break;
+    case BLE_HS_EBUSY:
+        printf("BLE scanning is busy\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE scanning is busy\n");
+        break;
+    case BLE_HS_ETIMEOUT:
+        printf("BLE operation timed out.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE operation timed out.\n");
+        break;
+    case BLE_HS_ENOTCONN:
+        printf("BLE not connected.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE not connected.\n");
+        break;
+    case BLE_HS_EINVAL:
+        printf("BLE invalid parameter.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE invalid parameter.\n");
+        break;
+    default:
+        printf("Error stopping BLE scan: %d\n", rc);
+        TERMINAL_VIEW_ADD_TEXT("Error stopping BLE scan: %d\n", rc);
     }
 }
 
-void ble_start_blespam_detector(void)
-{
+void ble_start_blespam_detector(void) {
     ble_register_handler(detect_ble_spam_callback);
     ble_start_scanning();
 }
 
-void ble_start_raw_ble_packetscan(void)
-{
+void ble_start_raw_ble_packetscan(void) {
     ble_register_handler(ble_print_raw_packet_callback);
     ble_start_scanning();
 }
 
-void ble_start_airtag_scanner(void)
-{
+void ble_start_airtag_scanner(void) {
     ble_register_handler(airtag_scanner_callback);
     ble_start_scanning();
 }
 
 static void ble_pcap_callback(struct ble_gap_event *event, size_t len) {
-    if (!event || len == 0) return;
-    
-    uint8_t hci_buffer[258];  // Max HCI packet size
+    if (!event || len == 0)
+        return;
+
+    uint8_t hci_buffer[258]; // Max HCI packet size
     size_t hci_len = 0;
-    
+
     if (event->type == BLE_GAP_EVENT_DISC) {
         // [1] HCI packet type (0x04 for HCI Event)
         hci_buffer[0] = 0x04;
-        
+
         // [2] HCI Event Code (0x3E for LE Meta Event)
         hci_buffer[1] = 0x3E;
-        
+
         // [3] Calculate total parameter length
-        uint8_t param_len = 10 + event->disc.length_data;  // 1 (subevent) + 1 (num reports) + 1 (event type) + 1 (addr type) + 6 (addr)
+        uint8_t param_len = 10 + event->disc.length_data; // 1 (subevent) + 1 (num reports) + 1
+                                                          // (event type) + 1 (addr type) + 6 (addr)
         hci_buffer[2] = param_len;
-        
+
         // [4] LE Meta Subevent (0x02 for LE Advertising Report)
         hci_buffer[3] = 0x02;
-        
+
         // [5] Number of reports
         hci_buffer[4] = 0x01;
-        
+
         // [6] Event type (ADV_IND = 0x00)
         hci_buffer[5] = 0x00;
-        
+
         // [7] Address type
         hci_buffer[6] = event->disc.addr.type;
-        
+
         // [8] Address (6 bytes)
         memcpy(&hci_buffer[7], event->disc.addr.val, 6);
-        
+
         // [9] Data length
         hci_buffer[13] = event->disc.length_data;
-        
+
         // [10] Data
         if (event->disc.length_data > 0) {
             memcpy(&hci_buffer[14], event->disc.data, event->disc.length_data);
         }
-        
+
         // [11] RSSI
         hci_buffer[14 + event->disc.length_data] = (uint8_t)event->disc.rssi;
-        
-        hci_len = 15 + event->disc.length_data;  // Total length
-        
-        // Debug logging
-        ESP_LOGI("BLE_PCAP", "HCI Event: type=0x04, meta=0x3E, len=%d", hci_len);
-        printf("Packet: ");
-        for (int i = 0; i < hci_len; i++) {
-            printf("%02x ", hci_buffer[i]);
-        }
-        printf("\n");
-        
+
+        hci_len = 15 + event->disc.length_data; // Total length
+
+        // packet logging (don't print to display terminal to prevent overwhelming)
+        printf("BLE Packet Received:\nType: 0x04 (HCI Event)\nMeta: 0x3E "
+               "(LE)\nLength: %d\n",
+               hci_len);
+
         pcap_write_packet_to_buffer(hci_buffer, hci_len, PCAP_CAPTURE_BLUETOOTH);
     }
 }
@@ -628,37 +737,35 @@ void ble_start_capture(void) {
     // Open PCAP file first
     esp_err_t err = pcap_file_open("ble_capture", PCAP_CAPTURE_BLUETOOTH);
     if (err != ESP_OK) {
-        ESP_LOGE("BLE_PCAP", "Failed to open PCAP file: %d", err);
+        ESP_LOGE("BLE_PCAP", "Failed to open PCAP file");
         return;
     }
-    
+
     // Register BLE handler only after file is open
     ble_register_handler(ble_pcap_callback);
-    
+
     // Create a timer to flush the buffer periodically
-    esp_timer_create_args_t timer_args = {
-        .callback = (esp_timer_cb_t)pcap_flush_buffer_to_file,
-        .name = "pcap_flush"
-    };
-    
+    esp_timer_create_args_t timer_args = {.callback = (esp_timer_cb_t)pcap_flush_buffer_to_file,
+                                          .name = "pcap_flush"};
+
     if (esp_timer_create(&timer_args, &flush_timer) == ESP_OK) {
         esp_timer_start_periodic(flush_timer, 1000000); // Flush every second
     }
-    
+
     ble_start_scanning();
 }
 
 void ble_start_skimmer_detection(void) {
     ESP_LOGI("BLE", "Starting skimmer detection scan...");
     TERMINAL_VIEW_ADD_TEXT("Starting skimmer detection scan...\n");
-    
+
     // Register the skimmer detection callback
     esp_err_t err = ble_register_handler(ble_skimmer_scan_callback);
     if (err != ESP_OK) {
         ESP_LOGE("BLE", "Failed to register skimmer detection callback");
         return;
     }
-    
+
     // Start BLE scanning
     ble_start_scanning();
 }

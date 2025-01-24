@@ -1,7 +1,16 @@
-name: Compile All
+name: Compile
 
 on:
   workflow_dispatch:
+    inputs:
+      buildType:
+        description: "Select the build type"
+        required: true
+        type: choice
+        options:
+          - "prerelease"
+          - "all"
+        default: "prerelease"
 
 jobs:
   build:
@@ -11,12 +20,12 @@ jobs:
     strategy:
       matrix:
         target:
-          - { name: "esp32-generic", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.default.esp32", zip_name: "esp32-generic.zip" }
+          - { name: "esp32-generic", idf_target: "esp32",   sdkconfig_file: "configs/sdkconfig.default.esp32",   zip_name: "esp32-generic.zip" }
           - { name: "esp32s2-generic", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32s2-generic.zip"}
           - { name: "esp32s3-generic", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "esp32s3-generic.zip" }
           - { name: "esp32c3-generic", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-generic.zip" }
           - { name: "esp32c6-generic", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
-          - { name: "Awok V5", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip"}
+          - { name: "Awok V5",         idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip"}
 
           # Dev Kit configurations (LED on, no screen support)
           - { name: "esp32c3-devkit", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.devkit.esp32c3", zip_name: "esp32c3-devkit.zip"}
@@ -26,26 +35,24 @@ jobs:
           - { name: "ghostboard", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.ghostboard", zip_name: "ghostboard.zip"}
 
           # Screen-supported builds
-          - { name: "MarauderV4_FlipperHub", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv4", zip_name: "MarauderV4_FlipperHub.zip"}
-          - { name: "MarauderV6&AwokDual", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip"}
-          - { name: "AwokMini", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip"}
-          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer", zip_name: "ESP32-S3-Cardputer.zip"}
-          - { name: "LillyGoTWatch_S3", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.S3TWatch", zip_name: "lillygos3watch.zip"}
-
+          - { name: "MarauderV4_FlipperHub", idf_target: "esp32",   sdkconfig_file: "configs/sdkconfig.marauderv4",  zip_name: "MarauderV4_FlipperHub.zip"}
+          - { name: "MarauderV6&AwokDual",   idf_target: "esp32",   sdkconfig_file: "configs/sdkconfig.marauderv6",  zip_name: "MarauderV6_AwokDual.zip"}
+          - { name: "AwokMini",              idf_target: "esp32",   sdkconfig_file: "configs/sdkconfig.awokmini",    zip_name: "AwokMini.zip"}
+          - { name: "ESP32-S3-Cardputer",    idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer",   zip_name: "ESP32-S3-Cardputer.zip"}
+          #- { name: "LillyGoTWatch_S3",     idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.S3TWatch",    zip_name: "lillygos3watch.zip"}
 
           # CYD (Cheap Yellow Display) with touch screen
-          - { name: "CYD2USB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB", zip_name: "CYD2USB.zip"}
-          - { name: "CYDMicroUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip"}
-          - { name: "CYDDualUSB", idf_target: "esp32",  sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip"}
-          - { name: "CYD2USB2.4_Inch", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch", zip_name: "CYD2USB2.4Inch.zip"}
-
+          - { name: "CYD2USB",         idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB",         zip_name: "CYD2USB.zip"}
+          - { name: "CYDMicroUSB",     idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB",     zip_name: "CYDMicroUSB.zip"}
+          - { name: "CYDDualUSB",      idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDDualUSB",      zip_name: "CYDDualUSB.zip"}
+          - { name: "CYD2USB2.4_Inch", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch",  zip_name: "CYD2USB2.4Inch.zip"}
 
           # 7-inch boards
           - { name: "Waveshare_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip"}
-          - { name: "Crowtech_LCD", idf_target: "esp32s3",  sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip"}
+          - { name: "Crowtech_LCD",  idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.crowtech7inch",  zip_name: "Crowtech_LCD.zip"}
 
     steps:
-      - name: Checkout Repository
+      - name: Check Out Repository
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -111,12 +118,22 @@ jobs:
           name: ${{ matrix.target.zip_name }}
           path: ${{ matrix.target.zip_name }}
 
+  # ---------------------------------------------------------------
+  #   This job uploads all artifacts to the correct R2 path
+  #   AND optionally does the "prerelease" extras (boards.json,
+  #   Discord commit history, etc.) if buildType == 'prerelease'.
+  # ---------------------------------------------------------------
   upload_all:
-    name: Upload All to Cloudflare R2 and GitHub Release
+    name: Upload Artifacts
     needs: build
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # so we can get commit logs, etc.
+
       - name: Download All Artifacts
         uses: actions/download-artifact@v3
         with:
@@ -133,6 +150,14 @@ jobs:
           else
             echo "No artifacts found or directory is empty."
             exit 1
+          fi
+
+      - name: Determine R2 Path (Set ENV)
+        run: |
+          if [ "${{ github.event.inputs.buildType }}" = "prerelease" ]; then
+            echo "R2_PATH=GhostESPBins/prerelease" >> $GITHUB_ENV
+          else
+            echo "R2_PATH=GhostESPBins" >> $GITHUB_ENV
           fi
 
       - name: Install rclone
@@ -157,9 +182,9 @@ jobs:
       - name: Upload All Artifacts to Cloudflare R2
         env:
           R2_BUCKET: "spooksapi"
-          R2_PATH: "GhostESPBins"
+          R2_PATH: ${{ env.R2_PATH }}
         run: |
-          echo "Uploading artifacts to Cloudflare R2..."
+          echo "Uploading artifacts to Cloudflare R2 -> $R2_PATH"
           for file in flat_artifacts/*; do
             if [ -f "$file" ]; then
               echo "Uploading $file..."
@@ -200,8 +225,11 @@ jobs:
             fi
           done
 
-      - name: Notify Discord of Successful Upload
-        if: success()
+      # ------------------
+      #   If = 'all' path
+      # ------------------
+      - name: Notify Discord of Successful Upload (ALL)
+        if: ${{ github.event.inputs.buildType == 'all' }}
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
@@ -222,3 +250,178 @@ jobs:
             -H "Content-Type: application/json" \
             -d "$payload" \
             "$DISCORD_WEBHOOK_URL"
+
+      # ----------------------
+      #   If = 'prerelease' path
+      # ----------------------
+      - name: Get Commit History
+        if: ${{ github.event.inputs.buildType == 'prerelease' }}
+        id: get_commits
+        run: |
+          # Get the last 10 commits
+          commits=$(git log --pretty=format:"- %s" -n 10)
+          
+          # Escape newlines and quotes for JSON
+          commits="${commits//'%'/'%25'}"
+          commits="${commits//$'\n'/'\\n'}"
+          commits="${commits//$'\r'/'%0D'}"
+          commits="${commits//'"'/'\"'}"
+          
+          echo "commits=$commits" >> $GITHUB_OUTPUT
+
+      - name: Notify Discord of Successful Upload (PRERELEASE)
+        if: ${{ github.event.inputs.buildType == 'prerelease' }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          BUILD_DATE=$(date -u +"%Y-%m-%d")
+          BUILD_VERSION=$(date -u +"%Y%m%d")
+          
+          payload=$(cat <<EOF
+          {
+            "embeds": [
+              {
+                "title": "🚀 GhostESP Prerelease Build - $BUILD_DATE",
+                "description": "A new prerelease build has been uploaded to Cloudflare R2 and GitHub Release.\\n\\n**Version:** Pre-$BUILD_VERSION\\n\\n**Changes since last prerelease:**\\n${{ steps.get_commits.outputs.commits }}\\n\\n**Flash your device:**\\n🔗 [Flash using GhostESP Web Flasher](https://flasher.ghostesp.net)",
+                "color": 16750848,
+                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+                "footer": {
+                  "text": "GhostESP Prerelease Build $BUILD_VERSION"
+                }
+              }
+            ]
+          }
+          EOF
+          )
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_WEBHOOK_URL"
+
+      - name: Generate boards.json
+        if: ${{ github.event.inputs.buildType == 'prerelease' }}
+        run: |
+          cat > boards.json << 'EOF'
+          {
+            "boards": {
+              "ESP32": {
+                "generic": {
+                  "name": "ESP32 Generic",
+                  "zip_file": "esp32-generic.zip",
+                  "chip_type": "ESP32"
+                },
+                "marauderv4": {
+                  "name": "MarauderV4 FlipperHub",
+                  "zip_file": "MarauderV4_FlipperHub.zip",
+                  "chip_type": "ESP32"
+                },
+                "marauderv6": {
+                  "name": "MarauderV6 & AwokDual",
+                  "zip_file": "MarauderV6_AwokDual.zip",
+                  "chip_type": "ESP32"
+                },
+                "awokmini": {
+                  "name": "AwokMini",
+                  "zip_file": "AwokMini.zip",
+                  "chip_type": "ESP32"
+                },
+                "cyd2usb": {
+                  "name": "CYD2USB",
+                  "zip_file": "CYD2USB.zip",
+                  "chip_type": "ESP32"
+                },
+                "cydmicrousb": {
+                  "name": "CYDMicroUSB",
+                  "zip_file": "CYDMicroUSB.zip",
+                  "chip_type": "ESP32"
+                },
+                "cyddualusb": {
+                  "name": "CYDDualUSB",
+                  "zip_file": "CYDDualUSB.zip",
+                  "chip_type": "ESP32"
+                },
+                "cyd2usb24inch": {
+                  "name": "CYD2USB 2.4 Inch",
+                  "zip_file": "CYD2USB2.4Inch.zip",
+                  "chip_type": "ESP32"
+                }
+              },
+              "ESP32S2": {
+                "generic": {
+                  "name": "ESP32-S2 Generic",
+                  "zip_file": "esp32s2-generic.zip",
+                  "chip_type": "ESP32-S2"
+                },
+                "awokv5": {
+                  "name": "Awok V5",
+                  "zip_file": "esp32v5_awok.zip",
+                  "chip_type": "ESP32-S2"
+                }
+              },
+              "ESP32S3": {
+                "generic": {
+                  "name": "ESP32-S3 Generic",
+                  "zip_file": "esp32s3-generic.zip",
+                  "chip_type": "ESP32-S3"
+                },
+                "cardputer": {
+                  "name": "ESP32-S3-Cardputer",
+                  "zip_file": "ESP32-S3-Cardputer.zip",
+                  "chip_type": "ESP32-S3"
+                },
+                "waveshare": {
+                  "name": "Waveshare LCD",
+                  "zip_file": "Waveshare_LCD.zip",
+                  "chip_type": "ESP32-S3"
+                },
+                "crowtech": {
+                  "name": "Crowtech LCD",
+                  "zip_file": "Crowtech_LCD.zip",
+                  "chip_type": "ESP32-S3"
+                }
+              },
+              "ESP32C3": {
+                "generic": {
+                  "name": "ESP32-C3 Generic",
+                  "zip_file": "esp32c3-generic.zip",
+                  "chip_type": "ESP32-C3"
+                },
+                "devkit": {
+                  "name": "ESP32-C3 DevKit",
+                  "zip_file": "esp32c3-devkit.zip",
+                  "chip_type": "ESP32-C3"
+                }
+              },
+              "ESP32C6": {
+                "generic": {
+                  "name": "ESP32-C6 Generic",
+                  "zip_file": "esp32c6-generic.zip",
+                  "chip_type": "ESP32-C6"
+                },
+                "devkit": {
+                  "name": "ESP32-C6 DevKit",
+                  "zip_file": "esp32c6-devkit.zip",
+                  "chip_type": "ESP32-C6"
+                },
+                "ghostboard": {
+                  "name": "GhostBoard",
+                  "zip_file": "ghostboard.zip",
+                  "chip_type": "ESP32-C6"
+                }
+              }
+            },
+            "version": "${{ github.sha }}",
+            "build_date": "$(date -u +"%Y-%m-%d")",
+            "build_number": "$(date -u +"%Y%m%d")"
+          }
+          EOF
+          echo "Generated boards.json with target information"
+
+      - name: Upload boards.json to Cloudflare R2
+        if: ${{ github.event.inputs.buildType == 'prerelease' }}
+        env:
+          R2_BUCKET: "spooksapi"
+          R2_PATH: ${{ env.R2_PATH }}
+        run: |
+          echo "Uploading boards.json to Cloudflare R2 ($R2_PATH)..."
+          rclone copy "boards.json" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress --s3-no-check-bucket

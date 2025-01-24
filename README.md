@@ -58,7 +58,8 @@ Make sure to check out our [Discord](https://discord.gg/PkdjxqYKe4)
 ## What Makes this different than ESP32 Marauder 
 This table should explain the key differences between ghost esp and ESP32 Marauder
 
-![Ghost_VS_Marauder](https://github.com/user-attachments/assets/bbcf6b49-6641-45fc-bbcf-8073e76d9601)
+![Ghost_VS_Marauder](https://github.com/user-attachments/assets/84fde8b3-e17e-44d5-9321-04f1f1ae8541)
+
 
 
 ## Special Acknowledgments
@@ -75,6 +76,6 @@ We extend our thanks to the following projects and their developers for their co
 
 Ghost ESP is intended strictly for educational and ethical security research. Unauthorized use of this firmware for malicious activities, such as disrupting legitimate network services, is illegal and subject to prosecution. Always secure appropriate permissions before conducting any network testing.
 
----
+## Open Source Contributions
 
-Unleash the potential of your ESP32 device with Ghost ESP—the next-generation tool for wireless network analysis and testing, now in alpha development. We value your feedback and participation in helping Ghost ESP reach its full potential.
+This project is fully open source and welcomes modifications and improvements from the community. While we may not have access to every ESP32-based device for testing, we encourage users to contribute device-specific support and other enhancements. If you've made modifications or added support for additional devices, please feel free to submit your contributions.

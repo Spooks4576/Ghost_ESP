@@ -20,7 +20,7 @@
 #include "lvgl.h"
 #include "lv_port.h"
 
-#ifdef JC3248W535EN_LCD
+#ifdef CONFIG_JC3248W535EN_LCD
 
 /**************************************************************************************************
  *  pinout

@@ -2,51 +2,44 @@
 #define DISPLAY_MANAGER_H
 
 #include "lvgl.h"
-#include <stdbool.h>
 #include "managers/joystick_manager.h"
+#include <stdbool.h>
 
+typedef void *QueueHandle_tt;
+typedef void *SemaphoreHandle_tt; // Because Circular Includes are fun :)
 
-typedef void* QueueHandle_tt;
-typedef void* SemaphoreHandle_tt; // Because Circular Includes are fun :)
-
-
-typedef enum {
-    INPUT_TYPE_JOYSTICK,
-    INPUT_TYPE_TOUCH
-} InputType;
+typedef enum { INPUT_TYPE_JOYSTICK, INPUT_TYPE_TOUCH } InputType;
 
 typedef struct {
-    InputType type;
-    union {
-        int joystick_index;           // Used for joystick inputs
-        lv_indev_data_t touch_data;   // Used for touchscreen inputs
-    } data;
+  InputType type;
+  union {
+    int joystick_index;         // Used for joystick inputs
+    lv_indev_data_t touch_data; // Used for touchscreen inputs
+  } data;
 } InputEvent;
 
-#define INPUT_QUEUE_LENGTH    10
-#define INPUT_ITEM_SIZE       sizeof(int)
+#define INPUT_QUEUE_LENGTH 10
+#define INPUT_ITEM_SIZE sizeof(int)
 QueueHandle_tt input_queue;
 
 #define MUTEX_TIMEOUT_MS 100
 
-
-#define HARDWARE_INPUT_TASK_PRIORITY    (4)
-#define RENDERING_TASK_PRIORITY         (4)
+#define HARDWARE_INPUT_TASK_PRIORITY (4)
+#define RENDERING_TASK_PRIORITY (4)
 
 typedef struct {
-    lv_obj_t *root;
-    void (*create)(void);  
-    void (*destroy)(void);
-    const char* name;
-    void (*get_hardwareinput_callback)(void **callback);
-    void (*input_callback)(InputEvent*);
+  lv_obj_t *root;
+  void (*create)(void);
+  void (*destroy)(void);
+  const char *name;
+  void (*get_hardwareinput_callback)(void **callback);
+  void (*input_callback)(InputEvent *);
 } View;
 
-
 typedef struct {
-    View *current_view; 
-    View *previous_view; 
-    SemaphoreHandle_tt mutex;
+  View *current_view;
+  View *previous_view;
+  SemaphoreHandle_tt mutex;
 } DisplayManager;
 
 /* Function prototypes */
@@ -76,7 +69,6 @@ void display_manager_destroy_current_view(void);
  */
 View *display_manager_get_current_view(void);
 
-
 void lvgl_tick_task(void *arg);
 
 void hardware_input_task(void *pvParameters);
@@ -87,9 +79,10 @@ lv_color_t hex_to_lv_color(const char *hex_str);
 
 // Status Bar Functions
 
-void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted, int batteryPercentage);
+void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
+                       int batteryPercentage);
 
-void display_manager_add_status_bar(const char* CurrentMenuName);
+void display_manager_add_status_bar(const char *CurrentMenuName);
 
 LV_IMG_DECLARE(Ghost_ESP);
 LV_IMG_DECLARE(Map);
@@ -100,8 +93,6 @@ LV_IMG_DECLARE(GESPFlappyghost);
 LV_IMG_DECLARE(ghost);
 LV_IMG_DECLARE(GESPAppGallery);
 
-
 joystick_t joysticks[5];
-
 
 #endif /* DISPLAY_MANAGER_H */
