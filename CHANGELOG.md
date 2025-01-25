@@ -1,5 +1,15 @@
 # Ghost ESP Changelog
 
+## 1.4.7
+
+### 🤏 Tweaks and Improvements
+
+- Removed main menu icon shadow - @jaylikesbunda
+- Updated battery container alignment - @jaylikesbunda
+- Removed options screen borders - @jaylikesbunda
+- Improved status bar containers - @jaylikesbunda
+- Enhanced performance of terminal scrolling - @jaylikesbunda
+
 ## 1.4.6
 
 ### ❤️ New Features
