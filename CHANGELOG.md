@@ -4,11 +4,11 @@
 
 ### 🤏 Tweaks and Improvements
 
+- Added extra NVS recovery attempts - @jaylikesbunda
 - Removed main menu icon shadow - @jaylikesbunda
-- Updated battery container alignment - @jaylikesbunda
 - Removed options screen borders - @jaylikesbunda
 - Improved status bar containers - @jaylikesbunda
-- Enhanced performance of terminal scrolling - @jaylikesbunda
+- Tweaked terminal scrolling logic to be more efficient - @jaylikesbunda
 
 ## 1.4.6
 
