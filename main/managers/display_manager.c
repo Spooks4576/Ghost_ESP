@@ -57,14 +57,10 @@ lv_obj_t *battery_label = NULL;
 bool display_manager_init_success = false;
 
 #define FADE_DURATION_MS 10
-
-// Default timeout duration in milliseconds
 #define DEFAULT_DISPLAY_TIMEOUT_MS 10000
 
-// Global variable to hold the configurable timeout duration
 uint32_t display_timeout_ms = DEFAULT_DISPLAY_TIMEOUT_MS;
 
-// Function to set the display timeout duration
 void set_display_timeout(uint32_t timeout_ms) {
   display_timeout_ms = timeout_ms;
 }
@@ -217,7 +213,7 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
   
   // Format battery text with proper spacing
   lv_label_set_text_fmt(battery_label, "%s  %d%%", battery_symbol, batteryPercentage);
-  lv_obj_align(battery_label, LV_ALIGN_CENTER, 0, 0); // Center in container
+  lv_obj_align(battery_label, LV_ALIGN_RIGHT_MID, 0, 0); // Center in container
 
   lv_obj_invalidate(status_bar);
 }
@@ -250,7 +246,7 @@ void display_manager_add_status_bar(const char *CurrentMenuName) {
   lv_obj_set_flex_flow(right_container, LV_FLEX_FLOW_ROW); // Row layout
   lv_obj_set_flex_align(right_container, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_set_style_pad_column(right_container, 5, 0); // Space between icon and percentage
-  lv_obj_align(right_container, LV_ALIGN_RIGHT_MID, -5, 0);
+  lv_obj_align(right_container, LV_ALIGN_RIGHT_MID, 0, 0);
 
   // Create centered title label
   lv_obj_t *mainlabel = lv_label_create(status_bar);
