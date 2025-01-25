@@ -166,56 +166,6 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
   lv_disp_t *disp = lv_disp_get_default();
   int hor_res = lv_disp_get_hor_res(disp);
 
-  int wifi_pos_x = hor_res / 50;
-  int bt_pos_x = hor_res / 10;
-  int sd_pos_x = hor_res / 6;
-  int battery_pos_x = hor_res - (hor_res / 20) - 5;
-
-  // Only render Wi-Fi, Bluetooth, and SD icons if the width is greater than 128
-  bool render_icons = (hor_res > 128);
-
-  if (render_icons && wifi_enabled) {
-    if (wifi_label == NULL) {
-      wifi_label = lv_label_create(status_bar);
-      lv_label_set_text(wifi_label, LV_SYMBOL_WIFI);
-      lv_obj_align(wifi_label, LV_ALIGN_LEFT_MID, wifi_pos_x + -5, 0);
-      lv_obj_set_style_text_color(
-          wifi_label,
-          hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
-    }
-  } else if (wifi_label != NULL) {
-    lv_obj_del(wifi_label);
-    wifi_label = NULL;
-  }
-
-  if (render_icons && bt_enabled) {
-    if (bt_label == NULL) {
-      bt_label = lv_label_create(status_bar);
-      lv_label_set_text(bt_label, LV_SYMBOL_BLUETOOTH);
-      lv_obj_align(bt_label, LV_ALIGN_LEFT_MID, bt_pos_x, 0);
-      lv_obj_set_style_text_color(
-          bt_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)),
-          0);
-    }
-  } else if (bt_label != NULL) {
-    lv_obj_del(bt_label);
-    bt_label = NULL;
-  }
-
-  if (render_icons && sd_card_mounted) {
-    if (sd_label == NULL) {
-      sd_label = lv_label_create(status_bar);
-      lv_label_set_text(sd_label, LV_SYMBOL_SD_CARD);
-      lv_obj_align(sd_label, LV_ALIGN_LEFT_MID, sd_pos_x, 0);
-      lv_obj_set_style_text_color(
-          sd_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)),
-          0);
-    }
-  } else if (sd_label != NULL) {
-    lv_obj_del(sd_label);
-    sd_label = NULL;
-  }
-
   const char *battery_symbol;
   if (batteryPercentage < 10) {
     battery_symbol = LV_SYMBOL_BATTERY_EMPTY;
@@ -238,29 +188,36 @@ void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
   batteryPercentage = 100;
 #endif
 
-  if (battery_label == NULL) {
-    battery_label = lv_label_create(status_bar);
-    lv_obj_align(battery_label, LV_ALIGN_RIGHT_MID, -5, 0);
-    lv_obj_set_style_text_color(
-        battery_label,
-        hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
-    lv_obj_set_style_text_font(
-        battery_label,
-        render_icons ? &lv_font_montserrat_16 : &lv_font_montserrat_10, 0);
-  } else {
-    lv_obj_del(battery_label); // Fix Battery Not Showing up on other menus
-    battery_label = lv_label_create(status_bar);
-    lv_obj_align(battery_label, LV_ALIGN_RIGHT_MID, -5, 0);
-    lv_obj_set_style_text_color(
-        battery_label,
-        hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
-    lv_obj_set_style_text_font(
-        battery_label,
-        render_icons ? &lv_font_montserrat_16 : &lv_font_montserrat_10, 0);
+  // Update icons in left container
+  if (wifi_enabled && !wifi_label) {
+    wifi_label = lv_label_create(lv_obj_get_child(status_bar, 0));  // Left container is first child
+    lv_label_set_text(wifi_label, LV_SYMBOL_WIFI);
+    lv_obj_set_style_text_color(wifi_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
+  }
+  
+  if (bt_enabled && !bt_label) {
+    bt_label = lv_label_create(lv_obj_get_child(status_bar, 0));  // Left container
+    lv_label_set_text(bt_label, LV_SYMBOL_BLUETOOTH);
+    lv_obj_set_style_text_color(bt_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
   }
 
-  lv_label_set_text_fmt(battery_label, "%s %d%%", battery_symbol,
-                        batteryPercentage);
+  if (sd_card_mounted && !sd_label) {
+    sd_label = lv_label_create(lv_obj_get_child(status_bar, 0));  // Left container
+    lv_label_set_text(sd_label, LV_SYMBOL_SD_CARD);
+    lv_obj_set_style_text_color(sd_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
+  }
+
+  // Improved battery label handling
+  if (!battery_label) {
+    battery_label = lv_label_create(lv_obj_get_child(status_bar, 1)); // Right container
+    lv_obj_set_width(battery_label, LV_SIZE_CONTENT); // Allow dynamic width
+    lv_obj_set_style_text_color(battery_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
+    lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_12, 0); // Smaller font
+  }
+  
+  // Format battery text with proper spacing
+  lv_label_set_text_fmt(battery_label, "%s  %d%%", battery_symbol, batteryPercentage);
+  lv_obj_align(battery_label, LV_ALIGN_CENTER, 0, 0); // Center in container
 
   lv_obj_invalidate(status_bar);
 }
@@ -269,30 +226,42 @@ void display_manager_add_status_bar(const char *CurrentMenuName) {
   status_bar = lv_obj_create(lv_scr_act());
   lv_obj_set_size(status_bar, LV_HOR_RES, 20);
   lv_obj_align(status_bar, LV_ALIGN_TOP_MID, 0, 0);
-
   lv_obj_set_style_bg_color(status_bar, lv_color_black(), LV_PART_MAIN);
-
   lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
   lv_obj_set_style_border_side(status_bar, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
   lv_obj_set_style_border_width(status_bar, 2, LV_PART_MAIN);
   lv_obj_set_style_border_color(
       status_bar, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)),
-      LV_PART_MAIN); // Previous color lv_color_hex(0x393939)
+      LV_PART_MAIN);
   lv_obj_clear_flag(status_bar, LV_OBJ_FLAG_SCROLLABLE);
 
-  lv_disp_t *disp = lv_disp_get_default();
-  int hor_res = lv_disp_get_hor_res(disp);
+  // Create container for left-aligned icons
+  lv_obj_t *left_container = lv_obj_create(status_bar);
+  lv_obj_remove_style_all(left_container);  // Clear default styles
+  lv_obj_set_size(left_container, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_set_flex_flow(left_container, LV_FLEX_FLOW_ROW);
+  lv_obj_set_flex_align(left_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_align(left_container, LV_ALIGN_LEFT_MID, 5, 0);  // 5px padding from left
 
+  // Modified right container setup
+  lv_obj_t *right_container = lv_obj_create(status_bar);
+  lv_obj_remove_style_all(right_container);
+  lv_obj_set_size(right_container, LV_SIZE_CONTENT, 20); // Fixed height
+  lv_obj_set_flex_flow(right_container, LV_FLEX_FLOW_ROW); // Row layout
+  lv_obj_set_flex_align(right_container, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_column(right_container, 5, 0); // Space between icon and percentage
+  lv_obj_align(right_container, LV_ALIGN_RIGHT_MID, -5, 0);
+
+  // Create centered title label
   lv_obj_t *mainlabel = lv_label_create(status_bar);
   lv_label_set_text(mainlabel, CurrentMenuName);
-  lv_obj_align(mainlabel, hor_res > 128 ? LV_ALIGN_CENTER : LV_ALIGN_LEFT_MID,
-               hor_res > 128 ? -15 : -5, 0);
+  lv_obj_align(mainlabel, LV_ALIGN_CENTER, 0, 0);
   lv_obj_set_style_text_color(
       mainlabel, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)),
       0);
   lv_obj_set_style_text_font(
       mainlabel,
-      hor_res > 128 ? &lv_font_montserrat_16 : &lv_font_montserrat_10, 0);
+      &lv_font_montserrat_14, 0);
 
   bool HasBluetooth;
 
