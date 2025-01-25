@@ -45,9 +45,20 @@ void settings_init(FSettings *settings) {
   settings_set_defaults(settings);
   esp_err_t err = nvs_flash_init();
   if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
-      err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    nvs_flash_erase();
-    nvs_flash_init();
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND
+      ) {
+    ESP_LOGI(S_TAG, "Erasing NVS partition...");
+    esp_err_t erase_err = nvs_flash_erase();
+    if (erase_err != ESP_OK) {
+        ESP_LOGE(S_TAG, "Failed to erase NVS: %s", esp_err_to_name(erase_err));
+        return;
+    }
+    err = nvs_flash_init();
+  }
+  if (err != ESP_OK) {
+    ESP_LOGE(S_TAG, "NVS init failed: %s", esp_err_to_name(err));
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    esp_restart();
   }
 
   err = nvs_open("storage", NVS_READWRITE, &nvsHandle);
