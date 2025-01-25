@@ -48,10 +48,10 @@ void settings_init(FSettings *settings) {
   if (err == ESP_ERR_NVS_NO_FREE_PAGES || 
       err == ESP_ERR_NVS_NEW_VERSION_FOUND ||
       err == ESP_ERR_NVS_NOT_FOUND) {
-      ESP_LOGI(S_TAG, "NVS corrupt - erasing partition...");
+      printf("NVS corrupt - erasing partition...");
       esp_err_t erase_err = nvs_flash_erase();
       if (erase_err != ESP_OK) {
-          ESP_LOGE(S_TAG, "Erase failed: %s", esp_err_to_name(erase_err));
+          printf("Erase failed: %s", esp_err_to_name(erase_err));
           vTaskDelay(pdMS_TO_TICKS(500));
           esp_restart(); // Hard reset if erase fails
       }
@@ -59,7 +59,7 @@ void settings_init(FSettings *settings) {
   }
 
   if (err != ESP_OK) {
-      ESP_LOGE(S_TAG, "NVS FATAL: %s - Rebooting", esp_err_to_name(err));
+      printf("NVS FATAL: %s - Rebooting", esp_err_to_name(err));
       vTaskDelay(pdMS_TO_TICKS(1000));
       esp_restart();
   }
