@@ -81,8 +81,6 @@ CommandFunction find_command(const char *name) {
 }
 
 void cmd_wifi_scan_start(int argc, char **argv) {
-    printf("WiFi scan started.\n");
-    TERMINAL_VIEW_ADD_TEXT("WiFi scan started.\n");
     wifi_manager_start_scan();
     wifi_manager_print_scan_results_with_oui();
 }

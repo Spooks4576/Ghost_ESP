@@ -756,9 +756,6 @@ void ble_start_capture(void) {
 }
 
 void ble_start_skimmer_detection(void) {
-    ESP_LOGI("BLE", "Starting skimmer detection scan...");
-    TERMINAL_VIEW_ADD_TEXT("Starting skimmer detection scan...\n");
-
     // Register the skimmer detection callback
     esp_err_t err = ble_register_handler(ble_skimmer_scan_callback);
     if (err != ESP_OK) {
