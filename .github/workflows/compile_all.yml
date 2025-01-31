@@ -302,6 +302,8 @@ jobs:
       - name: Generate boards.json
         if: ${{ github.event.inputs.buildType == 'prerelease' }}
         run: |
+          BUILD_DATE=$(date -u +"%Y-%m-%d")
+          BUILD_NUMBER=$(date -u +"%Y%m%d")
           cat > boards.json << 'EOF'
           {
             "boards": {
@@ -412,10 +414,16 @@ jobs:
               }
             },
             "version": "${{ github.sha }}",
-            "build_date": "$(date -u +"%Y-%m-%d")",
-            "build_number": "$(date -u +"%Y%m%d")"
+            "build_date": "BUILD_DATE_PLACEHOLDER",
+            "build_number": "BUILD_NUMBER_PLACEHOLDER"
           }
           EOF
+          
+          # Now replace the placeholders with actual values
+          sed -i "s/BUILD_DATE_PLACEHOLDER/$BUILD_DATE/g" boards.json
+          sed -i "s/BUILD_NUMBER_PLACEHOLDER/$BUILD_NUMBER/g" boards.json
+          sed -i "s/\\\${{ github.sha }}/${{ github.sha }}/g" boards.json
+          
           echo "Generated boards.json with target information"
 
       - name: Upload boards.json to Cloudflare R2
