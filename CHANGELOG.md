@@ -4,11 +4,13 @@
 
 ### 🤏 Tweaks and Improvements
 
+- Abort WiFi scan immediately if stop command is sent - @jaylikesbunda
+- Added Reset AP Credentials as a display option - @jaylikesbunda
 - Added extra NVS recovery attempts - @jaylikesbunda
 - Removed main menu icon shadow - @jaylikesbunda
-- Removed options screen borders - @jaylikesbunda
+- Removed both options screen borders - @jaylikesbunda
 - Improved status bar containers - @jaylikesbunda
-- Tweaked terminal scrolling logic to be more efficient - @jaylikesbunda
+- Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
 
 ## 1.4.6
 
