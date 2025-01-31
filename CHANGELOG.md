@@ -4,7 +4,6 @@
 
 ### 🤏 Tweaks and Improvements
 
-- Abort WiFi scan immediately if stop command is sent - @jaylikesbunda
 - Added Reset AP Credentials as a display option - @jaylikesbunda
 - Added extra NVS recovery attempts - @jaylikesbunda
 - Removed main menu icon shadow - @jaylikesbunda
