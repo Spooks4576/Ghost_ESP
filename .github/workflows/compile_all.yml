@@ -175,15 +175,15 @@ jobs:
 
       - name: Upload to Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for file in flat_artifacts/*; do
             if [ -f "$file" ] && [ -s "$file" ]; then
-              gh api --method POST \
-                /repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets \
-                --header "Content-Type:application/zip" \
-                --field name="$(basename $file)" \
-                --field data="@$file"
+              curl -X POST \
+                -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Content-Type: application/zip" \
+                --data-binary @"$file" \
+                "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=$(basename $file)"
             fi
           done
 
