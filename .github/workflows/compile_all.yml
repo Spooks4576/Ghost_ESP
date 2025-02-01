@@ -115,9 +115,6 @@ jobs:
         with:
           path: all_artifacts
 
-      - name: Install Dependencies
-        run: sudo apt-get install -y jq
-
       - name: Verify and Flatten Artifacts
         run: |
           mkdir -p flat_artifacts
@@ -187,49 +184,47 @@ jobs:
             fi
           done
 
-      - name: Upload boards.json to R2
+      - if: github.event.inputs.buildType == 'all'
+        name: Notify Discord (ALL)
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-        - if: github.event.inputs.buildType == 'all'
-          name: Notify Discord (ALL)
-          env:
-            DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          run: |
-            curl -H "Content-Type: application/json" -d '{
-              "embeds": [{
-                "title": "🎉 New Build Artifacts Uploaded!",
-                "description": "All build artifacts have been successfully uploaded to Cloudflare R2 and GitHub Release.",
-                "color": 5814783,
-                "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
-              }]
-            }' "$DISCORD_WEBHOOK_URL"
-  
-        - if: github.event.inputs.buildType == 'prerelease'
-          name: Get Commit History
-          id: get_commits
-          run: |
-            commits=$(git log --pretty=format:"- %s" -n 10)
-            commits="${commits//'%'/'%25'}"
-            commits="${commits//$'\n'/'\\n'}"
-            commits="${commits//$'\r'/'%0D'}"
-            commits="${commits//'"'/'\"'}"
-            echo "commits=$commits" >> $GITHUB_OUTPUT
-  
-        - if: github.event.inputs.buildType == 'prerelease'
-          name: Notify Discord (PRERELEASE)
-          env:
-            DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          run: |
-            BUILD_DATE=$(date -u +"%Y-%m-%d")
-            BUILD_VERSION=$(date -u +"%Y%m%d")
-            
-            curl -H "Content-Type: application/json" -d '{
-              "embeds": [{
-                "title": "🚀 GhostESP Prerelease Build - '"$BUILD_DATE"'",
-                "description": "A new prerelease build has been uploaded to Cloudflare R2 and GitHub Release.\\n\\n**Version:** Pre-'"$BUILD_VERSION"'\\n\\n**Changes since last prerelease:**\\n'"${{ steps.get_commits.outputs.commits }}"'\\n\\n**Flash your device:**\\n🔗 [Flash using GhostESP Web Flasher](https://flasher.ghostesp.net)",
-                "color": 16750848,
-                "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
-                "footer": {
-                  "text": "GhostESP Prerelease Build '"$BUILD_VERSION"'"
-                }
-              }]
-            }' "$DISCORD_WEBHOOK_URL"T%H:%M:%
+          curl -H "Content-Type: application/json" -d '{
+            "embeds": [{
+              "title": "🎉 New Build Artifacts Uploaded!",
+              "description": "All build artifacts have been successfully uploaded to Cloudflare R2 and GitHub Release.",
+              "color": 5814783,
+              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+            }]
+          }' "$DISCORD_WEBHOOK_URL"
+
+      - if: github.event.inputs.buildType == 'prerelease'
+        name: Get Commit History
+        id: get_commits
+        run: |
+          commits=$(git log --pretty=format:"- %s" -n 10)
+          commits="${commits//'%'/'%25'}"
+          commits="${commits//$'\n'/'\\n'}"
+          commits="${commits//$'\r'/'%0D'}"
+          commits="${commits//'"'/'\"'}"
+          echo "commits=$commits" >> $GITHUB_OUTPUT
+
+      - if: github.event.inputs.buildType == 'prerelease'
+        name: Notify Discord (PRERELEASE)
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          BUILD_DATE=$(date -u +"%Y-%m-%d")
+          BUILD_VERSION=$(date -u +"%Y%m%d")
+          
+          curl -H "Content-Type: application/json" -d '{
+            "embeds": [{
+              "title": "🚀 GhostESP Prerelease Build - '"$BUILD_DATE"'",
+              "description": "A new prerelease build has been uploaded to Cloudflare R2 and GitHub Release.\\n\\n**Version:** Pre-'"$BUILD_VERSION"'\\n\\n**Changes since last prerelease:**\\n'"${{ steps.get_commits.outputs.commits }}"'\\n\\n**Flash your device:**\\n🔗 [Flash using GhostESP Web Flasher](https://flasher.ghostesp.net)",
+              "color": 16750848,
+              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+              "footer": {
+                "text": "GhostESP Prerelease Build '"$BUILD_VERSION"'"
+              }
+            }]
+          }' "$DISCORD_WEBHOOK_URL"
