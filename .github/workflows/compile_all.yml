@@ -187,53 +187,7 @@ jobs:
             fi
           done
 
-      - name: Generate boards.json
-        if: github.event.inputs.buildType == 'prerelease'
-        run: |
-          BUILD_DATE=$(date -u +"%Y-%m-%d")
-          BUILD_NUMBER=$(date -u +"%Y%m%d")
-          
-          jq -n --arg sha "${{ github.sha }}" \
-             --arg date "$BUILD_DATE" \
-             --arg build "$BUILD_NUMBER" '{
-            "boards": {
-              "ESP32": {},
-              "ESP32S2": {},
-              "ESP32S3": {},
-              "ESP32C3": {},
-              "ESP32C6": {}
-            },
-            "version": $sha,
-            "build_date": $date,
-            "build_number": $build
-          }' > boards.json
-
-          # Extract matrix data and update boards.json
-          yq -r '.jobs.build.strategy.matrix.target[] | select(.name != null) | [.name, .idf_target, .zip_name] | @tsv' .github/workflows/compile.yml |
-          while IFS=$'\t' read -r name target zip; do
-            target_upper=$(echo "$target" | tr '[:lower:]' '[:upper:]')
-            board_key=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr -cd '[a-z0-9]')
-            
-            if [[ "$target_upper" =~ ^ESP32(S2|S3|C3|C6)?$ ]]; then
-              jq --arg target "$target_upper" \
-                 --arg key "$board_key" \
-                 --arg name "$name" \
-                 --arg zip "$zip" \
-                '.boards[$target][$key] = {
-                   "name": $name,
-                   "zip_file": $zip,
-                   "chip_type": $target
-                }' boards.json > boards.json.tmp && mv boards.json.tmp boards.json
-            fi
-          done
-
       - name: Upload boards.json to R2
-        if: github.event.inputs.buildType == 'prerelease'
-        env:
-          R2_BUCKET: "spooksapi"
-        run: |
-          rclone copy boards.json "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress --s3-no-check-bucket
-
       - if: github.event.inputs.buildType == 'all'
         name: Notify Discord (ALL)
         env:
