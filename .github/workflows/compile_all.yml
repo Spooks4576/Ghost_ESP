@@ -304,125 +304,57 @@ jobs:
         run: |
           BUILD_DATE=$(date -u +"%Y-%m-%d")
           BUILD_NUMBER=$(date -u +"%Y%m%d")
-          cat > boards.json << 'EOF'
+          
+          # Create base structure
+          cat > boards.json << EOF
           {
             "boards": {
-              "ESP32": {
-                "generic": {
-                  "name": "ESP32 Generic",
-                  "zip_file": "esp32-generic.zip",
-                  "chip_type": "ESP32"
-                },
-                "marauderv4": {
-                  "name": "MarauderV4 FlipperHub",
-                  "zip_file": "MarauderV4_FlipperHub.zip",
-                  "chip_type": "ESP32"
-                },
-                "marauderv6": {
-                  "name": "MarauderV6 & AwokDual",
-                  "zip_file": "MarauderV6_AwokDual.zip",
-                  "chip_type": "ESP32"
-                },
-                "awokmini": {
-                  "name": "AwokMini",
-                  "zip_file": "AwokMini.zip",
-                  "chip_type": "ESP32"
-                },
-                "cyd2usb": {
-                  "name": "CYD2USB",
-                  "zip_file": "CYD2USB.zip",
-                  "chip_type": "ESP32"
-                },
-                "cydmicrousb": {
-                  "name": "CYDMicroUSB",
-                  "zip_file": "CYDMicroUSB.zip",
-                  "chip_type": "ESP32"
-                },
-                "cyddualusb": {
-                  "name": "CYDDualUSB",
-                  "zip_file": "CYDDualUSB.zip",
-                  "chip_type": "ESP32"
-                },
-                "cyd2usb24inch": {
-                  "name": "CYD2USB 2.4 Inch",
-                  "zip_file": "CYD2USB2.4Inch.zip",
-                  "chip_type": "ESP32"
-                }
-              },
-              "ESP32S2": {
-                "generic": {
-                  "name": "ESP32-S2 Generic",
-                  "zip_file": "esp32s2-generic.zip",
-                  "chip_type": "ESP32-S2"
-                },
-                "awokv5": {
-                  "name": "Awok V5",
-                  "zip_file": "esp32v5_awok.zip",
-                  "chip_type": "ESP32-S2"
-                }
-              },
-              "ESP32S3": {
-                "generic": {
-                  "name": "ESP32-S3 Generic",
-                  "zip_file": "esp32s3-generic.zip",
-                  "chip_type": "ESP32-S3"
-                },
-                "cardputer": {
-                  "name": "ESP32-S3-Cardputer",
-                  "zip_file": "ESP32-S3-Cardputer.zip",
-                  "chip_type": "ESP32-S3"
-                },
-                "waveshare": {
-                  "name": "Waveshare LCD",
-                  "zip_file": "Waveshare_LCD.zip",
-                  "chip_type": "ESP32-S3"
-                },
-                "crowtech": {
-                  "name": "Crowtech LCD",
-                  "zip_file": "Crowtech_LCD.zip",
-                  "chip_type": "ESP32-S3"
-                }
-              },
-              "ESP32C3": {
-                "generic": {
-                  "name": "ESP32-C3 Generic",
-                  "zip_file": "esp32c3-generic.zip",
-                  "chip_type": "ESP32-C3"
-                },
-                "devkit": {
-                  "name": "ESP32-C3 DevKit",
-                  "zip_file": "esp32c3-devkit.zip",
-                  "chip_type": "ESP32-C3"
-                }
-              },
-              "ESP32C6": {
-                "generic": {
-                  "name": "ESP32-C6 Generic",
-                  "zip_file": "esp32c6-generic.zip",
-                  "chip_type": "ESP32-C6"
-                },
-                "devkit": {
-                  "name": "ESP32-C6 DevKit",
-                  "zip_file": "esp32c6-devkit.zip",
-                  "chip_type": "ESP32-C6"
-                },
-                "ghostboard": {
-                  "name": "GhostBoard",
-                  "zip_file": "ghostboard.zip",
-                  "chip_type": "ESP32-C6"
-                }
-              }
+              "ESP32": {},
+              "ESP32S2": {},
+              "ESP32S3": {},
+              "ESP32C3": {},
+              "ESP32C6": {}
             },
             "version": "${{ github.sha }}",
-            "build_date": "BUILD_DATE_PLACEHOLDER",
-            "build_number": "BUILD_NUMBER_PLACEHOLDER"
+            "build_date": "$BUILD_DATE",
+            "build_number": "$BUILD_NUMBER"
           }
           EOF
           
-          # Now replace the placeholders with actual values
-          sed -i "s/BUILD_DATE_PLACEHOLDER/$BUILD_DATE/g" boards.json
-          sed -i "s/BUILD_NUMBER_PLACEHOLDER/$BUILD_NUMBER/g" boards.json
-          sed -i "s/\\\${{ github.sha }}/${{ github.sha }}/g" boards.json
+          # Process each target and add to appropriate section
+          while IFS= read -r line; do
+            # Skip comments and empty lines
+            [[ "$line" =~ ^[[:space:]]*# ]] && continue
+            [[ -z "${line// }" ]] && continue
+            
+            if [[ "$line" =~ name:[[:space:]]*\"([^\"]+)\".*idf_target:[[:space:]]*\"([^\"]+)\".*zip_name:[[:space:]]*\"([^\"]+)\" ]]; then
+              name="${BASH_REMATCH[1]}"
+              target="${BASH_REMATCH[2]}"
+              zip="${BASH_REMATCH[3]}"
+              
+              # Convert target to uppercase and format correctly
+              target_upper=$(echo "$target" | tr '[:lower:]' '[:upper:]')
+              if [[ "$target_upper" =~ ESP32(S2|S3|C3|C6)?$ ]]; then
+                target_formatted="$target_upper"
+              fi
+              
+              # Generate board key (lowercase, no spaces, remove special chars)
+              board_key=$(echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
+              
+              # Add to appropriate section using jq
+              jq --arg target "$target_formatted" \
+                 --arg key "$board_key" \
+                 --arg name "$name" \
+                 --arg zip "$zip" \
+                 --arg chip_type "$target_formatted" \
+                '.boards[$target][$key] = {
+                   "name": $name,
+                   "zip_file": $zip,
+                   "chip_type": $chip_type
+                 }' boards.json > boards.json.tmp && mv boards.json.tmp boards.json
+              
+            fi
+          done < <(grep -A 20 "matrix:" .github/workflows/compile.yml | grep "name:\|idf_target:\|zip_name:")
           
           echo "Generated boards.json with target information"
 
