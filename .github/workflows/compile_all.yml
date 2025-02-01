@@ -25,39 +25,26 @@ jobs:
           - { name: "esp32s3-generic", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "esp32s3-generic.zip" }
           - { name: "esp32c3-generic", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-generic.zip" }
           - { name: "esp32c6-generic", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
-          - { name: "Awok V5",         idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip"}
-
-          # Dev Kit configurations (LED on, no screen support)
+          - { name: "Awok V5", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip"}
           - { name: "esp32c3-devkit", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.devkit.esp32c3", zip_name: "esp32c3-devkit.zip"}
           - { name: "esp32c6-devkit", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.devkit.esp32c6", zip_name: "esp32c6-devkit.zip"}
-
-          # Ghost board (LED on, special pin and LED count)
           - { name: "ghostboard", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.ghostboard", zip_name: "ghostboard.zip"}
-
-          # Screen-supported builds
-          - { name: "MarauderV4_FlipperHub", idf_target: "esp32",   sdkconfig_file: "configs/sdkconfig.marauderv4",  zip_name: "MarauderV4_FlipperHub.zip"}
-          - { name: "MarauderV6&AwokDual",   idf_target: "esp32",   sdkconfig_file: "configs/sdkconfig.marauderv6",  zip_name: "MarauderV6_AwokDual.zip"}
-          - { name: "AwokMini",              idf_target: "esp32",   sdkconfig_file: "configs/sdkconfig.awokmini",    zip_name: "AwokMini.zip"}
-          - { name: "ESP32-S3-Cardputer",    idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer",   zip_name: "ESP32-S3-Cardputer.zip"}
-          #- { name: "LillyGoTWatch_S3",     idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.S3TWatch",    zip_name: "lillygos3watch.zip"}
-
-          # CYD (Cheap Yellow Display) with touch screen
-          - { name: "CYD2USB",         idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB",         zip_name: "CYD2USB.zip"}
-          - { name: "CYDMicroUSB",     idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB",     zip_name: "CYDMicroUSB.zip"}
-          - { name: "CYDDualUSB",      idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDDualUSB",      zip_name: "CYDDualUSB.zip"}
-          - { name: "CYD2USB2.4_Inch", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch",  zip_name: "CYD2USB2.4Inch.zip"}
-          - { name: "CYD2USB2.4_Inch_C", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch_C_Varient",  zip_name: "CYD2USB2.4Inch_C.zip"}
-
-          # 7-inch boards
+          - { name: "MarauderV4_FlipperHub", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv4", zip_name: "MarauderV4_FlipperHub.zip"}
+          - { name: "MarauderV6&AwokDual", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip"}
+          - { name: "AwokMini", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip"}
+          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer", zip_name: "ESP32-S3-Cardputer.zip"}
+          - { name: "CYD2USB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB", zip_name: "CYD2USB.zip"}
+          - { name: "CYDMicroUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip"}
+          - { name: "CYDDualUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip"}
+          - { name: "CYD2USB2.4_Inch", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch", zip_name: "CYD2USB2.4Inch.zip"}
+          - { name: "CYD2USB2.4_Inch_C", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch_C_Varient", zip_name: "CYD2USB2.4Inch_C.zip"}
           - { name: "Waveshare_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip"}
-          - { name: "Crowtech_LCD",  idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.crowtech7inch",  zip_name: "Crowtech_LCD.zip"}
+          - { name: "Crowtech_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip"}
 
     steps:
-      - name: Check Out Repository
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -69,8 +56,7 @@ jobs:
           ~/esp-idf/install.sh
 
       - name: Apply Custom SDK Config
-        run: |
-          cp "${{ matrix.target.sdkconfig_file }}" sdkconfig.defaults
+        run: cp "${{ matrix.target.sdkconfig_file }}" sdkconfig.defaults
 
       - name: Set up ESP-IDF and Target
         run: |
@@ -95,9 +81,8 @@ jobs:
           if [ ! -f "$BOOTLOADER_PATH" ]; then
             echo "Error: Bootloader could not be downloaded."
             exit 1
-          else
-            echo "Bootloader downloaded successfully."
           fi
+          echo "Bootloader downloaded successfully."
 
       - name: Package Artifacts into ZIP
         run: |
@@ -106,54 +91,45 @@ jobs:
           mkdir -p "$ARTIFACT_DIR"
           cp build/partition_table/partition-table.bin "$ARTIFACT_DIR/"
           cp build/*.bin "$ARTIFACT_DIR/"
-          echo "Packaging into zip: $ZIP_FILE"
           cd "$ARTIFACT_DIR"
           zip "../$ZIP_FILE" ./*
           cd ..
-          echo "Zip file $ZIP_FILE created."
           ls -lh "$ZIP_FILE"
 
-      - name: Upload Build Artifacts to GitHub
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target.zip_name }}
           path: ${{ matrix.target.zip_name }}
 
-  # ---------------------------------------------------------------
-  #   This job uploads all artifacts to the correct R2 path
-  #   AND optionally does the "prerelease" extras (boards.json,
-  #   Discord commit history, etc.) if buildType == 'prerelease'.
-  # ---------------------------------------------------------------
   upload_all:
     name: Upload Artifacts
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check Out Repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # so we can get commit logs, etc.
+          fetch-depth: 0
 
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           path: all_artifacts
 
+      - name: Install Dependencies
+        run: sudo apt-get install -y jq
+
       - name: Verify and Flatten Artifacts
         run: |
-          echo "Checking and flattening artifacts..."
           mkdir -p flat_artifacts
           if [ -d "all_artifacts" ] && [ "$(ls -A all_artifacts)" ]; then
             find all_artifacts -type f -exec cp {} flat_artifacts/ \;
-            echo "Flattened artifacts:"
             ls -lh flat_artifacts
           else
-            echo "No artifacts found or directory is empty."
+            echo "No artifacts found"
             exit 1
           fi
 
-      - name: Determine R2 Path (Set ENV)
+      - name: Determine R2 Path
         run: |
           if [ "${{ github.event.inputs.buildType }}" = "prerelease" ]; then
             echo "R2_PATH=GhostESPBins/prerelease" >> $GITHUB_ENV
@@ -162,8 +138,7 @@ jobs:
           fi
 
       - name: Install rclone
-        run: |
-          curl -fsSL https://rclone.org/install.sh | sudo bash
+        run: curl -fsSL https://rclone.org/install.sh | sudo bash
 
       - name: Configure rclone for Cloudflare R2
         env:
@@ -171,7 +146,7 @@ jobs:
           R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
         run: |
           mkdir -p ~/.config/rclone
-          cat <<EOF > ~/.config/rclone/rclone.conf
+          cat > ~/.config/rclone/rclone.conf << EOF
           [cloudflare_r2]
           type = s3
           provider = Cloudflare
@@ -180,134 +155,47 @@ jobs:
           endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com
           EOF
 
-      - name: Upload All Artifacts to Cloudflare R2
+      - name: Upload Artifacts to R2
         env:
           R2_BUCKET: "spooksapi"
-          R2_PATH: ${{ env.R2_PATH }}
         run: |
-          echo "Uploading artifacts to Cloudflare R2 -> $R2_PATH"
           for file in flat_artifacts/*; do
             if [ -f "$file" ]; then
-              echo "Uploading $file..."
               rclone copy "$file" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress --s3-no-check-bucket
-            else
-              echo "Skipping $file as it is not a valid file."
             fi
           done
-          echo "All artifacts uploaded successfully."
 
-      - name: Get the Latest Release ID (Including Pre-releases)
-        id: get_release
+      - id: get_release
+        name: Get Latest Release ID
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          latest_release=$(curl -s \
-            -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${{ github.repository }}/releases" | jq '[.[] | select(.draft == false)] | .[0]')
-          release_id=$(echo "$latest_release" | jq -r '.id')
-          echo "Latest release ID (including pre-releases) is $release_id"
-          echo "::set-output name=release_id::$release_id"
+          latest_release=$(gh api repos/${{ github.repository }}/releases --jq '.[0].id')
+          echo "release_id=$latest_release" >> $GITHUB_OUTPUT
 
-      - name: Upload Artifacts to Latest Release
+      - name: Upload to Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           for file in flat_artifacts/*; do
             if [ -f "$file" ] && [ -s "$file" ]; then
-              echo "Uploading $file to GitHub Release..."
-              curl -X POST \
-                -H "Authorization: token $GITHUB_TOKEN" \
-                -H "Content-Type: application/zip" \
-                --data-binary @"$file" \
-                "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=$(basename $file)"
-            else
-              echo "Skipping $file as it is either empty or not a valid file."
+              gh api --method POST \
+                /repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets \
+                --header "Content-Type:application/zip" \
+                --field name="$(basename $file)" \
+                --field data="@$file"
             fi
           done
 
-      # ------------------
-      #   If = 'all' path
-      # ------------------
-      - name: Notify Discord of Successful Upload (ALL)
-        if: ${{ github.event.inputs.buildType == 'all' }}
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: |
-          payload=$(cat <<EOF
-          {
-            "embeds": [
-              {
-                "title": "🎉 New Build Artifacts Uploaded!",
-                "description": "All build artifacts have been successfully uploaded to Cloudflare R2 and GitHub Release.",
-                "color": 5814783,
-                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-              }
-            ]
-          }
-          EOF
-          )
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -d "$payload" \
-            "$DISCORD_WEBHOOK_URL"
-
-      # ----------------------
-      #   If = 'prerelease' path
-      # ----------------------
-      - name: Get Commit History
-        if: ${{ github.event.inputs.buildType == 'prerelease' }}
-        id: get_commits
-        run: |
-          # Get the last 10 commits
-          commits=$(git log --pretty=format:"- %s" -n 10)
-          
-          # Escape newlines and quotes for JSON
-          commits="${commits//'%'/'%25'}"
-          commits="${commits//$'\n'/'\\n'}"
-          commits="${commits//$'\r'/'%0D'}"
-          commits="${commits//'"'/'\"'}"
-          
-          echo "commits=$commits" >> $GITHUB_OUTPUT
-
-      - name: Notify Discord of Successful Upload (PRERELEASE)
-        if: ${{ github.event.inputs.buildType == 'prerelease' }}
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: |
-          BUILD_DATE=$(date -u +"%Y-%m-%d")
-          BUILD_VERSION=$(date -u +"%Y%m%d")
-          
-          payload=$(cat <<EOF
-          {
-            "embeds": [
-              {
-                "title": "🚀 GhostESP Prerelease Build - $BUILD_DATE",
-                "description": "A new prerelease build has been uploaded to Cloudflare R2 and GitHub Release.\\n\\n**Version:** Pre-$BUILD_VERSION\\n\\n**Changes since last prerelease:**\\n${{ steps.get_commits.outputs.commits }}\\n\\n**Flash your device:**\\n🔗 [Flash using GhostESP Web Flasher](https://flasher.ghostesp.net)",
-                "color": 16750848,
-                "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-                "footer": {
-                  "text": "GhostESP Prerelease Build $BUILD_VERSION"
-                }
-              }
-            ]
-          }
-          EOF
-          )
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -d "$payload" \
-            "$DISCORD_WEBHOOK_URL"
-
       - name: Generate boards.json
-        if: ${{ github.event.inputs.buildType == 'prerelease' }}
+        if: github.event.inputs.buildType == 'prerelease'
         run: |
           BUILD_DATE=$(date -u +"%Y-%m-%d")
           BUILD_NUMBER=$(date -u +"%Y%m%d")
           
-          # Create base structure
-          cat > boards.json << EOF
-          {
+          jq -n --arg sha "${{ github.sha }}" \
+             --arg date "$BUILD_DATE" \
+             --arg build "$BUILD_NUMBER" '{
             "boards": {
               "ESP32": {},
               "ESP32S2": {},
@@ -315,54 +203,78 @@ jobs:
               "ESP32C3": {},
               "ESP32C6": {}
             },
-            "version": "${{ github.sha }}",
-            "build_date": "$BUILD_DATE",
-            "build_number": "$BUILD_NUMBER"
-          }
-          EOF
-          
-          # Process each target and add to appropriate section
-          while IFS= read -r line; do
-            # Skip comments and empty lines
-            [[ "$line" =~ ^[[:space:]]*# ]] && continue
-            [[ -z "${line// }" ]] && continue
+            "version": $sha,
+            "build_date": $date,
+            "build_number": $build
+          }' > boards.json
+
+          # Extract matrix data and update boards.json
+          yq -r '.jobs.build.strategy.matrix.target[] | select(.name != null) | [.name, .idf_target, .zip_name] | @tsv' .github/workflows/compile.yml |
+          while IFS=$'\t' read -r name target zip; do
+            target_upper=$(echo "$target" | tr '[:lower:]' '[:upper:]')
+            board_key=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr -cd '[a-z0-9]')
             
-            if [[ "$line" =~ name:[[:space:]]*\"([^\"]+)\".*idf_target:[[:space:]]*\"([^\"]+)\".*zip_name:[[:space:]]*\"([^\"]+)\" ]]; then
-              name="${BASH_REMATCH[1]}"
-              target="${BASH_REMATCH[2]}"
-              zip="${BASH_REMATCH[3]}"
-              
-              # Convert target to uppercase and format correctly
-              target_upper=$(echo "$target" | tr '[:lower:]' '[:upper:]')
-              if [[ "$target_upper" =~ ESP32(S2|S3|C3|C6)?$ ]]; then
-                target_formatted="$target_upper"
-              fi
-              
-              # Generate board key (lowercase, no spaces, remove special chars)
-              board_key=$(echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]//g')
-              
-              # Add to appropriate section using jq
-              jq --arg target "$target_formatted" \
+            if [[ "$target_upper" =~ ^ESP32(S2|S3|C3|C6)?$ ]]; then
+              jq --arg target "$target_upper" \
                  --arg key "$board_key" \
                  --arg name "$name" \
                  --arg zip "$zip" \
-                 --arg chip_type "$target_formatted" \
                 '.boards[$target][$key] = {
                    "name": $name,
                    "zip_file": $zip,
-                   "chip_type": $chip_type
-                 }' boards.json > boards.json.tmp && mv boards.json.tmp boards.json
-              
+                   "chip_type": $target
+                }' boards.json > boards.json.tmp && mv boards.json.tmp boards.json
             fi
-          done < <(grep -A 20 "matrix:" .github/workflows/compile.yml | grep "name:\|idf_target:\|zip_name:")
-          
-          echo "Generated boards.json with target information"
+          done
 
-      - name: Upload boards.json to Cloudflare R2
-        if: ${{ github.event.inputs.buildType == 'prerelease' }}
+      - name: Upload boards.json to R2
+        if: github.event.inputs.buildType == 'prerelease'
         env:
           R2_BUCKET: "spooksapi"
-          R2_PATH: ${{ env.R2_PATH }}
         run: |
-          echo "Uploading boards.json to Cloudflare R2 ($R2_PATH)..."
-          rclone copy "boards.json" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress --s3-no-check-bucket
+          rclone copy boards.json "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress --s3-no-check-bucket
+
+      - if: github.event.inputs.buildType == 'all'
+        name: Notify Discord (ALL)
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          curl -H "Content-Type: application/json" -d '{
+            "embeds": [{
+              "title": "🎉 New Build Artifacts Uploaded!",
+              "description": "All build artifacts have been successfully uploaded to Cloudflare R2 and GitHub Release.",
+              "color": 5814783,
+              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+            }]
+          }' "$DISCORD_WEBHOOK_URL"
+
+      - if: github.event.inputs.buildType == 'prerelease'
+        name: Get Commit History
+        id: get_commits
+        run: |
+          commits=$(git log --pretty=format:"- %s" -n 10)
+          commits="${commits//'%'/'%25'}"
+          commits="${commits//$'\n'/'\\n'}"
+          commits="${commits//$'\r'/'%0D'}"
+          commits="${commits//'"'/'\"'}"
+          echo "commits=$commits" >> $GITHUB_OUTPUT
+
+      - if: github.event.inputs.buildType == 'prerelease'
+        name: Notify Discord (PRERELEASE)
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          BUILD_DATE=$(date -u +"%Y-%m-%d")
+          BUILD_VERSION=$(date -u +"%Y%m%d")
+          
+          curl -H "Content-Type: application/json" -d '{
+            "embeds": [{
+              "title": "🚀 GhostESP Prerelease Build - '"$BUILD_DATE"'",
+              "description": "A new prerelease build has been uploaded to Cloudflare R2 and GitHub Release.\\n\\n**Version:** Pre-'"$BUILD_VERSION"'\\n\\n**Changes since last prerelease:**\\n'"${{ steps.get_commits.outputs.commits }}"'\\n\\n**Flash your device:**\\n🔗 [Flash using GhostESP Web Flasher](https://flasher.ghostesp.net)",
+              "color": 16750848,
+              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+              "footer": {
+                "text": "GhostESP Prerelease Build '"$BUILD_VERSION"'"
+              }
+            }]
+          }' "$DISCORD_WEBHOOK_URL"T%H:%M:%
