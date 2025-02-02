@@ -1236,6 +1236,8 @@ void handle_rgb_mode(int argc, char **argv) {
         printf("Police mode activated\n");
         TERMINAL_VIEW_ADD_TEXT("Police mode activated\n");
     } else if (strcasecmp(argv[1], "strobe") == 0) {
+        printf("SEIZURE WARNING\nPLEASE EXIT NOW IF\nYOU ARE SENSITIVE\n");
+        vTaskDelay(pdMS_TO_TICKS(2000));
         xTaskCreate(strobe_task, "strobe_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
         printf("Strobe mode activated\n");
         TERMINAL_VIEW_ADD_TEXT("Strobe mode activated\n");
