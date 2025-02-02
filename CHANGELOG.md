@@ -8,15 +8,19 @@
 
 ### 🤏 Tweaks and Improvements
 
-- Added Reset AP Credentials as a display option - @jaylikesbunda
-- Added extra NVS recovery attempts - @jaylikesbunda
-- Removed main menu icon shadow - @jaylikesbunda
-- Removed both options screen borders - @jaylikesbunda
-- Improved status bar containers - @jaylikesbunda
-- Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
-- Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
-- Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
-- Removed a bunch of dupe logs and reworded some - @jaylikesbunda
+- General:
+  - Added extra NVS recovery attempts - @jaylikesbunda
+  - Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
+  - Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
+  - Removed a bunch of dupe logs and reworded some - @jaylikesbunda
+  - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
+  
+- Display Specific:
+  - Removed main menu icon shadow - @jaylikesbunda
+  - Removed both options screen borders - @jaylikesbunda
+  - Improved status bar containers - @jaylikesbunda
+  - Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
+  - Added Reset AP Credentials as a display option - @jaylikesbunda
 
 ## 1.4.6
 
