@@ -10,6 +10,10 @@
 #include <esp_log.h>
 #include <string.h>
 #include <time.h>
+#include "esp_rom_sys.h"  // Contains esp_rom_printf
+
+#define STORE_STR_ATTR __attribute__((section(".rodata.str")))
+#define STORE_DATA_ATTR __attribute__((section(".rodata.data")))
 
 #define WPS_OUI 0x0050f204
 #define TAG "WIFI_MONITOR"
@@ -92,14 +96,15 @@ int should_store_wps = 1;
 gps_t *gps = NULL;
 extern RGBManager_t rgb_manager;
 
-#define MAX_PINEAP_NETWORKS 50
+#define MAX_PINEAP_NETWORKS 20
 #define MAX_SSIDS_PER_BSSID 10
 #define MAX_WIFI_CHANNEL 13
 #define CHANNEL_HOP_INTERVAL_MS 200
 #define RECENT_SSID_COUNT 5
 #define LOG_DELAY_MS 5000
 
-static pineap_network_t pineap_networks[MAX_PINEAP_NETWORKS];
+// Use DRAM (slower but safe)
+static pineap_network_t pineap_networks[MAX_PINEAP_NETWORKS] DRAM_ATTR;
 static int pineap_network_count = 0;
 static bool pineap_detection_active = false;
 static uint8_t current_channel = 1;
@@ -182,7 +187,12 @@ void stop_pineap_detection(void) {
     stop_channel_hopping();
 }
 
-static void log_pineap_detection(void *arg) {
+#define IRAM_PRINTF(fmt, ...) do { \
+    static const char flash_fmt[] STORE_STR_ATTR = fmt; \
+    esp_rom_printf(flash_fmt, ##__VA_ARGS__); \
+} while(0)
+
+void __attribute__((section(".irom0.text"))) log_pineap_detection(void *arg) {
     pineap_log_data_t *log_data = (pineap_log_data_t *)arg;
     pineap_network_t *network = log_data->network;
 
@@ -212,18 +222,19 @@ static void log_pineap_detection(void *arg) {
         // Pulse RGB purple (red + blue) to indicate Pineapple detection
         pulse_once(&rgb_manager, 255, 0, 255);
 
-        printf("\nPineapple detected!\n");
-        printf("BSSID: %s\n", mac_str);
-        printf("Channel: %d\n", network->last_channel);
-        printf("RSSI: %d\n", network->last_rssi);
-        printf("SSIDs (%d): %s\n", valid_ssid_count, ssids_str);
+        IRAM_PRINTF("\nPineapple detected!\nBSSID: %02x:%02x:%02x:%02x:%02x:%02x\n", 
+                   log_data->bssid[0], log_data->bssid[1], log_data->bssid[2],
+                   log_data->bssid[3], log_data->bssid[4], log_data->bssid[5]);
+        IRAM_PRINTF("Channel: %d\n", network->last_channel);
+        IRAM_PRINTF("RSSI: %d\n", network->last_rssi);
+        IRAM_PRINTF("SSIDs (%d): %s\n", valid_ssid_count, ssids_str);
 
         // Evil Twin Detection: Check for same SSID from different BSSIDs
         for (int i = 0; i < pineap_network_count; i++) {
             if (i != (network - pineap_networks) && // Skip self
                 strcasecmp(network->recent_ssids[0], pineap_networks[i].recent_ssids[0]) == 0) {
-                printf("Evil Twin Detected:\nSame SSID '%.100s'\nfrom BSSID %.17s and\n%.100s\n",
-                       network->recent_ssids[0], mac_str, pineap_networks[i].bssid);
+                IRAM_PRINTF("Evil Twin:\nSSID '%.100s'\nBSSID %.17s vs %.100s\n",
+                           network->recent_ssids[0], mac_str, pineap_networks[i].bssid);
                 TERMINAL_VIEW_ADD_TEXT(
                     "Evil Twin Detected:\nSame SSID '%.100s'\nfrom BSSID %.17s and\n%.100s\n",
                     network->recent_ssids[0], mac_str, pineap_networks[i].bssid);
@@ -494,7 +505,7 @@ void wifi_raw_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     }
 }
 
-void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
+void __attribute__((section(".irom0.text"))) wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     if (type != WIFI_PKT_MGMT) {
         return;
     }
@@ -705,14 +716,14 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         uint16_t config_methods =
                             (payload[attr_index + 4] << 8) | payload[attr_index + 5];
 
-                        printf("Configuration Methods found: 0x%04x\n", config_methods);
+                        IRAM_PRINTF("Configuration Methods found: 0x%04x\n", config_methods);
 
                         if (config_methods & WPS_CONF_METHODS_PBC) {
-                            printf("WPS Push Button detected:\n%s\n", ssid);
+                            IRAM_PRINTF("WPS Push Button detected:\n%s\n", ssid);
                             TERMINAL_VIEW_ADD_TEXT("WPS Push Button detected:\n%s\n", ssid);
                         } else if (config_methods &
                                    (WPS_CONF_METHODS_PIN_DISPLAY | WPS_CONF_METHODS_PIN_KEYPAD)) {
-                            printf("WPS PIN detected:\n%s\n", ssid);
+                            IRAM_PRINTF("WPS PIN detected:\n%s\n", ssid);
                             TERMINAL_VIEW_ADD_TEXT("WPS PIN detected:\n%s\n", ssid);
                         }
 
@@ -735,7 +746,7 @@ void wifi_wps_detection_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
                         }
 
                         if (detected_network_count >= MAX_WPS_NETWORKS) {
-                            printf("Maximum number of WPS networks detected\nStopping monitor "
+                            IRAM_PRINTF("Maximum number of WPS networks detected\nStopping monitor "
                                    "mode.\n");
                             TERMINAL_VIEW_ADD_TEXT(
                                 "Maximum number of WPS networks detected\nStopping "
@@ -848,32 +859,32 @@ void ble_skimmer_scan_callback(struct ble_gap_event *event, void *arg) {
                          event->disc.addr.val[0], event->disc.addr.val[1], event->disc.addr.val[2],
                          event->disc.addr.val[3], event->disc.addr.val[4], event->disc.addr.val[5]);
 
-                printf("\nPOTENTIAL SKIMMER DETECTED!\n");
+                IRAM_PRINTF("\nPOTENTIAL SKIMMER DETECTED!\n");
                 TERMINAL_VIEW_ADD_TEXT("\nPOTENTIAL SKIMMER DETECTED!\n");
 
-                printf("Device Name: %s\n", device_name);
+                IRAM_PRINTF("Device Name: %s\n", device_name);
                 TERMINAL_VIEW_ADD_TEXT("Device Name: ");
                 TERMINAL_VIEW_ADD_TEXT(device_name);
                 TERMINAL_VIEW_ADD_TEXT("\n");
 
-                printf("MAC Address: %s\n", mac_addr);
+                IRAM_PRINTF("MAC Address: %s\n", mac_addr);
                 TERMINAL_VIEW_ADD_TEXT("MAC Address: ");
                 TERMINAL_VIEW_ADD_TEXT(mac_addr);
                 TERMINAL_VIEW_ADD_TEXT("\n");
 
-                printf("RSSI: %d dBm\n", event->disc.rssi);
+                IRAM_PRINTF("RSSI: %d dBm\n", event->disc.rssi);
                 TERMINAL_VIEW_ADD_TEXT("RSSI: ");
                 char rssi_str[12];
                 snprintf(rssi_str, sizeof(rssi_str), "%d", event->disc.rssi);
                 TERMINAL_VIEW_ADD_TEXT(rssi_str);
                 TERMINAL_VIEW_ADD_TEXT(" dBm\n");
 
-                printf("Reason:\nMatched known skimmer pattern: %s\n", suspicious_names[i]);
+                IRAM_PRINTF("Reason:\nMatched known skimmer pattern: %s\n", suspicious_names[i]);
                 TERMINAL_VIEW_ADD_TEXT("Reason:\nMatched known skimmer pattern: ");
                 TERMINAL_VIEW_ADD_TEXT(suspicious_names[i]);
                 TERMINAL_VIEW_ADD_TEXT("\n");
 
-                printf("Please verify before taking action.\n\n");
+                IRAM_PRINTF("Please verify before taking action.\n\n");
                 TERMINAL_VIEW_ADD_TEXT("Please verify before taking action.\n\n");
 
                 // pulse rgb red once when skimmer is detected

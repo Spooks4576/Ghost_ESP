@@ -10,6 +10,7 @@
 - Removed both options screen borders - @jaylikesbunda
 - Improved status bar containers - @jaylikesbunda
 - Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
+- Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
 
 ## 1.4.6
 
