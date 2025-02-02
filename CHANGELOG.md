@@ -12,6 +12,7 @@
 - Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
 - Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
 - Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
+- Disabled wifi_iram_opt for wroom models - @jaylikesbunda
 
 ## 1.4.6
 
