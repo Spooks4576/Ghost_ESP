@@ -1244,10 +1244,9 @@ void wifi_deauth_task(void *param) {
 
 void wifi_manager_start_deauth() {
     if (!beacon_task_running) {
-        printf("Starting deauth\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting deauth\n");
         ap_manager_stop_services();
         esp_wifi_start();
+        printf("Restarting Wi-Fi\n");
         xTaskCreate(wifi_deauth_task, "deauth_task", 4096, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, false);
@@ -2085,9 +2084,6 @@ void wifi_manager_stop_deauth() {
             esp_wifi_stop();
             ap_manager_start_services();
         }
-    } else {
-        printf("No deauth transmission\nis running.\n");
-        TERMINAL_VIEW_ADD_TEXT("No deauth transmission\nis running.\n");
     }
 }
 

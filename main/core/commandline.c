@@ -228,8 +228,8 @@ void handle_stop_flipper(int argc, char **argv) {
     csv_file_close();                  // Close any open CSV files
     gps_manager_deinit(&g_gpsManager); // Clean up GPS if active
     wifi_manager_stop_monitor_mode();  // Stop any active monitoring
-    printf("Stopped all activities and\nclosed files.\n");
-    TERMINAL_VIEW_ADD_TEXT("Stopped all activities and\nclosed files.\n");
+    printf("Stopped activities.\nClosed files.\n");
+    TERMINAL_VIEW_ADD_TEXT("Stopped activities.\nClosed files.\n");
 }
 
 void handle_dial_command(int argc, char **argv) {
@@ -568,8 +568,6 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-deauth") == 0) {
-        printf("Starting deauth\npacket capture...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting deauth\npacket capture...\n");
         int err = pcap_file_open("deauthscan", PCAP_CAPTURE_WIFI);
 
         if (err != ESP_OK) {
@@ -665,18 +663,19 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-skimmer") == 0) {
-        printf("Starting BLE\nSkimmer detection...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting BLE\nSkimmer detection...\n");
+        printf("Skimmer detection started.\n");
+        TERMINAL_VIEW_ADD_TEXT("Skimmer detection started.\n");
         int err = pcap_file_open("skimmer_scan", PCAP_CAPTURE_BLUETOOTH);
         if (err != ESP_OK) {
             printf("Warning: PCAP capture failed to start\n");
             TERMINAL_VIEW_ADD_TEXT("Warning: PCAP capture failed to start\n");
         } else {
-            printf("PCAP capture started\nSuspicious devices will be logged\n");
-            TERMINAL_VIEW_ADD_TEXT("PCAP capture started\nSuspicious devices will be logged\n");
+            printf("PCAP capture started\nMonitoring devices\n");
+            TERMINAL_VIEW_ADD_TEXT("PCAP capture started\nMonitoring devices\n");
         }
         // Start skimmer detection
         ble_start_skimmer_detection();
+
     }
 #endif
 }
@@ -1069,11 +1068,12 @@ void handle_gps_info(int argc, char **argv) {
 
             // Start the info display task
             xTaskCreate(gps_info_display_task, "gps_info", 4096, NULL, 1, &gps_info_task_handle);
-            printf("GPS info display started.\n");
-            TERMINAL_VIEW_ADD_TEXT("GPS info display started.\n");
+            printf("GPS info started.\n");
+            TERMINAL_VIEW_ADD_TEXT("GPS info started.\n");
         }
     }
 }
+
 
 #ifndef CONFIG_IDF_TARGET_ESP32S2
 void handle_ble_wardriving(int argc, char **argv) {
@@ -1135,9 +1135,10 @@ void handle_pineap_detection(int argc, char **argv) {
     start_pineap_detection();
     wifi_manager_start_monitor_mode(wifi_pineap_detector_callback);
 
-    printf("Monitoring for PineAP\n activity\n\n");
-    TERMINAL_VIEW_ADD_TEXT("Monitoring for PineAP\n activity\n\n");
+    printf("Monitoring for Pineapples\n");
+    TERMINAL_VIEW_ADD_TEXT("Monitoring for Pineapples\n");
 }
+
 
 void handle_apcred(int argc, char **argv) {
     if (argc < 2) {

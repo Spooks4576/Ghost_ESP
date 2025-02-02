@@ -128,12 +128,6 @@ void ble_stop_skimmer_detection(void) {
     if (rc == 0) {
         printf("BLE skimmer detection stopped successfully.\n");
         TERMINAL_VIEW_ADD_TEXT("BLE skimmer detection stopped successfully.\n");
-    } else if (rc == BLE_HS_EALREADY) {
-        printf("BLE scanning wasn't active.\n");
-        TERMINAL_VIEW_ADD_TEXT("BLE scanning wasn't active.\n");
-    } else {
-        printf("Failed to stop BLE scanning\n");
-        TERMINAL_VIEW_ADD_TEXT("Failed to stop BLE scanning\n");
     }
 }
 
@@ -633,16 +627,12 @@ void ble_stop(void) {
 
     switch (rc) {
     case 0:
-        printf("BLE scanning stopped successfully.\n");
-        TERMINAL_VIEW_ADD_TEXT("BLE scanning stopped successfully.\n");
-        break;
-    case BLE_HS_EALREADY:
-        printf("BLE scanning was not active.\n");
-        TERMINAL_VIEW_ADD_TEXT("BLE scanning was not active.\n");
+        printf("BLE scan stopped successfully.\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE scan stopped successfully.\n");
         break;
     case BLE_HS_EBUSY:
-        printf("BLE scanning is busy\n");
-        TERMINAL_VIEW_ADD_TEXT("BLE scanning is busy\n");
+        printf("BLE scan is busy\n");
+        TERMINAL_VIEW_ADD_TEXT("BLE scan is busy\n");
         break;
     case BLE_HS_ETIMEOUT:
         printf("BLE operation timed out.\n");
