@@ -192,7 +192,7 @@ void stop_pineap_detection(void) {
     esp_rom_printf(flash_fmt, ##__VA_ARGS__); \
 } while(0)
 
-void __attribute__((section(".irom0.text"))) log_pineap_detection(void *arg) {
+void log_pineap_detection(void *arg) {
     pineap_log_data_t *log_data = (pineap_log_data_t *)arg;
     pineap_network_t *network = log_data->network;
 
@@ -505,7 +505,7 @@ void wifi_raw_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     }
 }
 
-void __attribute__((section(".irom0.text"))) wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
+void wardriving_scan_callback(void *buf, wifi_promiscuous_pkt_type_t type) {
     if (type != WIFI_PKT_MGMT) {
         return;
     }
