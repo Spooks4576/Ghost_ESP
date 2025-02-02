@@ -1025,11 +1025,11 @@ void handle_help(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("        -r        : Reset to default (GhostNet/GhostNet)\n\n");
 
     printf("rgbmode\n");
-    printf("    Description: Control LED effects (rainbow, police, off)\n");
-    printf("    Usage: rgbmode <rainbow|police|off>\n");
+    printf("    Description: Control LED effects (rainbow, police, strobe, off)\n");
+    printf("    Usage: rgbmode <rainbow|police|strobe|off|color>\n");
     TERMINAL_VIEW_ADD_TEXT("rgbmode\n");
-    TERMINAL_VIEW_ADD_TEXT("    Description: Control LED effects (rainbow, police, off)\n");
-    TERMINAL_VIEW_ADD_TEXT("    Usage: rgbmode <rainbow|police|off>\n");
+    TERMINAL_VIEW_ADD_TEXT("    Description: Control LED effects (rainbow, police, strobe, off)\n");
+    TERMINAL_VIEW_ADD_TEXT("    Usage: rgbmode <rainbow|police|strobe|off|color>\n");
 }
 
 void handle_capture(int argc, char **argv) {
@@ -1215,34 +1215,79 @@ void handle_apcred(int argc, char **argv) {
 
 void handle_rgb_mode(int argc, char **argv) {
     if (argc < 2) {
-        printf("Usage: rgbmode <rainbow|police|off>\n");
-        TERMINAL_VIEW_ADD_TEXT("Usage: rgbmode <rainbow|police|off>\n");
+        printf("Usage: rgbmode <rainbow|police|strobe|off|color>\n");
+        TERMINAL_VIEW_ADD_TEXT("Usage: rgbmode <rainbow|police|strobe|off|color>\n");
         return;
     }
 
+    // Cancel any currently running LED effect task.
     if (rgb_effect_task_handle != NULL) {
         vTaskDelete(rgb_effect_task_handle);
         rgb_effect_task_handle = NULL;
     }
 
-    if (strcmp(argv[1], "rainbow") == 0) {
+    // Check for built-in modes first.
+    if (strcasecmp(argv[1], "rainbow") == 0) {
         xTaskCreate(rainbow_task, "rainbow_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
         printf("Rainbow mode activated\n");
         TERMINAL_VIEW_ADD_TEXT("Rainbow mode activated\n");
-    } 
-    else if (strcmp(argv[1], "police") == 0) {
+    } else if (strcasecmp(argv[1], "police") == 0) {
         xTaskCreate(police_task, "police_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
         printf("Police mode activated\n");
         TERMINAL_VIEW_ADD_TEXT("Police mode activated\n");
-    }
-    else if (strcmp(argv[1], "off") == 0) {
+    } else if (strcasecmp(argv[1], "strobe") == 0) {
+        xTaskCreate(strobe_task, "strobe_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
+        printf("Strobe mode activated\n");
+        TERMINAL_VIEW_ADD_TEXT("Strobe mode activated\n");
+    } else if (strcasecmp(argv[1], "off") == 0) {
         rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
+        led_strip_refresh(rgb_manager.strip);
         printf("RGB disabled\n");
         TERMINAL_VIEW_ADD_TEXT("RGB disabled\n");
-    }
-    else {
-        printf("Invalid RGB mode\n");
-        TERMINAL_VIEW_ADD_TEXT("Invalid RGB mode\n");
+    } else {
+        // Otherwise, treat the argument as a color name.
+        typedef struct {
+            const char *name;
+            uint8_t r;
+            uint8_t g;
+            uint8_t b;
+        } color_t;
+        static const color_t supported_colors[] = {
+            { "red",    255, 0,   0 },
+            { "green",  0,   255, 0 },
+            { "blue",   0,   0,   255 },
+            { "yellow", 255, 255, 0 },
+            { "purple", 128, 0,   128 },
+            { "cyan",   0,   255, 255 },
+            { "orange", 255, 165, 0 },
+            { "white",  255, 255, 255 },
+            { "pink",   255, 192, 203 }
+        };
+        const int num_colors = sizeof(supported_colors) / sizeof(supported_colors[0]);
+        int found = 0;
+        uint8_t r, g, b;
+        for (int i = 0; i < num_colors; i++) {
+            // Use case-insensitive compare.
+            if (strcasecmp(argv[1], supported_colors[i].name) == 0) {
+                r = supported_colors[i].r;
+                g = supported_colors[i].g;
+                b = supported_colors[i].b;
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            printf("Unknown color '%s'. Supported colors: red, green, blue, yellow, purple, cyan, orange, white, pink.\n", argv[1]);
+            TERMINAL_VIEW_ADD_TEXT("Unknown color '%s'. Supported colors: red, green, blue, yellow, purple, cyan, orange, white, pink.\n", argv[1]);
+            return;
+        }
+        // Set each LED to the selected static color.
+        for (int i = 0; i < rgb_manager.num_leds; i++) {
+            rgb_manager_set_color(&rgb_manager, i, r, g, b, false);
+        }
+        led_strip_refresh(rgb_manager.strip);
+        printf("Static color mode activated: %s\n", argv[1]);
+        TERMINAL_VIEW_ADD_TEXT("Static color mode activated: %s\n", argv[1]);
     }
 }
 
