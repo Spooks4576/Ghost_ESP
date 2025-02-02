@@ -11,7 +11,7 @@
 - Improved status bar containers - @jaylikesbunda
 - Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
 - Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
-- Removed redundant uint8_t range checks in RGB scaling utility to eliminate compiler warnings - @jaylikesbunda
+- Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
 
 ## 1.4.6
 
