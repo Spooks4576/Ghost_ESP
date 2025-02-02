@@ -5,6 +5,8 @@
 #include "managers/settings_manager.h"
 #include <math.h>
 
+void rgb_manager_strobe_effect(RGBManager_t *rgb_manager, int delay_ms);
+
 static const char *TAG = "RGBManager";
 
 typedef struct {
@@ -107,6 +109,12 @@ void police_task(void *pvParameter) {
     vTaskDelay(pdMS_TO_TICKS(20));
   }
   vTaskDelete(NULL);
+}
+
+void strobe_task(void *pvParameter) {
+    RGBManager_t *rgb_manager = (RGBManager_t *)pvParameter;
+    rgb_manager_strobe_effect(rgb_manager, settings_get_rgb_speed(&G_Settings));
+    vTaskDelete(NULL);
 }
 
 void clamp_rgb(uint8_t *r, uint8_t *g, uint8_t *b) {
@@ -521,6 +529,20 @@ void rgb_manager_policesiren_effect(RGBManager_t *rgb_manager, int delay_ms) {
     // Alternate between red and blue after each full cycle
     is_red = !is_red;
   }
+}
+
+void rgb_manager_strobe_effect(RGBManager_t *rgb_manager, int delay_ms) {
+    while (1) {
+        // Strobe ON: Set LED to full brightness (white)
+        rgb_manager_set_color(rgb_manager, 0, 255, 255, 255, false);
+        led_strip_refresh(rgb_manager->strip);
+        vTaskDelay(pdMS_TO_TICKS(delay_ms));
+
+        // Strobe OFF: Turn LEDs off completely
+        rgb_manager_set_color(rgb_manager, 0, 0, 0, 0, false);
+        led_strip_refresh(rgb_manager->strip);
+        vTaskDelay(pdMS_TO_TICKS(delay_ms * 3));
+    }
 }
 
 // Deinitialize the RGB LED manager
