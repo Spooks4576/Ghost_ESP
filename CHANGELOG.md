@@ -13,6 +13,7 @@
 - Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
 - Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
 - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
+- Added packet rate logging to deauth attacks with 5s intervals - @jaylikesbunda
 
 ## 1.4.6
 

