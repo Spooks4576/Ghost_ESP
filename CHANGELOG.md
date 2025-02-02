@@ -5,6 +5,7 @@
 ### ❤️ New Stuff
 
 - Added packet rate logging to deauth attacks with 5s intervals - @jaylikesbunda
+- Added 'rgbmode' command to control the RGB LED strip directly - @jaylikesbunda
 
 ### 🤏 Tweaks and Improvements
 
@@ -14,7 +15,8 @@
   - Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
   - Removed a bunch of dupe logs and reworded some - @jaylikesbunda
   - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
-  
+  - Updated police siren effect to use sine-based easing. - @jaylikesbunda
+
 - Display Specific:
   - Removed main menu icon shadow - @jaylikesbunda
   - Removed both options screen borders - @jaylikesbunda

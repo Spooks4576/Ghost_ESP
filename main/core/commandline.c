@@ -1023,6 +1023,13 @@ void handle_help(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("        <ssid>     : New SSID for the AP\n");
     TERMINAL_VIEW_ADD_TEXT("        <password> : New password (min 8 characters)\n");
     TERMINAL_VIEW_ADD_TEXT("        -r        : Reset to default (GhostNet/GhostNet)\n\n");
+
+    printf("rgbmode\n");
+    printf("    Description: Control LED effects (rainbow, police, off)\n");
+    printf("    Usage: rgbmode <rainbow|police|off>\n");
+    TERMINAL_VIEW_ADD_TEXT("rgbmode\n");
+    TERMINAL_VIEW_ADD_TEXT("    Description: Control LED effects (rainbow, police, off)\n");
+    TERMINAL_VIEW_ADD_TEXT("    Usage: rgbmode <rainbow|police|off>\n");
 }
 
 void handle_capture(int argc, char **argv) {
@@ -1206,6 +1213,39 @@ void handle_apcred(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("AP updated:\nSSID: %s\n", saved_ssid);
 }
 
+void handle_rgb_mode(int argc, char **argv) {
+    if (argc < 2) {
+        printf("Usage: rgbmode <rainbow|police|off>\n");
+        TERMINAL_VIEW_ADD_TEXT("Usage: rgbmode <rainbow|police|off>\n");
+        return;
+    }
+
+    if (rgb_effect_task_handle != NULL) {
+        vTaskDelete(rgb_effect_task_handle);
+        rgb_effect_task_handle = NULL;
+    }
+
+    if (strcmp(argv[1], "rainbow") == 0) {
+        xTaskCreate(rainbow_task, "rainbow_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
+        printf("Rainbow mode activated\n");
+        TERMINAL_VIEW_ADD_TEXT("Rainbow mode activated\n");
+    } 
+    else if (strcmp(argv[1], "police") == 0) {
+        xTaskCreate(police_task, "police_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
+        printf("Police mode activated\n");
+        TERMINAL_VIEW_ADD_TEXT("Police mode activated\n");
+    }
+    else if (strcmp(argv[1], "off") == 0) {
+        rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
+        printf("RGB disabled\n");
+        TERMINAL_VIEW_ADD_TEXT("RGB disabled\n");
+    }
+    else {
+        printf("Invalid RGB mode\n");
+        TERMINAL_VIEW_ADD_TEXT("Invalid RGB mode\n");
+    }
+}
+
 void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
@@ -1239,6 +1279,7 @@ void register_commands() {
 #endif
     register_command("pineap", handle_pineap_detection);
     register_command("apcred", handle_apcred);
+    register_command("rgbmode", handle_rgb_mode);
     printf("Registered Commands\n");
     TERMINAL_VIEW_ADD_TEXT("Registered Commands\n");
 }
