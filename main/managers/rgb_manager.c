@@ -442,7 +442,6 @@ void rgb_manager_rainbow_effect_matrix(RGBManager_t *rgb_manager,
   }
 }
 
-// Rainbow effect
 void rgb_manager_rainbow_effect(RGBManager_t *rgb_manager, int delay_ms) {
   double hue = 0.0;
 
@@ -484,34 +483,43 @@ void rgb_manager_rainbow_effect(RGBManager_t *rgb_manager, int delay_ms) {
 }
 
 void rgb_manager_policesiren_effect(RGBManager_t *rgb_manager, int delay_ms) {
-  uint8_t brightness;
-  bool increasing = true;
   bool is_red = true;
 
   while (1) {
+    // Fade in phase with easing for a smooth, natural ramp-up
     for (int pulse_step = 0; pulse_step <= 255; pulse_step += 5) {
-      if (increasing) {
-        brightness = pulse_step;
-      } else {
-        brightness = 255 - pulse_step;
-      }
-
+      double ratio = ((double)pulse_step) / 255.0;
+      uint8_t brightness = (uint8_t)(255 * sin(ratio * (M_PI / 2)));
       if (is_red) {
         rgb_manager_set_color(rgb_manager, 0, brightness, 0, 0, false);
       } else {
         rgb_manager_set_color(rgb_manager, 0, 0, 0, brightness, false);
       }
-
       led_strip_refresh(rgb_manager->strip);
-
       vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 
-    increasing = !increasing;
+    // Hold at maximum brightness briefly to mimic a real siren flash
+    vTaskDelay(pdMS_TO_TICKS(50));
 
-    if (!increasing) {
-      is_red = !is_red;
+    // Fade out phase with the same easing in reverse
+    for (int pulse_step = 255; pulse_step >= 0; pulse_step -= 5) {
+      double ratio = ((double)pulse_step) / 255.0;
+      uint8_t brightness = (uint8_t)(255 * sin(ratio * (M_PI / 2)));
+      if (is_red) {
+        rgb_manager_set_color(rgb_manager, 0, brightness, 0, 0, false);
+      } else {
+        rgb_manager_set_color(rgb_manager, 0, 0, 0, brightness, false);
+      }
+      led_strip_refresh(rgb_manager->strip);
+      vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
+
+    // Brief pause with the lights off to accentuate the cycle
+    vTaskDelay(pdMS_TO_TICKS(50));
+
+    // Alternate between red and blue after each full cycle
+    is_red = !is_red;
   }
 }
 

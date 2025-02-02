@@ -13,6 +13,7 @@ typedef struct {
   int num_leds;             // Number of LEDs
   led_strip_handle_t strip; // LED strip handle
   bool is_separate_pins;    // Flag to check if separate RGB pins are used
+  bool effect_active;        // Add this flag
 } RGBManager_t;
 
 /**
