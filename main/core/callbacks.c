@@ -14,7 +14,6 @@
 
 #define STORE_STR_ATTR __attribute__((section(".rodata.str")))
 #define STORE_DATA_ATTR __attribute__((section(".rodata.data")))
-
 #define WPS_OUI 0x0050f204
 #define TAG "WIFI_MONITOR"
 #define WPS_CONF_METHODS_PBC 0x0080
@@ -26,10 +25,34 @@
 #define WIFI_PKT_PROBE_RESP 0x05 // Probe Response subtype
 #define WIFI_PKT_EAPOL 0x80
 #define ESP_WIFI_VENDOR_METADATA_LEN 8 // Channel(1) + RSSI(1) + Rate(1) + Timestamp(4) + Noise(1)
-
 #define MIN_SSIDS_FOR_DETECTION 2 // Minimum SSIDs needed to flag as PineAP
+#define MAX_PINEAP_NETWORKS 20
+#define MAX_SSIDS_PER_BSSID 10
+#define MAX_WIFI_CHANNEL 13
+#define CHANNEL_HOP_INTERVAL_MS 200
+#define RECENT_SSID_COUNT 5
+#define LOG_DELAY_MS 5000
+static pineap_network_t pineap_networks[MAX_PINEAP_NETWORKS] DRAM_ATTR;
+static int pineap_network_count = 0;
+static bool pineap_detection_active = false;
+static uint8_t current_channel = 1;
+static esp_timer_handle_t channel_hop_timer = NULL;
+static uint32_t hash_ssid(const char *ssid);
+static bool ssid_hash_exists(pineap_network_t *network, uint32_t hash);
+static void trim_trailing(char *str);
+static bool compare_bssid(const uint8_t *bssid1, const uint8_t *bssid2);
+static bool is_beacon_packet(const wifi_promiscuous_pkt_t *pkt);
+static const char *SKIMMER_TAG = "SKIMMER_DETECT";
+static const char *suspicious_names[] = {
+    "HC-03", "HC-05", "HC-06",  "HC-08",    "BT-HC05", "JDY-31",
+    "AT-09", "HM-10", "CC41-A", "MLT-BT05", "SPP-CA",  "FFD0"};
 
-// Structure to track blacklisted BSSIDs
+wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
+int detected_network_count = 0;
+esp_timer_handle_t stop_timer;
+int should_store_wps = 1;
+gps_t *gps = NULL;
+extern RGBManager_t rgb_manager;
 typedef struct {
     uint8_t bssid[6];
     time_t detection_time;
@@ -83,32 +106,6 @@ static void add_to_blacklist(const uint8_t *bssid) {
     }
 }
 
-static uint32_t hash_ssid(const char *ssid);
-static bool ssid_hash_exists(pineap_network_t *network, uint32_t hash);
-static void trim_trailing(char *str);
-static bool compare_bssid(const uint8_t *bssid1, const uint8_t *bssid2);
-static bool is_beacon_packet(const wifi_promiscuous_pkt_t *pkt);
-
-wps_network_t detected_wps_networks[MAX_WPS_NETWORKS];
-int detected_network_count = 0;
-esp_timer_handle_t stop_timer;
-int should_store_wps = 1;
-gps_t *gps = NULL;
-extern RGBManager_t rgb_manager;
-
-#define MAX_PINEAP_NETWORKS 20
-#define MAX_SSIDS_PER_BSSID 10
-#define MAX_WIFI_CHANNEL 13
-#define CHANNEL_HOP_INTERVAL_MS 200
-#define RECENT_SSID_COUNT 5
-#define LOG_DELAY_MS 5000
-
-// Use DRAM (slower but safe)
-static pineap_network_t pineap_networks[MAX_PINEAP_NETWORKS] DRAM_ATTR;
-static int pineap_network_count = 0;
-static bool pineap_detection_active = false;
-static uint8_t current_channel = 1;
-static esp_timer_handle_t channel_hop_timer = NULL;
 
 static void channel_hop_timer_callback(void *arg) {
     if (!pineap_detection_active)
@@ -825,12 +822,7 @@ static int ble_hs_adv_parse_fields_cb(const struct ble_hs_adv_field *field, void
 
 // wrap for esp32s2
 #ifndef CONFIG_IDF_TARGET_ESP32S2
-static const char *SKIMMER_TAG = "SKIMMER_DETECT";
 
-// suspicious device names commonly used in skimmers
-static const char *suspicious_names[] = {"HC-03",   "HC-05",    "HC-06",  "HC-08",
-                                         "BT-HC05", "JDY-31",   "AT-09",  "HM-10",
-                                         "CC41-A",  "MLT-BT05", "SPP-CA", "FFD0"};
 static const int suspicious_names_count = sizeof(suspicious_names) / sizeof(suspicious_names[0]);
 void ble_skimmer_scan_callback(struct ble_gap_event *event, void *arg) {
     if (!event || event->type != BLE_GAP_EVENT_DISC) {

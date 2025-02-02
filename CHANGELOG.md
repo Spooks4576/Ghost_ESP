@@ -2,6 +2,10 @@
 
 ## 1.4.7
 
+### ❤️ New Stuff
+
+- Added packet rate logging to deauth attacks with 5s intervals - @jaylikesbunda
+
 ### 🤏 Tweaks and Improvements
 
 - Added Reset AP Credentials as a display option - @jaylikesbunda
@@ -12,9 +16,7 @@
 - Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
 - Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
 - Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
-- Disabled wifi_iram_opt for wroom models - @jaylikesbunda
-- Added packet rate logging to deauth attacks with 5s intervals - @jaylikesbunda
-- Miscellaneous logging changes - @jaylikesbunda
+- Removed a bunch of dupe logs and reworded some - @jaylikesbunda
 
 ## 1.4.6
 
