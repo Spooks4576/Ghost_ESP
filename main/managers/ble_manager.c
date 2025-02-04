@@ -594,12 +594,10 @@ void ble_deinit(void) {
 
 void ble_stop(void) {
     if (!ble_initialized) {
-        // comment out for now because it will this print out every time the user
-        // sends stop on flipper app and it's not 100% needed but it's good to have
-        // it for debugging
+        return;
+    }
 
-        /*         printf("BLE not initialized.\n");
-                TERMINAL_VIEW_ADD_TEXT("BLE not initialized.\n"); */
+    if (!ble_gap_disc_active()) {
         return;
     }
 
