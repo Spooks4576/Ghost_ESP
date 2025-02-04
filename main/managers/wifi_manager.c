@@ -719,7 +719,7 @@ httpd_handle_t start_portal_webserver(void) {
 }
 
 esp_err_t wifi_manager_start_evil_portal(const char *URL, const char *SSID, const char *Password,
-                                         const char *ap_ssid, const char *domain) {
+                                          const char *ap_ssid, const char *domain) {
 
     if (strlen(URL) > 0 && strlen(domain) > 0) {
         PORTALURL = URL;
@@ -2335,22 +2335,19 @@ void wifi_manager_start_ip_lookup() {
 
 void wifi_manager_connect_wifi(const char *ssid, const char *password) {
     wifi_config_t wifi_config = {
-        .sta =
-            {
-                .threshold.authmode = strlen(password) > 8 ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,
-                .pmf_cfg = {.capable = true, .required = false},
-            },
+        .sta = {
+            .threshold.authmode = strlen(password) > 8 ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN,
+            .pmf_cfg = {.capable = true, .required = false},
+        },
     };
 
     // Copy SSID and password safely
     strlcpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
     strlcpy((char *)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
 
-    // Ensure we're disconnected before starting
+    // Ensure clean start state
     esp_wifi_disconnect();
-    vTaskDelay(pdMS_TO_TICKS(500)); // Increased delay to ensure disconnect completes
-
-    // Clear any previous connection state
+    vTaskDelay(pdMS_TO_TICKS(500));
     xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
@@ -2362,68 +2359,32 @@ void wifi_manager_connect_wifi(const char *ssid, const char *password) {
     bool connected = false;
 
     while (retry_count < max_retries && !connected) {
-        printf("Attempting to connect to Wi-Fi\n(Attempt %d/%d)...\n", retry_count + 1,
-               max_retries);
-        TERMINAL_VIEW_ADD_TEXT("Attempting to connect to Wi-Fi\n(Attempt %d/%d)...\n",
-                               retry_count + 1, max_retries);
-
         esp_err_t ret = esp_wifi_connect();
         if (ret == ESP_ERR_WIFI_CONN) {
-            // If already connecting, wait for result instead of treating as error
-            printf("Connection already in progress\nwaiting for result...\n");
-            TERMINAL_VIEW_ADD_TEXT("Connection already in progress\nwaiting for result...\n");
-            ret = ESP_OK;
+            ret = ESP_OK; // Already connecting, handled elsewhere
         }
 
         if (ret == ESP_OK) {
-            // Wait for connection event with timeout
-            EventBits_t bits =
-                xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, pdFALSE, pdTRUE,
-                                    pdMS_TO_TICKS(8000)); // Increased to 8 second timeout
-
+            EventBits_t bits = xEventGroupWaitBits(wifi_event_group, 
+                WIFI_CONNECTED_BIT, pdFALSE, pdTRUE, pdMS_TO_TICKS(8000));
+            
             if (bits & WIFI_CONNECTED_BIT) {
-                // Double check connection status
-                wifi_ap_record_t ap_info;
-                if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
-                    printf("Successfully connected to Wi-Fi network:\n%s\n", ap_info.ssid);
-                    TERMINAL_VIEW_ADD_TEXT("Successfully connected to Wi-Fi network:\n%s\n",
-                                           ap_info.ssid);
-                    connected = true;
-                    break;
-                }
+                connected = true;
+                break;
             }
-        } else {
-            // Only treat as failed attempt if it's not ESP_ERR_WIFI_CONN
-            printf("Connection attempt %d failed:\n%s\n", retry_count + 1, esp_err_to_name(ret));
-            TERMINAL_VIEW_ADD_TEXT("Connection attempt %d failed:\n%s\n", retry_count + 1,
-                                   esp_err_to_name(ret));
         }
 
-        // If we get here and not connected, prepare for retry
         if (!connected) {
             esp_wifi_disconnect();
-            vTaskDelay(pdMS_TO_TICKS(1000)); // 1 second delay between retries
+            vTaskDelay(pdMS_TO_TICKS(1000));
             retry_count++;
         }
     }
 
     if (!connected) {
-        TERMINAL_VIEW_ADD_TEXT("Failed to connect to Wi-Fi after %d attempts\n", max_retries);
-        printf("Failed to connect to Wi-Fi after %d attempts\n", max_retries);
-        // Clean up
+        TERMINAL_VIEW_ADD_TEXT("Failed after %d attempts\n", max_retries);
+        printf("Connection failed after %d attempts\n", max_retries);
         esp_wifi_disconnect();
-    } else {
-        // Get and display IP info
-        esp_netif_ip_info_t ip_info;
-        if (esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info) ==
-            ESP_OK) {
-            printf("IP Address: " IPSTR "\n", IP2STR(&ip_info.ip));
-            printf("Subnet Mask: " IPSTR "\n", IP2STR(&ip_info.netmask));
-            printf("Gateway: " IPSTR "\n", IP2STR(&ip_info.gw));
-
-            TERMINAL_VIEW_ADD_TEXT("IP Address: " IPSTR "\n", IP2STR(&ip_info.ip));
-            TERMINAL_VIEW_ADD_TEXT("Connection successful!\n");
-        }
     }
 }
 

@@ -1238,27 +1238,56 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
             printf("AP stopped\n");
             break;
         case WIFI_EVENT_AP_STACONNECTED:
-            printf("Station connected to AP\n");
+            printf("Device connected to AP\n");
             break;
         case WIFI_EVENT_AP_STADISCONNECTED:
-            printf("Station disconnected from AP\n");
+            printf("Device disconnected from AP\n");
+
             break;
-        case WIFI_EVENT_STA_START:
-            printf("STA started\n");
-            esp_wifi_connect();
+        case WIFI_EVENT_STA_START: {
+            static bool connection_in_progress = false;
+            
+            if(!connection_in_progress) {
+                connection_in_progress = true;
+                
+                // Get configured SSID from station config
+                wifi_config_t sta_config;
+                if(esp_wifi_get_config(WIFI_IF_STA, &sta_config) == ESP_OK) {
+                    printf("\nConnecting to %.*s\n", 18, sta_config.sta.ssid);
+                } else {
+                    printf("\nConnecting to network\n");
+                }
+                esp_wifi_connect();
+            }
             break;
-        case WIFI_EVENT_STA_DISCONNECTED:
-            printf("Disconnected from Wi-Fi\n");
+        }
+        case WIFI_EVENT_STA_DISCONNECTED: {
+            wifi_event_sta_disconnected_t *disconn = (wifi_event_sta_disconnected_t *) event_data;
+            printf("Disconnected\nReason: %d\n", disconn->reason);
             break;
+        }
         default:
             break;
         }
     } else if (event_base == IP_EVENT) {
         switch (event_id) {
-        case IP_EVENT_STA_GOT_IP:
+        case IP_EVENT_STA_GOT_IP: {
+            ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
+            
+            // Get SSID from active connection
+            wifi_ap_record_t ap_info;
+            if(esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+                printf("\nConnected!\nSSID: %.*s\nIP: " IPSTR "\n",
+                       18, ap_info.ssid, 
+                       IP2STR(&event->ip_info.ip));
+            } else {
+                printf("\nConnected!\nIP: " IPSTR "\n",
+                       IP2STR(&event->ip_info.ip));
+            }
             break;
+        }
         case IP_EVENT_AP_STAIPASSIGNED:
-            printf("Assigned IP to STA\n");
+            printf("Assigned STA IP\n");
             break;
         default:
             break;

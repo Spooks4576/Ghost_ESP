@@ -17,6 +17,7 @@
   - Removed a bunch of dupe logs and reworded some - @jaylikesbunda
   - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
   - Updated police siren effect to use sine-based easing. - @jaylikesbunda
+  - Improved WiFi connection output and connection state management - @jaylikesbunda
 
 - Display Specific:
   - Removed main menu icon shadow - @jaylikesbunda
