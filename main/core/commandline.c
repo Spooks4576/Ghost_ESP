@@ -1031,6 +1031,15 @@ void handle_help(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("rgbmode\n");
     TERMINAL_VIEW_ADD_TEXT("    Description: Control LED effects (rainbow, police, strobe, off)\n");
     TERMINAL_VIEW_ADD_TEXT("    Usage: rgbmode <rainbow|police|strobe|off|color>\n");
+
+    printf("setrgbpins\n");
+    printf("    Description: Change RGB LED pins\n");
+    printf("    Usage: setrgbpins <red> <green> <blue>\n");
+    printf("           (use same value for all pins for single-pin LED strips)\n\n");
+    TERMINAL_VIEW_ADD_TEXT("setrgbpins\n");
+    TERMINAL_VIEW_ADD_TEXT("    Description: Change RGB LED pins\n");
+    TERMINAL_VIEW_ADD_TEXT("    Usage: setrgbpins <red> <green> <blue>\n");
+    TERMINAL_VIEW_ADD_TEXT("           (use same value for all pins for single-pin LED strips)\n\n");
 }
 
 void handle_capture(int argc, char **argv) {
@@ -1308,6 +1317,38 @@ void handle_rgb_mode(int argc, char **argv) {
     }
 }
 
+void handle_setrgb(int argc, char **argv) {
+    if (argc != 4) {
+        printf("Usage: setrgbpins <red> <green> <blue>\n");
+        printf("           (use same value for all pins for single-pin LED strips)\n\n");
+        return;
+    }
+    
+    gpio_num_t red_pin = (gpio_num_t)atoi(argv[1]);
+    gpio_num_t green_pin = (gpio_num_t)atoi(argv[2]);
+    gpio_num_t blue_pin = (gpio_num_t)atoi(argv[3]);
+
+    // Handle single-pin mode if all values match
+    if(red_pin == green_pin && green_pin == blue_pin) {
+        rgb_manager_deinit(&rgb_manager);
+        esp_err_t ret = rgb_manager_init(&rgb_manager, red_pin, 1,  // Use single pin mode
+                                        LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812,
+                                        GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_NC); // NC for separate pins
+        if(ret == ESP_OK) {
+            printf("Single-pin RGB configured on GPIO %d!\n", red_pin);
+        }
+    } else {
+        // Original separate pin logic
+        rgb_manager_deinit(&rgb_manager);
+        esp_err_t ret = rgb_manager_init(&rgb_manager, GPIO_NUM_NC, 1,
+                                        LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812,
+                                        red_pin, green_pin, blue_pin);
+        if(ret == ESP_OK) {
+            printf("RGB pins updated successfully!\n");
+        }
+    }
+}
+
 void register_commands() {
     register_command("help", handle_help);
     register_command("scanap", cmd_wifi_scan_start);
@@ -1342,6 +1383,7 @@ void register_commands() {
     register_command("pineap", handle_pineap_detection);
     register_command("apcred", handle_apcred);
     register_command("rgbmode", handle_rgb_mode);
+    register_command("setrgbpins", handle_setrgb);
     printf("Registered Commands\n");
     TERMINAL_VIEW_ADD_TEXT("Registered Commands\n");
 }
