@@ -19,6 +19,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <vendor/dial_client.h>
+#include "esp_wifi.h"
 
 static Command *command_list_head = NULL;
 TaskHandle_t VisualizerHandle = NULL;
@@ -1190,9 +1191,23 @@ void handle_apcred(int argc, char **argv) {
         return;
     }
 
+    // immediate AP reconfiguration
+    wifi_config_t ap_config = {
+        .ap = {
+            .ssid_len = strlen(new_ssid),
+            .max_connection = 4,
+            .authmode = WIFI_AUTH_WPA2_PSK
+        },
+    };
+    strcpy((char *)ap_config.ap.ssid, new_ssid);
+    strcpy((char *)ap_config.ap.password, new_password);
+    
+    // Force the new config immediately
+    esp_wifi_set_config(WIFI_IF_AP, &ap_config);
     settings_set_ap_ssid(&G_Settings, new_ssid);
     settings_set_ap_password(&G_Settings, new_password);
     settings_save(&G_Settings);
+
     const char *saved_ssid = settings_get_ap_ssid(&G_Settings);
     const char *saved_password = settings_get_ap_password(&G_Settings);
     if (strcmp(saved_ssid, new_ssid) != 0 || strcmp(saved_password, new_password) != 0) {

@@ -18,6 +18,7 @@
   - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
   - Updated police siren effect to use sine-based easing. - @jaylikesbunda
   - Improved WiFi connection output and connection state management - @jaylikesbunda
+  - Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
 
 - Display Specific:
   - Removed main menu icon shadow - @jaylikesbunda
@@ -25,6 +26,7 @@
   - Improved status bar containers - @jaylikesbunda
   - Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
   - Added Reset AP Credentials as a display option - @jaylikesbunda
+
 
 ## 1.4.6
 
