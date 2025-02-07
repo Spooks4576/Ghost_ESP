@@ -4,10 +4,13 @@
 
 ### ❤️ New Stuff
 
+Attacks:
 - Added packet rate logging to deauth attacks with 5s intervals - @jaylikesbunda
-- Added 'rgbmode' command to control the RGB LEDs directly with support for color and mode args- @jaylikesbunda
-- Added new 'strobe' effect for RGB LEDs - @jaylikesbunda
-- Added 'setrgbpins' command accessible through serial and webUI to set the RGB LED pins - @jaylikesbunda
+
+Lighting:
+  - Added 'rgbmode' command to control the RGB LEDs directly with support for color and mode args- @jaylikesbunda
+  - Added new 'strobe' effect for RGB LEDs - @jaylikesbunda
+  - Added 'setrgbpins' command accessible through serial and webUI to set the RGB LED pins - @jaylikesbunda
 
 ### 🐛 Bug Fixes
   - Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
