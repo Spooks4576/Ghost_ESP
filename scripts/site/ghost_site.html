@@ -815,7 +815,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP vA1.4.6</h1>
+        <h1>Ghost ESP vA1.4.7</h1>
         <!-- Tab Navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
@@ -1015,6 +1015,30 @@
                             </span>
                         </label>
                         <input type="number" id="rgb_speed" min="15" max="50" step="1" placeholder="15 - 50" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="rgb_red_pin">Red Pin 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">GPIO for red LED (0-34)</span>
+                            </span>
+                        </label>
+                        <input type="number" id="rgb_red_pin" min="0" max="34" placeholder="Red GPIO">
+                    </div>
+                    <div class="input-group">
+                        <label for="rgb_green_pin">Green Pin 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">GPIO for green LED (0-34)</span>
+                            </span>
+                        </label>
+                        <input type="number" id="rgb_green_pin" min="0" max="34" placeholder="Green GPIO">
+                    </div>
+                    <div class="input-group">
+                        <label for="rgb_blue_pin">Blue Pin 
+                            <span class="tooltip">?
+                                <span class="tooltiptext">GPIO for blue LED (0-34)</span>
+                            </span>
+                        </label>
+                        <input type="number" id="rgb_blue_pin" min="0" max="34" placeholder="Blue GPIO">
                     </div>
                 </div>
                 <!-- Flappy Ghost Section -->
@@ -1579,6 +1603,20 @@
                 alert('Please correct the following errors:\n' + validationErrors.join('\n'));
                 return;
             }
+
+            const rgbRedPin = parseInt(document.getElementById('rgb_red_pin').value);
+            const rgbGreenPin = parseInt(document.getElementById('rgb_green_pin').value);
+            const rgbBluePin = parseInt(document.getElementById('rgb_blue_pin').value);
+
+            // Add to settings POST
+            settings.rgb_red_pin = rgbRedPin;
+            settings.rgb_green_pin = rgbGreenPin;
+            settings.rgb_blue_pin = rgbBluePin;
+
+            // Add validation
+            if (!isNaN(rgbRedPin)) validateGpioRange(rgbRedPin, 'Red pin');
+            if (!isNaN(rgbGreenPin)) validateGpioRange(rgbGreenPin, 'Green pin'); 
+            if (!isNaN(rgbBluePin)) validateGpioRange(rgbBluePin, 'Blue pin');
 
             fetch('/api/settings', {
                 method: 'POST',
