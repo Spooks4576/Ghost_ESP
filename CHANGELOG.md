@@ -8,17 +8,18 @@
 - Added 'rgbmode' command to control the RGB LEDs directly with support for color and mode args- @jaylikesbunda
 - Added new 'strobe' effect for RGB LEDs - @jaylikesbunda
 
+### 🐛 Bug Fixes
+  - Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
+  - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
+    
 ### 🤏 Tweaks and Improvements
-
 - General:
   - Added extra NVS recovery attempts - @jaylikesbunda
   - Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
   - Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
   - Removed a bunch of dupe logs and reworded some - @jaylikesbunda
-  - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
   - Updated police siren effect to use sine-based easing. - @jaylikesbunda
   - Improved WiFi connection output and connection state management - @jaylikesbunda
-  - Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
 
 - Display Specific:
   - Removed main menu icon shadow - @jaylikesbunda
