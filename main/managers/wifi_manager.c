@@ -1225,7 +1225,6 @@ void wifi_deauth_task(void *param) {
                 for (int y = 1; y < 12; y++) {
                     uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                     wifi_manager_broadcast_deauth(ap_info[i].bssid, y, broadcast_mac);
-                    // Increase delay to 50ms
                     vTaskDelay(pdMS_TO_TICKS(50));
                 }
             }
@@ -1233,8 +1232,8 @@ void wifi_deauth_task(void *param) {
         vTaskDelay(pdMS_TO_TICKS(100));
         uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
         if (now - last_log >= 5000) {
-            TERMINAL_VIEW_ADD_TEXT("%d packets/sec\n", deauth_packets_sent/5);
-            printf("%lu packets/sec\n", deauth_packets_sent/5);
+            TERMINAL_VIEW_ADD_TEXT("%u packets/sec\n", deauth_packets_sent/5);
+            printf("%" PRIu32 " packets/sec\n", deauth_packets_sent/5); 
             deauth_packets_sent = 0;
             last_log = now;
         }
