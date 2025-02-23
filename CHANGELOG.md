@@ -4,19 +4,28 @@
 
 ### ❤️ New Stuff
 
+General:
+
+- Added WebUI "Terminal" for sending commands and receiving logs - @jaylikesbunda
+
 Attacks:
+
 - Added packet rate logging to deauth attacks with 5s intervals - @jaylikesbunda
 
 Lighting:
-  - Added 'rgbmode' command to control the RGB LEDs directly with support for color and mode args- @jaylikesbunda
-  - Added new 'strobe' effect for RGB LEDs - @jaylikesbunda
-  - Added 'setrgbpins' command accessible through serial and webUI to set the RGB LED pins - @jaylikesbunda
+
+- Added 'rgbmode' command to control the RGB LEDs directly with support for color and mode args- @jaylikesbunda
+- Added new 'strobe' effect for RGB LEDs - @jaylikesbunda
+- Added 'setrgbpins' command accessible through serial and webUI to set the RGB LED pins - @jaylikesbunda
+
 
 ### 🐛 Bug Fixes
-  - Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
-  - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
-    
+
+- Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
+- Disabled wifi_iram_opt for wroom models - @jaylikesbunda
+
 ### 🤏 Tweaks and Improvements
+
 - General:
   - Added extra NVS recovery attempts - @jaylikesbunda
   - Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
