@@ -1221,6 +1221,14 @@ void wifi_deauth_task(void *param) {
         }
         // Add a small delay between iterations
         vTaskDelay(pdMS_TO_TICKS(100));
+        uint32_t now = xTaskGetTickCount() * portTICK_PERIOD_MS;
+        if (now - last_log >= 5000) {
+            TERMINAL_VIEW_ADD_TEXT("%" PRIu32 " packets/sec\n", deauth_packets_sent/5);
+            printf("%" PRIu32 " packets/sec\n", deauth_packets_sent/5); 
+            deauth_packets_sent = 0;
+            last_log = now;
+        }
+
     }
 }
 
