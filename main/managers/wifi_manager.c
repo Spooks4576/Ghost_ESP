@@ -344,6 +344,11 @@ void wifi_stations_sniffer_callback(void *buf, wifi_promiscuous_pkt_type_t type)
         "station MAC: %02X:%02X:%02X:%02X:%02X:%02X -> AP BSSID: %02X:%02X:%02X:%02X:%02X:%02X\n",
         src_mac[0], src_mac[1], src_mac[2], src_mac[3], src_mac[4], src_mac[5], dest_mac[0],
         dest_mac[1], dest_mac[2], dest_mac[3], dest_mac[4], dest_mac[5]);
+    
+    // check if this station-ap pair already exists before adding it
+    if (!station_exists(src_mac, dest_mac)) {
+        add_station_ap_pair(src_mac, dest_mac);
+    }
 }
 
 esp_err_t stream_data_to_client(httpd_req_t *req, const char *url, const char *content_type) {
