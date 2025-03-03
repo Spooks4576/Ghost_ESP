@@ -23,6 +23,7 @@ Lighting:
 
 - Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
 - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
+- Fix Station Scanning not listing anything - @jaylikesbunda
 
 ### 🤏 Tweaks and Improvements
 
