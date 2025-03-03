@@ -23,7 +23,8 @@ Lighting:
 
 - Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
 - Disabled wifi_iram_opt for wroom models - @jaylikesbunda
-- Fix Station Scanning not listing anything - @jaylikesbunda
+- Fix station scanning not listing anything - @jaylikesbunda
+- Connect command now supports SSID and PSK with spaces and special characters - @jaylikesbunda
 
 ### 🤏 Tweaks and Improvements
 

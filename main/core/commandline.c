@@ -239,21 +239,117 @@ void handle_dial_command(int argc, char **argv) {
 
 void handle_wifi_connection(int argc, char **argv) {
     if (argc < 2) {
-        printf("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
-        TERMINAL_VIEW_ADD_TEXT("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
+        printf("Usage: %s \"<SSID>\" \"<PASSWORD>\"\n", argv[0]);
+        TERMINAL_VIEW_ADD_TEXT("Usage: %s \"<SSID>\" \"<PASSWORD>\"\n", argv[0]);
         return;
     }
 
-    const char *ssid = argv[1];
+    char ssid_buffer[128] = {0};
+    char password_buffer[128] = {0};
+    const char *ssid = NULL;
     const char *password = "";
-
-    if (argc == 3 && strlen(argv[2]) > 8) {
-        password = argv[2];
+    
+    // Handle SSID - could be spread across multiple arguments if it contains spaces
+    int i = 1;
+    if (argv[1][0] == '"') {
+        // SSID is in quotes, need to concatenate until closing quote
+        char *dest = ssid_buffer;
+        bool found_end_quote = false;
+        
+        // Skip the opening quote
+        strncpy(dest, &argv[1][1], sizeof(ssid_buffer) - 1);
+        dest += strlen(&argv[1][1]);
+        
+        // Check if the closing quote is in the same argument
+        if (argv[1][strlen(argv[1])-1] == '"') {
+            ssid_buffer[strlen(ssid_buffer)-1] = '\0'; // Remove closing quote
+            found_end_quote = true;
+        }
+        
+        // If not found in first arg, look in subsequent args
+        i = 2;
+        while (!found_end_quote && i < argc) {
+            *dest++ = ' '; // Add space between arguments
+            
+            if (strchr(argv[i], '"')) {
+                // This argument contains the closing quote
+                size_t len = strchr(argv[i], '"') - argv[i];
+                strncpy(dest, argv[i], len);
+                dest[len] = '\0';
+                found_end_quote = true;
+            } else {
+                // This argument is part of the SSID
+                strncpy(dest, argv[i], sizeof(ssid_buffer) - (dest - ssid_buffer) - 1);
+                dest += strlen(argv[i]);
+            }
+            i++;
+        }
+        
+        if (!found_end_quote) {
+            printf("Error: Missing closing quote for SSID\n");
+            TERMINAL_VIEW_ADD_TEXT("Error: Missing closing quote for SSID\n");
+            return;
+        }
+        
+        ssid = ssid_buffer;
+    } else {
+        // SSID is a single argument without quotes
+        ssid = argv[1];
+        i = 2;
+    }
+    
+    // Handle password if provided
+    if (i < argc) {
+        if (argv[i][0] == '"') {
+            // Password is in quotes
+            char *dest = password_buffer;
+            bool found_end_quote = false;
+            
+            // Skip the opening quote
+            strncpy(dest, &argv[i][1], sizeof(password_buffer) - 1);
+            dest += strlen(&argv[i][1]);
+            
+            // Check if the closing quote is in the same argument
+            if (argv[i][strlen(argv[i])-1] == '"') {
+                password_buffer[strlen(password_buffer)-1] = '\0'; // Remove closing quote
+                found_end_quote = true;
+            }
+            
+            // If not found in first arg, look in subsequent args
+            i++;
+            while (!found_end_quote && i < argc) {
+                *dest++ = ' '; // Add space between arguments
+                
+                if (strchr(argv[i], '"')) {
+                    // This argument contains the closing quote
+                    size_t len = strchr(argv[i], '"') - argv[i];
+                    strncpy(dest, argv[i], len);
+                    dest[len] = '\0';
+                    found_end_quote = true;
+                } else {
+                    // This argument is part of the password
+                    strncpy(dest, argv[i], sizeof(password_buffer) - (dest - password_buffer) - 1);
+                    dest += strlen(argv[i]);
+                }
+                i++;
+            }
+            
+            if (!found_end_quote) {
+                printf("Error: Missing closing quote for password\n");
+                TERMINAL_VIEW_ADD_TEXT("Error: Missing closing quote for password\n");
+                return;
+            }
+            
+            password = password_buffer;
+        } else {
+            // Password is a single argument without quotes
+            password = argv[i];
+        }
     }
 
     if (strlen(ssid) == 0) {
-        printf("SSID and PSK cannot be empty\n");
-        TERMINAL_VIEW_ADD_TEXT("SSID and PSK cannot be empty\n");
+        printf("SSID cannot be empty\n");
+        TERMINAL_VIEW_ADD_TEXT("SSID cannot be empty\n");
         return;
     }
 
