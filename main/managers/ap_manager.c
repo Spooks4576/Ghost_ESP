@@ -32,7 +32,7 @@ static esp_err_t api_logs_handler(httpd_req_t *req);
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
                           void *event_data);
 
-#define MAX_LOG_BUFFER_SIZE (32 * 1024)  // Increase to 32KB
+#define MAX_LOG_BUFFER_SIZE (8 * 1024)  // Increase to 32KB
 #define LOG_CHUNK_SIZE (MAX_LOG_BUFFER_SIZE / 4)  // Size to remove when buffer is full
 #define MAX_FILE_SIZE (5 * 1024 * 1024) // 5 MB
 #define BUFFER_SIZE (1024)              // 1 KB buffer size for reading chunks
