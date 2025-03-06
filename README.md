@@ -27,7 +27,7 @@ Ghost ESP turns your ESP32 into a powerful, cheap and helpful wireless testing t
 - **WiFi Capture** – Log probe requests, beacon frames, deauth packets, and raw data *(requires SD card or compatible storage)*.
 - **Evil Portal** – Set up a fake WiFi portal with a custom SSID and domain.
 - **Pineapple Detection** – Detect Wi-Fi Pineapples and Evil Twin Attacks.
-- **Web-UI** – Built-in interface for changing settings easily.
+- **Web-UI** – Built-in interface for changing settings and sending commands easily.
 - **Port Scanning** – Scan your local network for open ports.
 
 </details>
