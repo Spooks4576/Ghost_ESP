@@ -120,4 +120,3 @@ Lighting:
 - Ghost ESP Flipper App v1.1.8 - @jaylikesbunda
 - Cleanup README.md - @jaylikesbunda
 
-...changelog starts here...
