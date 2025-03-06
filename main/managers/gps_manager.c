@@ -93,8 +93,6 @@ void gps_manager_init(GPSManager *manager) {
     nmea_hdl = nmea_parser_init(&config);
     nmea_parser_add_handler(nmea_hdl, gps_event_handler, NULL);
     manager->isinitilized = true;
-
-    // Create a new check task
     xTaskCreate(check_gps_connection_task, "gps_check", 2048, NULL, 1, &gps_check_task_handle);
 }
 

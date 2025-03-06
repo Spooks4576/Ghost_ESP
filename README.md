@@ -1,41 +1,61 @@
-# Ghost ESP Firmware: Cutting-Edge Wireless Testing for ESP32
+# Ghost ESP: Next Generation Wi-Fi Pentesting
 
-Welcome to **Ghost ESP**, a versatile and powerful firmware designed to transform your ESP32 microcontroller into a sophisticated wireless testing tool. With Ghost ESP, your ESP32 can perform comprehensive WiFi and Bluetooth Low Energy (BLE) analysis, execute targeted wireless tests, and explore dynamic wireless environments.
+**⭐️ Enjoying Ghost ESP? Please give our repo a star!**
 
-## ⚠️ Notice: Alpha Version (ESP-IDF)
+Ghost ESP turns your ESP32 into a powerful, cheap and helpful wireless testing tool. Built on ESP-IDF.
 
-**This is an Alpha release** of Ghost ESP firmware built on the ESP-IDF framework.
+> **Note:** This is an **Alpha release**. Some features are still under development and may be unstable.
 
-**Please note:** certain features, such as **BLE spam** and **display support**, are actively in development and may be incomplete or unstable. Some ESP32 models may experience compatibility or performance limitations when using resource-intensive functionalities. This release aims to gather feedback from early adopters, which will guide improvements toward a stable release.
+---
 
-We appreciate your understanding and contributions as we refine Ghost ESP.
+## Getting Started
 
+1. Follow our [Flashing Guide](https://github.com/Spooks4576/Ghost_ESP/wiki) for installation and configuration.
+2. Join our community on [Discord](https://discord.gg/PkdjxqYKe4) for support and feedback.
+3. Visit our [Official Website](https://ghostesp.net) to stay in touch!
+
+---
 ## Key Features
 
-Ghost ESP offers an array of tools for wireless testing, with new functionalities being added in future updates. Here's an overview of current features:
+<details>
+<summary>WiFi Features</summary>
 
-### WiFi Features
-- **WiFi Access Point (AP) Scanning:** Identify and display nearby WiFi networks for insights into surrounding network activity
-- **Station Scanning:** Monitor WiFi stations (clients) connected to nearby networks, observing active devices
-- **Beacon Spam:** Deploy customizable SSID beacons to simulate or disrupt local WiFi environments
-- **Deauthentication Attacks:** Execute deauthentication attacks to disconnect clients from specific WiFi networks
-- **WiFi Capture:** Capture and store probe requests, beacon frames, deauthentication packets, and raw wireless data for detailed analysis (requires an SD card or compatible storage)
-- **Evil Portal:** Create a fake WiFi portal with a custom SSID and domain for controlled network testing
+- **AP Scanning** – Detect nearby WiFi networks.
+- **Station Scanning** – Monitor connected WiFi clients.
+- **Beacon Spam** – Broadcast customizable SSID beacons.
+- **Deauthentication Attacks** – Disconnect clients from specific networks.
+- **WiFi Capture** – Log probe requests, beacon frames, deauth packets, and raw data *(requires SD card or compatible storage)*.
+- **Evil Portal** – Set up a fake WiFi portal with a custom SSID and domain.
+- **Pineapple Detection** – Detect Wi-Fi Pineapples and Evil Twin Attacks.
+- **Web-UI** – Built-in interface for changing settings and sending commands easily.
+- **Port Scanning** – Scan your local network for open ports.
 
-### BLE Features
-- **BLE Scanning:** Detect BLE devices, including unique modes for identifying devices like AirTags and Flipper Zeros
-- **BLE Packet Capture:** Capture and analyze Bluetooth Low Energy packets, including support for detecting card skimmers
-- **BLE Wardriving:** Map and track BLE devices in your area
-- **BLE Detectors:** Specialized BLE scan modes to find specific devices like AirTags, Flipper Zeros, and other BLE emitters (upcoming in future versions)
+</details>
 
-### Additional Features
-- **GPS Integration:** Get location information using the "gpsinfo" command (on supported hardware)
-- **RGB LED Modes:** Customize RGB lighting for different task feedback with modes such as Stealth, Normal, and Rainbow
-- **DIAL & Chromecast V2 Support:** Interact with DIAL-capable devices such as Roku or Chromecast for media control and playback
+<details>
+<summary>BLE Features</summary>
+
+- **BLE Scanning** – Detect BLE devices, including specialized modes for AirTags, Flipper Zeros, and more.
+- **BLE Packet Capture** – Capture and analyze BLE traffic.
+- **BLE Wardriving** – Map and track BLE devices in your vicinity.
+
+</details>
+
+<details>
+<summary>Additional Features</summary>
+
+- **GPS Integration** – Retrieve location info via the `gpsinfo` command *(on supported hardware)*.
+- **RGB LED Modes** – Customizable LED feedback (Stealth, Normal, Rainbow).
+- **DIAL & Chromecast V2 Support** – Interact with DIAL-capable devices (e.g., Roku, Chromecast).
+- **Flappy Ghost and Rave Modes** – Extra apps for boards with displays.
+
+</details>
+
+> **Note:** BLE Spam is **NOT** supported at this time.
+
+---
 
 ## Supported ESP32 Models
-
-The following ESP32 models are compatible with Ghost ESP, though specific features may vary by model:
 
 - **ESP32 Wroom**
 - **ESP32 S2**
@@ -43,39 +63,32 @@ The following ESP32 models are compatible with Ghost ESP, though specific featur
 - **ESP32 S3**
 - **ESP32 C6**
 
-### Important Compatibility Considerations
+> **Note:** Feature availability may vary by model.
+> We do NOT support BLE Spam
+---
 
-Ghost ESP is an advanced tool that leverages the ESP32's WiFi and BLE capabilities to their fullest. Certain features, particularly BLE spam (still in development), may exceed the performance limits of some models, such as the ESP32 Wroom, leading to potential crashes or reduced functionality.
+## Ghost ESP vs. ESP32 Marauder
+![399090585-84fde8b3-e17e-44d5-9321-04f1f1ae8541](https://github.com/user-attachments/assets/1455802e-390a-4320-a224-aba2bdd412d0)
 
-Due to the **alpha** status, users should expect potential limitations, feature inconsistencies, and some degree of instability. We encourage early adopters to report issues to help us improve the firmware.
+---
 
-## 🚀 Getting Started
+## Acknowledgments
 
-To install and configure Ghost ESP, follow our [Flashing Guide](https://github.com/Spooks4576/Ghost_ESP/wiki) for step-by-step instructions. Be sure to check for any known limitations specific to your ESP32 model before proceeding.
+Special thanks to:
 
-Make sure to check out our [Discord](https://discord.gg/PkdjxqYKe4)
+- **[JustCallMeKoKo](https://github.com/justcallmekoko/ESP32Marauder):** For foundational ESP32 development.
+- **[thibauts](https://github.com/thibauts/node-castv2-client):** For CastV2 protocol insights.
+- **[MarcoLucidi01](https://github.com/MarcoLucidi01/ytcast/tree/master/dial):** For DIAL protocol integration.
+- **[SpacehuhnTech](https://github.com/SpacehuhnTech/esp8266_deauther):** For reference deauthentication code.
 
-## What Makes this different than ESP32 Marauder 
-This table should explain the key differences between ghost esp and ESP32 Marauder
-
-![Ghost_VS_Marauder](https://github.com/user-attachments/assets/84fde8b3-e17e-44d5-9321-04f1f1ae8541)
-
-
-
-## Special Acknowledgments
-
-We extend our thanks to the following projects and their developers for their contributions and inspiration in the development of Ghost ESP:
-
-- **[JustCallMeKoKo](https://github.com/justcallmekoko/ESP32Marauder):** For foundational ESP32 development and tools  
-- **[thibauts](https://github.com/thibauts/node-castv2-client):** For insights into the CastV2 protocol for media integration  
-- **[MarcoLucidi01](https://github.com/MarcoLucidi01/ytcast/tree/master/dial):** For pioneering DIAL protocol integration on ESP32 platforms  
-- **[SpacehuhnTech](https://github.com/SpacehuhnTech/esp8266_deauther):** For providing excellent reference code for deauthentication functionality  
-
+---
 
 ## Legal Disclaimer
 
-Ghost ESP is intended strictly for educational and ethical security research. Unauthorized use of this firmware for malicious activities, such as disrupting legitimate network services, is illegal and subject to prosecution. Always secure appropriate permissions before conducting any network testing.
+Ghost ESP is intended solely for educational and ethical security research. Unauthorized or malicious use is illegal. Always obtain proper permissions before conducting any network tests.
+
+---
 
 ## Open Source Contributions
 
-This project is fully open source and welcomes modifications and improvements from the community. While we may not have access to every ESP32-based device for testing, we encourage users to contribute device-specific support and other enhancements. If you've made modifications or added support for additional devices, please feel free to submit your contributions.
+This project is open source and welcomes your contributions. If you've added new features or enhanced device support, please submit your changes!

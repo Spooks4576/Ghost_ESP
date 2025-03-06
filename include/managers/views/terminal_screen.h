@@ -3,6 +3,7 @@
 
 #include "lvgl.h"
 #include "managers/display_manager.h"
+#include "managers/ap_manager.h"
 
 extern View terminal_view;
 
@@ -18,10 +19,14 @@ void terminal_view_destroy(void);
     char buffer[350];                                                          \
     snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__);                      \
     terminal_view_add_text(buffer);                                            \
+    ap_manager_add_log(buffer);                                               \
   } while (0)
 #else
 #define TERMINAL_VIEW_ADD_TEXT(fmt, ...)                                       \
   do {                                                                         \
+    char buffer[350];                                                         \
+    snprintf(buffer, sizeof(buffer), fmt, ##__VA_ARGS__);                      \
+    ap_manager_add_log(buffer);                                               \
   } while (0)
 #endif
 

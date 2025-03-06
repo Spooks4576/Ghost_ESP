@@ -286,27 +286,21 @@ void main_menu_create(void) {
   for (int i = 0; i < num_items; i++) {
     lv_obj_t *menu_item = lv_btn_create(menu_container);
     lv_obj_set_size(menu_item, button_width, button_height);
-    lv_obj_set_style_bg_color(menu_item, lv_color_black(), 0);
-    lv_obj_set_style_border_color(menu_item, menu_items[i].border_color, 0);
-    lv_obj_set_style_border_width(menu_item, 2, 0);
-    lv_obj_set_style_radius(menu_item, 10, 0);
+    lv_obj_set_style_shadow_width(menu_item, 0, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(menu_item, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_color(menu_item, menu_items[i].border_color, LV_PART_MAIN);
+    lv_obj_set_style_border_width(menu_item, 2, LV_PART_MAIN);
+    lv_obj_set_style_radius(menu_item, 10, LV_PART_MAIN);
+    
     lv_obj_set_scrollbar_mode(menu_item, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_pad_all(menu_item, 5, 0);
 
-    if (ver_res >= 240) // Dont create icons for smaller screens
-    {
+    if (ver_res >= 240) {
       if (menu_items[i].icon) {
         lv_obj_t *icon = lv_img_create(menu_item);
         lv_img_set_src(icon, menu_items[i].icon);
         lv_obj_set_size(icon, icon_width, icon_height);
         lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 0);
-
-        // Pure black shadow
-        lv_obj_set_style_shadow_width(icon, 8, 0);
-        lv_obj_set_style_shadow_color(icon, lv_color_make(0, 0, 0),
-                                      0); // Pure black
-        lv_obj_set_style_shadow_ofs_x(icon, 2, 0);
-        lv_obj_set_style_shadow_ofs_y(icon, 2, 0);
       }
     }
 

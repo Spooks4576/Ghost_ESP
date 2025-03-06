@@ -1,4 +1,3 @@
-
 // serial_manager.h
 
 #ifndef UTILS_H
@@ -20,35 +19,10 @@ const char *wrap_message(const char *message, const char *file, int line) {
   return buffer;
 }
 
-void scale_grb_by_brightness(uint8_t *g, uint8_t *r, uint8_t *b,
-                             float brightness) {
-  float scale_factor = brightness < 0.0f ? -brightness : brightness;
-
-  if (scale_factor > 1.0f) {
-    scale_factor = 1.0f;
-  }
-
-  int original_g = *g;
-  int original_r = *r;
-  int original_b = *b;
-
-  *g = (int)((float)(original_g)*scale_factor);
-  *r = (int)((float)(original_r)*scale_factor);
-  *b = (int)((float)(original_b)*scale_factor);
-
-  if (*g > 255)
-    *g = 255;
-  if (*r > 255)
-    *r = 255;
-  if (*b > 255)
-    *b = 255;
-
-  if (*g < 0)
-    *g = 0;
-  if (*r < 0)
-    *r = 0;
-  if (*b < 0)
-    *b = 0;
+void scale_grb_by_brightness(uint8_t *g, uint8_t *r, uint8_t *b, float brightness) {
+    *g = (uint8_t)(*g * brightness);
+    *r = (uint8_t)(*r * brightness); 
+    *b = (uint8_t)(*b * brightness);
 }
 
 bool is_in_task_context(void);

@@ -11,6 +11,8 @@
 #include <esp_log.h>
 #include <esp_netif.h>
 #include <esp_wifi.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include <math.h>
 #include <mdns.h>
 #include <nvs_flash.h>
@@ -19,27 +21,32 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#define MAX_LOG_BUFFER_SIZE 4096        // Adjust as needed
-#define MAX_FILE_SIZE (5 * 1024 * 1024) // 5 MB
-#define BUFFER_SIZE (1024)              // 1 KB buffer size for reading chunks
-#define MIN_(a, b) ((a) < (b) ? (a) : (b))
-static char log_buffer[MAX_LOG_BUFFER_SIZE];
-static size_t log_buffer_index = 0;
-
-static const char *TAG = "AP_MANAGER";
-static httpd_handle_t server = NULL;
-static esp_netif_t *netif = NULL;
-static bool mdns_freed = false;
-
 // Forward declarations
 static esp_err_t http_get_handler(httpd_req_t *req);
 static esp_err_t api_clear_logs_handler(httpd_req_t *req);
 static esp_err_t api_settings_handler(httpd_req_t *req);
 static esp_err_t api_command_handler(httpd_req_t *req);
 static esp_err_t api_settings_get_handler(httpd_req_t *req);
+static esp_err_t api_logs_handler(httpd_req_t *req);
 
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
                           void *event_data);
+
+#define MAX_LOG_BUFFER_SIZE (8 * 1024)  // Increase to 32KB
+#define LOG_CHUNK_SIZE (MAX_LOG_BUFFER_SIZE / 4)  // Size to remove when buffer is full
+#define MAX_FILE_SIZE (5 * 1024 * 1024) // 5 MB
+#define BUFFER_SIZE (1024)              // 1 KB buffer size for reading chunks
+#define MIN_(a, b) ((a) < (b) ? (a) : (b))
+#define SERIAL_BUFFER_SIZE 528          // Size of serial buffer
+
+static char log_buffer[MAX_LOG_BUFFER_SIZE];
+static size_t log_buffer_index = 0;
+static SemaphoreHandle_t log_mutex = NULL;
+
+static const char *TAG = "AP_MANAGER";
+static httpd_handle_t server = NULL;
+static esp_netif_t *netif = NULL;
+static bool mdns_freed = false;
 
 static esp_err_t scan_directory(const char *base_path, cJSON *json_array) {
     DIR *dir = opendir(base_path);
@@ -604,7 +611,6 @@ esp_err_t ap_manager_init(void) {
         ESP_LOGE(TAG, "mdns_hostname_set failed: %s\n", esp_err_to_name(ret));
         return ret;
     }
-
     ret = mdns_instance_name_set("GhostESP Web Interface");
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "mdns_instance_name_set failed: %s\n", esp_err_to_name(ret));
@@ -697,6 +703,11 @@ esp_err_t ap_manager_init(void) {
                                     .handler = api_command_handler,
                                     .user_ctx = NULL};
 
+    httpd_uri_t uri_get_logs = {.uri = "/api/logs",
+                                .method = HTTP_GET,
+                                .handler = api_logs_handler,
+                                .user_ctx = NULL};
+
     httpd_uri_t uri_delete_command = {.uri = "/api/sdcard",
                                       .method = HTTP_DELETE,
                                       .handler = api_sd_card_delete_file_handler,
@@ -744,6 +755,12 @@ esp_err_t ap_manager_init(void) {
         printf("Error registering URI\n");
     }
 
+    ret = httpd_register_uri_handler(server, &uri_get_logs);
+
+    if (ret != ESP_OK) {
+        printf("Error registering URI\n");
+    }
+
     printf("HTTP server started\n");
 
     esp_wifi_set_ps(WIFI_PS_NONE);
@@ -753,6 +770,13 @@ esp_err_t ap_manager_init(void) {
         printf("ESP32 AP IP Address: \n" IPSTR, IP2STR(&ip_info.ip));
     } else {
         printf("Failed to get IP address\n");
+    }
+
+    // Initialize log mutex
+    log_mutex = xSemaphoreCreateMutex();
+    if (!log_mutex) {
+        ESP_LOGE(TAG, "Failed to create log mutex");
+        return ESP_FAIL;
     }
 
     return ESP_OK;
@@ -775,21 +799,47 @@ void ap_manager_deinit(void) {
 }
 
 void ap_manager_add_log(const char *log_message) {
+    if (!log_message || !log_mutex) return;
+    
     size_t message_length = strlen(log_message);
+    if (message_length == 0) return;
+    
+    // Take mutex with timeout
+    if (xSemaphoreTake(log_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+        ESP_LOGW(TAG, "Failed to take log mutex");
+        return;
+    }
+    
+    // Check if we need to make space
+    if (log_buffer_index + message_length >= MAX_LOG_BUFFER_SIZE) {
+        // Find the first newline after LOG_CHUNK_SIZE
+        size_t remove_index = LOG_CHUNK_SIZE;
+        while (remove_index < log_buffer_index && log_buffer[remove_index] != '\n') {
+            remove_index++;
+        }
+        if (remove_index >= log_buffer_index) {
+            remove_index = LOG_CHUNK_SIZE; // Fallback if no newline found
+        } else {
+            remove_index++; // Include the newline
+        }
+        
+        // Move remaining content to start of buffer
+        size_t remaining = log_buffer_index - remove_index;
+        if (remaining > 0) {
+            memmove(log_buffer, log_buffer + remove_index, remaining);
+            log_buffer_index = remaining;
+        } else {
+            log_buffer_index = 0;
+        }
+    }
+    
+    // Add new message
     if (log_buffer_index + message_length < MAX_LOG_BUFFER_SIZE) {
-        strcpy(&log_buffer[log_buffer_index], log_message);
-        log_buffer_index += message_length;
-    } else {
-        printf("Log buffer full, clearing buffer and adding new log\n");
-
-        memset(log_buffer, 0, MAX_LOG_BUFFER_SIZE);
-        log_buffer_index = 0;
-
-        strcpy(&log_buffer[log_buffer_index], log_message);
+        memcpy(log_buffer + log_buffer_index, log_message, message_length);
         log_buffer_index += message_length;
     }
-
-    printf(log_message);
+    
+    xSemaphoreGive(log_mutex);
 }
 
 esp_err_t ap_manager_start_services() {
@@ -865,6 +915,11 @@ esp_err_t ap_manager_start_services() {
                                     .handler = api_command_handler,
                                     .user_ctx = NULL};
 
+    httpd_uri_t uri_get_logs = {.uri = "/api/logs",
+                                .method = HTTP_GET,
+                                .handler = api_logs_handler,
+                                .user_ctx = NULL};
+
     ret = httpd_register_uri_handler(server, &uri_delete_command);
     if (ret != ESP_OK) {
         printf("Error registering URI\n");
@@ -902,6 +957,12 @@ esp_err_t ap_manager_start_services() {
     }
 
     ret = httpd_register_uri_handler(server, &uri_post_command);
+
+    if (ret != ESP_OK) {
+        printf("Error registering URI \n");
+    }
+
+    ret = httpd_register_uri_handler(server, &uri_get_logs);
 
     if (ret != ESP_OK) {
         printf("Error registering URI \n");
@@ -985,6 +1046,11 @@ static esp_err_t api_command_handler(httpd_req_t *req) {
 
     const char *command = command_json->valuestring;
 
+    // Add command to log buffer
+    char cmd_log[512];
+    snprintf(cmd_log, sizeof(cmd_log), "> %s\n", command);
+    ap_manager_add_log(cmd_log);
+
     simulateCommand(command);
 
     httpd_resp_send(req, "Command executed", strlen("Command executed"));
@@ -993,13 +1059,57 @@ static esp_err_t api_command_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+// handler for getting serial logs
+static esp_err_t api_logs_handler(httpd_req_t *req) {
+    if (!log_mutex) {
+        return httpd_resp_send(req, "", 0);
+    }
+    
+    // Take mutex with timeout
+    if (xSemaphoreTake(log_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+        ESP_LOGW(TAG, "Failed to take log mutex for reading");
+        return httpd_resp_send(req, "", 0);
+    }
+    
+    // set response type as text/plain
+    httpd_resp_set_type(req, "text/plain");
+    
+    // Check if we have any logs
+    if (log_buffer_index == 0) {
+        xSemaphoreGive(log_mutex);
+        return httpd_resp_sendstr(req, "");
+    }
+    
+    // send the buffer contents
+    esp_err_t err = httpd_resp_send(req, log_buffer, log_buffer_index);
+    
+    xSemaphoreGive(log_mutex);
+    
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to send logs: %d", err);
+        return err;
+    }
+    
+    return ESP_OK;
+}
+
 // Handler for /api/clear_logs (clears the log buffer)
 static esp_err_t api_clear_logs_handler(httpd_req_t *req) {
+    if (!log_mutex) {
+        return httpd_resp_send(req, "{\"status\":\"error\",\"message\":\"Log system not initialized\"}", -1);
+    }
+    
+    if (xSemaphoreTake(log_mutex, pdMS_TO_TICKS(100)) != pdTRUE) {
+        return httpd_resp_send(req, "{\"status\":\"error\",\"message\":\"Failed to acquire lock\"}", -1);
+    }
+    
     log_buffer_index = 0;
     memset(log_buffer, 0, sizeof(log_buffer));
+    
+    xSemaphoreGive(log_mutex);
+    
     httpd_resp_set_type(req, "application/json");
-    httpd_resp_sendstr(req, "{\"status\":\"logs_cleared\"}");
-    return ESP_OK;
+    return httpd_resp_sendstr(req, "{\"status\":\"success\",\"message\":\"logs_cleared\"}");
 }
 
 // Handler for /api/settings (updates settings based on JSON payload)
@@ -1238,27 +1348,56 @@ static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_
             printf("AP stopped\n");
             break;
         case WIFI_EVENT_AP_STACONNECTED:
-            printf("Station connected to AP\n");
+            printf("Device connected to AP\n");
             break;
         case WIFI_EVENT_AP_STADISCONNECTED:
-            printf("Station disconnected from AP\n");
+            printf("Device disconnected from AP\n");
+
             break;
-        case WIFI_EVENT_STA_START:
-            printf("STA started\n");
-            esp_wifi_connect();
+        case WIFI_EVENT_STA_START: {
+            static bool connection_in_progress = false;
+            
+            if(!connection_in_progress) {
+                connection_in_progress = true;
+                
+                // Get configured SSID from station config
+                wifi_config_t sta_config;
+                if(esp_wifi_get_config(WIFI_IF_STA, &sta_config) == ESP_OK) {
+                    printf("\nConnecting to %.*s\n", 18, sta_config.sta.ssid);
+                } else {
+                    printf("\nConnecting to network\n");
+                }
+                esp_wifi_connect();
+            }
             break;
-        case WIFI_EVENT_STA_DISCONNECTED:
-            printf("Disconnected from Wi-Fi\n");
+        }
+        case WIFI_EVENT_STA_DISCONNECTED: {
+            wifi_event_sta_disconnected_t *disconn = (wifi_event_sta_disconnected_t *) event_data;
+            printf("Disconnected\nReason: %d\n", disconn->reason);
             break;
+        }
         default:
             break;
         }
     } else if (event_base == IP_EVENT) {
         switch (event_id) {
-        case IP_EVENT_STA_GOT_IP:
+        case IP_EVENT_STA_GOT_IP: {
+            ip_event_got_ip_t *event = (ip_event_got_ip_t *) event_data;
+            
+            // Get SSID from active connection
+            wifi_ap_record_t ap_info;
+            if(esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+                printf("\nConnected!\nSSID: %.*s\nIP: " IPSTR "\n",
+                       18, ap_info.ssid, 
+                       IP2STR(&event->ip_info.ip));
+            } else {
+                printf("\nConnected!\nIP: " IPSTR "\n",
+                       IP2STR(&event->ip_info.ip));
+            }
             break;
+        }
         case IP_EVENT_AP_STAIPASSIGNED:
-            printf("Assigned IP to STA\n");
+            printf("Assigned STA IP\n");
             break;
         default:
             break;

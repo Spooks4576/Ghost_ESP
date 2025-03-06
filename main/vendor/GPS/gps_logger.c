@@ -329,10 +329,6 @@ void gps_info_display_task(void *pvParameters) {
     static char output_buffer[256] = {0};
     char lat_str[20] = {0}, lon_str[20] = {0};
     static wardriving_data_t gps_data = {0};
-
-    printf("GPS info display task started\n");
-    TERMINAL_VIEW_ADD_TEXT("GPS info display task started\n");
-
     while (1) {
         // Add null check for nmea_hdl
         if (!nmea_hdl) {
