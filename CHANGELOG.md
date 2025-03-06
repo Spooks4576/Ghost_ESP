@@ -35,8 +35,10 @@ Lighting:
   - Removed a bunch of dupe logs and reworded some - @jaylikesbunda
   - Updated police siren effect to use sine-based easing. - @jaylikesbunda
   - Improved WiFi connection output and connection state management - @jaylikesbunda
+  - Optimised the WebUI to be smaller and faster to load - @jaylikesbunda
 
 - Display Specific:
+  - Update sdkconfig.CYD2USB2.4Inch_C_Varient config - @Spooks4576
   - Removed main menu icon shadow - @jaylikesbunda
   - Removed both options screen borders - @jaylikesbunda
   - Improved status bar containers - @jaylikesbunda
