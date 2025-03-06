@@ -1,51 +1,5 @@
 # Ghost ESP Changelog
 
-## 1.4.7
-
-### ❤️ New Stuff
-
-General:
-
-- Added WebUI "Terminal" for sending commands and receiving logs - @jaylikesbunda
-
-Attacks:
-
-- Added packet rate logging to deauth attacks with 5s intervals - @jaylikesbunda
-
-Lighting:
-
-- Added 'rgbmode' command to control the RGB LEDs directly with support for color and mode args- @jaylikesbunda
-- Added new 'strobe' effect for RGB LEDs - @jaylikesbunda
-- Added 'setrgbpins' command accessible through serial and webUI to set the RGB LED pins - @jaylikesbunda
-
-
-### 🐛 Bug Fixes
-
-- Immediate reconfiguration in apcred to bypass NVS dependency issues - @jaylikesbunda
-- Disabled wifi_iram_opt for wroom models - @jaylikesbunda
-- Fix station scanning not listing anything - @jaylikesbunda
-- Connect command now supports SSID and PSK with spaces and special characters - @jaylikesbunda
-
-### 🤏 Tweaks and Improvements
-
-- General:
-  - Added extra NVS recovery attempts - @jaylikesbunda
-  - Cleaned up callbacks.c to reduce DIRAM usage - @jaylikesbunda
-  - Removed some redundant checks to cleanup compiler warnings - @jaylikesbunda
-  - Removed a bunch of dupe logs and reworded some - @jaylikesbunda
-  - Updated police siren effect to use sine-based easing. - @jaylikesbunda
-  - Improved WiFi connection output and connection state management - @jaylikesbunda
-  - Optimised the WebUI to be smaller and faster to load - @jaylikesbunda
-
-- Display Specific:
-  - Update sdkconfig.CYD2USB2.4Inch_C_Varient config - @Spooks4576
-  - Removed main menu icon shadow - @jaylikesbunda
-  - Removed both options screen borders - @jaylikesbunda
-  - Improved status bar containers - @jaylikesbunda
-  - Tweaked terminal scrolling logic to be slightly more efficient - @jaylikesbunda
-  - Added Reset AP Credentials as a display option - @jaylikesbunda
-
-
 ## 1.4.6
 
 ### ❤️ New Features

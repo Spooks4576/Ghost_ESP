@@ -19,7 +19,6 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <vendor/dial_client.h>
-#include "esp_wifi.h"
 
 static Command *command_list_head = NULL;
 TaskHandle_t VisualizerHandle = NULL;
@@ -82,6 +81,8 @@ CommandFunction find_command(const char *name) {
 }
 
 void cmd_wifi_scan_start(int argc, char **argv) {
+    printf("WiFi scan started.\n");
+    TERMINAL_VIEW_ADD_TEXT("WiFi scan started.\n");
     wifi_manager_start_scan();
     wifi_manager_print_scan_results_with_oui();
 }
@@ -229,8 +230,8 @@ void handle_stop_flipper(int argc, char **argv) {
     csv_file_close();                  // Close any open CSV files
     gps_manager_deinit(&g_gpsManager); // Clean up GPS if active
     wifi_manager_stop_monitor_mode();  // Stop any active monitoring
-    printf("Stopped activities.\nClosed files.\n");
-    TERMINAL_VIEW_ADD_TEXT("Stopped activities.\nClosed files.\n");
+    printf("Stopped all activities and\nclosed files.\n");
+    TERMINAL_VIEW_ADD_TEXT("Stopped all activities and\nclosed files.\n");
 }
 
 void handle_dial_command(int argc, char **argv) {
@@ -239,117 +240,21 @@ void handle_dial_command(int argc, char **argv) {
 
 void handle_wifi_connection(int argc, char **argv) {
     if (argc < 2) {
-        printf("Usage: %s \"<SSID>\" \"<PASSWORD>\"\n", argv[0]);
-        TERMINAL_VIEW_ADD_TEXT("Usage: %s \"<SSID>\" \"<PASSWORD>\"\n", argv[0]);
+        printf("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
+        TERMINAL_VIEW_ADD_TEXT("Usage: %s <SSID> <PASSWORD>\n", argv[0]);
         return;
     }
 
-    char ssid_buffer[128] = {0};
-    char password_buffer[128] = {0};
-    const char *ssid = NULL;
+    const char *ssid = argv[1];
     const char *password = "";
-    
-    // Handle SSID - could be spread across multiple arguments if it contains spaces
-    int i = 1;
-    if (argv[1][0] == '"') {
-        // SSID is in quotes, need to concatenate until closing quote
-        char *dest = ssid_buffer;
-        bool found_end_quote = false;
-        
-        // Skip the opening quote
-        strncpy(dest, &argv[1][1], sizeof(ssid_buffer) - 1);
-        dest += strlen(&argv[1][1]);
-        
-        // Check if the closing quote is in the same argument
-        if (argv[1][strlen(argv[1])-1] == '"') {
-            ssid_buffer[strlen(ssid_buffer)-1] = '\0'; // Remove closing quote
-            found_end_quote = true;
-        }
-        
-        // If not found in first arg, look in subsequent args
-        i = 2;
-        while (!found_end_quote && i < argc) {
-            *dest++ = ' '; // Add space between arguments
-            
-            if (strchr(argv[i], '"')) {
-                // This argument contains the closing quote
-                size_t len = strchr(argv[i], '"') - argv[i];
-                strncpy(dest, argv[i], len);
-                dest[len] = '\0';
-                found_end_quote = true;
-            } else {
-                // This argument is part of the SSID
-                strncpy(dest, argv[i], sizeof(ssid_buffer) - (dest - ssid_buffer) - 1);
-                dest += strlen(argv[i]);
-            }
-            i++;
-        }
-        
-        if (!found_end_quote) {
-            printf("Error: Missing closing quote for SSID\n");
-            TERMINAL_VIEW_ADD_TEXT("Error: Missing closing quote for SSID\n");
-            return;
-        }
-        
-        ssid = ssid_buffer;
-    } else {
-        // SSID is a single argument without quotes
-        ssid = argv[1];
-        i = 2;
-    }
-    
-    // Handle password if provided
-    if (i < argc) {
-        if (argv[i][0] == '"') {
-            // Password is in quotes
-            char *dest = password_buffer;
-            bool found_end_quote = false;
-            
-            // Skip the opening quote
-            strncpy(dest, &argv[i][1], sizeof(password_buffer) - 1);
-            dest += strlen(&argv[i][1]);
-            
-            // Check if the closing quote is in the same argument
-            if (argv[i][strlen(argv[i])-1] == '"') {
-                password_buffer[strlen(password_buffer)-1] = '\0'; // Remove closing quote
-                found_end_quote = true;
-            }
-            
-            // If not found in first arg, look in subsequent args
-            i++;
-            while (!found_end_quote && i < argc) {
-                *dest++ = ' '; // Add space between arguments
-                
-                if (strchr(argv[i], '"')) {
-                    // This argument contains the closing quote
-                    size_t len = strchr(argv[i], '"') - argv[i];
-                    strncpy(dest, argv[i], len);
-                    dest[len] = '\0';
-                    found_end_quote = true;
-                } else {
-                    // This argument is part of the password
-                    strncpy(dest, argv[i], sizeof(password_buffer) - (dest - password_buffer) - 1);
-                    dest += strlen(argv[i]);
-                }
-                i++;
-            }
-            
-            if (!found_end_quote) {
-                printf("Error: Missing closing quote for password\n");
-                TERMINAL_VIEW_ADD_TEXT("Error: Missing closing quote for password\n");
-                return;
-            }
-            
-            password = password_buffer;
-        } else {
-            // Password is a single argument without quotes
-            password = argv[i];
-        }
+
+    if (argc == 3 && strlen(argv[2]) > 8) {
+        password = argv[2];
     }
 
     if (strlen(ssid) == 0) {
-        printf("SSID cannot be empty\n");
-        TERMINAL_VIEW_ADD_TEXT("SSID cannot be empty\n");
+        printf("SSID and PSK cannot be empty\n");
+        TERMINAL_VIEW_ADD_TEXT("SSID and PSK cannot be empty\n");
         return;
     }
 
@@ -665,6 +570,8 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-deauth") == 0) {
+        printf("Starting deauth\npacket capture...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting deauth\npacket capture...\n");
         int err = pcap_file_open("deauthscan", PCAP_CAPTURE_WIFI);
 
         if (err != ESP_OK) {
@@ -760,19 +667,18 @@ void handle_capture_scan(int argc, char **argv) {
     }
 
     if (strcmp(capturetype, "-skimmer") == 0) {
-        printf("Skimmer detection started.\n");
-        TERMINAL_VIEW_ADD_TEXT("Skimmer detection started.\n");
+        printf("Starting BLE\nSkimmer detection...\n");
+        TERMINAL_VIEW_ADD_TEXT("Starting BLE\nSkimmer detection...\n");
         int err = pcap_file_open("skimmer_scan", PCAP_CAPTURE_BLUETOOTH);
         if (err != ESP_OK) {
             printf("Warning: PCAP capture failed to start\n");
             TERMINAL_VIEW_ADD_TEXT("Warning: PCAP capture failed to start\n");
         } else {
-            printf("PCAP capture started\nMonitoring devices\n");
-            TERMINAL_VIEW_ADD_TEXT("PCAP capture started\nMonitoring devices\n");
+            printf("PCAP capture started\nSuspicious devices will be logged\n");
+            TERMINAL_VIEW_ADD_TEXT("PCAP capture started\nSuspicious devices will be logged\n");
         }
         // Start skimmer detection
         ble_start_skimmer_detection();
-
     }
 #endif
 }
@@ -1120,22 +1026,6 @@ void handle_help(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("        <ssid>     : New SSID for the AP\n");
     TERMINAL_VIEW_ADD_TEXT("        <password> : New password (min 8 characters)\n");
     TERMINAL_VIEW_ADD_TEXT("        -r        : Reset to default (GhostNet/GhostNet)\n\n");
-
-    printf("rgbmode\n");
-    printf("    Description: Control LED effects (rainbow, police, strobe, off)\n");
-    printf("    Usage: rgbmode <rainbow|police|strobe|off|color>\n");
-    TERMINAL_VIEW_ADD_TEXT("rgbmode\n");
-    TERMINAL_VIEW_ADD_TEXT("    Description: Control LED effects (rainbow, police, strobe, off)\n");
-    TERMINAL_VIEW_ADD_TEXT("    Usage: rgbmode <rainbow|police|strobe|off|color>\n");
-
-    printf("setrgbpins\n");
-    printf("    Description: Change RGB LED pins\n");
-    printf("    Usage: setrgbpins <red> <green> <blue>\n");
-    printf("           (use same value for all pins for single-pin LED strips)\n\n");
-    TERMINAL_VIEW_ADD_TEXT("setrgbpins\n");
-    TERMINAL_VIEW_ADD_TEXT("    Description: Change RGB LED pins\n");
-    TERMINAL_VIEW_ADD_TEXT("    Usage: setrgbpins <red> <green> <blue>\n");
-    TERMINAL_VIEW_ADD_TEXT("           (use same value for all pins for single-pin LED strips)\n\n");
 }
 
 void handle_capture(int argc, char **argv) {
@@ -1181,12 +1071,11 @@ void handle_gps_info(int argc, char **argv) {
 
             // Start the info display task
             xTaskCreate(gps_info_display_task, "gps_info", 4096, NULL, 1, &gps_info_task_handle);
-            printf("GPS info started.\n");
-            TERMINAL_VIEW_ADD_TEXT("GPS info started.\n");
+            printf("GPS info display started.\n");
+            TERMINAL_VIEW_ADD_TEXT("GPS info display started.\n");
         }
     }
 }
-
 
 #ifndef CONFIG_IDF_TARGET_ESP32S2
 void handle_ble_wardriving(int argc, char **argv) {
@@ -1248,10 +1137,9 @@ void handle_pineap_detection(int argc, char **argv) {
     start_pineap_detection();
     wifi_manager_start_monitor_mode(wifi_pineap_detector_callback);
 
-    printf("Monitoring for Pineapples\n");
-    TERMINAL_VIEW_ADD_TEXT("Monitoring for Pineapples\n");
+    printf("Monitoring for PineAP\n activity\n\n");
+    TERMINAL_VIEW_ADD_TEXT("Monitoring for PineAP\n activity\n\n");
 }
-
 
 void handle_apcred(int argc, char **argv) {
     if (argc < 2) {
@@ -1296,23 +1184,9 @@ void handle_apcred(int argc, char **argv) {
         return;
     }
 
-    // immediate AP reconfiguration
-    wifi_config_t ap_config = {
-        .ap = {
-            .ssid_len = strlen(new_ssid),
-            .max_connection = 4,
-            .authmode = WIFI_AUTH_WPA2_PSK
-        },
-    };
-    strcpy((char *)ap_config.ap.ssid, new_ssid);
-    strcpy((char *)ap_config.ap.password, new_password);
-    
-    // Force the new config immediately
-    esp_wifi_set_config(WIFI_IF_AP, &ap_config);
     settings_set_ap_ssid(&G_Settings, new_ssid);
     settings_set_ap_password(&G_Settings, new_password);
     settings_save(&G_Settings);
-
     const char *saved_ssid = settings_get_ap_ssid(&G_Settings);
     const char *saved_password = settings_get_ap_password(&G_Settings);
     if (strcmp(saved_ssid, new_ssid) != 0 || strcmp(saved_password, new_password) != 0) {
@@ -1331,118 +1205,6 @@ void handle_apcred(int argc, char **argv) {
 
     printf("AP credentials updated - SSID: %s, Password: %s\n", saved_ssid, saved_password);
     TERMINAL_VIEW_ADD_TEXT("AP updated:\nSSID: %s\n", saved_ssid);
-}
-
-void handle_rgb_mode(int argc, char **argv) {
-    if (argc < 2) {
-        printf("Usage: rgbmode <rainbow|police|strobe|off|color>\n");
-        TERMINAL_VIEW_ADD_TEXT("Usage: rgbmode <rainbow|police|strobe|off|color>\n");
-        return;
-    }
-
-    // Cancel any currently running LED effect task.
-    if (rgb_effect_task_handle != NULL) {
-        vTaskDelete(rgb_effect_task_handle);
-        rgb_effect_task_handle = NULL;
-    }
-
-    // Check for built-in modes first.
-    if (strcasecmp(argv[1], "rainbow") == 0) {
-        xTaskCreate(rainbow_task, "rainbow_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
-        printf("Rainbow mode activated\n");
-        TERMINAL_VIEW_ADD_TEXT("Rainbow mode activated\n");
-    } else if (strcasecmp(argv[1], "police") == 0) {
-        xTaskCreate(police_task, "police_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
-        printf("Police mode activated\n");
-        TERMINAL_VIEW_ADD_TEXT("Police mode activated\n");
-    } else if (strcasecmp(argv[1], "strobe") == 0) {
-        printf("SEIZURE WARNING\nPLEASE EXIT NOW IF\nYOU ARE SENSITIVE\n");
-        vTaskDelay(pdMS_TO_TICKS(2000));
-        xTaskCreate(strobe_task, "strobe_effect", 4096, &rgb_manager, 5, &rgb_effect_task_handle);
-        printf("Strobe mode activated\n");
-        TERMINAL_VIEW_ADD_TEXT("Strobe mode activated\n");
-    } else if (strcasecmp(argv[1], "off") == 0) {
-        rgb_manager_set_color(&rgb_manager, 0, 0, 0, 0, false);
-        led_strip_refresh(rgb_manager.strip);
-        printf("RGB disabled\n");
-        TERMINAL_VIEW_ADD_TEXT("RGB disabled\n");
-    } else {
-        // Otherwise, treat the argument as a color name.
-        typedef struct {
-            const char *name;
-            uint8_t r;
-            uint8_t g;
-            uint8_t b;
-        } color_t;
-        static const color_t supported_colors[] = {
-            { "red",    255, 0,   0 },
-            { "green",  0,   255, 0 },
-            { "blue",   0,   0,   255 },
-            { "yellow", 255, 255, 0 },
-            { "purple", 128, 0,   128 },
-            { "cyan",   0,   255, 255 },
-            { "orange", 255, 165, 0 },
-            { "white",  255, 255, 255 },
-            { "pink",   255, 192, 203 }
-        };
-        const int num_colors = sizeof(supported_colors) / sizeof(supported_colors[0]);
-        int found = 0;
-        uint8_t r, g, b;
-        for (int i = 0; i < num_colors; i++) {
-            // Use case-insensitive compare.
-            if (strcasecmp(argv[1], supported_colors[i].name) == 0) {
-                r = supported_colors[i].r;
-                g = supported_colors[i].g;
-                b = supported_colors[i].b;
-                found = 1;
-                break;
-            }
-        }
-        if (!found) {
-            printf("Unknown color '%s'. Supported colors: red, green, blue, yellow, purple, cyan, orange, white, pink.\n", argv[1]);
-            TERMINAL_VIEW_ADD_TEXT("Unknown color '%s'. Supported colors: red, green, blue, yellow, purple, cyan, orange, white, pink.\n", argv[1]);
-            return;
-        }
-        // Set each LED to the selected static color.
-        for (int i = 0; i < rgb_manager.num_leds; i++) {
-            rgb_manager_set_color(&rgb_manager, i, r, g, b, false);
-        }
-        led_strip_refresh(rgb_manager.strip);
-        printf("Static color mode activated: %s\n", argv[1]);
-        TERMINAL_VIEW_ADD_TEXT("Static color mode activated: %s\n", argv[1]);
-    }
-}
-
-void handle_setrgb(int argc, char **argv) {
-    if (argc != 4) {
-        printf("Usage: setrgbpins <red> <green> <blue>\n");
-        printf("           (use same value for all pins for single-pin LED strips)\n\n");
-        return;
-    }
-    
-    gpio_num_t red_pin = (gpio_num_t)atoi(argv[1]);
-    gpio_num_t green_pin = (gpio_num_t)atoi(argv[2]);
-    gpio_num_t blue_pin = (gpio_num_t)atoi(argv[3]);
-
-    // Handle single-pin mode if all values match
-    if(red_pin == green_pin && green_pin == blue_pin) {
-        rgb_manager_deinit(&rgb_manager);
-        esp_err_t ret = rgb_manager_init(&rgb_manager, red_pin, 1,  // Use single pin mode
-                                        LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812,
-                                        GPIO_NUM_NC, GPIO_NUM_NC, GPIO_NUM_NC); // NC for separate pins
-        if(ret == ESP_OK) {
-            printf("Single-pin RGB configured on GPIO %d!\n", red_pin);
-        }
-    } else {
-        // Original separate pin logic
-        rgb_manager_deinit(&rgb_manager);
-        esp_err_t ret = rgb_manager_init(&rgb_manager, GPIO_NUM_NC, 1,
-                                        LED_PIXEL_FORMAT_GRB, LED_MODEL_WS2812,
-                                        red_pin, green_pin, blue_pin);
-        if(ret == ESP_OK) {
-            printf("RGB pins updated successfully!\n");
-        }
-    }
 }
 
 void register_commands() {
@@ -1478,8 +1240,6 @@ void register_commands() {
 #endif
     register_command("pineap", handle_pineap_detection);
     register_command("apcred", handle_apcred);
-    register_command("rgbmode", handle_rgb_mode);
-    register_command("setrgbpins", handle_setrgb);
     printf("Registered Commands\n");
     TERMINAL_VIEW_ADD_TEXT("Registered Commands\n");
 }

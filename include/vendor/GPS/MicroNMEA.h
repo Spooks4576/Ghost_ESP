@@ -259,7 +259,7 @@ static inline uint16_t gps_get_absolute_year(uint16_t year_offset) {
 }
 
 static inline bool gps_is_valid_year(uint16_t year_offset) {
-  return (year_offset <= GPS_MAX_YEAR);
+  return (year_offset >= GPS_MIN_YEAR && year_offset <= GPS_MAX_YEAR);
 }
 
 #ifdef __cplusplus

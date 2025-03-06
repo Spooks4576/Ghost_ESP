@@ -11,7 +11,7 @@
 #include "host/ble_gap.h"
 #endif
 
-#define MAX_PINEAP_NETWORKS 20
+#define MAX_PINEAP_NETWORKS 50
 #define MAX_SSIDS_PER_BSSID 10
 #define RECENT_SSID_COUNT 5
 

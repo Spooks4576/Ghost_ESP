@@ -220,7 +220,7 @@
         }
 
         .file-explorer li:hover:has(.file-name.folder) {
-            background-color: var(--accent-color);
+            background-color: var(--accent-tone);
             cursor: pointer;
         }
 
@@ -797,140 +797,30 @@
             margin: 0 4px;
         }
 
-        /* Terminal Styling */
-        .terminal-container {
-            background: rgba(10, 10, 15, 0.95);
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
+        /* Console/Output Styles */
+        #console,
+        .console {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            height: calc(100vh - 200px);
-            min-height: 400px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .terminal-output {
-            flex: 1;
-            background-color: rgba(0, 0, 0, 0.7);
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            font-family: var(--font-mono);
-            color: var(--text-primary);
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-size: 14px;
-            line-height: 1.4;
+            height: 300px;
             overflow-y: auto;
-            overflow-x: hidden;
-            scrollbar-width: thin;
-            scrollbar-color: var(--primary-color) var(--background-color);
-        }
-
-        .terminal-output::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .terminal-output::-webkit-scrollbar-track {
-            background: var(--background-color);
-            border-radius: 4px;
-        }
-
-        .terminal-output::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 4px;
-        }
-
-        .terminal-input-container {
-            display: flex;
-            gap: 10px;
-            margin-top: auto;
-            padding-top: 15px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .terminal-input-container input {
-            flex: 1;
-            background-color: rgba(0, 0, 0, 0.5);
-            border: 2px solid var(--border-color);
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
             border-radius: 8px;
-            padding: 12px 15px;
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .terminal-input-container input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.2);
-            background-color: rgba(0, 0, 0, 0.7);
-        }
-
-        .terminal-input-container button {
-            min-width: 100px;
-            margin: 0;
-            padding: 12px 20px;
-            font-size: 14px;
-            background: rgba(255, 107, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .terminal-input-container button:hover {
-            background: var(--primary-color);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
-        }
-
-        @media (max-width: 768px) {
-            .terminal-container {
-                height: calc(100vh - 150px);
-                min-height: 300px;
-            }
-
-            .terminal-input-container {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .terminal-input-container button {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .terminal-container {
-                padding: 10px;
-                height: calc(100vh - 120px);
-            }
-
-            .terminal-output {
-                font-size: 12px;
-                padding: 10px;
-            }
-
-            .terminal-input-container input,
-            .terminal-input-container button {
-                font-size: 12px;
-                padding: 10px 15px;
-            }
+            margin-bottom: 20px;
+            border: 2px solid var(--border-color);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ghost ESP vA1.4.7</h1>
+        <h1>Ghost ESP vA1.4.6</h1>
         <!-- Tab Navigation -->
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Settings')" id="defaultTab">Settings</button>
             <button class="tablinks" onclick="openTab(event, 'Help')">Help</button>
             <button class="tablinks" onclick="openTab(event, 'SDCard')">SD Card</button>
-            <button class="tablinks" onclick="openTab(event, 'Terminal')">Terminal</button>
         </div>
         <!-- Settings Tab Content -->
         <div id="Settings" class="tabcontent show">
@@ -1125,30 +1015,6 @@
                             </span>
                         </label>
                         <input type="number" id="rgb_speed" min="15" max="50" step="1" placeholder="15 - 50" required>
-                    </div>
-                    <div class="input-group">
-                        <label for="rgb_red_pin">Red Pin 
-                            <span class="tooltip">?
-                                <span class="tooltiptext">GPIO for red LED (0-34)</span>
-                            </span>
-                        </label>
-                        <input type="number" id="rgb_red_pin" min="0" max="34" placeholder="Red GPIO">
-                    </div>
-                    <div class="input-group">
-                        <label for="rgb_green_pin">Green Pin 
-                            <span class="tooltip">?
-                                <span class="tooltiptext">GPIO for green LED (0-34)</span>
-                            </span>
-                        </label>
-                        <input type="number" id="rgb_green_pin" min="0" max="34" placeholder="Green GPIO">
-                    </div>
-                    <div class="input-group">
-                        <label for="rgb_blue_pin">Blue Pin 
-                            <span class="tooltip">?
-                                <span class="tooltiptext">GPIO for blue LED (0-34)</span>
-                            </span>
-                        </label>
-                        <input type="number" id="rgb_blue_pin" min="0" max="34" placeholder="Blue GPIO">
                     </div>
                 </div>
                 <!-- Flappy Ghost Section -->
@@ -1387,25 +1253,12 @@
             </div>
         </div>
         
-        <!-- Terminal Tab Content -->
-        <div id="Terminal" class="tabcontent">
-            <div class="settings-section terminal-container">
-                <h2>Device Terminal</h2>
-                <div id="terminalOutput" class="terminal-output"></div>
-                <div class="terminal-input-container">
-                    <input type="text" id="terminalInput" placeholder="Enter command...">
-                    <button onclick="sendTerminalCommand()">Send</button>
-                </div>
-            </div>
-        </div>
     </div>
     <!-- JavaScript for Interactivity -->
     <script>
 
         let sdCardData = [];          // Stores the entire SD Card structure
         let navigationStack = [];     // Keeps track of the navigation path
-        let logOffset = 0;
-        const termOutput = document.getElementById('terminalOutput');
 
         async function uploadFile() {
             const fileInput = document.getElementById('sdcard-upload');
@@ -1727,20 +1580,6 @@
                 return;
             }
 
-            const rgbRedPin = parseInt(document.getElementById('rgb_red_pin').value);
-            const rgbGreenPin = parseInt(document.getElementById('rgb_green_pin').value);
-            const rgbBluePin = parseInt(document.getElementById('rgb_blue_pin').value);
-
-            // Add to settings POST
-            settings.rgb_red_pin = rgbRedPin;
-            settings.rgb_green_pin = rgbGreenPin;
-            settings.rgb_blue_pin = rgbBluePin;
-
-            // Add validation
-            if (!isNaN(rgbRedPin)) validateGpioRange(rgbRedPin, 'Red pin');
-            if (!isNaN(rgbGreenPin)) validateGpioRange(rgbGreenPin, 'Green pin'); 
-            if (!isNaN(rgbBluePin)) validateGpioRange(rgbBluePin, 'Blue pin');
-
             fetch('/api/settings', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -1920,94 +1759,6 @@
         window.onload = function() {
             loadSettings();
         };
-
-        function sendTerminalCommand() {
-            const input = document.getElementById('terminalInput');
-            const command = input.value.trim();
-            
-            if (command) {
-                fetch('/api/command', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({command: command})
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    input.value = '';
-                })
-                .catch(error => console.error('Error:', error));
-            }
-        }
-
-        function updateTerminal() {
-            fetch('/api/logs')
-                .then(response => response.text())
-                .then(text => {
-                    const termOutput = document.getElementById('terminalOutput');
-                    const currentText = termOutput.innerText;
-                    
-                    // Only update if there's new text
-                    if (text !== currentText) {
-                        // Keep a buffer of the last 1000 lines
-                        const lines = text.split('\n');
-                        const maxLines = 1000;
-                        
-                        if (lines.length > maxLines) {
-                            text = lines.slice(-maxLines).join('\n');
-                        }
-                        
-                        termOutput.innerText = text;
-                        
-                        // Smooth scroll to bottom with a small delay
-                        setTimeout(() => {
-                            termOutput.scrollTop = termOutput.scrollHeight;
-                        }, 50);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-            
-            setTimeout(updateTerminal, 1000);
-        }
-
-        // Add event listener for Enter key in terminal input
-        document.getElementById('terminalInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                const input = this;
-                const command = input.value.trim();
-                
-                if (command) {
-                    // Disable input while command is processing
-                    input.disabled = true;
-                    
-                    fetch('/api/command', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({command: command})
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        input.value = '';
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        const termOutput = document.getElementById('terminalOutput');
-                        termOutput.innerText += '\nError executing command: ' + error.message;
-                    })
-                    .finally(() => {
-                        // Re-enable input and focus it
-                        input.disabled = false;
-                        input.focus();
-                    });
-                }
-            }
-        });
-
-        // Start polling for terminal updates
-        updateTerminal();
     </script>
 </body>
 </html>

@@ -5,8 +5,6 @@
 #include "managers/settings_manager.h"
 #include <math.h>
 
-void rgb_manager_strobe_effect(RGBManager_t *rgb_manager, int delay_ms);
-
 static const char *TAG = "RGBManager";
 
 typedef struct {
@@ -109,12 +107,6 @@ void police_task(void *pvParameter) {
     vTaskDelay(pdMS_TO_TICKS(20));
   }
   vTaskDelete(NULL);
-}
-
-void strobe_task(void *pvParameter) {
-    RGBManager_t *rgb_manager = (RGBManager_t *)pvParameter;
-    rgb_manager_strobe_effect(rgb_manager, settings_get_rgb_speed(&G_Settings));
-    vTaskDelete(NULL);
 }
 
 void clamp_rgb(uint8_t *r, uint8_t *g, uint8_t *b) {
@@ -222,10 +214,10 @@ int get_pixel_index(int row, int column) {
   return row * 8 + column;
 }
 
-void set_led_column(RGBManager_t *rgb_manager, size_t column, uint8_t height) {
+void set_led_column(size_t column, uint8_t height) {
   // Clear the column first
   for (int row = 0; row < 8; ++row) {
-    led_strip_set_pixel(rgb_manager->strip, get_pixel_index(row, column), 0, 0,
+    led_strip_set_pixel(rgb_manager.strip, get_pixel_index(row, column), 0, 0,
                         0);
   }
 
@@ -235,12 +227,12 @@ void set_led_column(RGBManager_t *rgb_manager, size_t column, uint8_t height) {
 
   // Light up the required number of LEDs with the selected primary color
   for (int row = 0; row < height; ++row) {
-    led_strip_set_pixel(rgb_manager->strip, get_pixel_index(7 - row, column), r,
+    led_strip_set_pixel(rgb_manager.strip, get_pixel_index(7 - row, column), r,
                         g, b);
   }
 }
 
-void set_led_square(RGBManager_t *rgb_manager, uint8_t size, uint8_t red, uint8_t green, uint8_t blue) {
+void set_led_square(uint8_t size, uint8_t red, uint8_t green, uint8_t blue) {
   // Size is the 'thickness' of the square from the edges.
   // Example: size=0 means the outermost 8x8 border, size=1 means one square
   // inward (6x6), and so on.
@@ -248,7 +240,7 @@ void set_led_square(RGBManager_t *rgb_manager, uint8_t size, uint8_t red, uint8_
   // Clear all LEDs first
   for (int row = 0; row < 8; ++row) {
     for (int col = 0; col < 8; ++col) {
-      led_strip_set_pixel(rgb_manager->strip, get_pixel_index(row, col), 0, 0,
+      led_strip_set_pixel(rgb_manager.strip, get_pixel_index(row, col), 0, 0,
                           0);
     }
   }
@@ -259,26 +251,24 @@ void set_led_square(RGBManager_t *rgb_manager, uint8_t size, uint8_t red, uint8_
 
   // Top and Bottom sides of the square
   for (int col = start; col <= end; ++col) {
-    led_strip_set_pixel(rgb_manager->strip, get_pixel_index(start, col), red,
+    led_strip_set_pixel(rgb_manager.strip, get_pixel_index(start, col), red,
                         green, blue); // Top side
-    led_strip_set_pixel(rgb_manager->strip, get_pixel_index(end, col), red,
+    led_strip_set_pixel(rgb_manager.strip, get_pixel_index(end, col), red,
                         green, blue); // Bottom side
   }
 
   // Left and Right sides of the square
   for (int row = start + 1; row < end;
        ++row) { // Avoid corners since they are already set
-    led_strip_set_pixel(rgb_manager->strip, get_pixel_index(row, start), red,
+    led_strip_set_pixel(rgb_manager.strip, get_pixel_index(row, start), red,
                         green, blue); // Left side
-    led_strip_set_pixel(rgb_manager->strip, get_pixel_index(row, end), red,
+    led_strip_set_pixel(rgb_manager.strip, get_pixel_index(row, end), red,
                         green, blue); // Right side
   }
 }
 
-void update_led_visualizer(uint8_t *amplitudes, size_t num_bars, bool square_mode) {
-  extern RGBManager_t G_RGBManager; // assuming there's a global instance
-  RGBManager_t *rgb_manager = &G_RGBManager;
-  
+void update_led_visualizer(uint8_t *amplitudes, size_t num_bars,
+                           bool square_mode) {
   if (square_mode) {
     // Square visualizer effect
     uint8_t amplitude = amplitudes[0]; // Use the first amplitude value
@@ -289,19 +279,19 @@ void update_led_visualizer(uint8_t *amplitudes, size_t num_bars, bool square_mod
     uint8_t red = 255, green = 0, blue = 0;
 
     // Draw the square based on the calculated size
-    set_led_square(rgb_manager, square_size, red, green, blue);
+    set_led_square(square_size, red, green, blue);
   } else {
     // Original bar visualizer effect
     for (size_t bar = 0; bar < num_bars; ++bar) {
       uint8_t amplitude = amplitudes[bar];
       uint8_t num_pixels_to_light =
           (amplitude * 8) / 255; // Scale to 8 pixels high
-      set_led_column(rgb_manager, bar, num_pixels_to_light);
+      set_led_column(bar, num_pixels_to_light);
     }
   }
 
   // Refresh the LED strip
-  led_strip_refresh(rgb_manager->strip);
+  led_strip_refresh(rgb_manager.strip);
 }
 
 void pulse_once(RGBManager_t *rgb_manager, uint8_t red, uint8_t green,
@@ -452,6 +442,7 @@ void rgb_manager_rainbow_effect_matrix(RGBManager_t *rgb_manager,
   }
 }
 
+// Rainbow effect
 void rgb_manager_rainbow_effect(RGBManager_t *rgb_manager, int delay_ms) {
   double hue = 0.0;
 
@@ -493,58 +484,35 @@ void rgb_manager_rainbow_effect(RGBManager_t *rgb_manager, int delay_ms) {
 }
 
 void rgb_manager_policesiren_effect(RGBManager_t *rgb_manager, int delay_ms) {
+  uint8_t brightness;
+  bool increasing = true;
   bool is_red = true;
 
   while (1) {
-    // Fade in phase with easing for a smooth, natural ramp-up
     for (int pulse_step = 0; pulse_step <= 255; pulse_step += 5) {
-      double ratio = ((double)pulse_step) / 255.0;
-      uint8_t brightness = (uint8_t)(255 * sin(ratio * (M_PI / 2)));
+      if (increasing) {
+        brightness = pulse_step;
+      } else {
+        brightness = 255 - pulse_step;
+      }
+
       if (is_red) {
         rgb_manager_set_color(rgb_manager, 0, brightness, 0, 0, false);
       } else {
         rgb_manager_set_color(rgb_manager, 0, 0, 0, brightness, false);
       }
+
       led_strip_refresh(rgb_manager->strip);
+
       vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }
 
-    // Hold at maximum brightness briefly to mimic a real siren flash
-    vTaskDelay(pdMS_TO_TICKS(50));
+    increasing = !increasing;
 
-    // Fade out phase with the same easing in reverse
-    for (int pulse_step = 255; pulse_step >= 0; pulse_step -= 5) {
-      double ratio = ((double)pulse_step) / 255.0;
-      uint8_t brightness = (uint8_t)(255 * sin(ratio * (M_PI / 2)));
-      if (is_red) {
-        rgb_manager_set_color(rgb_manager, 0, brightness, 0, 0, false);
-      } else {
-        rgb_manager_set_color(rgb_manager, 0, 0, 0, brightness, false);
-      }
-      led_strip_refresh(rgb_manager->strip);
-      vTaskDelay(pdMS_TO_TICKS(delay_ms));
+    if (!increasing) {
+      is_red = !is_red;
     }
-
-    // Brief pause with the lights off to accentuate the cycle
-    vTaskDelay(pdMS_TO_TICKS(50));
-
-    // Alternate between red and blue after each full cycle
-    is_red = !is_red;
   }
-}
-
-void rgb_manager_strobe_effect(RGBManager_t *rgb_manager, int delay_ms) {
-    while (1) {
-        // Strobe ON: Set LED to full brightness (white)
-        rgb_manager_set_color(rgb_manager, 0, 255, 255, 255, false);
-        led_strip_refresh(rgb_manager->strip);
-        vTaskDelay(pdMS_TO_TICKS(delay_ms));
-
-        // Strobe OFF: Turn LEDs off completely
-        rgb_manager_set_color(rgb_manager, 0, 0, 0, 0, false);
-        led_strip_refresh(rgb_manager->strip);
-        vTaskDelay(pdMS_TO_TICKS(delay_ms * 3));
-    }
 }
 
 // Deinitialize the RGB LED manager
