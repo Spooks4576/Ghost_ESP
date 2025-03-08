@@ -53,6 +53,7 @@ static const char *wifi_options[] = {"Scan Access Points",
                                      "TP Link Test",
                                      "PineAP Detection",
                                      "Scan Open Ports",
+                                     "Reset AP Credentials",
                                      "Go Back",
                                      NULL};
 
@@ -79,6 +80,7 @@ void options_menu_create() {
     lv_obj_set_style_pad_all(root, 0, 0);
     lv_obj_align(root, LV_ALIGN_TOP_LEFT, 0, 0);
     lv_obj_set_scrollbar_mode(root, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_set_style_border_width(root, 0, LV_PART_MAIN);
 
 #ifdef CONFIG_JC3248W535EN_LCD
     screen_width -= 50;
@@ -93,6 +95,7 @@ void options_menu_create() {
     lv_obj_set_style_pad_column(list, 0, 0);
     lv_obj_set_scrollbar_mode(list, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_bg_color(list, lv_color_black(), 0);
+    lv_obj_set_style_border_width(list, 0, 0);
 
     menu_container = list;
 
@@ -179,14 +182,8 @@ static void select_menu_item(int index) {
     lv_obj_t *current_item = lv_obj_get_child(menu_container, selected_item_index);
     if (current_item) {
         lv_color_t deep_orange = lv_color_make(255, 87, 34);
-        lv_color_t darker_orange = lv_color_make(150, 45, 15);
         lv_obj_set_style_bg_color(current_item, deep_orange, LV_PART_MAIN);
         lv_obj_set_style_bg_opa(current_item, LV_OPA_COVER, LV_PART_MAIN);
-
-        lv_obj_set_style_radius(current_item, 12, LV_PART_MAIN);
-        lv_obj_set_style_border_side(current_item, LV_BORDER_SIDE_FULL, LV_PART_MAIN);
-        lv_obj_set_style_border_color(current_item, darker_orange, LV_PART_MAIN);
-        lv_obj_set_style_border_width(current_item, 2, LV_PART_MAIN);
 
         lv_obj_scroll_to_view(current_item, LV_ANIM_OFF);
     } else {
@@ -504,6 +501,12 @@ void option_event_cb(lv_event_t *e) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("scanports local -C");
+    }
+
+    if (strcmp(Selected_Option, "Reset AP Credentials") == 0) {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("apcred -r");
     }
 }
 

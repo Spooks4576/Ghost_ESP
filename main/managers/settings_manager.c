@@ -44,10 +44,24 @@ static const char *TAG = "SettingsManager";
 void settings_init(FSettings *settings) {
   settings_set_defaults(settings);
   esp_err_t err = nvs_flash_init();
-  if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
-      err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    nvs_flash_erase();
-    nvs_flash_init();
+
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES || 
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND ||
+      err == ESP_ERR_NVS_NOT_FOUND) {
+      printf("NVS corrupt - erasing partition...");
+      esp_err_t erase_err = nvs_flash_erase();
+      if (erase_err != ESP_OK) {
+          printf("Erase failed: %s", esp_err_to_name(erase_err));
+          vTaskDelay(pdMS_TO_TICKS(500));
+          esp_restart(); // Hard reset if erase fails
+      }
+      err = nvs_flash_init();
+  }
+
+  if (err != ESP_OK) {
+      printf("NVS FATAL: %s - Rebooting", esp_err_to_name(err));
+      vTaskDelay(pdMS_TO_TICKS(1000));
+      esp_restart();
   }
 
   err = nvs_open("storage", NVS_READWRITE, &nvsHandle);
@@ -101,6 +115,8 @@ void settings_load(FSettings *settings) {
   err = nvs_get_u8(nvsHandle, NVS_RGB_MODE_KEY, &value_u8);
   if (err == ESP_OK) {
     settings->rgb_mode = (RGBMode)value_u8;
+  } else if (err == ESP_ERR_NVS_NOT_FOUND) {
+    ESP_LOGW(S_TAG, "Using default RGB mode");
   }
 
   size_t required_size = sizeof(value_float); // Set the size of the buffer

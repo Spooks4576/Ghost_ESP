@@ -13,6 +13,7 @@ typedef struct {
   int num_leds;             // Number of LEDs
   led_strip_handle_t strip; // LED strip handle
   bool is_separate_pins;    // Flag to check if separate RGB pins are used
+  bool effect_active;        // Add this flag
 } RGBManager_t;
 
 /**
@@ -63,6 +64,8 @@ esp_err_t rgb_manager_deinit(RGBManager_t *rgb_manager);
 void rainbow_task(void *pvParameter);
 
 void police_task(void *pvParameter);
+
+void strobe_task(void *pvParameter);
 
 void pulse_once(RGBManager_t *rgb_manager, uint8_t red, uint8_t green,
                 uint8_t blue);
