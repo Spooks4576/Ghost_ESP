@@ -237,6 +237,7 @@ void display_manager_add_status_bar(const char *CurrentMenuName) {
   lv_obj_set_size(left_container, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
   lv_obj_set_flex_flow(left_container, LV_FLEX_FLOW_ROW);
   lv_obj_set_flex_align(left_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_style_pad_column(left_container, 5, 0); // add spacing between icons
   lv_obj_align(left_container, LV_ALIGN_LEFT_MID, 5, 0);  // 5px padding from left
 
   // Modified right container setup

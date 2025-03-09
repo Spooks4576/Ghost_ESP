@@ -26,8 +26,6 @@ jobs:
           - { name: "esp32c3-generic", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-generic.zip" }
           - { name: "esp32c6-generic", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
           - { name: "Awok V5", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip"}
-          - { name: "esp32c3-devkit", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.devkit.esp32c3", zip_name: "esp32c3-devkit.zip"}
-          - { name: "esp32c6-devkit", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.devkit.esp32c6", zip_name: "esp32c6-devkit.zip"}
           - { name: "ghostboard", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.ghostboard", zip_name: "ghostboard.zip"}
           - { name: "MarauderV4_FlipperHub", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv4", zip_name: "MarauderV4_FlipperHub.zip"}
           - { name: "MarauderV6&AwokDual", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip"}

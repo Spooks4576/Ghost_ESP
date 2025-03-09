@@ -18,13 +18,9 @@ jobs:
           - { name: "esp32c6-generic", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
           - { name: "Awok V5", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip"}
 
-          # Dev Kit configurations (LED on, no screen support)
-          - { name: "esp32c3-devkit", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.devkit.esp32c3", zip_name: "esp32c3-devkit.zip"}
-          - { name: "esp32c6-devkit", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.devkit.esp32c6", zip_name: "esp32c6-devkit.zip"}
-
           # Ghost board (LED on, special pin and LED count)
           - { name: "ghostboard", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.ghostboard", zip_name: "ghostboard.zip"}
-
+          
           # Screen-supported builds
           - { name: "MarauderV4_FlipperHub", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv4", zip_name: "MarauderV4_FlipperHub.zip"}
           - { name: "MarauderV6&AwokDual", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip"}
@@ -32,13 +28,11 @@ jobs:
           - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer", zip_name: "ESP32-S3-Cardputer.zip"}
           #- { name: "LillyGoTWatch_S3", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.S3TWatch", zip_name: "lillygos3watch.zip"}
 
-
           # CYD (Cheap Yellow Display) with touch screen
           - { name: "CYD2USB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB", zip_name: "CYD2USB.zip"}
           - { name: "CYDMicroUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip"}
           - { name: "CYDDualUSB", idf_target: "esp32",  sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip"}
           - { name: "CYD2USB2.4_Inch", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch", zip_name: "CYD2USB2.4Inch.zip"}
-
 
           # 7-inch boards
           - { name: "Waveshare_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip"}
@@ -324,21 +318,10 @@ jobs:
                   "zip_file": "esp32c3-generic.zip",
                   "chip_type": "ESP32-C3"
                 },
-                "devkit": {
-                  "name": "ESP32-C3 DevKit",
-                  "zip_file": "esp32c3-devkit.zip",
-                  "chip_type": "ESP32-C3"
-                }
-              },
               "ESP32C6": {
                 "generic": {
                   "name": "ESP32-C6 Generic",
                   "zip_file": "esp32c6-generic.zip",
-                  "chip_type": "ESP32-C6"
-                },
-                "devkit": {
-                  "name": "ESP32-C6 DevKit",
-                  "zip_file": "esp32c6-devkit.zip",
                   "chip_type": "ESP32-C6"
                 },
                 "ghostboard": {
