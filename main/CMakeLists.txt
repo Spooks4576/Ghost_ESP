@@ -11,7 +11,7 @@ set(required_components bt nvs_flash driver esp_http_server mdns json esp_http_c
 set(sources ${app_sources})
 
 
-if("${IDF_TARGET}" STREQUAL "esp32s3" AND CONFIG_USE_CARDPUTER)
+if("${IDF_TARGET}" STREQUAL "esp32s3")
     # Add the M5GFX wrapper source file
     list(APPEND sources "vendor/m5/m5gfx_wrapper.cpp")
     # Add M5GFX to the required components
