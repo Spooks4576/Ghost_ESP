@@ -1429,17 +1429,16 @@
             let uploadPath = '/mnt';
             if (navigationStack.length > 1) {
                 const pathParts = navigationStack.slice(1).map(folder => folder.name);
-                uploadPath = path.join(uploadPath, ...pathParts);
+                uploadPath = '/mnt/' + pathParts.join('/');
             }
-
-            formData.append('path', uploadPath);
 
             try {
                 // Show uploading status
                 const statusElement = document.getElementById('sdcard-status');
                 statusElement.textContent = 'Uploading file...';
 
-                const response = await fetch('/api/sdcard/upload', {
+                // Use the uploadPath as a query parameter in the URL
+                const response = await fetch(`/api/sdcard/upload?path=${encodeURIComponent(uploadPath)}`, {
                     method: 'POST',
                     body: formData
                 });

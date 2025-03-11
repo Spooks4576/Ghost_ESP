@@ -3,6 +3,7 @@
 
 #include "lvgl.h"
 #include "managers/display_manager.h"
+#include "game_gallery_screen.h"
 
 void apps_menu_create(void);
 void apps_menu_destroy(void);

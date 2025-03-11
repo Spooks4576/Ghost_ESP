@@ -2,6 +2,7 @@
 #include "managers/views/flappy_ghost_screen.h"
 #include "managers/views/main_menu_screen.h"
 #include "managers/views/music_visualizer.h"
+#include "managers/views/game_gallery_screen.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -14,13 +15,18 @@ typedef struct {
   lv_color_t border_color;
 } app_item_t;
 
+static const lv_color_t flap_color = LV_COLOR_MAKE(255, 215, 0);
+static const lv_color_t rave_color = LV_COLOR_MAKE(128, 0, 128);
+static const lv_color_t games_color = LV_COLOR_MAKE(0, 255, 0);
+
 static app_item_t app_items[] = {
-    {"Flap", &GESPFlappyghost},
-    {"Rave", &rave},
+  {"Flap", &GESPFlappyghost, flap_color},
+  {"Rave", &rave, rave_color},
+  {"Games", NULL, games_color}
 };
 
 static int num_apps = sizeof(app_items) / sizeof(app_items[0]);
-static int apps_per_page = 6; // 3 columns * 2 rows
+static int apps_per_page = 6;
 static int current_page = 0;
 static int total_pages = 0;
 
@@ -30,44 +36,57 @@ static lv_obj_t *next_button = NULL;
 static lv_obj_t *prev_button = NULL;
 #endif
 
-void refresh_apps_menu(void); // Forward declaration
+void refresh_apps_menu(void);
 
 void apps_menu_create(void) {
   display_manager_fill_screen(lv_color_black());
 
-  // Set border colors for apps
-  app_items[0].border_color = lv_color_make(255, 215, 0);
-
   // Calculate total pages
   total_pages = (num_apps + apps_per_page - 1) / apps_per_page;
 
-  static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1),
-                                 LV_GRID_TEMPLATE_LAST};
-  static lv_coord_t row_dsc[] = {LV_GRID_FR(0.5), // Row 0: Back button
-                                 LV_GRID_FR(1),   // Row 1: Apps row 1
-                                 LV_GRID_FR(1),   // Row 2: Apps row 2
-#ifdef CONFIG_USE_TOUCHSCREEN
-                                 LV_GRID_FR(0.5), // Row 3: Next/Prev buttons
-#endif
-                                 LV_GRID_TEMPLATE_LAST};
+  // Determine orientation (should be landscape for 1024x600)
+  bool is_landscape = (LV_HOR_RES >= LV_VER_RES);
+  printf("Screen: %dx%d, Orientation: %s\n", LV_HOR_RES, LV_VER_RES, is_landscape ? "Landscape" : "Portrait");
 
+  // Grid layout: 3 columns across width, rows down height
+  static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+  static lv_coord_t row_dsc[] = {
+    LV_GRID_FR(1),   // Row 0: Apps row 1 (top)
+    LV_GRID_FR(1),   // Row 1: Apps row 2
+    LV_GRID_FR(0.5), // Row 2: Buffer or spacer
+    #ifdef CONFIG_USE_TOUCHSCREEN
+    LV_GRID_FR(0.5), // Row 3: Navigation buttons (bottom)
+    #endif
+    LV_GRID_TEMPLATE_LAST
+  };
+
+  // Button sizes for landscape (7-inch screen, e.g., 1024x600)
+  int button_width = LV_HOR_RES / 4;  // e.g., 256 pixels
+  int button_height = LV_VER_RES / 8; // e.g., 75 pixels
+
+  // Create container
   apps_container = lv_obj_create(lv_scr_act());
+  if (!apps_container) {
+    printf("Failed to create apps_container\n");
+    return;
+  }
   apps_menu_view.root = apps_container;
   lv_obj_set_grid_dsc_array(apps_container, col_dsc, row_dsc);
-  lv_obj_set_size(apps_container, LV_HOR_RES, LV_VER_RES);
+  lv_obj_set_size(apps_container, LV_HOR_RES, LV_VER_RES); // Full screen: 1024x600
   lv_obj_set_scrollbar_mode(apps_container, LV_SCROLLBAR_MODE_OFF);
-  lv_obj_set_style_pad_column(apps_container, -20, 0);
+  lv_obj_set_style_pad_column(apps_container, 10, 0); // Positive spacing between columns
   lv_obj_set_style_bg_opa(apps_container, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(apps_container, 0, 0);
-  lv_obj_set_style_pad_all(apps_container, 0, 0);
+  // Padding for layout
+  lv_obj_set_style_pad_left(apps_container, 10, 0);
+  lv_obj_set_style_pad_bottom(apps_container, 10, 0);
+  lv_obj_set_style_pad_right(apps_container, 10, 0);
+  lv_obj_set_style_pad_top(apps_container, 5, 0); // Small margin from top
   lv_obj_set_style_radius(apps_container, 0, 0);
-
-  lv_obj_align(apps_container, LV_ALIGN_CENTER, 0, 20);
+  // Align to top of screen
+  lv_obj_align(apps_container, LV_ALIGN_TOP_MID, 0, 0);
 
   // Create Back Button
-  int button_width = LV_HOR_RES / 4;
-  int button_height = LV_VER_RES / 8;
-
   back_button = lv_btn_create(apps_container);
   lv_obj_set_size(back_button, button_width, button_height);
   lv_obj_set_style_bg_color(back_button, lv_color_black(), 0);
@@ -76,22 +95,22 @@ void apps_menu_create(void) {
   lv_obj_set_style_radius(back_button, 10, 0);
   lv_obj_set_scrollbar_mode(back_button, LV_SCROLLBAR_MODE_OFF);
   lv_obj_set_style_pad_all(back_button, 5, 0);
-
   lv_obj_t *back_label = lv_label_create(back_button);
   lv_label_set_text(back_label, "Back");
   lv_obj_set_style_text_font(back_label, &lv_font_montserrat_18, 0);
   lv_obj_align(back_label, LV_ALIGN_CENTER, 0, 0);
   lv_obj_set_style_text_color(back_label, lv_color_white(), 0);
 
-  // Position the back button at the top center
-  lv_obj_set_grid_cell(back_button, LV_GRID_ALIGN_CENTER, 1, 1,
-                       LV_GRID_ALIGN_START, 0, 1);
+  // Place Back button in bottom-left corner
+  #ifdef CONFIG_USE_TOUCHSCREEN
+  lv_obj_set_grid_cell(back_button, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_END, 3, 1);
+  #else
+  lv_obj_set_grid_cell(back_button, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_END, 2, 1);
+  #endif
   lv_obj_set_user_data(back_button, (void *)(uintptr_t)(-1));
 
-  lv_obj_add_flag(back_button, LV_OBJ_FLAG_HIDDEN);
-
-#ifdef CONFIG_USE_TOUCHSCREEN
-  // Create Next and Previous Buttons
+  #ifdef CONFIG_USE_TOUCHSCREEN
+  // Create Next Button
   next_button = lv_btn_create(apps_container);
   lv_obj_set_size(next_button, button_width, button_height);
   lv_obj_set_style_bg_color(next_button, lv_color_black(), 0);
@@ -100,19 +119,15 @@ void apps_menu_create(void) {
   lv_obj_set_style_radius(next_button, 10, 0);
   lv_obj_set_scrollbar_mode(next_button, LV_SCROLLBAR_MODE_OFF);
   lv_obj_set_style_pad_all(next_button, 5, 0);
-
   lv_obj_t *next_label = lv_label_create(next_button);
   lv_label_set_text(next_label, "Next");
   lv_obj_set_style_text_font(next_label, &lv_font_montserrat_18, 0);
   lv_obj_align(next_label, LV_ALIGN_CENTER, 0, 0);
   lv_obj_set_style_text_color(next_label, lv_color_white(), 0);
+  lv_obj_set_grid_cell(next_button, LV_GRID_ALIGN_END, 2, 1, LV_GRID_ALIGN_END, 3, 1);
+  lv_obj_set_user_data(next_button, (void *)(uintptr_t)(-2));
 
-  lv_obj_set_grid_cell(next_button, LV_GRID_ALIGN_CENTER, 2, 1,
-                       LV_GRID_ALIGN_START, 3, 1);
-  lv_obj_set_user_data(
-      next_button,
-      (void *)(uintptr_t)(-2)); // Use -2 to identify the next button
-
+  // Create Previous Button
   prev_button = lv_btn_create(apps_container);
   lv_obj_set_size(prev_button, button_width, button_height);
   lv_obj_set_style_bg_color(prev_button, lv_color_black(), 0);
@@ -121,81 +136,92 @@ void apps_menu_create(void) {
   lv_obj_set_style_radius(prev_button, 10, 0);
   lv_obj_set_scrollbar_mode(prev_button, LV_SCROLLBAR_MODE_OFF);
   lv_obj_set_style_pad_all(prev_button, 5, 0);
-
   lv_obj_t *prev_label = lv_label_create(prev_button);
   lv_label_set_text(prev_label, "Prev");
   lv_obj_set_style_text_font(prev_label, &lv_font_montserrat_18, 0);
   lv_obj_align(prev_label, LV_ALIGN_CENTER, 0, 0);
   lv_obj_set_style_text_color(prev_label, lv_color_white(), 0);
+  lv_obj_set_grid_cell(prev_button, LV_GRID_ALIGN_CENTER, 1, 1, LV_GRID_ALIGN_END, 3, 1);
+  lv_obj_set_user_data(prev_button, (void *)(uintptr_t)(-3));
+  #endif
 
-  lv_obj_set_grid_cell(prev_button, LV_GRID_ALIGN_CENTER, 0, 1,
-                       LV_GRID_ALIGN_START, 3, 1);
-  lv_obj_set_user_data(
-      prev_button,
-      (void *)(uintptr_t)(-3)); // Use -3 to identify the prev button
-
-  // Update navigation buttons' visibility
-  if (current_page <= 0) {
-    lv_obj_add_flag(prev_button, LV_OBJ_FLAG_HIDDEN);
-  } else {
-    lv_obj_clear_flag(prev_button, LV_OBJ_FLAG_HIDDEN);
-  }
-
-  if (current_page >= total_pages - 1) {
-    lv_obj_add_flag(next_button, LV_OBJ_FLAG_HIDDEN);
-  } else {
-    lv_obj_clear_flag(next_button, LV_OBJ_FLAG_HIDDEN);
-  }
-#endif // USE_TOUCHSCREEN
-
-  // Create App Items for Current Page
+  // Refresh app items (ensure apps populate from top)
   refresh_apps_menu();
 
-#ifndef CONFIG_USE_TOUCHSCREEN
+  #ifndef CONFIG_USE_TOUCHSCREEN
   select_app_item(current_page * apps_per_page);
-#endif
+  #endif
 
   display_manager_add_status_bar("Apps");
 }
 
-void refresh_apps_menu(void) {
-  // Delete existing app items except the back button and next/prev buttons (if
-  // touchscreen)
+void apps_menu_destroy(void) {
+  if (apps_container) {
+    lv_obj_clean(apps_container);
+    lv_obj_del(apps_container);
+    apps_container = NULL;
+  }
+}
+
+void update_app_item_styles(void) {
   uint32_t child_count = lv_obj_get_child_cnt(apps_container);
-  for (int32_t i = child_count - 1; i >= 0; i--) { // Iterate in reverse order
+  for (uint32_t i = 0; i < child_count; i++) {
+    lv_obj_t *app_item = lv_obj_get_child(apps_container, i);
+    int index = (int)(uintptr_t)lv_obj_get_user_data(app_item);
+    if (index < 0) continue;
+    if (index == selected_app_index) {
+      lv_obj_set_style_border_color(app_item, lv_color_make(255, 255, 0), 0);
+      lv_obj_set_style_border_width(app_item, 4, 0);
+    } else {
+      lv_obj_set_style_border_color(app_item, app_items[index].border_color, 0);
+      lv_obj_set_style_border_width(app_item, 2, 0);
+    }
+  }
+}
+
+void select_app_item(int index) {
+  if (index < -1) index = num_apps - 1;
+  if (index > num_apps - 1) index = -1;
+  selected_app_index = index;
+
+  int page = (selected_app_index == -1) ? 0 : (selected_app_index / apps_per_page);
+  if (page != current_page) {
+    current_page = page;
+    refresh_apps_menu();
+  } else {
+    update_app_item_styles();
+  }
+}
+
+
+void refresh_apps_menu(void) {
+  // Clear existing app items (preserve navigation buttons)
+  uint32_t child_count = lv_obj_get_child_cnt(apps_container);
+  for (int32_t i = child_count - 1; i >= 0; i--) {
     lv_obj_t *child = lv_obj_get_child(apps_container, i);
     int index = (int)(uintptr_t)lv_obj_get_user_data(child);
-    if (index >= 0) { // Delete app items
+    if (index >= 0) {
       lv_obj_del(child);
     }
   }
 
   int start_index = current_page * apps_per_page;
   int end_index = start_index + apps_per_page;
-  if (end_index > num_apps)
-    end_index = num_apps;
+  if (end_index > num_apps) end_index = num_apps;
 
-  lv_disp_t *disp = lv_disp_get_default();
-  int hor_res = lv_disp_get_hor_res(disp);
-  int ver_res = lv_disp_get_ver_res(disp);
-
-  int button_width = hor_res / 4;
-  int button_height = ver_res / 4;
-
+  // Button sizes for landscape (e.g., 1024x600)
+  int button_width = LV_HOR_RES / 4;  // e.g., 256 pixels
+  int button_height = LV_VER_RES / 4; // e.g., 150 pixels
   int icon_width = 50;
   int icon_height = 50;
+  const lv_font_t *font = (LV_VER_RES <= 128) ? &lv_font_montserrat_10 :
+  (LV_VER_RES <= 240) ? &lv_font_montserrat_16 :
+  &lv_font_montserrat_18;
 
-  const lv_font_t *font;
-  if (ver_res <= 128) {
-    font = &lv_font_montserrat_10;
-  } else if (ver_res <= 240) {
-    font = &lv_font_montserrat_16;
-  } else {
-    font = &lv_font_montserrat_18;
-  }
-
+  // Populate app buttons starting at row 0 (top)
   for (int i = start_index; i < end_index; i++) {
     int display_index = i - start_index;
+    if (display_index >= 3) break; // Limit to 3 buttons for now
 
     lv_obj_t *app_item = lv_btn_create(apps_container);
     lv_obj_set_size(app_item, button_width, button_height);
@@ -206,60 +232,53 @@ void refresh_apps_menu(void) {
     lv_obj_set_scrollbar_mode(app_item, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_style_pad_all(app_item, 5, 0);
 
-    if (ver_res >= 240 && app_items[i].icon) {
+    if (LV_VER_RES >= 240 && app_items[i].icon) {
       lv_obj_t *icon = lv_img_create(app_item);
       lv_img_set_src(icon, app_items[i].icon);
       lv_obj_set_size(icon, icon_width, icon_height);
       lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, -5);
     }
 
-    if (ver_res <= 135) {
-      lv_obj_t *label = lv_label_create(app_item);
-      lv_label_set_text(label, app_items[i].name);
-      lv_obj_set_style_text_font(label, font, 0);
-      lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-      lv_obj_set_style_text_color(label, lv_color_white(), 0);
-    }
+    lv_obj_t *label = lv_label_create(app_item);
+    lv_label_set_text(label, app_items[i].name);
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_text_color(label, lv_color_white(), 0);
 
-    int row_idx = 1 + (display_index / 3); // Rows 1 and 2 for apps
-    lv_obj_set_grid_cell(app_item, LV_GRID_ALIGN_CENTER, display_index % 3, 1,
-                         LV_GRID_ALIGN_START, row_idx, 1);
-
+    // Place in row 0, columns 0-2 (top row)
+    int row_idx = display_index / 3; // Start at row 0
+    int col_idx = display_index % 3; // Columns 0, 1, 2
+    lv_obj_set_grid_cell(app_item, LV_GRID_ALIGN_CENTER, col_idx, 1, LV_GRID_ALIGN_CENTER, row_idx, 1);
     lv_obj_set_user_data(app_item, (void *)(intptr_t)i);
   }
 
-#ifdef CONFIG_USE_TOUCHSCREEN
-  // Update navigation buttons' visibility
+  #ifdef CONFIG_USE_TOUCHSCREEN
   if (current_page <= 0) {
     lv_obj_add_flag(prev_button, LV_OBJ_FLAG_HIDDEN);
   } else {
     lv_obj_clear_flag(prev_button, LV_OBJ_FLAG_HIDDEN);
   }
-
   if (current_page >= total_pages - 1) {
     lv_obj_add_flag(next_button, LV_OBJ_FLAG_HIDDEN);
   } else {
     lv_obj_clear_flag(next_button, LV_OBJ_FLAG_HIDDEN);
   }
-#endif
+  #endif
 
-#ifndef CONFIG_USE_TOUCHSCREEN
-  // For devices without touchscreens, ensure selected_app_index is within the
-  // current page
-  if (selected_app_index != -1 &&
-      (selected_app_index < start_index || selected_app_index >= end_index)) {
+  #ifndef CONFIG_USE_TOUCHSCREEN
+  if (selected_app_index < start_index || selected_app_index >= end_index) {
     selected_app_index = start_index;
   }
   update_app_item_styles();
-#endif
+  #endif
 }
 
-void handle_apps_button_press(int ButtonPressed) {
-  if (ButtonPressed == 0) { // Left
+static void handle_apps_button_press(int button) {
+  if (button == 0) { // Left
     select_app_item(selected_app_index - 1);
-  } else if (ButtonPressed == 3) { // Right
+  } else if (button == 3) { // Right
     select_app_item(selected_app_index + 1);
-  } else if (ButtonPressed == 1) { // Select
+  } else if (button == 1) { // Select
     if (selected_app_index == -1) {
       printf("Back button pressed\n");
       display_manager_switch_view(&main_menu_view);
@@ -267,16 +286,16 @@ void handle_apps_button_press(int ButtonPressed) {
       printf("Launching app via joystick: %d\n", selected_app_index);
       if (selected_app_index == 0) {
         display_manager_switch_view(&flappy_bird_view);
-      }
-
-      if (selected_app_index == 1) {
+      } else if (selected_app_index == 1) {
         display_manager_switch_view(&music_visualizer_view);
+      } else if (selected_app_index == 2) {
+        display_manager_switch_view(&game_gallery_view);
       }
     }
   }
 }
 
-void apps_menu_event_handler(InputEvent *event) {
+static void apps_menu_event_handler(InputEvent *event) {
   if (event->type == INPUT_TYPE_TOUCH) {
     lv_indev_data_t *data = &event->data.touch_data;
     int touched_app_index = -1;
@@ -292,14 +311,13 @@ void apps_menu_event_handler(InputEvent *event) {
       lv_obj_get_coords(child, &item_area);
 
       if (data->point.x >= item_area.x1 && data->point.x <= item_area.x2 &&
-          data->point.y >= item_area.y1 && data->point.y <= item_area.y2) {
-
+        data->point.y >= item_area.y1 && data->point.y <= item_area.y2) {
         if (index == -1) { // Back button
           printf("Back button touched\n");
           display_manager_switch_view(&main_menu_view);
           return;
         }
-#ifdef CONFIG_USE_TOUCHSCREEN
+        #ifdef CONFIG_USE_TOUCHSCREEN
         else if (index == -2) { // Next button
           if (current_page < total_pages - 1) {
             current_page++;
@@ -313,12 +331,12 @@ void apps_menu_event_handler(InputEvent *event) {
           }
           return;
         }
-#endif
+        #endif
         else {
           touched_app_index = index;
           break;
         }
-      }
+        }
     }
 
     if (touched_app_index >= 0) {
@@ -327,68 +345,12 @@ void apps_menu_event_handler(InputEvent *event) {
         display_manager_switch_view(&flappy_bird_view);
       } else if (touched_app_index == 1) {
         display_manager_switch_view(&music_visualizer_view);
+      } else if (touched_app_index == 2) {
+        display_manager_switch_view(&game_gallery_view);
       }
-    } else {
-      printf("Touch input detected but no app item found at touch coordinates. "
-             "X: %d, Y: %d\n",
-             data->point.x, data->point.y);
     }
-
   } else if (event->type == INPUT_TYPE_JOYSTICK) {
-    int button = event->data.joystick_index;
-    handle_apps_button_press(button);
-  }
-}
-
-void update_app_item_styles(void) {
-  uint32_t child_count = lv_obj_get_child_cnt(apps_container);
-  for (uint32_t i = 0; i < child_count; i++) {
-    lv_obj_t *app_item = lv_obj_get_child(apps_container, i);
-    int index = (int)(uintptr_t)lv_obj_get_user_data(app_item);
-
-    // Skip non-app items
-    if (index < 0)
-      continue;
-
-    if (index == selected_app_index) {
-      lv_obj_set_style_border_color(app_item, lv_color_make(255, 255, 0), 0);
-      lv_obj_set_style_border_width(app_item, 4, 0);
-    } else {
-      lv_obj_set_style_border_color(app_item, app_items[index].border_color, 0);
-      lv_obj_set_style_border_width(app_item, 2, 0);
-    }
-  }
-}
-
-void select_app_item(int index) {
-  if (index < -1)
-    index = num_apps - 1;
-  if (index > num_apps - 1)
-    index = -1;
-
-  selected_app_index = index;
-
-  int page;
-
-  if (selected_app_index == -1) {
-    page = 0; // Back button is on page 0
-  } else {
-    page = selected_app_index / apps_per_page;
-  }
-
-  if (page != current_page) {
-    current_page = page;
-    refresh_apps_menu();
-  } else {
-    update_app_item_styles();
-  }
-}
-
-void apps_menu_destroy(void) {
-  if (apps_container) {
-    lv_obj_clean(apps_container);
-    lv_obj_del(apps_container);
-    apps_container = NULL;
+    handle_apps_button_press(event->data.joystick_index);
   }
 }
 
@@ -397,10 +359,10 @@ void get_apps_menu_callback(void **callback) {
 }
 
 View apps_menu_view = {
-    .root = NULL,
-    .create = apps_menu_create,
-    .destroy = apps_menu_destroy,
-    .input_callback = apps_menu_event_handler,
-    .name = "Apps Menu",
-    .get_hardwareinput_callback = get_apps_menu_callback,
+  .root = NULL,
+  .create = apps_menu_create,
+  .destroy = apps_menu_destroy,
+  .input_callback = apps_menu_event_handler,
+  .name = "Apps Menu",
+  .get_hardwareinput_callback = get_apps_menu_callback
 };
