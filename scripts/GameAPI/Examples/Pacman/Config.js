@@ -5,14 +5,19 @@ const config = {
     compress_logic: false
 };
 
-// Asset definitions
+
 const assets = [
-    { name: "pacman.png", type: "sprite", format: "rgb565" },
-{ name: "ghost.png", type: "sprite", format: "rgb565" },
-{ name: "maze.png", type: "image", format: "indexed8" }
+    { name: "pacman.png", type: "sprite", format: "rgb565" },  // Index 0
+{ name: "ghost.png", type: "sprite", format: "rgb565" },   // Index 1
+{ name: "maze.png", type: "image", format: "indexed8" }    // Index 2
 ];
 
-// Initial positions (in pixels)
+// Asset indices
+const PACMAN = 0;
+const GHOST = 1;
+const MAZE = 2;
+
+
 let pacmanX = 50;
 let pacmanY = 50;
 let ghostX = 80;
@@ -26,41 +31,41 @@ const BLUE = 0x001F;
 
 // Main game loop
 function update() {
-    // Move ghost (simplified static movement for now; Math.random() not supported yet)
-    moveSprite("ghost", ghostX + 1, ghostY);
+    ghostX = ghostX + 1;  // Update ghostX dynamically
+    moveSprite(GHOST, ghostX, ghostY);
 
     // Animate Pac-Man
-    setAnimation("pacman", pacmanAnim);
+    setAnimation(PACMAN, pacmanAnim);
     pacmanAnim = (pacmanAnim === "open") ? "close" : "open";
-    moveSprite("pacman", pacmanX, pacmanY);
+    moveSprite(PACMAN, pacmanX, pacmanY);
 
     // Draw a power pellet
     drawPixel(pacmanX + 10, pacmanY, YELLOW);
 
-    // Draw touch control zones (for visualization, static for 128x128)
+
     drawRect(96, 96, 20, 20, BLUE, false); // Right
     drawRect(32, 96, 20, 20, BLUE, false); // Left
     drawRect(64, 32, 20, 20, BLUE, false); // Up
     drawRect(64, 96, 20, 20, BLUE, false); // Down
 }
 
-// Touch controls with relative coordinates (rel_x, rel_y, rel_radius, callback)
+
 onTouchPress(0.85, 0.85, 0.1, function() {
-    pacmanX = pacmanX + 5; // Dynamic assignment
+    pacmanX = pacmanX + 5; // Move right
     drawLine(pacmanX - 5, pacmanY, pacmanX, pacmanY, YELLOW);
 });
 
 onTouchPress(0.15, 0.85, 0.1, function() {
-    pacmanX = pacmanX - 5;
+    pacmanX = pacmanX - 5; // Move left
     drawLine(pacmanX + 5, pacmanY, pacmanX, pacmanY, YELLOW);
 });
 
 onTouchPress(0.5, 0.15, 0.1, function() {
-    pacmanY = pacmanY - 5;
+    pacmanY = pacmanY - 5; // Move up
     drawLine(pacmanX, pacmanY + 5, pacmanX, pacmanY, YELLOW);
 });
 
 onTouchPress(0.5, 0.85, 0.1, function() {
-    pacmanY = pacmanY + 5;
+    pacmanY = pacmanY + 5; // Move down
     drawLine(pacmanX, pacmanY - 5, pacmanX, pacmanY, YELLOW);
 });
