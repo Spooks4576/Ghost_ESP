@@ -2,7 +2,6 @@
 #include "managers/views/flappy_ghost_screen.h"
 #include "managers/views/main_menu_screen.h"
 #include "managers/views/music_visualizer.h"
-#include "managers/views/game_gallery_screen.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -17,12 +16,10 @@ typedef struct {
 
 static const lv_color_t flap_color = LV_COLOR_MAKE(255, 215, 0);
 static const lv_color_t rave_color = LV_COLOR_MAKE(128, 0, 128);
-static const lv_color_t games_color = LV_COLOR_MAKE(0, 255, 0);
 
 static app_item_t app_items[] = {
   {"Flap", &GESPFlappyghost, flap_color},
-  {"Rave", &rave, rave_color},
-  {"Games", NULL, games_color}
+  {"Rave", &rave, rave_color}
 };
 
 static int num_apps = sizeof(app_items) / sizeof(app_items[0]);
@@ -288,14 +285,12 @@ static void handle_apps_button_press(int button) {
         display_manager_switch_view(&flappy_bird_view);
       } else if (selected_app_index == 1) {
         display_manager_switch_view(&music_visualizer_view);
-      } else if (selected_app_index == 2) {
-        display_manager_switch_view(&game_gallery_view);
-      }
     }
   }
 }
+}
 
-static void apps_menu_event_handler(InputEvent *event) {
+void apps_menu_event_handler(InputEvent *event) {
   if (event->type == INPUT_TYPE_TOUCH) {
     lv_indev_data_t *data = &event->data.touch_data;
     int touched_app_index = -1;
@@ -345,8 +340,6 @@ static void apps_menu_event_handler(InputEvent *event) {
         display_manager_switch_view(&flappy_bird_view);
       } else if (touched_app_index == 1) {
         display_manager_switch_view(&music_visualizer_view);
-      } else if (touched_app_index == 2) {
-        display_manager_switch_view(&game_gallery_view);
       }
     }
   } else if (event->type == INPUT_TYPE_JOYSTICK) {
