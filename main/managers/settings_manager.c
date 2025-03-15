@@ -268,6 +268,26 @@ void settings_load(FSettings *settings) {
   printf("Settings loaded from NVS.\n");
 }
 
+static void update_rainbow_effect(const FSettings *settings) {
+#ifndef CONFIG_WITH_SCREEN
+  return; // early return to avoid creating with no screen
+#endif
+
+
+  if (settings_get_rgb_mode(settings) != 0) {
+    if (rainbow_timer == NULL) {
+      rainbow_timer = lv_timer_create(rainbow_effect_cb, 50, NULL);
+      rainbow_hue = 0;
+    }
+  } else {
+    if (rainbow_timer != NULL) {
+      lv_timer_del(rainbow_timer);
+      rainbow_timer = NULL;
+    }
+  }
+}
+
+
 void settings_save(const FSettings *settings) {
   ESP_LOGI(TAG, "Starting settings save process");
   ESP_LOGI(TAG, "Current display timeout: %lu ms",
@@ -417,6 +437,9 @@ void settings_save(const FSettings *settings) {
                   &rgb_effect_task_handle);
     }
   }
+
+
+  update_rainbow_effect(&G_Settings);
 
   // Commit all changes
   err = nvs_commit(nvsHandle);

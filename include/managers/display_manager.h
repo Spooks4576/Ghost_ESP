@@ -8,6 +8,9 @@
 typedef void *QueueHandle_tt;
 typedef void *SemaphoreHandle_tt; // Because Circular Includes are fun :)
 
+static lv_timer_t *rainbow_timer = NULL;
+static uint16_t rainbow_hue = 0;
+
 typedef enum { INPUT_TYPE_JOYSTICK, INPUT_TYPE_TOUCH } InputType;
 
 typedef struct {
@@ -58,6 +61,9 @@ bool display_manager_register_view(View *view);
  * @brief Switch to a new view.
  */
 void display_manager_switch_view(View *view);
+
+
+void rainbow_effect_cb(lv_timer_t *timer);
 
 /**
  * @brief Destroy the current view.

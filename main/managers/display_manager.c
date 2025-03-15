@@ -53,6 +53,7 @@ lv_obj_t *wifi_label = NULL;
 lv_obj_t *bt_label = NULL;
 lv_obj_t *sd_label = NULL;
 lv_obj_t *battery_label = NULL;
+lv_obj_t *mainlabel = NULL;
 
 bool display_manager_init_success = false;
 
@@ -93,6 +94,38 @@ void fade_in_cb(void *obj, int32_t v) {
     lv_obj_set_style_opa(obj, v, LV_PART_MAIN);
   }
 }
+
+void rainbow_effect_cb(lv_timer_t *timer) {
+  if (!status_bar || !lv_obj_is_valid(status_bar)) {
+    return;
+  }
+
+
+  rainbow_hue = (rainbow_hue + 5) % 360;
+
+  lv_color_t color = lv_color_hsv_to_rgb(rainbow_hue, 100, 100);
+
+  lv_obj_set_style_border_color(status_bar, color, 0);
+
+  if (wifi_label && lv_obj_is_valid(wifi_label)) {
+    lv_obj_set_style_text_color(wifi_label, color, 0);
+  }
+  if (bt_label && lv_obj_is_valid(bt_label)) {
+    lv_obj_set_style_text_color(bt_label, color, 0);
+  }
+  if (sd_label && lv_obj_is_valid(sd_label)) {
+    lv_obj_set_style_text_color(sd_label, color, 0);
+  }
+  if (battery_label && lv_obj_is_valid(battery_label)) {
+    lv_obj_set_style_text_color(battery_label, color, 0);
+  }
+  if (mainlabel && lv_obj_is_valid(mainlabel)) {
+    lv_obj_set_style_text_color(mainlabel, color, 0);
+  }
+
+  lv_obj_invalidate(status_bar);
+}
+
 
 void display_manager_fade_out(lv_obj_t *obj, lv_anim_ready_cb_t ready_cb,
                               View *view) {
@@ -250,7 +283,7 @@ void display_manager_add_status_bar(const char *CurrentMenuName) {
   lv_obj_align(right_container, LV_ALIGN_RIGHT_MID, 0, 0);
 
   // Create centered title label
-  lv_obj_t *mainlabel = lv_label_create(status_bar);
+  mainlabel = lv_label_create(status_bar);
   lv_label_set_text(mainlabel, CurrentMenuName);
   lv_obj_align(mainlabel, LV_ALIGN_CENTER, 0, 0);
   lv_obj_set_style_text_color(
