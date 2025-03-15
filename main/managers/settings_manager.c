@@ -3,6 +3,7 @@
 #include "freertos/semphr.h"
 #include "lvgl.h"
 #include "managers/display_manager.h"
+#include "mbedtls/base64.h"  // For base64 decoding
 #include "managers/rgb_manager.h"
 #include <esp_log.h>
 #include <string.h>
