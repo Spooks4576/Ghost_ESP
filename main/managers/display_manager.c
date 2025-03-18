@@ -191,110 +191,118 @@ lv_color_t hex_to_lv_color(const char *hex_str) {
 }
 
 void update_status_bar(bool wifi_enabled, bool bt_enabled, bool sd_card_mounted,
-                       int batteryPercentage) {
-  lv_disp_t *disp = lv_disp_get_default();
-  int hor_res = lv_disp_get_hor_res(disp);
-
-  const char *battery_symbol;
-  if (batteryPercentage < 10) {
-    battery_symbol = LV_SYMBOL_BATTERY_EMPTY;
-  } else if (batteryPercentage < 30) {
-    battery_symbol = LV_SYMBOL_BATTERY_1;
-  } else if (batteryPercentage < 60) {
-    battery_symbol = LV_SYMBOL_BATTERY_2;
-  } else if (batteryPercentage < 80) {
-    battery_symbol = LV_SYMBOL_BATTERY_3;
-  } else {
-    battery_symbol = LV_SYMBOL_BATTERY_FULL;
-  }
-
-#ifdef CONFIG_HAS_BATTERY
-  if (axp202_is_charging()) {
-    battery_symbol = LV_SYMBOL_CHARGE;
-  }
-#else
-  battery_symbol = LV_SYMBOL_CHARGE;
-  batteryPercentage = 100;
-#endif
-
-  // Update icons in left container
-  if (wifi_enabled && !wifi_label) {
-    wifi_label = lv_label_create(lv_obj_get_child(status_bar, 0));  // Left container is first child
-    lv_label_set_text(wifi_label, LV_SYMBOL_WIFI);
-    lv_obj_set_style_text_color(wifi_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
-  }
-  
-  if (bt_enabled && !bt_label) {
-    bt_label = lv_label_create(lv_obj_get_child(status_bar, 0));  // Left container
-    lv_label_set_text(bt_label, LV_SYMBOL_BLUETOOTH);
-    lv_obj_set_style_text_color(bt_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
-  }
-
-  if (sd_card_mounted && !sd_label) {
-    sd_label = lv_label_create(lv_obj_get_child(status_bar, 0));  // Left container
-    lv_label_set_text(sd_label, LV_SYMBOL_SD_CARD);
-    lv_obj_set_style_text_color(sd_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
-  }
-
-  // Improved battery label handling
-  if (!battery_label) {
-    battery_label = lv_label_create(lv_obj_get_child(status_bar, 1)); // Right container
-    lv_obj_set_width(battery_label, LV_SIZE_CONTENT); // Allow dynamic width
-    lv_obj_set_style_text_color(battery_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)), 0);
-    lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_12, 0); // Smaller font
-  }
-  
-  // Format battery text with proper spacing
-  lv_label_set_text_fmt(battery_label, "%s  %d%%", battery_symbol, batteryPercentage);
-  lv_obj_align(battery_label, LV_ALIGN_RIGHT_MID, 0, 0); // Center in container
-
-  lv_obj_invalidate(status_bar);
+  int batteryPercentage) {
+// Update visibility of status icons
+if (sd_card_mounted) {
+lv_obj_clear_flag(sd_label, LV_OBJ_FLAG_HIDDEN);
+} else {
+lv_obj_add_flag(sd_label, LV_OBJ_FLAG_HIDDEN);
 }
+
+if (bt_enabled) {
+lv_obj_clear_flag(bt_label, LV_OBJ_FLAG_HIDDEN);
+} else {
+lv_obj_add_flag(bt_label, LV_OBJ_FLAG_HIDDEN);
+}
+
+if (wifi_enabled) {
+lv_obj_clear_flag(wifi_label, LV_OBJ_FLAG_HIDDEN);
+} else {
+lv_obj_add_flag(wifi_label, LV_OBJ_FLAG_HIDDEN);
+}
+
+// Update battery icon and percentage
+const char *battery_symbol;
+#ifdef CONFIG_HAS_BATTERY
+if (axp202_is_charging()) {
+battery_symbol = LV_SYMBOL_CHARGE;
+} else {
+battery_symbol = (batteryPercentage > 75) ? LV_SYMBOL_BATTERY_FULL :
+(batteryPercentage > 50) ? LV_SYMBOL_BATTERY_3 :
+(batteryPercentage > 25) ? LV_SYMBOL_BATTERY_2 :
+(batteryPercentage > 10) ? LV_SYMBOL_BATTERY_1 : LV_SYMBOL_BATTERY_EMPTY;
+}
+#else
+battery_symbol = LV_SYMBOL_BATTERY_FULL; // Default for non-battery configs
+#endif
+lv_label_set_text_fmt(battery_label, "%s %d%%", battery_symbol, batteryPercentage);
+
+// Invalidate the status bar to ensure redraw
+lv_obj_invalidate(status_bar);
+}
+
 
 void display_manager_add_status_bar(const char *CurrentMenuName) {
   status_bar = lv_obj_create(lv_scr_act());
   lv_obj_set_size(status_bar, LV_HOR_RES, 20);
   lv_obj_align(status_bar, LV_ALIGN_TOP_MID, 0, 0);
-  lv_obj_set_style_bg_color(status_bar, lv_color_black(), LV_PART_MAIN);
+  lv_obj_set_style_bg_color(status_bar, lv_color_hex(0x333333), LV_PART_MAIN); // Dark gray background
   lv_obj_set_scrollbar_mode(status_bar, LV_SCROLLBAR_MODE_OFF);
   lv_obj_set_style_border_side(status_bar, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
-  lv_obj_set_style_border_width(status_bar, 2, LV_PART_MAIN);
+  lv_obj_set_style_border_width(status_bar, 1, LV_PART_MAIN); // Thinner border
   lv_obj_set_style_border_color(
       status_bar, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)),
       LV_PART_MAIN);
   lv_obj_clear_flag(status_bar, LV_OBJ_FLAG_SCROLLABLE);
 
-  // Create container for left-aligned icons
+  // Left container for menu name
   lv_obj_t *left_container = lv_obj_create(status_bar);
-  lv_obj_remove_style_all(left_container);  // Clear default styles
+  lv_obj_remove_style_all(left_container);
   lv_obj_set_size(left_container, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
   lv_obj_set_flex_flow(left_container, LV_FLEX_FLOW_ROW);
-  lv_obj_set_flex_align(left_container, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-  lv_obj_set_style_pad_column(left_container, 5, 0); // add spacing between icons
-  lv_obj_align(left_container, LV_ALIGN_LEFT_MID, 5, 0);  // 5px padding from left
+  lv_obj_align(left_container, LV_ALIGN_LEFT_MID, 5, 0); // 5px padding from left
 
-  // Modified right container setup
+  // Right container for status icons
   lv_obj_t *right_container = lv_obj_create(status_bar);
   lv_obj_remove_style_all(right_container);
-  lv_obj_set_size(right_container, LV_SIZE_CONTENT, 20); // Fixed height
-  lv_obj_set_flex_flow(right_container, LV_FLEX_FLOW_ROW); // Row layout
+  lv_obj_set_size(right_container, LV_SIZE_CONTENT, 20);
+  lv_obj_set_flex_flow(right_container, LV_FLEX_FLOW_ROW);
   lv_obj_set_flex_align(right_container, LV_FLEX_ALIGN_END, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-  lv_obj_set_style_pad_column(right_container, 5, 0); // Space between icon and percentage
-  lv_obj_align(right_container, LV_ALIGN_RIGHT_MID, 0, 0);
+  lv_obj_set_style_pad_column(right_container, 5, 0); // 5px spacing between icons
+  lv_obj_align(right_container, LV_ALIGN_RIGHT_MID, -5, 0); // 5px padding from right
 
-  // Create centered title label
-  mainlabel = lv_label_create(status_bar);
+  // Menu name (left-aligned)
+  mainlabel = lv_label_create(left_container);
   lv_label_set_text(mainlabel, CurrentMenuName);
-  lv_obj_align(mainlabel, LV_ALIGN_CENTER, 0, 0);
-  lv_obj_set_style_text_color(
-      mainlabel, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)),
-      0);
-  lv_obj_set_style_text_font(
-      mainlabel,
-      &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(mainlabel, lv_color_hex(0x999999), 0); // Lighter gray
+  lv_obj_set_style_text_font(mainlabel, &lv_font_montserrat_14, 0);
 
+  // Pre-create all status labels in right container (hidden by default)
+  sd_label = lv_label_create(right_container);
+  lv_label_set_text(sd_label, LV_SYMBOL_SD_CARD);
+  lv_obj_set_style_text_color(sd_label, lv_color_hex(0xCCCCCC), 0); // Light gray
+  lv_obj_set_style_text_font(sd_label, &lv_font_montserrat_12, 0);
+  lv_obj_add_flag(sd_label, LV_OBJ_FLAG_HIDDEN);
+
+  bt_label = lv_label_create(right_container);
+  lv_label_set_text(bt_label, LV_SYMBOL_BLUETOOTH);
+  lv_obj_set_style_text_color(bt_label, lv_color_hex(0xCCCCCC), 0);
+  lv_obj_set_style_text_font(bt_label, &lv_font_montserrat_12, 0);
+  lv_obj_add_flag(bt_label, LV_OBJ_FLAG_HIDDEN);
+
+  wifi_label = lv_label_create(right_container);
+  lv_label_set_text(wifi_label, LV_SYMBOL_WIFI);
+  lv_obj_set_style_text_color(wifi_label, lv_color_hex(0xCCCCCC), 0);
+  lv_obj_set_style_text_font(wifi_label, &lv_font_montserrat_12, 0);
+  lv_obj_add_flag(wifi_label, LV_OBJ_FLAG_HIDDEN);
+
+  battery_label = lv_label_create(right_container);
+  lv_label_set_text(battery_label, ""); // Set dynamically in update_status_bar
+  lv_obj_set_style_text_color(battery_label, lv_color_hex(0xCCCCCC), 0);
+  lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_12, 0);
+
+  // Add clock if RTC is available
+#ifdef CONFIG_HAS_RTC_CLOCK
+  static lv_obj_t *clock_label = NULL;
+  clock_label = lv_label_create(right_container);
+  lv_label_set_text(clock_label, "00:00");
+  lv_obj_set_style_text_color(clock_label, lv_color_hex(0xCCCCCC), 0);
+  lv_obj_set_style_text_font(clock_label, &lv_font_montserrat_12, 0);
+  lv_timer_create(update_clock, 1000, clock_label);
+#endif
+
+  // Initial status update
   bool HasBluetooth;
-
 #ifndef CONFIG_IDF_TARGET_ESP32S2
   HasBluetooth = true;
 #else
@@ -308,7 +316,7 @@ void display_manager_add_status_bar(const char *CurrentMenuName) {
   update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized,
                     is_charging ? power_level : power_level);
 #else
-  update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, 1000);
+  update_status_bar(true, HasBluetooth, sd_card_manager.is_initialized, 100);
 #endif
 }
 
@@ -655,26 +663,12 @@ void processEvent() {
 }
 
 void lvgl_tick_task(void *arg) {
-
   const TickType_t tick_interval = pdMS_TO_TICKS(10);
-
-  int tick_increment;
-
-  if (LV_VER_RES <= 128) {
-    tick_increment = 3; // For screens 128x128 or smaller
-  } else if (LV_VER_RES > 240) {
-    tick_increment = 10; // For screens larger than 240x320
-  } else {
-    tick_increment = 5; // For 240x320 screens
-  }
-
   while (1) {
-    processEvent();
-
-    lv_timer_handler();
-    lv_tick_inc(tick_increment);
-    vTaskDelay(tick_interval);
+      processEvent();
+      lv_timer_handler();
+      lv_tick_inc(10);
+      vTaskDelay(tick_interval);
   }
-
   vTaskDelete(NULL);
 }

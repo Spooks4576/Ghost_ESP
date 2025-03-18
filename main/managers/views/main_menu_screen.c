@@ -163,30 +163,30 @@ static void menu_item_event_handler(InputEvent *event) {
  * @brief Handles the selection of menu items.
  * @param item_index The index of the selected menu item.
  */
-static void handle_menu_item_selection(int item_index) {
+ static void handle_menu_item_selection(int item_index) {
   switch (item_index) {
   case 1:
-    printf("Wi-Fi selected\n");
-    SelectedMenuType = OT_Wifi;
-    display_manager_switch_view(&options_menu_view);
-    break;
+      printf("Wi-Fi selected\n");
+      SelectedMenuType = OT_Wifi;
+      display_manager_switch_view(&options_menu_view);
+      break;
   case 0:
-    printf("BLE selected\n");
-    SelectedMenuType = OT_Bluetooth;
-    display_manager_switch_view(&options_menu_view);
-    break;
+      printf("BLE selected\n");
+      SelectedMenuType = OT_Bluetooth;
+      display_manager_switch_view(&options_menu_view);
+      break;
   case 2:
-    printf("GPS selected\n");
-    SelectedMenuType = OT_GPS;
-    display_manager_switch_view(&options_menu_view);
-    break;
+      printf("GPS selected\n");
+      SelectedMenuType = OT_GPS;
+      display_manager_switch_view(&options_menu_view);
+      break;
   case 3:
-    printf("Apps View Selected\n");
-    display_manager_switch_view(&apps_menu_view);
-    break;
+      printf("Apps View Selected\n");
+      display_manager_switch_view(&apps_menu_view);
+      break;
   default:
-    printf("Unknown menu item selected\n");
-    break;
+      printf("Unknown menu item selected\n");
+      break;
   }
 }
 
@@ -207,17 +207,14 @@ void handle_hardware_button_press(int ButtonPressed) {
 /**
  * @brief Updates the style of the selected and unselected menu items.
  */
-static void update_menu_item_styles(void) {
+ static void update_menu_item_styles(void) {
   for (int i = 0; i < num_items; i++) {
-    lv_obj_t *menu_item = (lv_obj_t *)lv_obj_get_child(menu_container, i);
-    if (i == selected_item_index) {
-      lv_obj_set_style_border_color(menu_item, lv_color_make(147, 51, 234),
-                                    0); // purple
-      lv_obj_set_style_border_width(menu_item, 4, 0);
-    } else {
-      lv_obj_set_style_border_color(menu_item, menu_items[i].border_color, 0);
-      lv_obj_set_style_border_width(menu_item, 2, 0);
-    }
+      lv_obj_t *menu_item = (lv_obj_t *)lv_obj_get_child(menu_container, i);
+      if (i == selected_item_index) {
+          lv_obj_set_style_bg_color(menu_item, lv_color_hex(0x333333), 0); // Slightly lighter for selection
+      } else {
+          lv_obj_set_style_bg_color(menu_item, lv_color_hex(0x1E1E1E), 0); // Default dark gray
+      }
   }
 }
 
@@ -238,103 +235,104 @@ static void select_menu_item(int index) {
 /**
  * @brief Creates the main menu screen view.
  */
-void main_menu_create(void) {
-  menu_items[0].border_color = lv_color_make(178, 34, 34);
-  menu_items[1].border_color = lv_color_make(178, 34, 34);
-  menu_items[2].border_color = lv_color_make(178, 34, 34);
-  menu_items[3].border_color = lv_color_make(178, 34, 34);
+ void main_menu_create(void) {
 
-  display_manager_fill_screen(lv_color_black());
-
-  static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1),
-                                 LV_GRID_TEMPLATE_LAST};
-  static lv_coord_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1),
-                                 LV_GRID_TEMPLATE_LAST};
+  display_manager_fill_screen(lv_color_hex(0x121212)); 
 
   menu_container = lv_obj_create(lv_scr_act());
   main_menu_view.root = menu_container;
-  lv_obj_set_grid_dsc_array(menu_container, col_dsc, row_dsc);
-  lv_obj_set_size(menu_container, LV_HOR_RES, LV_VER_RES);
-  lv_obj_set_scrollbar_mode(menu_container, LV_SCROLLBAR_MODE_OFF);
-  lv_obj_set_style_pad_column(menu_container, 10, 0);
+  lv_obj_set_size(menu_container, LV_HOR_RES, LV_VER_RES - 20); 
   lv_obj_set_style_bg_opa(menu_container, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(menu_container, 0, 0);
-  lv_obj_set_style_pad_all(menu_container, 0, 0);
-  lv_obj_set_style_radius(menu_container, 0, 0);
+  lv_obj_set_scrollbar_mode(menu_container, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_align(menu_container, LV_ALIGN_TOP_MID, 0, 0);
 
-  lv_obj_align(menu_container, LV_ALIGN_BOTTOM_MID, 0, 0);
+  printf("Screen dimensions: width=%d, height=%d\n", LV_HOR_RES, LV_VER_RES);
 
-  lv_disp_t *disp = lv_disp_get_default();
-  int hor_res = lv_disp_get_hor_res(disp);
-  int ver_res = lv_disp_get_ver_res(disp);
-
-  int button_width = hor_res / 4;
-  int button_height = ver_res / 3;
-
+  int button_width = LV_HOR_RES / 5; 
+  int button_height = 100; 
   int icon_width = 50;
   int icon_height = 50;
 
-  const lv_font_t *font;
-  if (ver_res <= 128) {
-    font = &lv_font_montserrat_10;
-  } else if (ver_res <= 240) {
-    font = &lv_font_montserrat_16;
-  } else {
-    font = &lv_font_montserrat_18;
+  int num_rows = 3;
+  int total_button_height = button_height * num_rows; 
+  int available_height = LV_VER_RES - 20; 
+  int row_padding = (available_height - total_button_height) / (num_rows + 1); 
+  if (row_padding < 10) { 
+      row_padding = 10;
+      button_height = (available_height - (row_padding * (num_rows + 1))) / num_rows;
   }
+
+  int num_columns = 3;
+  int total_button_width = button_width * num_columns; 
+  int column_padding = (LV_HOR_RES - total_button_width) / (num_columns + 1); 
+
+  printf("Button size: width=%d, height=%d\n", button_width, button_height);
+  printf("Padding: column=%d, row=%d\n", column_padding, row_padding);
+  printf("Total grid size: width=%d, height=%d\n", total_button_width, total_button_height);
+
+  int grid_width = total_button_width + column_padding * (num_columns - 1); 
+  int grid_height = total_button_height + row_padding * (num_rows - 1); 
+  int x_offset = (LV_HOR_RES - grid_width) / 2 - 30; 
+  int y_offset = (LV_VER_RES - 20 - grid_height) / 2 - 40; 
+
+  if (x_offset < 0) x_offset = 0;
+  if (y_offset < 0) y_offset = 0;
+
+  int x_positions[3];
+  int y_positions[3];
+  for (int i = 0; i < num_columns; i++) {
+      x_positions[i] = x_offset + i * (button_width + column_padding);
+  }
+  for (int i = 0; i < num_rows; i++) {
+      y_positions[i] = y_offset + i * (button_height + row_padding);
+  }
+
+  printf("X positions: [%d, %d, %d]\n", x_positions[0], x_positions[1], x_positions[2]);
+  printf("Y positions: [%d, %d, %d]\n", y_positions[0], y_positions[1], y_positions[2]);
+
+  lv_color_t icon_colors[4] = {
+      lv_color_hex(0x1976D2), 
+      lv_color_hex(0xD32F2F), 
+      lv_color_hex(0x388E3C), 
+      lv_color_hex(0x7B1FA2)  
+  };
 
   for (int i = 0; i < num_items; i++) {
-    lv_obj_t *menu_item = lv_btn_create(menu_container);
-    lv_obj_set_size(menu_item, button_width, button_height);
-    lv_obj_set_style_shadow_width(menu_item, 0, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(menu_item, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(menu_item, menu_items[i].border_color, LV_PART_MAIN);
-    lv_obj_set_style_border_width(menu_item, 2, LV_PART_MAIN);
-    lv_obj_set_style_radius(menu_item, 10, LV_PART_MAIN);
-    
-    lv_obj_set_scrollbar_mode(menu_item, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_set_style_pad_all(menu_item, 5, 0);
+      lv_obj_t *menu_item = lv_btn_create(menu_container);
+      lv_obj_set_size(menu_item, button_width, button_height);
+      lv_obj_set_style_bg_color(menu_item, lv_color_hex(0x1E1E1E), LV_PART_MAIN);
+      lv_obj_set_style_shadow_width(menu_item, 3, LV_PART_MAIN);
+      lv_obj_set_style_shadow_color(menu_item, lv_color_hex(0x000000), LV_PART_MAIN);
+      lv_obj_set_style_border_width(menu_item, 0, LV_PART_MAIN);
+      lv_obj_set_style_radius(menu_item, 10, LV_PART_MAIN);
+      lv_obj_set_scrollbar_mode(menu_item, LV_SCROLLBAR_MODE_OFF);
 
-    if (ver_res >= 240) {
+      lv_obj_set_layout(menu_item, LV_LAYOUT_FLEX);
+      lv_obj_set_flex_flow(menu_item, LV_FLEX_FLOW_COLUMN);
+      lv_obj_set_flex_align(menu_item, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+      lv_obj_set_style_pad_all(menu_item, 3, 0);
+      lv_obj_set_style_pad_row(menu_item, 3, 0);
+
       if (menu_items[i].icon) {
-        lv_obj_t *icon = lv_img_create(menu_item);
-        lv_img_set_src(icon, menu_items[i].icon);
-        lv_obj_set_size(icon, icon_width, icon_height);
-        lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 0);
+          lv_obj_t *icon = lv_img_create(menu_item);
+          lv_img_set_src(icon, menu_items[i].icon);
+          lv_obj_set_size(icon, icon_width, icon_height);
+          lv_obj_set_style_img_recolor(icon, icon_colors[i], 0);
+          lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, 0);
       }
-    }
 
-    lv_obj_t *label = lv_label_create(menu_item);
-    lv_label_set_text(label, menu_items[i].name);
-    lv_obj_set_style_text_font(label, font, 0);
+      lv_obj_t *label = lv_label_create(menu_item);
+      lv_label_set_text(label, menu_items[i].name);
+      lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
+      lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
 
-    lv_obj_align(label, LV_ALIGN_BOTTOM_MID, 0, 0);
-    lv_obj_set_style_text_color(label, lv_color_white(), 0);
+      int row_idx = 2 - (i / 3); 
+      int col_idx = i % 3;
+      lv_obj_set_pos(menu_item, x_positions[col_idx], y_positions[row_idx]);
 
-    int row_idx = 2 - (i / 3); // This reverses the row placement
-    lv_obj_set_grid_cell(menu_item, LV_GRID_ALIGN_CENTER, i % 3, 1,
-                         LV_GRID_ALIGN_END, row_idx, 1);
-
-    lv_obj_set_user_data(menu_item, (void *)(uintptr_t)i);
+      printf("Button %d (%s): x=%d, y=%d\n", i, menu_items[i].name, x_positions[col_idx], y_positions[row_idx]);
   }
-
-#ifdef CONFIG_HAS_RTC_CLOCK
-  time_label = lv_label_create(lv_scr_act());
-  lv_label_set_text(time_label, "00:00:00");
-  lv_obj_set_style_text_color(
-      time_label, hex_to_lv_color(settings_get_accent_color_str(&G_Settings)),
-      0);
-  lv_obj_set_style_text_font(time_label, &lv_font_montserrat_24, 0);
-  lv_obj_set_pos(time_label, 70, 33);
-
-  // Create a timer to update the time label every second
-  time_update_timer = lv_timer_create(update_time_label, 100, NULL);
-  lv_timer_ready(time_update_timer);
-#endif
-
-#ifndef CONFIG_USE_TOUCHSCREEN
-  select_menu_item(0);
-#endif
 
   display_manager_add_status_bar(LV_VER_RES > 320 ? "Main Menu" : "Menu");
 }
@@ -342,17 +340,22 @@ void main_menu_create(void) {
 /**
  * @brief Destroys the main menu screen view.
  */
-void main_menu_destroy(void) {
+ void main_menu_destroy(void) {
   if (menu_container) {
-    lv_obj_clean(menu_container);
-    lv_obj_del(menu_container);
-    menu_container = NULL;
+      lv_obj_clean(menu_container);
+      lv_obj_del(menu_container);
+      menu_container = NULL;
+      main_menu_view.root = NULL;
   }
 
   if (time_update_timer) {
-    lv_timer_del(time_update_timer);
-    lv_obj_del(time_label);
-    time_update_timer = NULL;
+      lv_timer_del(time_update_timer);
+      time_update_timer = NULL;
+  }
+
+  if (time_label) {
+      lv_obj_del(time_label);
+      time_label = NULL;
   }
 }
 
