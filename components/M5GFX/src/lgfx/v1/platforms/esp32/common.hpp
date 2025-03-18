@@ -34,12 +34,34 @@ Contributors:
 #include <soc/gpio_sig_map.h>
 #include <esp_timer.h>
 
-#if !defined ( REG_SPI_BASE )
- /// ESP32-S3をターゲットにした際にREG_SPI_BASEが定義されていなかったので応急処置 5.3まで;
- #if defined ( CONFIG_IDF_TARGET_ESP32S3 )
-  #define REG_SPI_BASE(i)   (DR_REG_SPI1_BASE + (((i)>1) ? (((i)* 0x1000) + 0x20000) : (((~(i)) & 1)* 0x1000 )))
- #else
-  //#define REG_SPI_BASE(i) (DR_REG_SPI0_BASE - (i) * 0x1000)
+#if __has_include(<esp_memory_utils.h>)
+ #include <esp_memory_utils.h>
+#elif __has_include(<soc/soc_memory_types.h>)
+ #include <soc/soc_memory_types.h>
+#elif __has_include(<soc/soc_memory_layout.h>)
+ #include <soc/soc_memory_layout.h>
+#else
+ __attribute((weak))
+ bool esp_ptr_dma_capable(const void*) { return false; }
+#endif
+
+#if defined ( ARDUINO )
+ #if __has_include (<SPI.h>)
+  #include <SPI.h>
+ #endif
+ #if __has_include (<Wire.h>)
+  #include <Wire.h>
+ #endif
+#endif
+
+#if defined ( CONFIG_IDF_TARGET_ESP32S3 )
+ /// ESP32-S3をターゲットにした際にREG_SPI_BASEの定義がおかしいため自前で設定
+ #if defined( REG_SPI_BASE )
+  #undef REG_SPI_BASE
+ #endif
+ #define REG_SPI_BASE(i)   (DR_REG_SPI1_BASE + (((i)>1) ? (((i)* 0x1000) + 0x20000) : (((~(i)) & 1)* 0x1000 )))
+#else
+ #if !defined ( REG_SPI_BASE )
   #define REG_SPI_BASE(i)     (DR_REG_SPI2_BASE)
  #endif
 #endif
@@ -85,6 +107,7 @@ namespace lgfx
   static inline void* heap_alloc_dma(  size_t length) { return heap_caps_malloc((length + 3) & ~3, MALLOC_CAP_DMA);  }
   static inline void* heap_alloc_psram(size_t length) { return heap_caps_malloc((length + 3) & ~3, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);  }
   static inline void heap_free(void* buf) { heap_caps_free(buf); }
+  static inline bool heap_capable_dma(const void* ptr) { return esp_ptr_dma_capable(ptr); }
 
   /// 引数のポインタが組込RAMか判定する  true=内部RAM / false=外部RAMやROM等;
 #if defined ( CONFIG_IDF_TARGET_ESP32S3 )
@@ -226,6 +249,9 @@ protected:
     {
     public:
       pin_backup_t(int pin_num);
+      pin_backup_t(void) : pin_backup_t( -1 ) {};
+      void setPin(int pin_num) { _pin_num = pin_num; }
+      int getPin(void) const { return _pin_num; }
       void backup(void);
       void restore(void);
 
@@ -233,7 +259,9 @@ protected:
       uint32_t _io_mux_gpio_reg;
       uint32_t _gpio_pin_reg;
       uint32_t _gpio_func_out_reg;
-      gpio_num_t _pin_num;
+      uint32_t _gpio_func_in_reg;
+      int16_t _in_func_num = -1;
+      int8_t _pin_num = -1; //GPIO_NUM_NC
       bool _gpio_enable;
     };
 
@@ -267,6 +295,22 @@ protected:
   {
     cpp::result<void, error_t> setPins(int i2c_port, int pin_sda, int pin_scl);
     cpp::result<void, error_t> init(int i2c_port);
+    cpp::result<int, error_t> getPinSDA(int i2c_port);
+    cpp::result<int, error_t> getPinSCL(int i2c_port);
+
+    struct i2c_temporary_switcher_t
+    {
+      i2c_temporary_switcher_t(int i2c_port, int pin_sda, int pin_scl);
+      void restore(void);
+    protected:
+#if defined ( ARDUINO ) && __has_include (<Wire.h>)
+      TwoWire* _twowire = nullptr;
+#endif
+      gpio::pin_backup_t _pin_backup[4];
+      int _i2c_port = 0;
+      bool _backuped = false;
+      bool _need_reinit = false;
+    };
   }
 
 //----------------------------------------------------------------------------
