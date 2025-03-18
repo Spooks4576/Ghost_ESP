@@ -56,25 +56,75 @@ void apps_menu_create(void) {
     lv_obj_align(apps_container, LV_ALIGN_TOP_MID, 0, 0);
 
     // Dynamic sizing like main menu
-    int button_width = LV_HOR_RES / 5; // Match main menu’s 5-column division
-    int button_height = (LV_VER_RES - 20) / 3.2; // Match main menu’s height scaling
+    int button_width = LV_HOR_RES / 5;
+    int button_height = (LV_VER_RES - 20) / 3.2;
     int icon_size = LV_VER_RES > 240 ? 50 : 30;
+    int num_rows = 3;
+    int num_columns = 3;
+    bool show_labels = true;
+    int layout_x_offset = 0;
+    int layout_y_offset = 0;
+    int icon_x_offset = 0;
+    int icon_y_offset = 0;
     apps_per_page = 6; // 3x2 grid per page
+    int column_padding = 20; // Default padding
+
+    // Adjust for smaller screens
+    if (LV_HOR_RES < 150 || LV_VER_RES < 150) {
+        num_columns = 4;
+        num_rows = 1;
+        show_labels = false;
+        apps_per_page = 4; // 4x1 grid per page
+        
+        // Calculate button width and padding to fit screen
+        column_padding = 10; // Reduced base padding
+        button_width = (LV_HOR_RES - (num_columns - 1) * column_padding) / num_columns; // Fit within screen width
+        button_height = 60;
+        icon_size = button_width > 50 ? 50 : 40; // Adjust icon size based on button width
+        
+        // Adjustable offsets for small screens
+        layout_x_offset = -17 / 2;
+        layout_y_offset = 32;
+        icon_x_offset = -25;
+        icon_y_offset = -15;
+        
+        printf("Adjusted for small screen (4x1 grid, no labels): button width=%d, height=%d, icon size=%dx%d\n", 
+               button_width, button_height, icon_size, icon_size);
+        printf("Offsets - Layout: x=%d, y=%d, Icon: x=%d, y=%d\n", 
+               layout_x_offset, layout_y_offset, icon_x_offset, icon_y_offset);
+    }
 
     // Grid container for apps
     lv_obj_t *grid_container = lv_obj_create(apps_container);
     lv_obj_set_size(grid_container, LV_HOR_RES, LV_VER_RES - 80); // Space for nav buttons
     lv_obj_set_layout(grid_container, LV_LAYOUT_GRID);
-    static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
-    static lv_coord_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
+    static lv_coord_t col_dsc[5];
+    static lv_coord_t row_dsc[4];
+    if (LV_HOR_RES < 150 || LV_VER_RES < 150) {
+        col_dsc[0] = LV_GRID_FR(1);
+        col_dsc[1] = LV_GRID_FR(1);
+        col_dsc[2] = LV_GRID_FR(1);
+        col_dsc[3] = LV_GRID_FR(1);
+        col_dsc[4] = LV_GRID_TEMPLATE_LAST;
+        row_dsc[0] = LV_GRID_FR(1);
+        row_dsc[1] = LV_GRID_TEMPLATE_LAST;
+    } else {
+        col_dsc[0] = LV_GRID_FR(1);
+        col_dsc[1] = LV_GRID_FR(1);
+        col_dsc[2] = LV_GRID_FR(1);
+        col_dsc[3] = LV_GRID_TEMPLATE_LAST;
+        row_dsc[0] = LV_GRID_FR(1);
+        row_dsc[1] = LV_GRID_FR(1);
+        row_dsc[2] = LV_GRID_TEMPLATE_LAST;
+    }
     lv_obj_set_grid_dsc_array(grid_container, col_dsc, row_dsc);
-    lv_obj_set_style_pad_all(grid_container, 20, 0); // Match main menu padding
+    lv_obj_set_style_pad_all(grid_container, 20, 0);
     lv_obj_set_style_pad_row(grid_container, 20, 0);
-    lv_obj_set_style_pad_column(grid_container, 20, 0);
+    lv_obj_set_style_pad_column(grid_container, column_padding, 0); // Use calculated padding
     lv_obj_set_style_bg_opa(grid_container, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_border_width(grid_container, 0, 0); // No border on grid
+    lv_obj_set_style_border_width(grid_container, 0, 0);
     lv_obj_set_scrollbar_mode(grid_container, LV_SCROLLBAR_MODE_OFF);
-    lv_obj_align(grid_container, LV_ALIGN_TOP_MID, 0, 20);
+    lv_obj_align(grid_container, LV_ALIGN_TOP_MID, layout_x_offset, layout_y_offset);
 
     // Populate apps
     int start_index = current_page * apps_per_page;
@@ -88,7 +138,7 @@ void apps_menu_create(void) {
         lv_obj_set_style_bg_color(app_item, lv_color_hex(0x1E1E1E), LV_PART_MAIN);
         lv_obj_set_style_shadow_width(app_item, 3, LV_PART_MAIN);
         lv_obj_set_style_shadow_color(app_item, lv_color_hex(0x000000), LV_PART_MAIN);
-        lv_obj_set_style_border_width(app_item, 0, LV_PART_MAIN); // No white border
+        lv_obj_set_style_border_width(app_item, 0, LV_PART_MAIN);
         lv_obj_set_style_radius(app_item, 10, LV_PART_MAIN);
         lv_obj_set_scrollbar_mode(app_item, LV_SCROLLBAR_MODE_OFF);
 
@@ -102,32 +152,41 @@ void apps_menu_create(void) {
             lv_obj_t *icon = lv_img_create(app_item);
             lv_img_set_src(icon, app_items[i].icon);
             lv_obj_set_size(icon, icon_size, icon_size);
-            // No tinting applied, keeping original icon colors
+            if (LV_HOR_RES < 150 || LV_VER_RES < 150) {
+                int x_center = (button_width - icon_size) / 2 + icon_x_offset;
+                int y_center = (button_height - icon_size) / 2 + icon_y_offset;
+                lv_obj_set_pos(icon, x_center, y_center);
+                printf("Icon %d: offset x=%d, y=%d\n", i, x_center, y_center);
+            }
         }
 
-        lv_obj_t *label = lv_label_create(app_item);
-        lv_label_set_text(label, app_items[i].name);
-        lv_obj_set_style_text_font(label, &lv_font_montserrat_16, 0);
-        lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
+        if (show_labels) {
+            lv_obj_t *label = lv_label_create(app_item);
+            lv_label_set_text(label, app_items[i].name);
+            lv_obj_set_style_text_font(label, &lv_font_montserrat_16, 0);
+            lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
+        }
 
-        int row_idx = display_index / 3;
-        int col_idx = display_index % 3;
+        int row_idx = display_index / num_columns;
+        int col_idx = display_index % num_columns;
         lv_obj_set_grid_cell(app_item, LV_GRID_ALIGN_CENTER, col_idx, 1, LV_GRID_ALIGN_CENTER, row_idx, 1);
         lv_obj_set_user_data(app_item, (void *)(intptr_t)i);
     }
 
-    // Back button (styled like main menu navigation)
-    back_button = lv_btn_create(apps_container);
-    lv_obj_set_size(back_button, 60, 60);
-    lv_obj_align(back_button, LV_ALIGN_BOTTOM_LEFT, 20, -10);
-    lv_obj_set_style_bg_color(back_button, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_set_style_radius(back_button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_set_style_border_width(back_button, 0, LV_PART_MAIN); // No border
-    lv_obj_t *back_label = lv_label_create(back_button);
-    lv_label_set_text(back_label, LV_SYMBOL_LEFT);
-    lv_obj_center(back_label);
-    lv_obj_set_style_text_color(back_label, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_set_user_data(back_button, (void *)(intptr_t)(-1));
+    // Back button - only create if not a small screen
+    if (!(LV_HOR_RES < 150 || LV_VER_RES < 150)) {
+        back_button = lv_btn_create(apps_container);
+        lv_obj_set_size(back_button, 60, 60);
+        lv_obj_align(back_button, LV_ALIGN_BOTTOM_LEFT, 20, -10);
+        lv_obj_set_style_bg_color(back_button, lv_color_hex(0x333333), LV_PART_MAIN);
+        lv_obj_set_style_radius(back_button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_border_width(back_button, 0, LV_PART_MAIN);
+        lv_obj_t *back_label = lv_label_create(back_button);
+        lv_label_set_text(back_label, LV_SYMBOL_LEFT);
+        lv_obj_center(back_label);
+        lv_obj_set_style_text_color(back_label, lv_color_hex(0xFFFFFF), 0);
+        lv_obj_set_user_data(back_button, (void *)(intptr_t)(-1));
+    }
 
     #ifdef CONFIG_USE_TOUCHSCREEN
     if (total_pages > 1) {
@@ -136,7 +195,7 @@ void apps_menu_create(void) {
         lv_obj_align(prev_button, LV_ALIGN_BOTTOM_RIGHT, -80, -10);
         lv_obj_set_style_bg_color(prev_button, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_set_style_radius(prev_button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        lv_obj_set_style_border_width(prev_button, 0, LV_PART_MAIN); // No border
+        lv_obj_set_style_border_width(prev_button, 0, LV_PART_MAIN);
         lv_obj_t *prev_label = lv_label_create(prev_button);
         lv_label_set_text(prev_label, LV_SYMBOL_PREV);
         lv_obj_center(prev_label);
@@ -149,7 +208,7 @@ void apps_menu_create(void) {
         lv_obj_align(next_button, LV_ALIGN_BOTTOM_RIGHT, -10, -10);
         lv_obj_set_style_bg_color(next_button, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_set_style_radius(next_button, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        lv_obj_set_style_border_width(next_button, 0, LV_PART_MAIN); // No border
+        lv_obj_set_style_border_width(next_button, 0, LV_PART_MAIN);
         lv_obj_t *next_label = lv_label_create(next_button);
         lv_label_set_text(next_label, LV_SYMBOL_NEXT);
         lv_obj_center(next_label);
@@ -180,7 +239,7 @@ void update_app_item_styles(void) {
         int index = (int)(intptr_t)lv_obj_get_user_data(app_item);
 
         if (index == selected_app_index) {
-            lv_obj_set_style_bg_color(app_item, lv_color_hex(0x1E1E1E), LV_PART_MAIN);
+            lv_obj_set_style_bg_color(app_item, lv_color_hex(0x333333), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(app_item, LV_OPA_COVER, LV_PART_MAIN);
         } else {
             lv_obj_set_style_bg_color(app_item, lv_color_hex(0x1E1E1E), LV_PART_MAIN);

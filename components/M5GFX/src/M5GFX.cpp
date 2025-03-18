@@ -1736,7 +1736,7 @@ namespace m5gfx
             }
           }
           bus_spi->release();
-          bus_cfg.spi_host = SPI3_HOST;
+          bus_cfg.spi_host = SPI2_HOST;
           bus_cfg.freq_write = 40000000;
           bus_cfg.freq_read  = 16000000;
           bus_spi->config(bus_cfg);

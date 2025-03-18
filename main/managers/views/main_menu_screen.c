@@ -235,107 +235,125 @@ static void select_menu_item(int index) {
 /**
  * @brief Creates the main menu screen view.
  */
+
+
  void main_menu_create(void) {
+     display_manager_fill_screen(lv_color_hex(0x121212)); 
+ 
+     menu_container = lv_obj_create(lv_scr_act());
+     main_menu_view.root = menu_container;
+     lv_obj_set_size(menu_container, LV_HOR_RES, LV_VER_RES - 20); 
+     lv_obj_set_style_bg_opa(menu_container, LV_OPA_TRANSP, 0);
+     lv_obj_set_style_border_width(menu_container, 0, 0);
+     lv_obj_set_scrollbar_mode(menu_container, LV_SCROLLBAR_MODE_OFF);
+     lv_obj_align(menu_container, LV_ALIGN_TOP_MID, 0, 0);
+ 
+     printf("Screen dimensions: width=%d, height=%d\n", LV_HOR_RES, LV_VER_RES);
+ 
+     int button_width = LV_HOR_RES / 5; 
+     int button_height = 100; 
+     int icon_width = 50;
+     int icon_height = 50;
+     int num_rows = 3;
+     int num_columns = 3;
+     bool show_labels = true;
+     int layout_x_offset = 0;  // New: Offset for entire layout
+     int layout_y_offset = 0;
+     int icon_x_offset = 0;    // New: Offset for icons within buttons
+     int icon_y_offset = 0;
+ 
+     // Adjust for smaller screens
+     if (LV_HOR_RES < 150 || LV_VER_RES < 150) {
+         button_width = 50;
+         button_height = 50;
+         icon_width = 50;
+         icon_height = 50;
+         num_columns = 4;
+         num_rows = 1;
+         show_labels = false;
+         // Adjustable offsets for small screens
+         layout_x_offset = -17;    // Tweak this for left/right positioning of entire layout
+         layout_y_offset = 32;   // Tweak this for up/down positioning of entire layout
+         icon_x_offset = -25;      // Tweak this for icon left/right within button
+         icon_y_offset = -15;      // Tweak this for icon up/down within button
+         printf("Adjusted for small screen (4x1 grid, no labels): button width=%d, height=%d, icon size=%dx%d\n", 
+                button_width, button_height, icon_width, icon_height);
+         printf("Offsets - Layout: x=%d, y=%d, Icon: x=%d, y=%d\n", 
+                layout_x_offset, layout_y_offset, icon_x_offset, icon_y_offset);
+     }
+ 
+     int total_button_width = button_width * num_columns;
+     int total_button_height = button_height * num_rows;
+     int column_padding = (LV_HOR_RES - total_button_width) / (num_columns);
+     int row_padding = (LV_VER_RES - 20 - total_button_height) / (num_rows + 1);
+ 
+     if (column_padding < 5) column_padding = 5;
+     if (row_padding < 5) row_padding = 5;
+ 
+     printf("Button size: width=%d, height=%d\n", button_width, button_height);
+     printf("Padding: column=%d, row=%d\n", column_padding, row_padding);
+     printf("Total grid size: width=%d, height=%d\n", total_button_width, total_button_height);
+ 
+     int x_positions[4];
+     int y_positions[3];
+     // Apply layout offset to positions
+     for (int i = 0; i < num_columns; i++) {
+         x_positions[i] = layout_x_offset + (i * (button_width + column_padding));
+     }
+     for (int i = 0; i < num_rows; i++) {
+         y_positions[i] = layout_y_offset + (i * (button_height + row_padding));
+     }
+ 
+     printf("X positions: [%d, %d, %d, %d]\n", x_positions[0], x_positions[1], x_positions[2], x_positions[3]);
+     printf("Y positions: [%d%s]\n", y_positions[0], num_rows > 1 ? ", ..." : "");
+ 
+     lv_color_t icon_colors[4] = {
+         lv_color_hex(0x1976D2), 
+         lv_color_hex(0xD32F2F), 
+         lv_color_hex(0x388E3C), 
+         lv_color_hex(0x7B1FA2)  
+     };
+ 
+     for (int i = 0; i < num_items && i < (num_rows * num_columns); i++) {
+         lv_obj_t *menu_item = lv_btn_create(menu_container);
+         lv_obj_set_size(menu_item, button_width, button_height);
+         lv_obj_set_style_bg_color(menu_item, lv_color_hex(0x1E1E1E), LV_PART_MAIN);
+         lv_obj_set_style_shadow_width(menu_item, 3, LV_PART_MAIN);
+         lv_obj_set_style_shadow_color(menu_item, lv_color_hex(0x000000), LV_PART_MAIN);
+         lv_obj_set_style_border_width(menu_item, 0, LV_PART_MAIN);
+         lv_obj_set_style_radius(menu_item, 10, LV_PART_MAIN);
+         lv_obj_set_scrollbar_mode(menu_item, LV_SCROLLBAR_MODE_OFF);
+ 
+         if (menu_items[i].icon) {
+             lv_obj_t *icon = lv_img_create(menu_item);
+             lv_img_set_src(icon, menu_items[i].icon);
+             lv_obj_set_size(icon, icon_width, icon_height);
+             lv_obj_set_style_img_recolor(icon, icon_colors[i % 4], 0);
+             lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, 0);
+             // Center icon with adjustable offsets
+             int x_center = (button_width - icon_width) / 2 + icon_x_offset;
+             int y_center = (button_height - icon_height) / 2 + icon_y_offset;
+             lv_obj_set_pos(icon, x_center, y_center);
+             printf("Icon %d: offset x=%d, y=%d\n", i, x_center, y_center);
+         }
+ 
+         if (show_labels) {
+             lv_obj_t *label = lv_label_create(menu_item);
+             lv_label_set_text(label, menu_items[i].name);
+             lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
+             lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
+         }
+ 
+         int row_idx = i / num_columns;
+         int col_idx = i % num_columns;
+         lv_obj_set_pos(menu_item, x_positions[col_idx], y_positions[row_idx]);
+         printf("Button %d (%s): x=%d, y=%d\n", i, menu_items[i].name, 
+                x_positions[col_idx], y_positions[row_idx]);
+     }
+ 
+     display_manager_add_status_bar(LV_VER_RES > 320 ? "Main Menu" : "Menu");
+ }
 
-  display_manager_fill_screen(lv_color_hex(0x121212)); 
-
-  menu_container = lv_obj_create(lv_scr_act());
-  main_menu_view.root = menu_container;
-  lv_obj_set_size(menu_container, LV_HOR_RES, LV_VER_RES - 20); 
-  lv_obj_set_style_bg_opa(menu_container, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(menu_container, 0, 0);
-  lv_obj_set_scrollbar_mode(menu_container, LV_SCROLLBAR_MODE_OFF);
-  lv_obj_align(menu_container, LV_ALIGN_TOP_MID, 0, 0);
-
-  printf("Screen dimensions: width=%d, height=%d\n", LV_HOR_RES, LV_VER_RES);
-
-  int button_width = LV_HOR_RES / 5; 
-  int button_height = 100; 
-  int icon_width = 50;
-  int icon_height = 50;
-
-  int num_rows = 3;
-  int total_button_height = button_height * num_rows; 
-  int available_height = LV_VER_RES - 20; 
-  int row_padding = (available_height - total_button_height) / (num_rows + 1); 
-  if (row_padding < 10) { 
-      row_padding = 10;
-      button_height = (available_height - (row_padding * (num_rows + 1))) / num_rows;
-  }
-
-  int num_columns = 3;
-  int total_button_width = button_width * num_columns; 
-  int column_padding = (LV_HOR_RES - total_button_width) / (num_columns + 1); 
-
-  printf("Button size: width=%d, height=%d\n", button_width, button_height);
-  printf("Padding: column=%d, row=%d\n", column_padding, row_padding);
-  printf("Total grid size: width=%d, height=%d\n", total_button_width, total_button_height);
-
-  int grid_width = total_button_width + column_padding * (num_columns - 1); 
-  int grid_height = total_button_height + row_padding * (num_rows - 1); 
-  int x_offset = (LV_HOR_RES - grid_width) / 2 - 30; 
-  int y_offset = (LV_VER_RES - 20 - grid_height) / 2 - 40; 
-
-  if (x_offset < 0) x_offset = 0;
-  if (y_offset < 0) y_offset = 0;
-
-  int x_positions[3];
-  int y_positions[3];
-  for (int i = 0; i < num_columns; i++) {
-      x_positions[i] = x_offset + i * (button_width + column_padding);
-  }
-  for (int i = 0; i < num_rows; i++) {
-      y_positions[i] = y_offset + i * (button_height + row_padding);
-  }
-
-  printf("X positions: [%d, %d, %d]\n", x_positions[0], x_positions[1], x_positions[2]);
-  printf("Y positions: [%d, %d, %d]\n", y_positions[0], y_positions[1], y_positions[2]);
-
-  lv_color_t icon_colors[4] = {
-      lv_color_hex(0x1976D2), 
-      lv_color_hex(0xD32F2F), 
-      lv_color_hex(0x388E3C), 
-      lv_color_hex(0x7B1FA2)  
-  };
-
-  for (int i = 0; i < num_items; i++) {
-      lv_obj_t *menu_item = lv_btn_create(menu_container);
-      lv_obj_set_size(menu_item, button_width, button_height);
-      lv_obj_set_style_bg_color(menu_item, lv_color_hex(0x1E1E1E), LV_PART_MAIN);
-      lv_obj_set_style_shadow_width(menu_item, 3, LV_PART_MAIN);
-      lv_obj_set_style_shadow_color(menu_item, lv_color_hex(0x000000), LV_PART_MAIN);
-      lv_obj_set_style_border_width(menu_item, 0, LV_PART_MAIN);
-      lv_obj_set_style_radius(menu_item, 10, LV_PART_MAIN);
-      lv_obj_set_scrollbar_mode(menu_item, LV_SCROLLBAR_MODE_OFF);
-
-      lv_obj_set_layout(menu_item, LV_LAYOUT_FLEX);
-      lv_obj_set_flex_flow(menu_item, LV_FLEX_FLOW_COLUMN);
-      lv_obj_set_flex_align(menu_item, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-      lv_obj_set_style_pad_all(menu_item, 3, 0);
-      lv_obj_set_style_pad_row(menu_item, 3, 0);
-
-      if (menu_items[i].icon) {
-          lv_obj_t *icon = lv_img_create(menu_item);
-          lv_img_set_src(icon, menu_items[i].icon);
-          lv_obj_set_size(icon, icon_width, icon_height);
-          lv_obj_set_style_img_recolor(icon, icon_colors[i], 0);
-          lv_obj_set_style_img_recolor_opa(icon, LV_OPA_COVER, 0);
-      }
-
-      lv_obj_t *label = lv_label_create(menu_item);
-      lv_label_set_text(label, menu_items[i].name);
-      lv_obj_set_style_text_font(label, &lv_font_montserrat_12, 0);
-      lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
-
-      int row_idx = 2 - (i / 3); 
-      int col_idx = i % 3;
-      lv_obj_set_pos(menu_item, x_positions[col_idx], y_positions[row_idx]);
-
-      printf("Button %d (%s): x=%d, y=%d\n", i, menu_items[i].name, x_positions[col_idx], y_positions[row_idx]);
-  }
-
-  display_manager_add_status_bar(LV_VER_RES > 320 ? "Main Menu" : "Menu");
-}
 
 /**
  * @brief Destroys the main menu screen view.
