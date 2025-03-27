@@ -20,24 +20,24 @@ jobs:
     strategy:
       matrix:
         target:
-          - { name: "esp32-generic", idf_target: "esp32",   sdkconfig_file: "configs/sdkconfig.default.esp32",   zip_name: "esp32-generic.zip" }
-          - { name: "esp32s2-generic", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32s2-generic.zip"}
+          - { name: "esp32-generic", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.default.esp32", zip_name: "esp32-generic.zip" }
+          - { name: "esp32s2-generic", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32s2-generic.zip" }
           - { name: "esp32s3-generic", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.default.esp32s3", zip_name: "esp32s3-generic.zip" }
           - { name: "esp32c3-generic", idf_target: "esp32c3", sdkconfig_file: "configs/sdkconfig.default.esp32c3", zip_name: "esp32c3-generic.zip" }
           - { name: "esp32c6-generic", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.default.esp32c6", zip_name: "esp32c6-generic.zip" }
-          - { name: "Awok V5", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip"}
-          - { name: "ghostboard", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.ghostboard", zip_name: "ghostboard.zip"}
-          - { name: "MarauderV4_FlipperHub", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv4", zip_name: "MarauderV4_FlipperHub.zip"}
-          - { name: "MarauderV6&AwokDual", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip"}
-          - { name: "AwokMini", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip"}
-          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer", zip_name: "ESP32-S3-Cardputer.zip"}
-          - { name: "CYD2USB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB", zip_name: "CYD2USB.zip"}
-          - { name: "CYDMicroUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip"}
-          - { name: "CYDDualUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip"}
-          - { name: "CYD2USB2.4_Inch", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch", zip_name: "CYD2USB2.4Inch.zip"}
-          - { name: "CYD2USB2.4_Inch_C", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch_C_Varient", zip_name: "CYD2USB2.4Inch_C.zip"}
-          - { name: "Waveshare_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip"}
-          - { name: "Crowtech_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip"}
+          - { name: "Awok V5", idf_target: "esp32s2", sdkconfig_file: "configs/sdkconfig.default.esp32s2", zip_name: "esp32v5_awok.zip" }
+          - { name: "ghostboard", idf_target: "esp32c6", sdkconfig_file: "configs/sdkconfig.ghostboard", zip_name: "ghostboard.zip" }
+          - { name: "MarauderV4_FlipperHub", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv4", zip_name: "MarauderV4_FlipperHub.zip" }
+          - { name: "MarauderV6&AwokDual", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.marauderv6", zip_name: "MarauderV6_AwokDual.zip" }
+          - { name: "AwokMini", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.awokmini", zip_name: "AwokMini.zip" }
+          - { name: "ESP32-S3-Cardputer", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.cardputer", zip_name: "ESP32-S3-Cardputer.zip" }
+          - { name: "CYD2USB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB", zip_name: "CYD2USB.zip" }
+          - { name: "CYDMicroUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDMicroUSB", zip_name: "CYDMicroUSB.zip" }
+          - { name: "CYDDualUSB", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYDDualUSB", zip_name: "CYDDualUSB.zip" }
+          - { name: "CYD2USB2.4_Inch", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch", zip_name: "CYD2USB2.4Inch.zip" }
+          - { name: "CYD2USB2.4_Inch_C", idf_target: "esp32", sdkconfig_file: "configs/sdkconfig.CYD2USB2.4Inch_C_Varient", zip_name: "CYD2USB2.4Inch_C.zip" }
+          - { name: "Waveshare_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.waveshare7inch", zip_name: "Waveshare_LCD.zip" }
+          - { name: "Crowtech_LCD", idf_target: "esp32s3", sdkconfig_file: "configs/sdkconfig.crowtech7inch", zip_name: "Crowtech_LCD.zip" }
 
     steps:
       - uses: actions/checkout@v4
@@ -68,16 +68,22 @@ jobs:
         run: |
           . ~/esp-idf/export.sh
           idf.py clean
-          idf.py build
+          idf.py build || {
+            echo "Build failed for ${{ matrix.target.name }}"
+            exit 1
+          }
 
       - name: Download Bootloader
         run: |
           BOOTLOADER_URL="https://cdn.spookytools.com/bootloaders/${{ matrix.target.idf_target }}.bin"
           BOOTLOADER_PATH="build/bootloader.bin"
           echo "Downloading bootloader from $BOOTLOADER_URL..."
-          curl -L -o "$BOOTLOADER_PATH" "$BOOTLOADER_URL"
+          curl -L -o "$BOOTLOADER_PATH" "$BOOTLOADER_URL" || {
+            echo "Error: Bootloader download failed."
+            exit 1
+          }
           if [ ! -f "$BOOTLOADER_PATH" ]; then
-            echo "Error: Bootloader could not be downloaded."
+            echo "Error: Bootloader file not found after download."
             exit 1
           fi
           echo "Bootloader downloaded successfully."
@@ -87,10 +93,19 @@ jobs:
           ARTIFACT_DIR="packaged_artifacts"
           ZIP_FILE="${{ matrix.target.zip_name }}"
           mkdir -p "$ARTIFACT_DIR"
-          cp build/partition_table/partition-table.bin "$ARTIFACT_DIR/"
-          cp build/*.bin "$ARTIFACT_DIR/"
+          cp build/partition_table/partition-table.bin "$ARTIFACT_DIR/" || {
+            echo "Failed to copy partition table"
+            exit 1
+          }
+          cp build/*.bin "$ARTIFACT_DIR/" || {
+            echo "Failed to copy binaries"
+            exit 1
+          }
           cd "$ARTIFACT_DIR"
-          zip "../$ZIP_FILE" ./*
+          zip "../$ZIP_FILE" ./* || {
+            echo "Failed to create ZIP"
+            exit 1
+          }
           cd ..
           ls -lh "$ZIP_FILE"
 
@@ -124,79 +139,202 @@ jobs:
             exit 1
           fi
 
-      - name: Determine R2 Path
+      - name: Generate Supported Boards JSON
         run: |
-          if [ "${{ github.event.inputs.buildType }}" = "prerelease" ]; then
-            echo "R2_PATH=GhostESPBins/prerelease" >> $GITHUB_ENV
-          else
-            echo "R2_PATH=GhostESPBins" >> $GITHUB_ENV
-          fi
+          echo "Generating supported.json from build targets..."
+          echo '{' > supported.json
+          echo '  "boards": {' >> supported.json
+          echo '    "ESP32": {' >> supported.json
+          for target in "${{ join(matrix.target[*].name, ' ') }}"; do
+            if [[ "$target" =~ "esp32" ]]; then
+              name=$(echo "$target" | cut -d' ' -f1)
+              zip_name=$(echo "${{ join(matrix.target[*].zip_name, ' ') }}" | grep -o "\S*$name\S*.zip" || echo "$name.zip")
+              echo "      \"${name//-/_}\": {\"name\": \"$name\", \"zip_file\": \"$zip_name\", \"chip_type\": \"ESP32\"}," >> supported.json
+            fi
+          done
+          sed -i '$ s/,$//' supported.json # Remove trailing comma
+          echo '    },' >> supported.json
+          echo '    "ESP32S2": {' >> supported.json
+          for target in "${{ join(matrix.target[*].name, ' ') }}"; do
+            if [[ "$target" =~ "esp32s2" ]]; then
+              name=$(echo "$target" | cut -d' ' -f1)
+              zip_name=$(echo "${{ join(matrix.target[*].zip_name, ' ') }}" | grep -o "\S*$name\S*.zip" || echo "$name.zip")
+              echo "      \"${name//-/_}\": {\"name\": \"$name\", \"zip_file\": \"$zip_name\", \"chip_type\": \"ESP32S2\"}," >> supported.json
+            fi
+          done
+          sed -i '$ s/,$//' supported.json
+          echo '    },' >> supported.json
+          echo '    "ESP32S3": {' >> supported.json
+          for target in "${{ join(matrix.target[*].name, ' ') }}"; do
+            if [[ "$target" =~ "esp32s3" ]]; then
+              name=$(echo "$target" | cut -d' ' -f1)
+              zip_name=$(echo "${{ join(matrix.target[*].zip_name, ' ') }}" | grep -o "\S*$name\S*.zip" || echo "$name.zip")
+              echo "      \"${name//-/_}\": {\"name\": \"$name\", \"zip_file\": \"$zip_name\", \"chip_type\": \"ESP32S3\"}," >> supported.json
+            fi
+          done
+          sed -i '$ s/,$//' supported.json
+          echo '    },' >> supported.json
+          echo '    "ESP32C3": {' >> supported.json
+          for target in "${{ join(matrix.target[*].name, ' ') }}"; do
+            if [[ "$target" =~ "esp32c3" ]]; then
+              name=$(echo "$target" | cut -d' ' -f1)
+              zip_name=$(echo "${{ join(matrix.target[*].zip_name, ' ') }}" | grep -o "\S*$name\S*.zip" || echo "$name.zip")
+              echo "      \"${name//-/_}\": {\"name\": \"$name\", \"zip_file\": \"$zip_name\", \"chip_type\": \"ESP32C3\"}," >> supported.json
+            fi
+          done
+          sed -i '$ s/,$//' supported.json
+          echo '    },' >> supported.json
+          echo '    "ESP32C6": {' >> supported.json
+          for target in "${{ join(matrix.target[*].name, ' ') }}"; do
+            if [[ "$target" =~ "esp32c6" ]]; then
+              name=$(echo "$target" | cut -d' ' -f1)
+              zip_name=$(echo "${{ join(matrix.target[*].zip_name, ' ') }}" | grep -o "\S*$name\S*.zip" || echo "$name.zip")
+              echo "      \"${name//-/_}\": {\"name\": \"$name\", \"zip_file\": \"$zip_name\", \"chip_type\": \"ESP32C6\"}," >> supported.json
+            fi
+          done
+          sed -i '$ s/,$//' supported.json
+          echo '    }' >> supported.json
+          echo '  },' >> supported.json
+          echo '  "version": "${{ github.sha }}",' >> supported.json
+          echo '  "build_date": "'$(date -u +"%Y-%m-%d")'",' >> supported.json
+          echo '  "build_number": "'$(date -u +"%Y%m%d")'"' >> supported.json
+          echo '}' >> supported.json
+          cat supported.json
 
-      - name: Install rclone
-        run: curl -fsSL https://rclone.org/install.sh | sudo bash
+      - name: Install jq
+        run: sudo apt-get install -y jq
 
-      - name: Configure rclone for Cloudflare R2
+      - name: Login to API and Get Token
+        id: login
         env:
-          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
-          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          ADMIN_USER: ${{ secrets.ADMIN_USER }}
+          ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
         run: |
-          mkdir -p ~/.config/rclone
-          cat > ~/.config/rclone/rclone.conf << EOF
-          [cloudflare_r2]
-          type = s3
-          provider = Cloudflare
-          access_key_id = $R2_ACCESS_KEY
-          secret_access_key = $R2_SECRET_KEY
-          endpoint = https://fb5f7d31bedfe4f3538ddfa6db491962.r2.cloudflarestorage.com
-          EOF
+          for attempt in {1..3}; do
+            response=$(curl -s -X POST -H "Content-Type: application/json" \
+              -d "{\"username\":\"$ADMIN_USER\",\"password\":\"$ADMIN_PASS\"}" \
+              https://api.spookytools.com/api/auth/login)
+            token=$(echo "$response" | jq -r '.token')
+            if [ -n "$token" ] && [ "$token" != "null" ]; then
+              echo "Token obtained on attempt $attempt"
+              echo "TOKEN=$token" >> $GITHUB_ENV
+              break
+            fi
+            echo "Failed to obtain token on attempt $attempt: $response"
+            if [ "$attempt" -lt 3 ]; then sleep 5; else exit 1; fi
+          done
 
-      - name: Upload Artifacts to R2
-        env:
-          R2_BUCKET: "spooksapi"
+      - name: Update Supported Boards List
         run: |
-          for file in flat_artifacts/*; do
+          for attempt in {1..3}; do
+            status=$(curl -s -o response.json -w "%{http_code}" -X POST \
+              -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+              -d @supported.json https://api.spookytools.com/api/supported)
+            if [ "$status" -eq 200 ]; then
+              echo "Supported boards updated on attempt $attempt"
+              break
+            fi
+            echo "Failed to update supported boards on attempt $attempt (HTTP $status): $(cat response.json)"
+            if [ "$attempt" -lt 3 ]; then sleep 5; else echo "Final attempt failed"; exit 1; fi
+          done
+
+      - name: Upload ZIP Files to API
+        run: |
+          for file in flat_artifacts/*.zip; do
             if [ -f "$file" ]; then
-              rclone copy "$file" "cloudflare_r2:${R2_BUCKET}/${R2_PATH}" --progress --s3-no-check-bucket
+              filename=$(basename "$file")
+              chip_type=$(echo "$filename" | cut -d'-' -f1 | tr '[:lower:]' '[:upper:]')
+              if [[ "$chip_type" != "ESP32" && "$chip_type" != "ESP32S2" && "$chip_type" != "ESP32S3" && "$chip_type" != "ESP32C3" && "$chip_type" != "ESP32C6" ]]; then
+                chip_type=$(grep -o "ESP32[CS0-6]*" <<< "${{ join(matrix.target[*].idf_target, ' ') }}" | grep -i "$filename" -B1 | head -n1 || echo "ESP32")
+              fi
+              echo "Uploading $filename to API as $chip_type..."
+              for attempt in {1..3}; do
+                status=$(curl -s -o response.json -w "%{http_code}" -X POST \
+                  -H "Authorization: Bearer $TOKEN" \
+                  -F "file=@$file" \
+                  "https://api.spookytools.com/api/upload/$chip_type/$filename")
+                if [ "$status" -eq 200 ]; then
+                  echo "$filename uploaded on attempt $attempt"
+                  break
+                fi
+                echo "Failed to upload $filename on attempt $attempt (HTTP $status): $(cat response.json)"
+                if [ "$attempt" -lt 3 ]; then sleep 5; else echo "Final attempt failed for $filename"; fi
+              done
             fi
           done
 
-      - id: get_release
-        name: Get Latest Release ID
+      - name: Check Existing Release Assets
+        id: check_release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          latest_release=$(gh api repos/${{ github.repository }}/releases --jq '.[0].id')
-          echo "release_id=$latest_release" >> $GITHUB_OUTPUT
+          latest_release=$(gh api repos/${{ github.repository }}/releases --jq '.[0]')
+          release_id=$(echo "$latest_release" | jq -r '.id')
+          assets=$(echo "$latest_release" | jq -r '.assets[] | .name')
+          all_exist=true
+          for file in flat_artifacts/*.zip; do
+            filename=$(basename "$file")
+            if ! echo "$assets" | grep -q "$filename"; then
+              all_exist=false
+              break
+            fi
+          done
+          echo "release_id=$release_id" >> $GITHUB_OUTPUT
+          echo "all_exist=$all_exist" >> $GITHUB_OUTPUT
+          if [ "$all_exist" = "true" ]; then
+            echo "All ZIP files already exist in the latest release"
+          else
+            echo "Some ZIP files are new or missing"
+          fi
 
       - name: Upload to Release
+        if: steps.check_release.outputs.all_exist != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for file in flat_artifacts/*; do
+          for file in flat_artifacts/*.zip; do
             if [ -f "$file" ] && [ -s "$file" ]; then
-              curl -X POST \
-                -H "Authorization: token $GITHUB_TOKEN" \
-                -H "Content-Type: application/zip" \
-                --data-binary @"$file" \
-                "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets?name=$(basename $file)"
+              filename=$(basename "$file")
+              echo "Uploading $filename to GitHub Release..."
+              for attempt in {1..3}; do
+                status=$(curl -s -o response.json -w "%{http_code}" -X POST \
+                  -H "Authorization: token $GITHUB_TOKEN" \
+                  -H "Content-Type: application/zip" \
+                  --data-binary @"$file" \
+                  "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.check_release.outputs.release_id }}/assets?name=$filename")
+                if [ "$status" -eq 201 ]; then
+                  echo "$filename uploaded to release on attempt $attempt"
+                  break
+                fi
+                echo "Failed to upload $filename to release on attempt $attempt (HTTP $status): $(cat response.json)"
+                if [ "$attempt" -lt 3 ]; then sleep 5; else echo "Final attempt failed for $filename"; fi
+              done
             fi
           done
 
-      - if: github.event.inputs.buildType == 'all'
+      - if: github.event.inputs.buildType == 'all' && steps.check_release.outputs.all_exist != 'true'
         name: Notify Discord (ALL)
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          curl -H "Content-Type: application/json" -d '{
-            "embeds": [{
-              "title": "🎉 New Build Artifacts Uploaded!",
-              "description": "All build artifacts have been successfully uploaded to Cloudflare R2 and GitHub Release.",
-              "color": 5814783,
-              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
-            }]
-          }' "$DISCORD_WEBHOOK_URL"
+          for attempt in {1..3}; do
+            status=$(curl -s -o response.json -w "%{http_code}" -H "Content-Type: application/json" -d '{
+              "embeds": [{
+                "title": "🎉 New Build Artifacts Uploaded!",
+                "description": "All build artifacts have been successfully uploaded to the API and GitHub Release.",
+                "color": 5814783,
+                "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+              }]
+            }' "$DISCORD_WEBHOOK_URL")
+            if [ "$status" -eq 204 ]; then
+              echo "Discord notification (ALL) sent on attempt $attempt"
+              break
+            fi
+            echo "Failed to send Discord notification (ALL) on attempt $attempt (HTTP $status): $(cat response.json)"
+            if [ "$attempt" -lt 3 ]; then sleep 5; else echo "Final attempt failed"; fi
+          done
 
-      - if: github.event.inputs.buildType == 'prerelease'
+      - if: github.event.inputs.buildType == 'prerelease' && steps.check_release.outputs.all_exist != 'true'
         name: Get Commit History
         id: get_commits
         run: |
@@ -207,22 +345,29 @@ jobs:
           commits="${commits//'"'/'\"'}"
           echo "commits=$commits" >> $GITHUB_OUTPUT
 
-      - if: github.event.inputs.buildType == 'prerelease'
+      - if: github.event.inputs.buildType == 'prerelease' && steps.check_release.outputs.all_exist != 'true'
         name: Notify Discord (PRERELEASE)
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
           BUILD_DATE=$(date -u +"%Y-%m-%d")
           BUILD_VERSION=$(date -u +"%Y%m%d")
-          
-          curl -H "Content-Type: application/json" -d '{
-            "embeds": [{
-              "title": "🚀 GhostESP Prerelease Build - '"$BUILD_DATE"'",
-              "description": "A new prerelease build has been uploaded to Cloudflare R2 and GitHub Release.\\n\\n**Version:** Pre-'"$BUILD_VERSION"'\\n\\n**Changes since last prerelease:**\\n'"${{ steps.get_commits.outputs.commits }}"'\\n\\n**Flash your device:**\\n🔗 [Flash using GhostESP Web Flasher](https://flasher.ghostesp.net)",
-              "color": 16750848,
-              "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
-              "footer": {
-                "text": "GhostESP Prerelease Build '"$BUILD_VERSION"'"
-              }
-            }]
-          }' "$DISCORD_WEBHOOK_URL"
+          for attempt in {1..3}; do
+            status=$(curl -s -o response.json -w "%{http_code}" -H "Content-Type: application/json" -d '{
+              "embeds": [{
+                "title": "🚀 GhostESP Prerelease Build - '"$BUILD_DATE"'",
+                "description": "A new prerelease build has been uploaded to the API and GitHub Release.\\n\\n**Version:** Pre-'"$BUILD_VERSION"'\\n\\n**Changes since last prerelease:**\\n'"${{ steps.get_commits.outputs.commits }}"'\\n\\n**Flash your device:**\\n🔗 [Flash using GhostESP Web Flasher](https://flasher.ghostesp.net)",
+                "color": 16750848,
+                "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+                "footer": {
+                  "text": "GhostESP Prerelease Build '"$BUILD_VERSION"'"
+                }
+              }]
+            }' "$DISCORD_WEBHOOK_URL")
+            if [ "$status" -eq 204 ]; then
+              echo "Discord notification (PRERELEASE) sent on attempt $attempt"
+              break
+            fi
+            echo "Failed to send Discord notification (PRERELEASE) on attempt $attempt (HTTP $status): $(cat response.json)"
+            if [ "$attempt" -lt 3 ]; then sleep 5; else echo "Final attempt failed"; fi
+          done
