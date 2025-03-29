@@ -1,14 +1,6 @@
-# Check if the target is ESP32 S3
-if(NOT "${IDF_TARGET}" STREQUAL "esp32s3")
-    message(STATUS "M5GFX component is only compatible with ESP32 S3. Skipping for target ${IDF_TARGET}")
-    return()
-endif()
-
-# Original component configuration
 set(COMPONENT_ADD_INCLUDEDIRS
     src
     )
-
 file(GLOB SRCS
      src/*.cpp
      src/lgfx/Fonts/efont/*.c
@@ -22,7 +14,6 @@ file(GLOB SRCS
      src/lgfx/v1/platforms/esp32s3/*.cpp
      src/lgfx/v1/touch/*.cpp
      )
-
 set(COMPONENT_SRCS ${SRCS})
 
 if (IDF_VERSION_MAJOR GREATER_EQUAL 5)
@@ -35,6 +26,7 @@ endif()
 
 ### If you use arduino-esp32 components, please activate next comment line.
 # list(APPEND COMPONENT_REQUIRES arduino-esp32)
+
 
 message(STATUS "M5GFX use components = ${COMPONENT_REQUIRES}")
 

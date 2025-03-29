@@ -16,7 +16,7 @@
  #if defined ( CONFIG_IDF_TARGET_ESP32 ) || !defined ( CONFIG_IDF_TARGET )
   #define M5UNITRCA_PIN_DAC GPIO_NUM_26
  #else
-  #define M5UNITRCA_PIN_DAC GPIO_NUM_NC
+  #define M5UNITRCA_PIN_DAC ((gpio_num_t)-1) //GPIO_NUM_NC;
  #endif
 #endif
 #else

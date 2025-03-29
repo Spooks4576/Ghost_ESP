@@ -176,7 +176,6 @@ namespace m5gfx
 
     static M5GFX* getInstance(void) { return _instance; }
 
-    void clearDisplay(int32_t color = TFT_BLACK) { fillScreen(color); }
     void progressBar(int x, int y, int w, int h, uint8_t val);
     void pushState(void);
     void popState(void);

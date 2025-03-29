@@ -17,6 +17,7 @@
 #include <mdns.h>
 #include <nvs_flash.h>
 #include <stdio.h>
+#include "mbedtls/base64.h"
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -1008,8 +1009,62 @@ void ap_manager_stop_services() {
 // Handler for GET requests (serves the HTML page)
 static esp_err_t http_get_handler(httpd_req_t *req) {
     printf("Received HTTP GET request: %s\n", req->uri);
-    httpd_resp_set_type(req, "text/html");
-    return httpd_resp_send(req, (const char *)ghost_site_html, ghost_site_html_size);
+
+    char auth_buffer[128];
+
+    size_t auth_len = httpd_req_get_hdr_value_len(req, "Authorization");
+
+    if (auth_len == 0) {
+        httpd_resp_set_status(req, "401 Unauthorized");
+        httpd_resp_set_hdr(req, "WWW-Authenticate", "Basic realm=\"Protected Area\"");
+        httpd_resp_sendstr(req, "Authentication required");
+        return ESP_OK;
+    }
+
+
+    if (httpd_req_get_hdr_value_str(req, "Authorization", auth_buffer, sizeof(auth_buffer)) == ESP_OK) {
+        if (strncmp(auth_buffer, "Basic ", 6) == 0) {
+            char *credentials = auth_buffer + 6;
+            size_t decoded_len;
+
+            size_t input_len = strlen(credentials);
+            size_t decoded_max_len = (input_len * 3) / 4 + 1;
+            char *decoded = (char *)malloc(decoded_max_len);
+
+            if (decoded) {
+                int ret = mbedtls_base64_decode((unsigned char *)decoded, decoded_max_len,
+                                                &decoded_len, (const unsigned char *)credentials,
+                                                input_len);
+                if (ret == 0) {
+                    decoded[decoded_len] = '\0';
+
+
+                    const FSettings *settings = &G_Settings;
+                    const char *expected_username = settings_get_ap_ssid(settings);
+                    const char *expected_password = settings_get_ap_password(settings);
+
+
+                    char expected_creds[128];
+                    snprintf(expected_creds, sizeof(expected_creds), "%s:%s",
+                             expected_username, expected_password);
+
+
+                    if (strcmp(decoded, expected_creds) == 0) {
+                        httpd_resp_set_type(req, "text/html");
+                        return httpd_resp_send(req, (const char *)ghost_site_html,
+                                               ghost_site_html_size);
+                    }
+                }
+                free(decoded);
+            }
+        }
+    }
+
+
+    httpd_resp_set_status(req, "401 Unauthorized");
+    httpd_resp_set_hdr(req, "WWW-Authenticate", "Basic realm=\"Protected Area\"");
+    httpd_resp_sendstr(req, "Invalid credentials");
+    return ESP_OK;
 }
 
 static esp_err_t api_command_handler(httpd_req_t *req) {
