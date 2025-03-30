@@ -18,19 +18,17 @@ static bool is_stopping = false;
 #define CLEANUP_AMOUNT (MAX_TEXT_LENGTH / 2)
 #define MAX_QUEUE_SIZE 10
 #define MAX_MESSAGE_SIZE 256
-#define MIN_SCREEN_SIZE 240  // Threshold for button display
+#define MIN_SCREEN_SIZE 239
 #define BUTTON_SIZE 40
 #define BUTTON_PADDING 5
 
-static lv_obj_t *scroll_up_btn = NULL;
-static lv_obj_t *scroll_down_btn = NULL;
 static lv_obj_t *back_btn = NULL;
 
 static void scroll_terminal_up(void);
 static void scroll_terminal_down(void);
 static void stop_all_operations(void);
 
-// Message queue system
+
 typedef struct {
   char messages[MAX_QUEUE_SIZE][MAX_MESSAGE_SIZE];
   int head;
@@ -39,6 +37,7 @@ typedef struct {
 } MessageQueue;
 
 static MessageQueue message_queue = {.head = 0, .tail = 0, .count = 0};
+
 
 static void queue_message(const char *text) {
   if (message_queue.count >= MAX_QUEUE_SIZE) {
@@ -154,27 +153,6 @@ void terminal_view_create(void) {
   lv_textarea_set_cursor_click_pos(terminal_textarea, false);
 
   if (LV_HOR_RES > MIN_SCREEN_SIZE && LV_VER_RES > MIN_SCREEN_SIZE) {
-    // Scroll Up Button
-    scroll_up_btn = lv_btn_create(terminal_view.root);
-    lv_obj_set_size(scroll_up_btn, BUTTON_SIZE, BUTTON_SIZE);
-    lv_obj_align(scroll_up_btn, LV_ALIGN_BOTTOM_RIGHT, -(BUTTON_SIZE + BUTTON_PADDING * 2), -BUTTON_PADDING);
-    lv_obj_set_style_bg_color(scroll_up_btn, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_set_style_radius(scroll_up_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_t *up_label = lv_label_create(scroll_up_btn);
-    lv_label_set_text(up_label, LV_SYMBOL_UP);
-    lv_obj_center(up_label);
-
-    // Scroll Down Button
-    scroll_down_btn = lv_btn_create(terminal_view.root);
-    lv_obj_set_size(scroll_down_btn, BUTTON_SIZE, BUTTON_SIZE);
-    lv_obj_align(scroll_down_btn, LV_ALIGN_BOTTOM_RIGHT, -BUTTON_PADDING, -BUTTON_PADDING);
-    lv_obj_set_style_bg_color(scroll_down_btn, lv_color_hex(0x333333), LV_PART_MAIN);
-    lv_obj_set_style_radius(scroll_down_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN);
-    lv_obj_t *down_label = lv_label_create(scroll_down_btn);
-    lv_label_set_text(down_label, LV_SYMBOL_DOWN);
-    lv_obj_center(down_label);
-
-    // Back Button
     back_btn = lv_btn_create(terminal_view.root);
     lv_obj_set_size(back_btn, BUTTON_SIZE, BUTTON_SIZE);
     lv_obj_align(back_btn, LV_ALIGN_BOTTOM_LEFT, BUTTON_PADDING, -BUTTON_PADDING);
@@ -184,14 +162,8 @@ void terminal_view_create(void) {
     lv_label_set_text(back_label, LV_SYMBOL_LEFT);
     lv_obj_center(back_label);
 
-    // Force layout update and log positions
+
     lv_obj_update_layout(terminal_view.root);
-    ESP_LOGW(TAG, "Scroll Up pos: x=%d, y=%d, w=%d, h=%d", 
-             lv_obj_get_x(scroll_up_btn), lv_obj_get_y(scroll_up_btn), 
-             lv_obj_get_width(scroll_up_btn), lv_obj_get_height(scroll_up_btn));
-    ESP_LOGW(TAG, "Scroll Down pos: x=%d, y=%d, w=%d, h=%d", 
-             lv_obj_get_x(scroll_down_btn), lv_obj_get_y(scroll_down_btn), 
-             lv_obj_get_width(scroll_down_btn), lv_obj_get_height(scroll_down_btn));
     ESP_LOGW(TAG, "Back pos: x=%d, y=%d, w=%d, h=%d", 
              lv_obj_get_x(back_btn), lv_obj_get_y(back_btn), 
              lv_obj_get_width(back_btn), lv_obj_get_height(back_btn));
@@ -219,13 +191,12 @@ void terminal_view_destroy(void) {
     lv_obj_del(terminal_view.root);
     terminal_view.root = NULL;
     terminal_textarea = NULL;
-    scroll_up_btn = NULL;
-    scroll_down_btn = NULL;
     back_btn = NULL;
   }
 
   is_stopping = false;
 }
+
 
 void terminal_view_add_text(const char *text) {
   if (!text || is_stopping) return;
@@ -267,7 +238,6 @@ void terminal_view_add_text(const char *text) {
   xSemaphoreGive(terminal_mutex);
 }
 
-
 void terminal_view_hardwareinput_callback(InputEvent *event) {
   if (event->type == INPUT_TYPE_TOUCH) {
     int touch_x = event->data.touch_data.point.x;
@@ -275,44 +245,38 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
     ESP_LOGW(TAG, "Touch detected at x=%d, y=%d (screen: %dx%d)", touch_x, touch_y, LV_HOR_RES, LV_VER_RES);
 
     if (LV_HOR_RES > MIN_SCREEN_SIZE && LV_VER_RES > MIN_SCREEN_SIZE) {
-      int button_y_min = LV_VER_RES - (BUTTON_SIZE * 2 + BUTTON_PADDING * 2); // 480 - (80 + 10) = 390
-      int button_y_max = LV_VER_RES - BUTTON_PADDING;                        // 480 - 5 = 475
-      ESP_LOGW(TAG, "Button Y range: %d to %d", button_y_min, button_y_max);
+      int button_y_min = LV_VER_RES - (BUTTON_SIZE + BUTTON_PADDING * 2);
+      int button_y_max = LV_VER_RES - BUTTON_PADDING;
+      
 
       if (touch_y >= button_y_min && touch_y <= button_y_max) {
-        int back_x_min = BUTTON_PADDING;                  // 5
-        int back_x_max = BUTTON_PADDING + BUTTON_SIZE + 25; // 5 + 40 + 25 = 70
-        ESP_LOGW(TAG, "Back X range: %d to %d", back_x_min, back_x_max);
+        int back_x_min = BUTTON_PADDING;
+        int back_x_max = BUTTON_PADDING + BUTTON_SIZE + 25;
         if (touch_x >= back_x_min && touch_x <= back_x_max) {
           ESP_LOGW(TAG, "Back button triggered");
           stop_all_operations();
           return;
         }
+      }
+      
 
-        
-        int scroll_up_x_min = 634;
-        int scroll_up_x_max = 694;
-        ESP_LOGW(TAG, "Scroll Up X range: %d to %d", scroll_up_x_min, scroll_up_x_max);
-        if (touch_x >= scroll_up_x_min && touch_x <= scroll_up_x_max) {
-          ESP_LOGW(TAG, "Scroll Up button triggered");
-          scroll_terminal_up();
-          return;
-        }
-
-        
-        int scroll_down_x_min = 679;
-        int scroll_down_x_max = 739; 
-        ESP_LOGW(TAG, "Scroll Down X range: %d to %d", scroll_down_x_min, scroll_down_x_max);
-        if (touch_x >= scroll_down_x_min && touch_x <= scroll_down_x_max) {
-          ESP_LOGW(TAG, "Scroll Down button triggered");
-          scroll_terminal_down();
-          return;
-        }
-      } else {
-        ESP_LOGW(TAG, "Touch Y (%d) outside button Y range (%d-%d)", touch_y, button_y_min, button_y_max);
+      int screen_half = LV_VER_RES / 2;
+      if (touch_y < screen_half) {
+        ESP_LOGW(TAG, "Top half tap - Scroll up");
+        scroll_terminal_up();
+      } else if (touch_y < button_y_min) {
+        ESP_LOGW(TAG, "Bottom half tap - Scroll down");
+        scroll_terminal_down();
       }
     } else {
-      ESP_LOGW(TAG, "Screen too small for buttons (%dx%d <= %d)", LV_HOR_RES, LV_VER_RES, MIN_SCREEN_SIZE);
+      int screen_half = LV_VER_RES / 2;
+      if (touch_y < screen_half) {
+        ESP_LOGW(TAG, "Top half tap - Scroll up (small screen)");
+        scroll_terminal_up();
+      } else {
+        ESP_LOGW(TAG, "Bottom half tap - Scroll down (small screen)");
+        scroll_terminal_down();
+      }
     }
   } else if (event->type == INPUT_TYPE_JOYSTICK) {
     int button = event->data.joystick_index;
@@ -328,6 +292,7 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
     }
   }
 }
+
 
 void terminal_view_get_hardwareinput_callback(void **callback) {
   if (callback != NULL) {
