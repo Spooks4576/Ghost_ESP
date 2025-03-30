@@ -7,6 +7,7 @@
 #include "managers/views/error_popup.h"
 #include "managers/views/main_menu_screen.h"
 #include "managers/views/terminal_screen.h"
+#include "managers/views/number_pad_screen.h"
 #include "managers/wifi_manager.h"
 #include <stdio.h>
 
@@ -35,7 +36,9 @@ const char *options_menu_type_to_string(EOptionsMenuType menuType) {
 }
 
 static const char *wifi_options[] = {"Scan Access Points",
+                                     "Select AP",
                                      "Scan LAN Devices",
+                                     "Select LAN",
                                      "Start Deauth Attack",
                                      "Beacon Spam - Random",
                                      "Beacon Spam - Rickroll",
@@ -500,6 +503,22 @@ void option_event_cb(lv_event_t *e) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("apcred -r");
+    }
+
+    if (strcmp(Selected_Option, "Select AP") == 0) {
+        if (scanned_aps) {
+            set_number_pad_mode(NP_MODE_AP);
+            display_manager_switch_view(&number_pad_view);
+            vTaskDelay(pdMS_TO_TICKS(10));
+        } else {
+            error_popup_create("You Need to Scan APs First...");
+        }
+    }
+
+    if (strcmp(Selected_Option, "Select LAN") == 0) {
+        set_number_pad_mode(NP_MODE_LAN);
+        display_manager_switch_view(&number_pad_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
