@@ -287,8 +287,24 @@ void main_menu_create(void) {
       icon_y_offset = -25;
   }
 
-  // Adjust for smaller screens
-  if (LV_HOR_RES < 150 || LV_VER_RES < 150) {
+  if (LV_HOR_RES == 128 && LV_VER_RES == 128) {
+    button_width = 50;
+    button_height = 50;
+    icon_width = 40;
+    icon_height = 40;
+    num_columns = 2;
+    num_rows = 2;
+    show_labels = false;
+    layout_x_offset = 14;    // Center the 2x2 grid horizontally
+    layout_y_offset = 14;    // Center the 2x2 grid vertically
+    icon_x_offset = 5;       // Fine-tune icon position within button
+    icon_y_offset = 5;
+    printf("Adjusted for 128x128 screen (2x2 grid, no labels): button width=%d, height=%d, icon size=%dx%d\n", 
+           button_width, button_height, icon_width, icon_height);
+    printf("Offsets - Layout: x=%d, y=%d, Icon: x=%d, y=%d\n", 
+           layout_x_offset, layout_y_offset, icon_x_offset, icon_y_offset);
+  }
+  else if (LV_HOR_RES < 150 || LV_VER_RES < 150) {
       button_width = 50;
       button_height = 50;
       icon_width = 50;
@@ -301,9 +317,9 @@ void main_menu_create(void) {
       icon_x_offset = -25;
       icon_y_offset = -15;
       printf("Adjusted for small screen (4x1 grid, no labels): button width=%d, height=%d, icon size=%dx%d\n", 
-             button_width, button_height, icon_width, icon_height);
+            button_width, button_height, icon_width, icon_height);
       printf("Offsets - Layout: x=%d, y=%d, Icon: x=%d, y=%d\n", 
-             layout_x_offset, layout_y_offset, icon_x_offset, icon_y_offset);
+            layout_x_offset, layout_y_offset, icon_x_offset, icon_y_offset);
   }
 
   int total_button_width = button_width * num_columns;
