@@ -15,7 +15,7 @@ void main_menu_create(void);
  */
 void main_menu_destroy(void);
 
-static void select_menu_item(int index);
+static void select_menu_item(int index, bool slide_left);
 
 static void handle_menu_item_selection(int item_index);
 

@@ -8,7 +8,7 @@ void apps_menu_create(void);
 void apps_menu_destroy(void);
 static void apps_menu_event_handler(InputEvent *event);
 void get_apps_menu_callback(void **callback);
-void select_app_item(int index);
+static void select_app_item(int index, bool slide_left);
 void update_app_item_styles(void);
 
 extern View apps_menu_view;

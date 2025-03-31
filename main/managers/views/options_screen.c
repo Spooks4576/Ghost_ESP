@@ -18,7 +18,7 @@ lv_obj_t *menu_container = NULL;
 int num_items = 0;
 unsigned long createdTimeInMs = 0;
 
-static void select_menu_item(int index); // Forward Declaration
+static void select_option_item(int index); // Forward Declaration
 
 const char *options_menu_type_to_string(EOptionsMenuType menuType) {
     switch (menuType) {
@@ -73,7 +73,7 @@ static const char *settings_options[] = {"Set RGB Mode - Stealth", "Set RGB Mode
 
 static void up_down_event_cb(lv_event_t *e) {
 int direction = (int)(intptr_t)lv_event_get_user_data(e);
-select_menu_item(selected_item_index + direction);
+select_option_item(selected_item_index + direction);
 }
 
 
@@ -173,14 +173,14 @@ void options_menu_create() {
         lv_obj_add_event_cb(down_btn, up_down_event_cb, LV_EVENT_CLICKED, (void *)1);
     }
 
-    select_menu_item(0);
+    select_option_item(0);
     display_manager_add_status_bar(options_menu_type_to_string(SelectedMenuType));
 
     createdTimeInMs = (unsigned long)(esp_timer_get_time() / 1000ULL);
 }
 
-static void select_menu_item(int index) {
-    printf("select_menu_item called with index: %d, num_items: %d\n", index, num_items);
+static void select_option_item(int index) {
+    printf("select_option_item called with index: %d, num_items: %d\n", index, num_items);
 
     if (index < 0) index = num_items - 1;
     if (index >= num_items) index = 0;
@@ -225,9 +225,9 @@ void handle_hardware_button_press_options(InputEvent *event) {
         // Check if touch is on up/down buttons (bottom 50px)
         if (data->point.y > LV_VER_RES - 50) {
             if (data->point.x > LV_HOR_RES - 100 && data->point.x < LV_HOR_RES - 50) {
-                select_menu_item(selected_item_index - 1); // Up
+                select_option_item(selected_item_index - 1); // Up
             } else if (data->point.x > LV_HOR_RES - 50) {
-                select_menu_item(selected_item_index + 1); // Down
+                select_option_item(selected_item_index + 1); // Down
             }
             return;
         }
@@ -239,7 +239,7 @@ void handle_hardware_button_press_options(InputEvent *event) {
             lv_obj_get_coords(btn, &btn_area);
             if (data->point.x >= btn_area.x1 && data->point.x <= btn_area.x2 &&
                 data->point.y >= btn_area.y1 && data->point.y <= btn_area.y2) {
-                select_menu_item(i);
+                select_option_item(i);
                 handle_option_directly((const char *)lv_obj_get_user_data(btn));
                 break;
             }
@@ -247,9 +247,9 @@ void handle_hardware_button_press_options(InputEvent *event) {
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
         if (button == 2) {
-            select_menu_item(selected_item_index - 1); // Up
+            select_option_item(selected_item_index - 1); // Up
         } else if (button == 4) {
-            select_menu_item(selected_item_index + 1); // Down
+            select_option_item(selected_item_index + 1); // Down
         } else if (button == 1) {
             lv_obj_t *selected_obj = lv_obj_get_child(menu_container, selected_item_index);
             if (selected_obj) {
