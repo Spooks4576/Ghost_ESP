@@ -7,6 +7,7 @@
 #include "managers/views/error_popup.h"
 #include "managers/views/main_menu_screen.h"
 #include "managers/views/terminal_screen.h"
+#include "managers/views/number_pad_screen.h"
 #include "managers/wifi_manager.h"
 #include <stdio.h>
 
@@ -17,7 +18,7 @@ lv_obj_t *menu_container = NULL;
 int num_items = 0;
 unsigned long createdTimeInMs = 0;
 
-static void select_menu_item(int index); // Forward Declaration
+static void select_option_item(int index); // Forward Declaration
 
 const char *options_menu_type_to_string(EOptionsMenuType menuType) {
     switch (menuType) {
@@ -35,7 +36,9 @@ const char *options_menu_type_to_string(EOptionsMenuType menuType) {
 }
 
 static const char *wifi_options[] = {"Scan Access Points",
+                                     "Select AP",
                                      "Scan LAN Devices",
+                                     "Select LAN",
                                      "Start Deauth Attack",
                                      "Beacon Spam - Random",
                                      "Beacon Spam - Rickroll",
@@ -70,13 +73,15 @@ static const char *settings_options[] = {"Set RGB Mode - Stealth", "Set RGB Mode
 
 static void up_down_event_cb(lv_event_t *e) {
 int direction = (int)(intptr_t)lv_event_get_user_data(e);
-select_menu_item(selected_item_index + direction);
+select_option_item(selected_item_index + direction);
 }
 
 
 void options_menu_create() {
     int screen_width = LV_HOR_RES;
     int screen_height = LV_VER_RES;
+
+    bool is_small_screen = (screen_width <= 240 || screen_height <= 240);
 
     display_manager_fill_screen(lv_color_hex(0x121212));
 
@@ -94,8 +99,8 @@ void options_menu_create() {
     lv_obj_set_layout(menu_container, LV_LAYOUT_FLEX);
     lv_obj_set_flex_flow(menu_container, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_style_bg_opa(menu_container, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_pad_all(menu_container, 10, 0);
-    lv_obj_set_style_pad_row(menu_container, 5, 0);
+    lv_obj_set_style_pad_all(menu_container, is_small_screen ? 5 : 10, 0);
+    lv_obj_set_style_pad_row(menu_container, is_small_screen ? 2 : 5, 0);
     lv_obj_set_scrollbar_mode(menu_container, LV_SCROLLBAR_MODE_OFF);
 
     const char **options = NULL;
@@ -113,25 +118,25 @@ void options_menu_create() {
     }
 
     num_items = 0;
-    int button_height = 60;
+    int button_height = is_small_screen ? 40 : 60; // Scale down button height for small screens
     for (int i = 0; options[i] != NULL; i++) {
         lv_obj_t *btn = lv_btn_create(menu_container);
-        lv_obj_set_size(btn, screen_width - 20, button_height);
+        lv_obj_set_size(btn, screen_width - (is_small_screen ? 10 : 20), button_height);
         lv_obj_set_style_bg_color(btn, lv_color_hex(0x1E1E1E), LV_PART_MAIN);
-        lv_obj_set_style_shadow_width(btn, 3, LV_PART_MAIN);
+        lv_obj_set_style_shadow_width(btn, is_small_screen ? 2 : 3, LV_PART_MAIN); // Smaller shadow
         lv_obj_set_style_shadow_color(btn, lv_color_hex(0x000000), LV_PART_MAIN);
         lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
-        lv_obj_set_style_radius(btn, 10, LV_PART_MAIN);
+        lv_obj_set_style_radius(btn, is_small_screen ? 5 : 10, LV_PART_MAIN); // Smaller radius
         lv_obj_set_scrollbar_mode(btn, LV_SCROLLBAR_MODE_OFF);
 
         lv_obj_set_layout(btn, LV_LAYOUT_FLEX);
         lv_obj_set_flex_flow(btn, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(btn, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-        lv_obj_set_style_pad_all(btn, 10, 0);
+        lv_obj_set_style_pad_all(btn, is_small_screen ? 5 : 10, 0); // Reduce padding inside button
 
         lv_obj_t *label = lv_label_create(btn);
         lv_label_set_text(label, options[i]);
-        lv_obj_set_style_text_font(label, &lv_font_montserrat_16, 0);
+        lv_obj_set_style_text_font(label, is_small_screen ? &lv_font_montserrat_14 : &lv_font_montserrat_16, 0); // Smaller font
         lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
 
         if (options[i + 1] != NULL) {
@@ -146,10 +151,10 @@ void options_menu_create() {
         num_items++;
     }
 
-    if (num_items * (button_height + 5) > screen_height - 20) {
+    if (num_items * (button_height + (is_small_screen ? 2 : 5)) > screen_height - 20) {
         lv_obj_t *up_btn = lv_btn_create(root);
-        lv_obj_set_size(up_btn, 40, 40);
-        lv_obj_align(up_btn, LV_ALIGN_BOTTOM_RIGHT, -50, -10);
+        lv_obj_set_size(up_btn, is_small_screen ? 30 : 40, is_small_screen ? 30 : 40); // Smaller buttons
+        lv_obj_align(up_btn, LV_ALIGN_BOTTOM_RIGHT, is_small_screen ? -40 : -50, -10);
         lv_obj_set_style_bg_color(up_btn, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_set_style_radius(up_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN);
         lv_obj_t *up_label = lv_label_create(up_btn);
@@ -158,7 +163,7 @@ void options_menu_create() {
         lv_obj_add_event_cb(up_btn, up_down_event_cb, LV_EVENT_CLICKED, (void *)-1);
 
         lv_obj_t *down_btn = lv_btn_create(root);
-        lv_obj_set_size(down_btn, 40, 40);
+        lv_obj_set_size(down_btn, is_small_screen ? 30 : 40, is_small_screen ? 30 : 40); // Smaller buttons
         lv_obj_align(down_btn, LV_ALIGN_BOTTOM_RIGHT, -10, -10);
         lv_obj_set_style_bg_color(down_btn, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_set_style_radius(down_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN);
@@ -168,14 +173,14 @@ void options_menu_create() {
         lv_obj_add_event_cb(down_btn, up_down_event_cb, LV_EVENT_CLICKED, (void *)1);
     }
 
-    select_menu_item(0);
+    select_option_item(0);
     display_manager_add_status_bar(options_menu_type_to_string(SelectedMenuType));
 
     createdTimeInMs = (unsigned long)(esp_timer_get_time() / 1000ULL);
 }
 
-static void select_menu_item(int index) {
-    printf("select_menu_item called with index: %d, num_items: %d\n", index, num_items);
+static void select_option_item(int index) {
+    printf("select_option_item called with index: %d, num_items: %d\n", index, num_items);
 
     if (index < 0) index = num_items - 1;
     if (index >= num_items) index = 0;
@@ -220,9 +225,9 @@ void handle_hardware_button_press_options(InputEvent *event) {
         // Check if touch is on up/down buttons (bottom 50px)
         if (data->point.y > LV_VER_RES - 50) {
             if (data->point.x > LV_HOR_RES - 100 && data->point.x < LV_HOR_RES - 50) {
-                select_menu_item(selected_item_index - 1); // Up
+                select_option_item(selected_item_index - 1); // Up
             } else if (data->point.x > LV_HOR_RES - 50) {
-                select_menu_item(selected_item_index + 1); // Down
+                select_option_item(selected_item_index + 1); // Down
             }
             return;
         }
@@ -234,7 +239,7 @@ void handle_hardware_button_press_options(InputEvent *event) {
             lv_obj_get_coords(btn, &btn_area);
             if (data->point.x >= btn_area.x1 && data->point.x <= btn_area.x2 &&
                 data->point.y >= btn_area.y1 && data->point.y <= btn_area.y2) {
-                select_menu_item(i);
+                select_option_item(i);
                 handle_option_directly((const char *)lv_obj_get_user_data(btn));
                 break;
             }
@@ -242,9 +247,9 @@ void handle_hardware_button_press_options(InputEvent *event) {
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
         if (button == 2) {
-            select_menu_item(selected_item_index - 1); // Up
+            select_option_item(selected_item_index - 1); // Up
         } else if (button == 4) {
-            select_menu_item(selected_item_index + 1); // Down
+            select_option_item(selected_item_index + 1); // Down
         } else if (button == 1) {
             lv_obj_t *selected_obj = lv_obj_get_child(menu_container, selected_item_index);
             if (selected_obj) {
@@ -500,6 +505,22 @@ void option_event_cb(lv_event_t *e) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("apcred -r");
+    }
+
+    if (strcmp(Selected_Option, "Select AP") == 0) {
+        if (scanned_aps) {
+            set_number_pad_mode(NP_MODE_AP);
+            display_manager_switch_view(&number_pad_view);
+            vTaskDelay(pdMS_TO_TICKS(10));
+        } else {
+            error_popup_create("You Need to Scan APs First...");
+        }
+    }
+
+    if (strcmp(Selected_Option, "Select LAN") == 0) {
+        set_number_pad_mode(NP_MODE_LAN);
+        display_manager_switch_view(&number_pad_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
