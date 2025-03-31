@@ -81,6 +81,8 @@ void options_menu_create() {
     int screen_width = LV_HOR_RES;
     int screen_height = LV_VER_RES;
 
+    bool is_small_screen = (screen_width <= 240 || screen_height <= 240);
+
     display_manager_fill_screen(lv_color_hex(0x121212));
 
     root = lv_obj_create(lv_scr_act());
@@ -97,8 +99,8 @@ void options_menu_create() {
     lv_obj_set_layout(menu_container, LV_LAYOUT_FLEX);
     lv_obj_set_flex_flow(menu_container, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_style_bg_opa(menu_container, LV_OPA_TRANSP, 0);
-    lv_obj_set_style_pad_all(menu_container, 10, 0);
-    lv_obj_set_style_pad_row(menu_container, 5, 0);
+    lv_obj_set_style_pad_all(menu_container, is_small_screen ? 5 : 10, 0);
+    lv_obj_set_style_pad_row(menu_container, is_small_screen ? 2 : 5, 0);
     lv_obj_set_scrollbar_mode(menu_container, LV_SCROLLBAR_MODE_OFF);
 
     const char **options = NULL;
@@ -116,25 +118,25 @@ void options_menu_create() {
     }
 
     num_items = 0;
-    int button_height = 60;
+    int button_height = is_small_screen ? 40 : 60; // Scale down button height for small screens
     for (int i = 0; options[i] != NULL; i++) {
         lv_obj_t *btn = lv_btn_create(menu_container);
-        lv_obj_set_size(btn, screen_width - 20, button_height);
+        lv_obj_set_size(btn, screen_width - (is_small_screen ? 10 : 20), button_height);
         lv_obj_set_style_bg_color(btn, lv_color_hex(0x1E1E1E), LV_PART_MAIN);
-        lv_obj_set_style_shadow_width(btn, 3, LV_PART_MAIN);
+        lv_obj_set_style_shadow_width(btn, is_small_screen ? 2 : 3, LV_PART_MAIN); // Smaller shadow
         lv_obj_set_style_shadow_color(btn, lv_color_hex(0x000000), LV_PART_MAIN);
         lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
-        lv_obj_set_style_radius(btn, 10, LV_PART_MAIN);
+        lv_obj_set_style_radius(btn, is_small_screen ? 5 : 10, LV_PART_MAIN); // Smaller radius
         lv_obj_set_scrollbar_mode(btn, LV_SCROLLBAR_MODE_OFF);
 
         lv_obj_set_layout(btn, LV_LAYOUT_FLEX);
         lv_obj_set_flex_flow(btn, LV_FLEX_FLOW_ROW);
         lv_obj_set_flex_align(btn, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-        lv_obj_set_style_pad_all(btn, 10, 0);
+        lv_obj_set_style_pad_all(btn, is_small_screen ? 5 : 10, 0); // Reduce padding inside button
 
         lv_obj_t *label = lv_label_create(btn);
         lv_label_set_text(label, options[i]);
-        lv_obj_set_style_text_font(label, &lv_font_montserrat_16, 0);
+        lv_obj_set_style_text_font(label, is_small_screen ? &lv_font_montserrat_14 : &lv_font_montserrat_16, 0); // Smaller font
         lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
 
         if (options[i + 1] != NULL) {
@@ -149,10 +151,10 @@ void options_menu_create() {
         num_items++;
     }
 
-    if (num_items * (button_height + 5) > screen_height - 20) {
+    if (num_items * (button_height + (is_small_screen ? 2 : 5)) > screen_height - 20) {
         lv_obj_t *up_btn = lv_btn_create(root);
-        lv_obj_set_size(up_btn, 40, 40);
-        lv_obj_align(up_btn, LV_ALIGN_BOTTOM_RIGHT, -50, -10);
+        lv_obj_set_size(up_btn, is_small_screen ? 30 : 40, is_small_screen ? 30 : 40); // Smaller buttons
+        lv_obj_align(up_btn, LV_ALIGN_BOTTOM_RIGHT, is_small_screen ? -40 : -50, -10);
         lv_obj_set_style_bg_color(up_btn, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_set_style_radius(up_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN);
         lv_obj_t *up_label = lv_label_create(up_btn);
@@ -161,7 +163,7 @@ void options_menu_create() {
         lv_obj_add_event_cb(up_btn, up_down_event_cb, LV_EVENT_CLICKED, (void *)-1);
 
         lv_obj_t *down_btn = lv_btn_create(root);
-        lv_obj_set_size(down_btn, 40, 40);
+        lv_obj_set_size(down_btn, is_small_screen ? 30 : 40, is_small_screen ? 30 : 40); // Smaller buttons
         lv_obj_align(down_btn, LV_ALIGN_BOTTOM_RIGHT, -10, -10);
         lv_obj_set_style_bg_color(down_btn, lv_color_hex(0x333333), LV_PART_MAIN);
         lv_obj_set_style_radius(down_btn, LV_RADIUS_CIRCLE, LV_PART_MAIN);
