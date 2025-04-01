@@ -812,6 +812,39 @@ void handle_startwd(int argc, char **argv) {
     }
 }
 
+void handle_ble_spam(int argc, char **argv) {
+    ble_advertisement_type_t type;
+
+    if (argc < 2 || argv[1] == NULL) {
+        printf("Error: No advertisement type specified. Usage: ble_spam <type>\n");
+        printf("Valid types: earbuds, watch, apple, default\n");
+        type = BLE_ADV_TYPE_EARBUDS;
+    } else {
+        if (strcmp(argv[1], "earbuds") == 0) {
+            type = BLE_ADV_TYPE_EARBUDS;
+        } else if (strcmp(argv[1], "watch") == 0) {
+            type = BLE_ADV_TYPE_WATCH;
+        } else if (strcmp(argv[1], "apple") == 0) {
+            type = BLE_ADV_TYPE_APPLE;
+        } else if (strcmp(argv[1], "default") == 0) {
+            type = BLE_ADV_TYPE_DEFAULT;
+        }
+        else 
+        {
+            printf("Error: Invalid advertisement type: %s\n", argv[1]);
+            printf("Valid types: earbuds, watch, apple, default\n");
+            type = BLE_ADV_TYPE_EARBUDS;
+        }
+    }
+
+    printf("Starting BLE spam test with type: %s\n", 
+           type == BLE_ADV_TYPE_EARBUDS ? "earbuds" :
+           type == BLE_ADV_TYPE_WATCH ? "watch" :
+           type == BLE_ADV_TYPE_APPLE ? "apple" : "default");
+
+    ble_start_random_advertising(type);
+}
+
 void handle_scan_ports(int argc, char **argv) {
     if (argc < 2) {
         printf("Usage:\n");
@@ -1472,6 +1505,7 @@ void register_commands() {
 #ifndef CONFIG_IDF_TARGET_ESP32S2
     register_command("blescan", handle_ble_scan_cmd);
     register_command("blewardriving", handle_ble_wardriving);
+    register_command("blespam", handle_ble_spam);
 #endif
 #ifdef DEBUG
     register_command("crash", handle_crash); // For Debugging

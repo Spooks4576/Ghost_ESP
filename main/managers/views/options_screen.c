@@ -62,7 +62,7 @@ static const char *wifi_options[] = {"Scan Access Points",
 
 static const char *bluetooth_options[] = {"Find Flippers",   "Start AirTag Scanner",
                                           "Raw BLE Scanner", "BLE Skimmer Detect",
-                                          "Go Back",         NULL};
+                                         "BLE Spam Watch", "BLE Spam Earbuds", "BLE Spam Apple", "Go Back", NULL};
 
 static const char *gps_options[] = {"Start Wardriving", "Stop Wardriving", "GPS Info",
                                     "BLE Wardriving",   "Go Back",         NULL};
@@ -388,6 +388,28 @@ void option_event_cb(lv_event_t *e) {
         display_manager_switch_view(&terminal_view);
         vTaskDelay(pdMS_TO_TICKS(10));
         simulateCommand("startwd -s");
+    }
+
+    if (strcmp(Selected_Option, "BLE Spam Apple") == 0)
+    {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("blespam apple");
+    }
+
+
+    if (strcmp(Selected_Option, "BLE Spam Watch") == 0)
+    {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("blespam watch");
+    }
+
+    if (strcmp(Selected_Option, "BLE Spam Earbuds") == 0)
+    {
+        display_manager_switch_view(&terminal_view);
+        vTaskDelay(pdMS_TO_TICKS(10));
+        simulateCommand("blespam earbuds");
     }
 
     if (strcmp(Selected_Option, "Start AirTag Scanner") == 0) {

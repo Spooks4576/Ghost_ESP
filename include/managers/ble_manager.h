@@ -18,6 +18,29 @@
 
 typedef void (*ble_data_handler_t)(struct ble_gap_event *event, size_t len);
 
+
+typedef enum {
+  BLE_ADV_TYPE_DEFAULT,
+  BLE_ADV_TYPE_WATCH, 
+  BLE_ADV_TYPE_EARBUDS,
+  BLE_ADV_TYPE_APPLE
+} ble_advertisement_type_t;
+
+typedef struct {
+  uint8_t id;
+  const char *description;
+} watch_model_t;
+
+typedef struct {
+  uint32_t id; // 24-bit ID for earbuds
+  const char *description;
+} earbuds_model_t;
+
+typedef struct {
+  uint8_t value;
+  const char *name;
+} apple_action_t;
+
 typedef struct {
   uint16_t uuid16[MAX_UUID16];
   int uuid16_count;
@@ -42,6 +65,7 @@ void ble_start_capture(void);
 void ble_start_scanning(void);
 void ble_start_skimmer_detection(void);
 void ble_stop_skimmer_detection(void);
+void ble_start_random_advertising(ble_advertisement_type_t type);
 
 #endif
 #endif // BLE_MANAGER_H
