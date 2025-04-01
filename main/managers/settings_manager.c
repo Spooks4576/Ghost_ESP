@@ -38,8 +38,6 @@ static const char *NVS_GPS_RX_PIN = "gps_rx_pin";
 static const char *NVS_DISPLAY_TIMEOUT_KEY = "disp_timeout";
 static const char *NVS_ENABLE_RTS_KEY = "rts_enable";
 
-extern lv_timer_t *time_update_timer;
-
 static const char *TAG = "SettingsManager";
 
 void settings_init(FSettings *settings) {
@@ -455,14 +453,6 @@ void settings_save(const FSettings *settings) {
   ESP_LOGI(TAG, "Applying timezone change: %s", settings->selected_timezone);
   setenv("TZ", settings->selected_timezone, 1);
   tzset();
-
-  // Force time display update if it exists
-  if (time_update_timer) {
-    ESP_LOGI(TAG, "Forcing time display update");
-    lv_timer_ready(time_update_timer);
-  } else {
-    ESP_LOGW(TAG, "Time update timer not available");
-  }
 #endif
 
   // Update global settings immediately

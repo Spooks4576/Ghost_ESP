@@ -291,16 +291,6 @@ void display_manager_add_status_bar(const char *CurrentMenuName) {
   lv_obj_set_style_text_color(battery_label, lv_color_hex(0xCCCCCC), 0);
   lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_12, 0);
 
-  // Add clock if RTC is available
-#ifdef CONFIG_HAS_RTC_CLOCK
-  static lv_obj_t *clock_label = NULL;
-  clock_label = lv_label_create(right_container);
-  lv_label_set_text(clock_label, "00:00");
-  lv_obj_set_style_text_color(clock_label, lv_color_hex(0xCCCCCC), 0);
-  lv_obj_set_style_text_font(clock_label, &lv_font_montserrat_12, 0);
-  lv_timer_create(update_clock, 1000, clock_label);
-#endif
-
   // Initial status update
   bool HasBluetooth;
 #ifndef CONFIG_IDF_TARGET_ESP32S2
